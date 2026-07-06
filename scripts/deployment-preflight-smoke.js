@@ -46,6 +46,21 @@ const cases = [
     expectedChecks: ["draining-boolean", "not-draining"],
   },
   {
+    name: "shared-poc-rejects-placeholder-secrets",
+    args: [],
+    env: hardenedEnv({
+      DEV_ACCOUNT_TOKEN: "replace-with-strong-account-token",
+      ADMIN_TOKEN: "replace-with-strong-admin-token",
+      METRICS_TOKEN: "metrics-token-placeholder-123",
+    }),
+    expectOk: false,
+    expectedChecks: [
+      "dev_account_token-not-placeholder",
+      "admin_token-not-placeholder",
+      "metrics_token-not-placeholder",
+    ],
+  },
+  {
     name: "shared-poc-jwt-pass",
     args: [],
     env: jwtEnv(),

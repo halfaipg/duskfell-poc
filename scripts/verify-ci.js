@@ -15,6 +15,7 @@ await step("assets-verify", () => run("npm", ["run", "assets:verify"]));
 await step("deployment-preflight-smoke", () => run("npm", ["run", "smoke:deployment-preflight"]));
 await step("deploy-audit-smoke", () => run("npm", ["run", "smoke:deploy-audit"]));
 await step("drain-mode-smoke", () => run("npm", ["run", "smoke:drain-mode"]));
+await step("public-deployment-smoke", () => run("npm", ["run", "smoke:public-deployment"]));
 await step("http-hardening-smoke", () => run("npm", ["run", "smoke:http-hardening"]));
 await step("ops-snapshot-smoke", () => run("npm", ["run", "smoke:ops-snapshot"]));
 await step("runtime-asset-integrity-smoke", () =>

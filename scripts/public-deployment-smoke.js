@@ -39,6 +39,22 @@ try {
     },
     ["DEV_ACCOUNT_TOKEN length", "ADMIN_TOKEN length", "METRICS_TOKEN length"],
   );
+  const placeholderTokenStartup = await expectStartupFailure(
+    {
+      PUBLIC_DEPLOYMENT: "true",
+      REQUIRE_SESSION: "true",
+      REQUIRE_ACCOUNT: "true",
+      DEV_ACCOUNT_TOKEN: "replace-with-strong-account-token",
+      ADMIN_TOKEN: "replace-with-strong-admin-token",
+      METRICS_TOKEN: "metrics-token-placeholder-123",
+      ALLOWED_ORIGINS: allowedOrigin,
+    },
+    [
+      "DEV_ACCOUNT_TOKEN must not use placeholder text",
+      "ADMIN_TOKEN must not use placeholder text",
+      "METRICS_TOKEN must not use placeholder text",
+    ],
+  );
 
   server = await startServer({
     PUBLIC_DEPLOYMENT: "true",
@@ -75,6 +91,7 @@ try {
     port,
     refusedStartup,
     weakTokenStartup,
+    placeholderTokenStartup,
     health,
     adminMissing,
     adminSummary: {
@@ -106,6 +123,7 @@ try {
     ok:
       refusedStartup.ok &&
       weakTokenStartup.ok &&
+      placeholderTokenStartup.ok &&
       health === "ok" &&
       adminMissing === 401 &&
       adminSummary.publicDeployment === true &&

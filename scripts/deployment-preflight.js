@@ -1,6 +1,13 @@
 const args = parseArgs(process.argv.slice(2));
 const profile = args.profile ?? "shared-poc";
 const env = process.env;
+const PLACEHOLDER_SECRET_MARKERS = [
+  "replace-with",
+  "placeholder",
+  "changeme",
+  "change-me",
+  "todo",
+];
 
 const checks = [];
 
@@ -122,6 +129,12 @@ function checkAccountAuth() {
       typeof token === "string" && token.trim() === token,
       "error",
       `${name} must not have surrounding whitespace`,
+    );
+    add(
+      `${name.toLowerCase()}-not-placeholder`,
+      typeof token === "string" && !looksLikePlaceholderSecret(token),
+      "error",
+      `${name} must not use placeholder text`,
     );
   }
 
@@ -323,6 +336,11 @@ function boolEnv(name) {
   if (value === "true") return true;
   if (value === "false") return false;
   return null;
+}
+
+function looksLikePlaceholderSecret(value) {
+  const normalized = value.toLowerCase();
+  return PLACEHOLDER_SECRET_MARKERS.some((marker) => normalized.includes(marker));
 }
 
 function bindAddrHost(value) {

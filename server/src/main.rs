@@ -2768,6 +2768,28 @@ fn validate_public_deployment_token(
             _ => "token length >= 24 bytes",
         });
     }
+    if looks_like_placeholder_secret(token) {
+        missing.push(match name {
+            "ADMIN_TOKEN" => "ADMIN_TOKEN must not use placeholder text",
+            "METRICS_TOKEN" => "METRICS_TOKEN must not use placeholder text",
+            "DEV_ACCOUNT_TOKEN" => "DEV_ACCOUNT_TOKEN must not use placeholder text",
+            "ACCOUNT_JWT_HS256_SECRET" => "ACCOUNT_JWT_HS256_SECRET must not use placeholder text",
+            _ => "token must not use placeholder text",
+        });
+    }
+}
+
+fn looks_like_placeholder_secret(token: &str) -> bool {
+    let normalized = token.to_ascii_lowercase();
+    [
+        "replace-with",
+        "placeholder",
+        "changeme",
+        "change-me",
+        "todo",
+    ]
+    .iter()
+    .any(|marker| normalized.contains(marker))
 }
 
 fn account_auth_secret_for_distinct_check(account_auth: &AccountAuthConfig) -> Option<&str> {
@@ -3419,6 +3441,25 @@ mod config_tests {
         assert!(weak_message.contains("ADMIN_TOKEN length"));
         assert!(weak_message.contains("METRICS_TOKEN length"));
         assert!(weak_message.contains("METRICS_TOKEN without surrounding whitespace"));
+
+        let placeholder_err = validate_public_deployment(
+            true,
+            &strict_sessions,
+            &AccountAuthConfig {
+                require_account: true,
+                mode: AccountAuthMode::DevToken {
+                    token: "replace-with-strong-account-token".to_string(),
+                },
+            },
+            &origins,
+            Some("replace-with-strong-admin-token"),
+            Some("metrics-token-placeholder-123"),
+        )
+        .expect_err("public deployment rejects placeholder tokens");
+        let placeholder_message = placeholder_err.to_string();
+        assert!(placeholder_message.contains("DEV_ACCOUNT_TOKEN must not use placeholder text"));
+        assert!(placeholder_message.contains("ADMIN_TOKEN must not use placeholder text"));
+        assert!(placeholder_message.contains("METRICS_TOKEN must not use placeholder text"));
 
         let reused_err = validate_public_deployment(
             true,
