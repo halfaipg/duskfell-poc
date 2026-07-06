@@ -1,6 +1,8 @@
 ARG RUST_VERSION=1.81
+ARG GIT_SHA=unknown
 
 FROM rust:${RUST_VERSION}-slim-bookworm AS build
+ARG GIT_SHA
 WORKDIR /src
 
 RUN apt-get update \
@@ -12,9 +14,14 @@ COPY server/Cargo.toml server/Cargo.toml
 COPY server/src server/src
 COPY server/data server/data
 
-RUN cargo build --release --locked -p sundermere-server
+RUN GIT_SHA="${GIT_SHA}" cargo build --release --locked -p sundermere-server
 
 FROM debian:bookworm-slim AS runtime
+ARG GIT_SHA
+
+LABEL org.opencontainers.image.title="Duskfell PoC" \
+  org.opencontainers.image.description="Clean-room Duskfell authoritative sandbox PoC server" \
+  org.opencontainers.image.revision="${GIT_SHA}"
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends ca-certificates curl \

@@ -15,7 +15,8 @@ if (!Number.isInteger(port) || port <= 0) {
 
 let result;
 try {
-  await run("docker", ["build", "-t", image, "."]);
+  const gitSha = (args.gitSha ?? (await runCapture("git", ["rev-parse", "HEAD"]))).trim();
+  await run("docker", ["build", "--build-arg", `GIT_SHA=${gitSha}`, "-t", image, "."]);
   await run("docker", ["rm", "-f", name], { allowFailure: true });
   const containerId = await runCapture("docker", [
     "run",
@@ -69,6 +70,13 @@ try {
     "--format",
     "{{json .Config.Healthcheck}}",
   ]);
+  const imageRevision = await runCapture("docker", [
+    "image",
+    "inspect",
+    image,
+    "--format",
+    '{{index .Config.Labels "org.opencontainers.image.revision"}}',
+  ]);
 
   result = {
     ok:
@@ -79,11 +87,14 @@ try {
       runtime.app?.ticker === "$DUSK" &&
       missingMetricsStatus === 401 &&
       metricsStatus === 200 &&
+      runtime.app?.buildGitSha === gitSha &&
       imageUser.trim() === "duskfell:duskfell" &&
+      imageRevision.trim() === gitSha &&
       healthcheck.includes("/readyz"),
     image,
     name,
     port,
+    gitSha,
     containerId: containerId.trim(),
     ready: ready.ready,
     missingAdminStatus,
@@ -91,6 +102,7 @@ try {
     missingMetricsStatus,
     metricsStatus,
     imageUser: imageUser.trim(),
+    imageRevision: imageRevision.trim(),
     hasReadyzHealthcheck: healthcheck.includes("/readyz"),
     elapsedMs: round(performance.now() - startedAt),
   };

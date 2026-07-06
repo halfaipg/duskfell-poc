@@ -16,7 +16,7 @@ await step("deployment-preflight-smoke", () => run("npm", ["run", "smoke:deploym
 await step("runtime-asset-integrity-smoke", () =>
   run("npm", ["run", "smoke:runtime-asset-integrity"]),
 );
-await step("runtime-manifest-smoke", () => run("npm", ["run", "smoke:runtime-manifest"]));
+await step("runtime-provenance-smoke", () => run("npm", ["run", "smoke:runtime-provenance"]));
 await step("asset-serving-smoke", () => run("npm", ["run", "smoke:assets"]));
 await step("metrics-smoke", () => run("npm", ["run", "smoke:metrics"]));
 await step("readiness-smoke", () => run("npm", ["run", "smoke:readiness"]));

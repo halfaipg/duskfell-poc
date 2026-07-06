@@ -56,7 +56,7 @@ daemon and network access to the configured base images.
 For a shared demo, run the image with explicit public deployment guardrails:
 
 ```sh
-docker build -t duskfell-poc:local .
+docker build --build-arg GIT_SHA="$(git rev-parse HEAD)" -t duskfell-poc:local .
 docker run --rm -p 127.0.0.1:4107:4107 \
   -e PUBLIC_DEPLOYMENT=true \
   -e REQUIRE_SESSION=true \
@@ -73,9 +73,11 @@ docker run --rm -p 127.0.0.1:4107:4107 \
 The image listens on `0.0.0.0:4107` inside the container, runs as
 `duskfell:duskfell`, serves bundled `client/`, `assets/`, and
 `server/data/world.json`, writes JSONL journal/outbox state under `/data`, and
-uses `/readyz` for its Docker healthcheck. Real public deployments should use
-JWT account mode, distinct high-entropy secrets, exact HTTPS origins, and a
-persistent volume or managed durable store.
+uses `/readyz` for its Docker healthcheck. Pass `GIT_SHA` at build time so
+`/admin/runtime` and the OCI `org.opencontainers.image.revision` label identify
+the exact source revision. Real public deployments should use JWT account mode,
+distinct high-entropy secrets, exact HTTPS origins, and a persistent volume or
+managed durable store.
 
 ## Development Commands
 
@@ -227,9 +229,9 @@ npm run verify:ci
 The command runs Rust formatting, locked Rust check/tests, supply-chain smoke,
 client projection/protocol/asset-loader tests, sprite and terrain manifest tests,
 runtime asset verification, deployment preflight smoke, runtime manifest/integrity
-smokes, asset serving smoke, metrics smoke, readiness smoke, and git whitespace
-checks. GitHub Actions runs the same command on pushes to `main` and `codex/**`,
-pull requests, and manual dispatches.
+smokes, runtime build-provenance smoke, asset serving smoke, metrics smoke,
+readiness smoke, and git whitespace checks. GitHub Actions runs the same command
+on pushes to `main` and `codex/**`, pull requests, and manual dispatches.
 
 Run the broad local verification gate:
 

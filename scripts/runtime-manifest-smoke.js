@@ -7,6 +7,8 @@ const args = parseArgs(process.argv.slice(2));
 const port = Number(args.port ?? 4129);
 const startupTimeoutMs = Number(args.startupTimeoutMs ?? 10000);
 const adminToken = args.adminToken ?? `runtime-manifest-${Date.now()}`;
+const buildGitSha = args.buildGitSha ?? null;
+const expectedGitSha = args.expectedGitSha ?? buildGitSha;
 const runId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const runtimeDir = path.resolve("var", "runtime-manifest-smoke");
 const journalPath = path.join(runtimeDir, `${runId}-journal.jsonl`);
@@ -39,6 +41,10 @@ try {
       runtime.app?.chain === "Base" &&
       runtime.app?.ticker === "$DUSK" &&
       runtime.app?.serverCrate === "sundermere-server",
+    buildProvenance:
+      expectedGitSha == null
+        ? runtime.app?.buildGitSha == null || isNonEmptyString(runtime.app.buildGitSha)
+        : runtime.app?.buildGitSha === expectedGitSha,
     content:
       runtime.content?.schemaVersion === summary.content?.schemaVersion &&
       runtime.content?.contentHash === summary.content?.contentHash &&
@@ -168,11 +174,16 @@ function summarizeAssetManifest(manifest) {
   };
 }
 
+function isNonEmptyString(value) {
+  return typeof value === "string" && value.length > 0;
+}
+
 async function startServer() {
   const child = spawn("cargo", ["run", "-p", "sundermere-server"], {
     cwd: process.cwd(),
     env: {
       ...process.env,
+      ...(buildGitSha == null ? {} : { GIT_SHA: buildGitSha }),
       ADMIN_TOKEN: adminToken,
       BIND_ADDR: `127.0.0.1:${port}`,
       JOURNAL_PATH: journalPath,
