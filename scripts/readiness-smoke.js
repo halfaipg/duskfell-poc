@@ -7,6 +7,8 @@ const args = parseArgs(process.argv.slice(2));
 const port = Number(args.port ?? 4120);
 const runtimeDir = path.resolve("var", "readiness-smoke");
 const runId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+const journalPath = path.join(runtimeDir, `${runId}-journal.jsonl`);
+const outboxPath = path.join(runtimeDir, `${runId}-settlement-outbox.jsonl`);
 const httpUrl = `http://127.0.0.1:${port}`;
 
 if (!Number.isInteger(port) || port <= 0) {
@@ -25,6 +27,17 @@ try {
   const initialReady = await fetchReadiness();
   const session = await issueSession();
   const saturatedReady = await fetchReadiness();
+  const readinessText = JSON.stringify({ initialReady, saturatedReady });
+  const readinessPathRedaction = {
+    absoluteRuntimeDirAbsent:
+      !readinessText.includes(runtimeDir) &&
+      !readinessText.includes(journalPath) &&
+      !readinessText.includes(outboxPath),
+    ok:
+      !readinessText.includes(runtimeDir) &&
+      !readinessText.includes(journalPath) &&
+      !readinessText.includes(outboxPath),
+  };
 
   result = {
     port,
@@ -32,9 +45,11 @@ try {
     sessionStatus: session.status,
     initialReady,
     saturatedReady,
+    readinessPathRedaction,
     elapsedMs: round(performance.now() - startedAt),
     ok:
       health === "ok" &&
+      readinessPathRedaction.ok &&
       session.status === 200 &&
       initialReady.status === 200 &&
       initialReady.body.ready === true &&
@@ -71,8 +86,8 @@ async function startServer() {
     env: {
       ...process.env,
       BIND_ADDR: `127.0.0.1:${port}`,
-      JOURNAL_PATH: path.join(runtimeDir, `${runId}-journal.jsonl`),
-      SETTLEMENT_OUTBOX_PATH: path.join(runtimeDir, `${runId}-settlement-outbox.jsonl`),
+      JOURNAL_PATH: journalPath,
+      SETTLEMENT_OUTBOX_PATH: outboxPath,
       REQUIRE_SESSION: "true",
       SESSION_TICKET_CAPACITY: "1",
       SESSION_TICKET_TTL_SECONDS: "60",

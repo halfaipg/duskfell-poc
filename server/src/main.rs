@@ -921,20 +921,20 @@ fn durable_parent_status(path: &Path) -> DurableParentStatus {
         Ok(metadata) if metadata.is_dir() && !metadata.permissions().readonly() => {
             DurableParentStatus {
                 ok: true,
-                detail: format!("{} exists and is not read-only", parent.display()),
+                detail: "durable parent directory exists and is not read-only".to_string(),
             }
         }
         Ok(metadata) if !metadata.is_dir() => DurableParentStatus {
             ok: false,
-            detail: format!("{} is not a directory", parent.display()),
+            detail: "durable parent path is not a directory".to_string(),
         },
         Ok(_) => DurableParentStatus {
             ok: false,
-            detail: format!("{} is read-only", parent.display()),
+            detail: "durable parent directory is read-only".to_string(),
         },
         Err(err) => DurableParentStatus {
             ok: false,
-            detail: format!("{} is not accessible: {err}", parent.display()),
+            detail: format!("durable parent directory is not accessible: {err}"),
         },
     }
 }
@@ -3577,6 +3577,9 @@ mod config_tests {
 
         assert!(status.ok, "{}", status.detail);
         assert!(status.detail.contains("not read-only"));
+        assert!(!status
+            .detail
+            .contains(&std::env::temp_dir().display().to_string()));
     }
 
     #[test]
@@ -3585,6 +3588,7 @@ mod config_tests {
         fs::write(&parent_file, b"not a directory").expect("write parent marker");
 
         let status = durable_parent_status(&parent_file.join("journal.jsonl"));
+        let parent_file_display = parent_file.display().to_string();
 
         let _ = fs::remove_file(parent_file);
         assert!(!status.ok);
@@ -3593,6 +3597,7 @@ mod config_tests {
             "{}",
             status.detail
         );
+        assert!(!status.detail.contains(&parent_file_display));
     }
 
     #[test]
