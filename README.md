@@ -1,6 +1,6 @@
 # Duskfell PoC
 
-Open-world sandbox MMO with an async blockchain settlement boundary. This repository does not use EA/Broadsword assets, names, data files, packet formats, emulator code, or content tables.
+Open-world sandbox MMO with an async blockchain settlement boundary.
 
 The PoC currently proves the first production-shaped loop:
 
