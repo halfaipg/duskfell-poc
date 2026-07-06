@@ -94,6 +94,34 @@ const cases = [
     expectedChecks: ["allowed-origins-bounded"],
   },
   {
+    name: "shared-poc-rejects-hostname-bind-addr",
+    args: [],
+    env: hardenedEnv({
+      BIND_ADDR: "localhost:4107",
+    }),
+    expectOk: false,
+    expectedChecks: ["bind-addr-parse"],
+  },
+  {
+    name: "shared-poc-rejects-malformed-bind-addr-port",
+    args: [],
+    env: hardenedEnv({
+      BIND_ADDR: "127.0.0.1:not-a-port",
+    }),
+    expectOk: false,
+    expectedChecks: ["bind-addr-parse"],
+  },
+  {
+    name: "shared-poc-accepts-bracketed-ipv6-bind-addr",
+    args: [],
+    env: hardenedEnv({
+      BIND_ADDR: "[::1]:4107",
+    }),
+    expectOk: true,
+    expectedChecks: ["bind-addr-parse"],
+    expectedOkChecks: ["bind-addr-parse"],
+  },
+  {
     name: "shared-poc-jwt-pass",
     args: [],
     env: jwtEnv(),

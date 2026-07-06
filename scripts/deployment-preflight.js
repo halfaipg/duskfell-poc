@@ -1,3 +1,5 @@
+import net from "node:net";
+
 const args = parseArgs(process.argv.slice(2));
 const profile = args.profile ?? "shared-poc";
 const env = process.env;
@@ -250,9 +252,14 @@ function checkOrigins() {
 
 function checkBind() {
   const bindAddr = env.BIND_ADDR ?? "127.0.0.1:4107";
-  const host = bindAddrHost(bindAddr);
-  const loopback = isLoopbackBindHost(host);
-  add("bind-addr-parse", Boolean(host), "error", "BIND_ADDR must include a host and port");
+  const parsed = parseBindAddr(bindAddr);
+  const loopback = parsed.ok && isLoopbackBindHost(parsed.host);
+  add(
+    "bind-addr-parse",
+    parsed.ok,
+    "error",
+    parsed.ok ? `BIND_ADDR=${parsed.host}:${parsed.port}` : parsed.error,
+  );
   if (profile === "local") {
     add("local-bind-loopback", loopback, "warn", "local profile should bind loopback only");
   } else {
@@ -451,19 +458,58 @@ function looksLikePlaceholderSecret(value) {
   return PLACEHOLDER_SECRET_MARKERS.some((marker) => normalized.includes(marker));
 }
 
-function bindAddrHost(value) {
-  const trimmed = value.trim();
-  if (trimmed.startsWith("[")) {
-    const end = trimmed.indexOf("]");
-    return end === -1 ? null : trimmed.slice(1, end);
+function parseBindAddr(value) {
+  if (typeof value !== "string" || value.length === 0) {
+    return { ok: false, error: "BIND_ADDR must be a socket address" };
   }
-  const index = trimmed.lastIndexOf(":");
-  return index <= 0 ? null : trimmed.slice(0, index);
+  if (value.trim() !== value || /[\s\x00-\x1f\x7f]/u.test(value)) {
+    return {
+      ok: false,
+      error: "BIND_ADDR must not contain whitespace or control characters",
+    };
+  }
+
+  if (value.startsWith("[")) {
+    const close = value.indexOf("]");
+    if (close <= 1 || value[close + 1] !== ":") {
+      return { ok: false, error: "BIND_ADDR IPv6 addresses must look like [::1]:4107" };
+    }
+    const host = value.slice(1, close);
+    const port = value.slice(close + 2);
+    if (net.isIP(host) !== 6) {
+      return { ok: false, error: "BIND_ADDR bracketed host must be an IPv6 address" };
+    }
+    return parseBindPort(port, host);
+  }
+
+  const parts = value.split(":");
+  if (parts.length !== 2 || parts[0].length === 0) {
+    return {
+      ok: false,
+      error: "BIND_ADDR must be an IP socket address such as 127.0.0.1:4107 or [::1]:4107",
+    };
+  }
+  if (net.isIP(parts[0]) !== 4) {
+    return { ok: false, error: "BIND_ADDR host must be an IPv4 address or bracketed IPv6 address" };
+  }
+
+  return parseBindPort(parts[1], parts[0]);
+}
+
+function parseBindPort(value, host) {
+  if (!/^\d+$/u.test(value)) {
+    return { ok: false, error: "BIND_ADDR port must be numeric" };
+  }
+  const port = Number(value);
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    return { ok: false, error: "BIND_ADDR port must be between 1 and 65535" };
+  }
+  return { ok: true, host, port };
 }
 
 function isLoopbackBindHost(host) {
   if (!host) return false;
-  return host === "localhost" || host === "127.0.0.1" || host === "::1";
+  return host === "::1" || host === "127.0.0.1" || host.startsWith("127.");
 }
 
 function isLocalHost(hostname) {
