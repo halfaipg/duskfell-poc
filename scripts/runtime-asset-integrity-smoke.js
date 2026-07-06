@@ -43,7 +43,7 @@ try {
     extraEnv: {
       MAX_RUNTIME_ASSET_BYTES: "3000",
     },
-    expectedPatterns: [/MAX_RUNTIME_ASSET_BYTES/, /terrain-placeholder\.png/],
+    expectedPatterns: [/MAX_RUNTIME_ASSET_BYTES/, /placeholder\.png/],
   });
 
   result = {

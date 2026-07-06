@@ -178,6 +178,19 @@ Note: `/api/snapshot` is a full debug/admin snapshot and should be token-protect
 
 ## Load Smoke
 
+Run the CI-shaped gate locally:
+
+```sh
+npm run verify:ci
+```
+
+The command runs Rust formatting, locked Rust check/tests, supply-chain smoke,
+client projection/protocol/asset-loader tests, sprite and terrain manifest tests,
+runtime asset verification, deployment preflight smoke, runtime manifest/integrity
+smokes, asset serving smoke, metrics smoke, readiness smoke, and git whitespace
+checks. GitHub Actions runs the same command on pushes to `main` and `codex/**`,
+pull requests, and manual dispatches.
+
 Run the broad local verification gate:
 
 ```sh

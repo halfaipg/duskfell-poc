@@ -3,6 +3,7 @@
   "scripts": {
     "doctor:server": "node scripts/dev-server-doctor.js",
     "preflight:deployment": "node scripts/deployment-preflight.js",
+    "verify:ci": "node scripts/verify-ci.js",
     "verify:local": "node scripts/verify-local.js",
     "test:client": "node --test client/*.test.js",
     "test:sprites": "node --test scripts/sprite-manifest.test.js",
