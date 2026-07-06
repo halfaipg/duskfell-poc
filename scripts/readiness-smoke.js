@@ -53,6 +53,7 @@ try {
       session.status === 200 &&
       initialReady.status === 200 &&
       initialReady.body.ready === true &&
+      hasCheck(initialReady.body, "persistenceBackendActive", true) &&
       hasCheck(initialReady.body, "settlementQueueOpen", true) &&
       hasCheck(initialReady.body, "settlementQueueCapacityAvailable", true) &&
       hasCheck(initialReady.body, "journalDirWritable", true) &&
@@ -61,6 +62,7 @@ try {
       hasCheck(initialReady.body, "sessionTicketCapacityAvailable", true) &&
       saturatedReady.status === 503 &&
       saturatedReady.body.ready === false &&
+      hasCheck(saturatedReady.body, "persistenceBackendActive", true) &&
       hasCheck(saturatedReady.body, "settlementQueueOpen", true) &&
       hasCheck(saturatedReady.body, "settlementQueueCapacityAvailable", true) &&
       hasCheck(saturatedReady.body, "journalDirWritable", true) &&

@@ -17,6 +17,7 @@ await mkdir(runtimeDir, { recursive: true });
 
 const exit = await expectStartupFailure({
   DEPLOYMENT_PROFILE: "shared-poc",
+  PERSISTENCE_BACKEND: "jsonl",
   PUBLIC_DEPLOYMENT: "true",
   REQUIRE_SESSION: "true",
   REQUIRE_ACCOUNT: "true",

@@ -56,6 +56,7 @@ if (!["local", "shared-poc", "production"].includes(profile)) {
 
 checkKnownProfile();
 checkDeploymentProfile();
+checkPersistenceBackend();
 checkPublicMode();
 checkBuildProvenance();
 checkAccountAuth();
@@ -115,6 +116,65 @@ function checkDeploymentProfile() {
     runtimeProfile === profile,
     "error",
     `DEPLOYMENT_PROFILE must be ${profile} for --profile ${profile}`,
+  );
+}
+
+function checkPersistenceBackend() {
+  const backend = env.PERSISTENCE_BACKEND ?? "jsonl";
+  const known = ["jsonl", "postgres"].includes(backend);
+  add(
+    "persistence-backend-known",
+    known,
+    "error",
+    "PERSISTENCE_BACKEND must be jsonl or postgres when set",
+  );
+  if (!known) {
+    return;
+  }
+
+  if (profile !== "local") {
+    add(
+      "persistence-backend-explicit",
+      Boolean(env.PERSISTENCE_BACKEND),
+      "error",
+      "shared and production profiles require explicit PERSISTENCE_BACKEND",
+    );
+  }
+
+  if (profile === "production") {
+    add(
+      "production-persistence-backend-postgres",
+      backend === "postgres",
+      "error",
+      "production requires PERSISTENCE_BACKEND=postgres",
+    );
+    add(
+      "production-database-url-present",
+      Boolean(env.DATABASE_URL),
+      "error",
+      "production requires DATABASE_URL for the Postgres event-store",
+    );
+    add(
+      "production-database-url-bounded",
+      typeof env.DATABASE_URL === "string" && Buffer.byteLength(env.DATABASE_URL) <= 4096,
+      "error",
+      "DATABASE_URL must be at most 4096 bytes",
+    );
+    add(
+      "production-database-url-postgres",
+      typeof env.DATABASE_URL === "string" &&
+        (env.DATABASE_URL.startsWith("postgres://") || env.DATABASE_URL.startsWith("postgresql://")),
+      "error",
+      "DATABASE_URL must use postgres:// or postgresql://",
+    );
+    return;
+  }
+
+  add(
+    "persistence-backend-jsonl",
+    backend === "jsonl",
+    profile === "local" ? "warn" : "error",
+    "local and shared-poc profiles use PERSISTENCE_BACKEND=jsonl until the Postgres event-store is implemented",
   );
 }
 
@@ -522,7 +582,11 @@ function checkProductionBlockers() {
   );
   add(
     "durable-database-configured",
-    false,
+    env.PERSISTENCE_BACKEND === "postgres" &&
+      typeof env.DATABASE_URL === "string" &&
+      Buffer.byteLength(env.DATABASE_URL) <= 4096 &&
+      (env.DATABASE_URL.startsWith("postgres://") ||
+        env.DATABASE_URL.startsWith("postgresql://")),
     "error",
     "production needs a database/event-store for accounts, characters, inventory, audit events, and settlement jobs",
   );

@@ -30,6 +30,20 @@ try {
     },
     ["DEPLOYMENT_PROFILE=shared-poc"],
   );
+  const missingPersistenceBackendStartup = await expectStartupFailure(
+    {
+      DEPLOYMENT_PROFILE: "shared-poc",
+      PUBLIC_DEPLOYMENT: "true",
+      REQUIRE_SESSION: "true",
+      REQUIRE_ACCOUNT: "true",
+      DEV_ACCOUNT_TOKEN: accountToken,
+      ADMIN_TOKEN: adminToken,
+      METRICS_TOKEN: metricsToken,
+      ALLOWED_ORIGINS: allowedOrigin,
+      DURABLE_SYNC_WRITES: "true",
+    },
+    ["PERSISTENCE_BACKEND=jsonl"],
+  );
   const refusedStartup = await expectStartupFailure({
     DEPLOYMENT_PROFILE: "shared-poc",
     PUBLIC_DEPLOYMENT: "true",
@@ -98,6 +112,7 @@ try {
 
   server = await startServer({
     DEPLOYMENT_PROFILE: "shared-poc",
+    PERSISTENCE_BACKEND: "jsonl",
     PUBLIC_DEPLOYMENT: "true",
     REQUIRE_SESSION: "true",
     REQUIRE_ACCOUNT: "true",
@@ -132,6 +147,7 @@ try {
   result = {
     port,
     missingDeploymentProfileStartup,
+    missingPersistenceBackendStartup,
     refusedStartup,
     weakTokenStartup,
     placeholderTokenStartup,
@@ -142,6 +158,7 @@ try {
     adminSummary: {
       publicDeployment: adminSummary.publicDeployment,
       deploymentProfile: adminSummary.deploymentProfile,
+      persistenceBackend: adminSummary.persistenceBackend,
       requireSession: adminSummary.requireSession,
       requireAccount: adminSummary.requireAccount,
       devAccountTokenConfigured: adminSummary.devAccountTokenConfigured,
@@ -154,6 +171,14 @@ try {
       sundermere_deployment_profile_shared_poc: parseMetric(
         metricsText,
         "sundermere_deployment_profile_shared_poc",
+      ),
+      sundermere_persistence_backend_jsonl: parseMetric(
+        metricsText,
+        "sundermere_persistence_backend_jsonl",
+      ),
+      sundermere_persistence_backend_postgres: parseMetric(
+        metricsText,
+        "sundermere_persistence_backend_postgres",
       ),
       sundermere_require_session: parseMetric(metricsText, "sundermere_require_session"),
       sundermere_require_account: parseMetric(metricsText, "sundermere_require_account"),
@@ -172,6 +197,7 @@ try {
     elapsedMs: round(performance.now() - startedAt),
     ok:
       missingDeploymentProfileStartup.ok &&
+      missingPersistenceBackendStartup.ok &&
       refusedStartup.ok &&
       weakTokenStartup.ok &&
       placeholderTokenStartup.ok &&
@@ -181,6 +207,7 @@ try {
       adminMissing === 401 &&
       adminSummary.publicDeployment === true &&
       adminSummary.deploymentProfile === "shared-poc" &&
+      adminSummary.persistenceBackend === "jsonl" &&
       adminSummary.requireSession === true &&
       adminSummary.requireAccount === true &&
       adminSummary.devAccountTokenConfigured === true &&
@@ -189,6 +216,8 @@ try {
       metricsMissing === 401 &&
       parseMetric(metricsText, "sundermere_public_deployment") === 1 &&
       parseMetric(metricsText, "sundermere_deployment_profile_shared_poc") === 1 &&
+      parseMetric(metricsText, "sundermere_persistence_backend_jsonl") === 1 &&
+      parseMetric(metricsText, "sundermere_persistence_backend_postgres") === 0 &&
       parseMetric(metricsText, "sundermere_require_session") === 1 &&
       parseMetric(metricsText, "sundermere_require_account") === 1 &&
       parseMetric(metricsText, "sundermere_dev_account_token_configured") === 1 &&

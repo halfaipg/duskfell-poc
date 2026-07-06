@@ -18,6 +18,8 @@ const cases = [
     expectOk: true,
     expectedChecks: [
       "deployment-profile-matches-profile",
+      "persistence-backend-explicit",
+      "persistence-backend-jsonl",
       "public-deployment-enabled",
       "build-git-sha-format",
       "auth-credentials-distinct",
@@ -32,6 +34,20 @@ const cases = [
     env: hardenedEnv({ DEPLOYMENT_PROFILE: undefined }),
     expectOk: false,
     expectedChecks: ["deployment-profile-known", "deployment-profile-matches-profile"],
+  },
+  {
+    name: "shared-poc-rejects-missing-persistence-backend",
+    args: [],
+    env: hardenedEnv({ PERSISTENCE_BACKEND: undefined }),
+    expectOk: false,
+    expectedChecks: ["persistence-backend-known", "persistence-backend-explicit", "persistence-backend-jsonl"],
+  },
+  {
+    name: "shared-poc-rejects-postgres-runtime-backend",
+    args: [],
+    env: hardenedEnv({ PERSISTENCE_BACKEND: "postgres" }),
+    expectOk: false,
+    expectedChecks: ["persistence-backend-known", "persistence-backend-jsonl"],
   },
   {
     name: "shared-poc-rejects-unsynced-durable-writes",
@@ -284,6 +300,8 @@ const cases = [
     }),
     expectOk: false,
     expectedChecks: [
+      "production-persistence-backend-postgres",
+      "production-database-url-present",
       "real-account-provider-configured",
       "durable-database-configured",
       "signer-indexer-configured",
@@ -300,12 +318,39 @@ const cases = [
     }),
     expectOk: false,
     expectedChecks: [
+      "production-persistence-backend-postgres",
+      "production-database-url-present",
       "real-account-provider-configured",
       "durable-database-configured",
       "signer-indexer-configured",
       "cross-process-rate-limits-configured",
     ],
     expectedOkChecks: ["real-account-provider-configured"],
+  },
+  {
+    name: "production-postgres-clears-database-blocker",
+    args: ["--profile", "production"],
+    env: jwtEnv({
+      DEPLOYMENT_PROFILE: "production",
+      PERSISTENCE_BACKEND: "postgres",
+      DATABASE_URL: "postgres://duskfell.example/duskfell",
+      ALLOWED_ORIGINS: "https://play.example",
+      BIND_ADDR: "0.0.0.0:4107",
+    }),
+    expectOk: false,
+    expectedChecks: [
+      "production-persistence-backend-postgres",
+      "production-database-url-postgres",
+      "durable-database-configured",
+      "signer-indexer-configured",
+      "cross-process-rate-limits-configured",
+    ],
+    expectedOkChecks: [
+      "real-account-provider-configured",
+      "production-persistence-backend-postgres",
+      "production-database-url-postgres",
+      "durable-database-configured",
+    ],
   },
   {
     name: "production-rejects-local-origin",
@@ -408,6 +453,7 @@ function jwtEnv(overrides = {}) {
 function hardenedEnv(overrides = {}) {
   const values = {
     DEPLOYMENT_PROFILE: "shared-poc",
+    PERSISTENCE_BACKEND: "jsonl",
     PUBLIC_DEPLOYMENT: "true",
     REQUIRE_SESSION: "true",
     REQUIRE_ACCOUNT: "true",

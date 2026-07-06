@@ -163,6 +163,8 @@ async function checkMetrics() {
       "sundermere_deployment_profile_local",
       "sundermere_deployment_profile_shared_poc",
       "sundermere_deployment_profile_production",
+      "sundermere_persistence_backend_jsonl",
+      "sundermere_persistence_backend_postgres",
       "sundermere_draining",
       "sundermere_require_session",
       "sundermere_require_account",
@@ -201,6 +203,11 @@ function checkRuntimePosture(runtime, summary) {
       "deployment-profile-shared-poc",
       summary.deploymentProfile === "shared-poc",
       `deploymentProfile=${summary.deploymentProfile}`,
+    );
+    add(
+      "persistence-backend-jsonl",
+      summary.persistenceBackend === "jsonl",
+      `persistenceBackend=${summary.persistenceBackend}`,
     );
     add("public-deployment-enabled", summary.publicDeployment === true, `publicDeployment=${summary.publicDeployment}`);
     add("not-draining", summary.draining === false, `draining=${summary.draining}`);
@@ -254,6 +261,12 @@ function checkMetricsPosture(metrics) {
         metrics.sundermere_deployment_profile_shared_poc === 1 &&
         metrics.sundermere_deployment_profile_production === 0,
       `local=${metrics.sundermere_deployment_profile_local} shared=${metrics.sundermere_deployment_profile_shared_poc} production=${metrics.sundermere_deployment_profile_production}`,
+    );
+    add(
+      "metrics-persistence-backend-jsonl",
+      metrics.sundermere_persistence_backend_jsonl === 1 &&
+        metrics.sundermere_persistence_backend_postgres === 0,
+      `jsonl=${metrics.sundermere_persistence_backend_jsonl} postgres=${metrics.sundermere_persistence_backend_postgres}`,
     );
     add("metrics-public-deployment", metrics.sundermere_public_deployment === 1, `value=${metrics.sundermere_public_deployment}`);
     add("metrics-not-draining", metrics.sundermere_draining === 0, `value=${metrics.sundermere_draining}`);

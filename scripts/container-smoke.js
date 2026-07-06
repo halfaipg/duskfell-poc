@@ -29,6 +29,8 @@ try {
     "-e",
     "DEPLOYMENT_PROFILE=shared-poc",
     "-e",
+    "PERSISTENCE_BACKEND=jsonl",
+    "-e",
     "PUBLIC_DEPLOYMENT=true",
     "-e",
     "REQUIRE_SESSION=true",

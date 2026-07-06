@@ -155,6 +155,21 @@ impl DeploymentProfile {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum PersistenceBackend {
+    Jsonl,
+    Postgres,
+}
+
+impl PersistenceBackend {
+    fn name(self) -> &'static str {
+        match self {
+            PersistenceBackend::Jsonl => "jsonl",
+            PersistenceBackend::Postgres => "postgres",
+        }
+    }
+}
+
 #[derive(Clone)]
 struct AppState {
     sim: Arc<Mutex<SimWorld>>,
@@ -169,6 +184,7 @@ struct AppState {
     max_journal_bytes: u64,
     max_settlement_outbox_bytes: u64,
     max_durable_line_bytes: usize,
+    persistence_backend: PersistenceBackend,
     _journal_file_lock: Arc<DurableFileLock>,
     _settlement_outbox_file_lock: Arc<DurableFileLock>,
     durable_sync_writes: bool,
@@ -217,6 +233,9 @@ async fn main() -> anyhow::Result<()> {
     let settlement_config = SettlementConfig { chain_enabled };
     let (settlement_tx, settlement_rx) = settlement::channel();
     let settlement_ledger = Arc::new(Mutex::new(SettlementLedger::default()));
+    let persistence_backend_configured = std::env::var("PERSISTENCE_BACKEND").is_ok();
+    let persistence_backend = persistence_backend()?;
+    validate_supported_persistence_backend(persistence_backend)?;
     let max_journal_bytes = env_positive_u64("MAX_JOURNAL_BYTES", DEFAULT_MAX_JOURNAL_BYTES)?;
     let max_settlement_outbox_bytes = env_positive_u64(
         "MAX_SETTLEMENT_OUTBOX_BYTES",
@@ -339,6 +358,8 @@ async fn main() -> anyhow::Result<()> {
         admin_token.as_deref(),
         metrics_token.as_deref(),
         durable_sync_writes,
+        persistence_backend_configured,
+        persistence_backend,
     )?;
     validate_bind_addr(public_deployment, addr)?;
     validate_chain_mode(public_deployment, settlement_config.chain_enabled)?;
@@ -388,6 +409,7 @@ async fn main() -> anyhow::Result<()> {
         max_journal_bytes,
         max_settlement_outbox_bytes,
         max_durable_line_bytes,
+        persistence_backend,
         _journal_file_lock: journal_file_lock,
         _settlement_outbox_file_lock: settlement_outbox_file_lock,
         durable_sync_writes,
@@ -914,6 +936,14 @@ async fn readyz(State(state): State<AppState>) -> impl IntoResponse {
         detail: format!(
             "{} objects loaded from {}",
             state.content_manifest.object_count, state.content_manifest.schema_version
+        ),
+    });
+    checks.push(ReadinessCheck {
+        name: "persistenceBackendActive",
+        ok: state.persistence_backend == PersistenceBackend::Jsonl,
+        detail: format!(
+            "{} persistence backend active",
+            state.persistence_backend.name()
         ),
     });
     checks.push(ReadinessCheck {
@@ -1597,6 +1627,20 @@ async fn metrics(
     );
     append_metric(
         &mut metrics,
+        "sundermere_persistence_backend_jsonl",
+        "Whether PERSISTENCE_BACKEND is jsonl.",
+        "gauge",
+        u64::from(state.persistence_backend == PersistenceBackend::Jsonl),
+    );
+    append_metric(
+        &mut metrics,
+        "sundermere_persistence_backend_postgres",
+        "Whether PERSISTENCE_BACKEND is postgres.",
+        "gauge",
+        u64::from(state.persistence_backend == PersistenceBackend::Postgres),
+    );
+    append_metric(
+        &mut metrics,
         "sundermere_draining",
         "Whether this shard is refusing new session admission for drain or rollback.",
         "gauge",
@@ -1754,6 +1798,7 @@ struct AdminSummary {
     settlement_queue_closed_events: u64,
     max_settlement_outbox_bytes: u64,
     max_durable_line_bytes: usize,
+    persistence_backend: &'static str,
     durable_sync_writes: bool,
     durable_journal_persist_failures: u64,
     durable_settlement_persist_failures: u64,
@@ -1867,6 +1912,7 @@ async fn admin_summary(
         settlement_queue_closed_events: state.metrics.settlement_queue_closed_total(),
         max_settlement_outbox_bytes: state.max_settlement_outbox_bytes,
         max_durable_line_bytes: state.max_durable_line_bytes,
+        persistence_backend: state.persistence_backend.name(),
         durable_sync_writes: state.durable_sync_writes,
         durable_journal_persist_failures: state.metrics.durable_journal_persist_failed_total(),
         durable_settlement_persist_failures: state
@@ -2954,6 +3000,8 @@ fn validate_public_deployment(
     admin_token: Option<&str>,
     metrics_token: Option<&str>,
     durable_sync_writes: bool,
+    persistence_backend_configured: bool,
+    persistence_backend: PersistenceBackend,
 ) -> anyhow::Result<()> {
     if !public_deployment {
         return Ok(());
@@ -2988,6 +3036,9 @@ fn validate_public_deployment(
     }
     if !durable_sync_writes {
         missing.push("DURABLE_SYNC_WRITES=true");
+    }
+    if !persistence_backend_configured || persistence_backend != PersistenceBackend::Jsonl {
+        missing.push("PERSISTENCE_BACKEND=jsonl");
     }
     if admin_token.is_none() {
         missing.push("ADMIN_TOKEN");
@@ -3909,6 +3960,36 @@ fn parse_deployment_profile_value(value: &str) -> anyhow::Result<DeploymentProfi
     }
 }
 
+fn persistence_backend() -> anyhow::Result<PersistenceBackend> {
+    match std::env::var("PERSISTENCE_BACKEND") {
+        Ok(value) => parse_persistence_backend_value(&value),
+        Err(std::env::VarError::NotPresent) => Ok(PersistenceBackend::Jsonl),
+        Err(err) => Err(anyhow!("PERSISTENCE_BACKEND is not readable: {err}")),
+    }
+}
+
+fn parse_persistence_backend_value(value: &str) -> anyhow::Result<PersistenceBackend> {
+    match value.trim() {
+        "" | "jsonl" => Ok(PersistenceBackend::Jsonl),
+        "postgres" => Ok(PersistenceBackend::Postgres),
+        other => Err(anyhow!(
+            "PERSISTENCE_BACKEND must be jsonl or postgres, got {other}"
+        )),
+    }
+}
+
+fn validate_supported_persistence_backend(
+    persistence_backend: PersistenceBackend,
+) -> anyhow::Result<()> {
+    if persistence_backend == PersistenceBackend::Jsonl {
+        return Ok(());
+    }
+
+    Err(anyhow!(
+        "PERSISTENCE_BACKEND=postgres is reserved for the production database/event-store path, but this PoC runtime only implements PERSISTENCE_BACKEND=jsonl"
+    ))
+}
+
 fn bind_addr() -> anyhow::Result<SocketAddr> {
     std::env::var("BIND_ADDR")
         .unwrap_or_else(|_| "127.0.0.1:4107".to_string())
@@ -4045,16 +4126,17 @@ mod config_tests {
     use super::{
         bounded_bearer_token, bounded_header_str, constant_time_eq, durable_parent_status,
         durable_persistence_check, has_hidden_path_segment, is_safe_request_id, parse_bool_value,
-        parse_deployment_profile_value, parse_origin_allowlist_value, parse_positive_f32_value,
-        parse_positive_u32_value, parse_positive_u64_value, parse_positive_usize_value,
-        redacted_durable_path_basename, sanitized_trace_path, session_body_content_type,
-        session_display_name_from_body, settlement_queue_capacity_check, validate_account_jwt,
-        validate_account_subject, validate_bind_addr, validate_chain_mode,
-        validate_deployment_profile, validate_public_deployment, validate_runtime_budget_config,
-        validate_websocket_timing, AccountAuthConfig, AccountAuthMode, DeploymentProfile,
-        OriginAllowlistConfig, RuntimeBudgetConfig, WebSocketConfig, MAX_ACCOUNT_SUBJECT_BYTES,
-        MAX_ALLOWED_ORIGINS, MAX_AUTH_TOKEN_BYTES, MAX_JWT_AUDIENCE_BYTES, MAX_JWT_ISSUER_BYTES,
-        MAX_ORIGIN_BYTES,
+        parse_deployment_profile_value, parse_origin_allowlist_value,
+        parse_persistence_backend_value, parse_positive_f32_value, parse_positive_u32_value,
+        parse_positive_u64_value, parse_positive_usize_value, redacted_durable_path_basename,
+        sanitized_trace_path, session_body_content_type, session_display_name_from_body,
+        settlement_queue_capacity_check, validate_account_jwt, validate_account_subject,
+        validate_bind_addr, validate_chain_mode, validate_deployment_profile,
+        validate_public_deployment, validate_runtime_budget_config,
+        validate_supported_persistence_backend, validate_websocket_timing, AccountAuthConfig,
+        AccountAuthMode, DeploymentProfile, OriginAllowlistConfig, PersistenceBackend,
+        RuntimeBudgetConfig, WebSocketConfig, MAX_ACCOUNT_SUBJECT_BYTES, MAX_ALLOWED_ORIGINS,
+        MAX_AUTH_TOKEN_BYTES, MAX_JWT_AUDIENCE_BYTES, MAX_JWT_ISSUER_BYTES, MAX_ORIGIN_BYTES,
     };
     use crate::ingress::ClientIngressConfig;
     use crate::metrics::AppMetrics;
@@ -4099,6 +4181,30 @@ mod config_tests {
             DeploymentProfile::Production
         );
         assert!(parse_deployment_profile_value("prod").is_err());
+    }
+
+    #[test]
+    fn parses_and_guards_persistence_backend_values() {
+        assert_eq!(
+            parse_persistence_backend_value("").expect("empty backend defaults jsonl"),
+            PersistenceBackend::Jsonl
+        );
+        assert_eq!(
+            parse_persistence_backend_value("jsonl").expect("jsonl parses"),
+            PersistenceBackend::Jsonl
+        );
+        assert_eq!(
+            parse_persistence_backend_value("postgres").expect("postgres parses"),
+            PersistenceBackend::Postgres
+        );
+        assert!(parse_persistence_backend_value("sqlite").is_err());
+        assert!(validate_supported_persistence_backend(PersistenceBackend::Jsonl).is_ok());
+        let postgres_err = validate_supported_persistence_backend(PersistenceBackend::Postgres)
+            .expect_err("postgres backend remains reserved");
+        let postgres_message = postgres_err.to_string();
+        assert!(postgres_message.contains("PERSISTENCE_BACKEND=postgres"));
+        assert!(postgres_message.contains("production database/event-store"));
+        assert!(postgres_message.contains("PERSISTENCE_BACKEND=jsonl"));
     }
 
     #[test]
@@ -4464,6 +4570,8 @@ mod config_tests {
             None,
             None,
             false,
+            false,
+            PersistenceBackend::Jsonl,
         )
         .is_ok());
 
@@ -4475,6 +4583,8 @@ mod config_tests {
             None,
             None,
             false,
+            false,
+            PersistenceBackend::Jsonl,
         )
         .expect_err("public deployment rejects local defaults");
         let message = err.to_string();
@@ -4484,6 +4594,7 @@ mod config_tests {
         assert!(message.contains("ACCOUNT_AUTH_MODE"));
         assert!(message.contains("ALLOWED_ORIGINS"));
         assert!(message.contains("DURABLE_SYNC_WRITES=true"));
+        assert!(message.contains("PERSISTENCE_BACKEND=jsonl"));
         assert!(message.contains("ADMIN_TOKEN"));
         assert!(message.contains("METRICS_TOKEN"));
 
@@ -4495,6 +4606,8 @@ mod config_tests {
             Some("admin-token-public-12345"),
             Some("metrics-token-public-123"),
             true,
+            true,
+            PersistenceBackend::Jsonl,
         )
         .is_ok());
 
@@ -4506,6 +4619,8 @@ mod config_tests {
             Some("admin-token-public-12345"),
             Some("metrics-token-public-123"),
             true,
+            true,
+            PersistenceBackend::Jsonl,
         )
         .is_ok());
 
@@ -4517,6 +4632,8 @@ mod config_tests {
             Some("admin-token-public-12345"),
             Some("metrics-token-public-123"),
             false,
+            true,
+            PersistenceBackend::Jsonl,
         )
         .expect_err("public deployment requires synced durable writes");
         assert!(unsynced_durable_err
@@ -4536,6 +4653,8 @@ mod config_tests {
             Some("short-admin-token"),
             Some(" short-metrics-token "),
             true,
+            true,
+            PersistenceBackend::Jsonl,
         )
         .expect_err("public deployment rejects weak tokens");
         let weak_message = weak_err.to_string();
@@ -4558,6 +4677,8 @@ mod config_tests {
             Some(&"b".repeat(MAX_AUTH_TOKEN_BYTES + 1)),
             Some(&"c".repeat(MAX_AUTH_TOKEN_BYTES + 1)),
             true,
+            true,
+            PersistenceBackend::Jsonl,
         )
         .expect_err("public deployment rejects oversized configured tokens");
         let oversized_message = oversized_err.to_string();
@@ -4578,6 +4699,8 @@ mod config_tests {
             Some("replace-with-strong-admin-token"),
             Some("metrics-token-placeholder-123"),
             true,
+            true,
+            PersistenceBackend::Jsonl,
         )
         .expect_err("public deployment rejects placeholder tokens");
         let placeholder_message = placeholder_err.to_string();
@@ -4598,6 +4721,8 @@ mod config_tests {
             Some("shared-public-token-1234"),
             Some("metrics-token-public-123"),
             true,
+            true,
+            PersistenceBackend::Jsonl,
         )
         .expect_err("public deployment rejects reused token");
         assert!(reused_err.to_string().contains("must be distinct"));
@@ -4617,6 +4742,8 @@ mod config_tests {
             Some("admin-token-public-12345"),
             Some("metrics-token-public-123"),
             true,
+            true,
+            PersistenceBackend::Jsonl,
         )
         .expect_err("public deployment requires jwt issuer and audience");
         let jwt_message = jwt_missing_claims_err.to_string();
@@ -4638,6 +4765,8 @@ mod config_tests {
             Some("admin-token-public-12345"),
             Some("metrics-token-public-123"),
             true,
+            true,
+            PersistenceBackend::Jsonl,
         )
         .expect_err("public deployment rejects weak jwt identity config");
         let jwt_bad_identity_message = jwt_bad_identity_config_err.to_string();
@@ -4666,6 +4795,8 @@ mod config_tests {
             Some("admin-token-public-12345"),
             Some("metrics-token-public-123"),
             true,
+            true,
+            PersistenceBackend::Jsonl,
         )
         .expect_err("public deployment rejects jwt issuer query");
         assert!(jwt_query_issuer_err
@@ -4687,6 +4818,8 @@ mod config_tests {
             Some("admin-token-public-12345"),
             Some("metrics-token-public-123"),
             true,
+            true,
+            PersistenceBackend::Jsonl,
         )
         .expect_err("public deployment rejects oversized jwt identity config");
         let jwt_oversized_identity_message = jwt_oversized_identity_config_err.to_string();
