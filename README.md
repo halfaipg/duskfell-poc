@@ -110,6 +110,7 @@ npm run smoke:container
 npm run smoke:content-schema
 npm run smoke:deploy-audit
 npm run smoke:deed
+npm run smoke:ops-snapshot
 npm run smoke:external-bind-guard
 npm run smoke:gameplay-journal-replay
 npm run smoke:crafting
@@ -207,6 +208,23 @@ The audit checks health/readiness, token protection on `/admin/runtime` and
 content/runtime consistency, verified sprite and terrain asset pins, public-mode
 guardrails, durable persistence failure counters, and settlement queue capacity.
 
+For incident notes or rollback triage, capture a bounded redacted operations
+snapshot:
+
+```sh
+node scripts/ops-snapshot.js \
+  --url https://play.example.com \
+  --adminToken "$ADMIN_TOKEN" \
+  --metricsToken "$METRICS_TOKEN" \
+  --out "var/ops-snapshot-$(date +%Y%m%d%H%M%S).json"
+```
+
+The snapshot includes runtime identity, content and asset fingerprints,
+readiness, selected metrics, journal/outbox counters, recent event type counts,
+and ownership counts. It intentionally excludes full `/api/snapshot`, raw event
+payloads, account subjects, player IDs, token values, and absolute durable file
+paths.
+
 The default `shared-poc` profile checks the public-mode environment without starting the server. It expects hardened PoC deployment variables such as `PUBLIC_DEPLOYMENT=true`, strict sessions, account auth, strong distinct credentials, exact allowed Origins, sane positive capacity and payload budgets, and chain mode disabled. Use `npm run preflight:deployment -- --profile production` to see the fail-closed list of missing production systems; today that profile intentionally fails until durable datastore, signer/indexer, and cross-process admission/rate-limit services exist. The identity blocker clears only when `ACCOUNT_AUTH_MODE=jwt-hs256` includes a strong secret, issuer, and audience.
 Set `HTTP_BODY_LIMIT_BYTES` to cap plain HTTP request bodies. The default is `4096`, which is enough for current session/admin traffic and prevents oversized POST bodies from occupying shard work.
 Set `ADMIN_EVENT_LIMIT_CAP` to cap a single `/admin/events` response. The default is `200`; the endpoint default query limit is `50`.
@@ -266,6 +284,17 @@ npm run doctor:server
 
 The command checks the local listener, health/readiness, root HTML, admin summary,
 metrics, and one WebSocket join. It does not start or stop the server.
+
+Run the redacted operations snapshot smoke:
+
+```sh
+npm run smoke:ops-snapshot
+```
+
+The command starts a hardened isolated server, captures an operations snapshot,
+and verifies the output keeps tokens plus absolute durable paths out of the
+artifact while preserving runtime identity, readiness, metrics, journal, and
+settlement summaries.
 
 Run the supply-chain smoke:
 

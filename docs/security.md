@@ -53,6 +53,8 @@ Run `npm run preflight:deployment` before booting shared PoC deployments. The pr
 
 Run `scripts/deploy-audit.js --profile shared-poc` against a running shared shard after deploy. It verifies health/readiness, admin and metrics token protection, runtime build provenance, asset hash verification, public deployment guardrails, durable persistence failure counters, and settlement queue capacity from the live endpoints. `scripts/deploy-audit-smoke.js` starts a hardened isolated server and verifies the audit path itself.
 
+Run `scripts/ops-snapshot.js` during incident response or rollback triage to export a bounded redacted operations snapshot. The snapshot summarizes runtime identity, content and asset fingerprints, readiness, selected metrics, journal/outbox counters, recent event type counts, and ownership counts, but deliberately omits full world snapshots, raw journal event payloads, account subjects, player IDs, secret tokens, and absolute durable file paths. `scripts/ops-snapshot-smoke.js` verifies those redaction boundaries against a hardened isolated server.
+
 Non-loopback `BIND_ADDR` values require `PUBLIC_DEPLOYMENT=true`, so binding to `0.0.0.0` cannot silently expose local-dev defaults. `scripts/external-bind-guard-smoke.js` verifies this fail-closed startup path.
 
 `CHAIN_ENABLED=true` is currently a local-only settlement stub that produces `needs-signer` receipts instead of signed transactions. `scripts/chain-local-stub-smoke.js` verifies a deed claim in local chain mode still returns `needs-signer` with no `chainTx`. Public deployment refuses startup with chain mode enabled until signer and indexer configuration are implemented. `scripts/chain-public-guard-smoke.js` verifies this fail-closed startup path.
