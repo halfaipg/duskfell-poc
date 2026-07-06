@@ -15,6 +15,7 @@ const MAX_JWT_ISSUER_BYTES = 512;
 const MAX_JWT_AUDIENCE_BYTES = 256;
 const MAX_ALLOWED_ORIGINS = 16;
 const MAX_ORIGIN_BYTES = 512;
+const MAX_GIT_SHA_BYTES = 64;
 const BUDGET_LIMITS = {
   MAX_ACTIVE_CONNECTIONS: [1, 10_000],
   MAX_CONNECTIONS_PER_IP: [1, 10_000],
@@ -54,6 +55,7 @@ if (!["local", "shared-poc", "production"].includes(profile)) {
 
 checkKnownProfile();
 checkPublicMode();
+checkBuildProvenance();
 checkAccountAuth();
 checkOrigins();
 checkBind();
@@ -111,6 +113,39 @@ function checkPublicMode() {
     boolEnv("REQUIRE_ACCOUNT") === true,
     "error",
     "shared and production profiles require REQUIRE_ACCOUNT=true",
+  );
+}
+
+function checkBuildProvenance() {
+  if (profile === "local") {
+    add(
+      "local-build-git-sha-optional",
+      true,
+      "warn",
+      "local profile may omit GIT_SHA",
+    );
+    return;
+  }
+
+  const gitSha = env.GIT_SHA;
+  add("build-git-sha-present", Boolean(gitSha), "error", "GIT_SHA must be set");
+  add(
+    "build-git-sha-bounded",
+    typeof gitSha === "string" && Buffer.byteLength(gitSha) <= MAX_GIT_SHA_BYTES,
+    "error",
+    `GIT_SHA must be at most ${MAX_GIT_SHA_BYTES} bytes`,
+  );
+  add(
+    "build-git-sha-format",
+    typeof gitSha === "string" && /^[0-9a-f]{7,64}$/iu.test(gitSha),
+    "error",
+    "GIT_SHA must be a 7-64 character hexadecimal Git revision",
+  );
+  add(
+    "build-git-sha-not-unknown",
+    typeof gitSha === "string" && gitSha.toLowerCase() !== "unknown",
+    "error",
+    "GIT_SHA must not use the Dockerfile unknown default",
   );
 }
 

@@ -18,6 +18,7 @@ const cases = [
     expectOk: true,
     expectedChecks: [
       "public-deployment-enabled",
+      "build-git-sha-format",
       "auth-credentials-distinct",
       "chain-mode-disabled",
       "not-draining",
@@ -120,6 +121,32 @@ const cases = [
     expectOk: true,
     expectedChecks: ["bind-addr-parse"],
     expectedOkChecks: ["bind-addr-parse"],
+  },
+  {
+    name: "shared-poc-rejects-missing-build-provenance",
+    args: [],
+    env: hardenedEnv({ GIT_SHA: undefined }),
+    expectOk: false,
+    expectedChecks: [
+      "build-git-sha-present",
+      "build-git-sha-bounded",
+      "build-git-sha-format",
+      "build-git-sha-not-unknown",
+    ],
+  },
+  {
+    name: "shared-poc-rejects-weak-build-provenance",
+    args: [],
+    env: hardenedEnv({ GIT_SHA: "unknown" }),
+    expectOk: false,
+    expectedChecks: ["build-git-sha-format", "build-git-sha-not-unknown"],
+  },
+  {
+    name: "shared-poc-rejects-oversized-build-provenance",
+    args: [],
+    env: hardenedEnv({ GIT_SHA: "a".repeat(65) }),
+    expectOk: false,
+    expectedChecks: ["build-git-sha-bounded", "build-git-sha-format"],
   },
   {
     name: "shared-poc-rejects-oversized-numeric-budgets",
@@ -357,6 +384,7 @@ function hardenedEnv(overrides = {}) {
     METRICS_TOKEN: "metrics-preflight-token-0001",
     ALLOWED_ORIGINS: "https://play.example",
     BIND_ADDR: "127.0.0.1:4107",
+    GIT_SHA: "0123456789abcdef0123456789abcdef01234567",
     ...overrides,
   };
   for (const [key, value] of Object.entries(values)) {

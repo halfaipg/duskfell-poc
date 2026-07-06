@@ -56,7 +56,8 @@ daemon and network access to the configured base images.
 For a shared demo, run the image with explicit public deployment guardrails:
 
 ```sh
-docker build --build-arg GIT_SHA="$(git rev-parse HEAD)" -t duskfell-poc:local .
+export GIT_SHA="$(git rev-parse HEAD)"
+docker build --build-arg GIT_SHA="$GIT_SHA" -t duskfell-poc:local .
 docker run --rm -p 127.0.0.1:4107:4107 \
   -e PUBLIC_DEPLOYMENT=true \
   -e REQUIRE_SESSION=true \
@@ -66,6 +67,7 @@ docker run --rm -p 127.0.0.1:4107:4107 \
   -e ADMIN_TOKEN=replace-with-strong-admin-token \
   -e METRICS_TOKEN=replace-with-strong-metrics-token \
   -e ALLOWED_ORIGINS=http://127.0.0.1:4107 \
+  -e GIT_SHA="$GIT_SHA" \
   -v duskfell-data:/data \
   duskfell-poc:local
 ```
@@ -75,9 +77,10 @@ The image listens on `0.0.0.0:4107` inside the container, runs as
 `server/data/world.json`, writes JSONL journal/outbox state under `/data`, and
 uses `/readyz` for its Docker healthcheck. Pass `GIT_SHA` at build time so
 `/admin/runtime` and the OCI `org.opencontainers.image.revision` label identify
-the exact source revision. Real public deployments should use JWT account mode,
-distinct high-entropy secrets, exact HTTPS origins, and a persistent volume or
-managed durable store.
+the exact source revision; keep the same bounded hex revision in the deployment
+environment so preflight can reject untraceable shared builds. Real public
+deployments should use JWT account mode, distinct high-entropy secrets, exact
+HTTPS origins, and a persistent volume or managed durable store.
 
 ## Development Commands
 
@@ -195,6 +198,7 @@ Set `BIND_ADDR` to choose the listener address. It must be an IP socket address 
 Run the deployment preflight before starting any shared environment:
 
 ```sh
+export GIT_SHA="$(git rev-parse HEAD)"
 npm run preflight:deployment
 ```
 
@@ -233,7 +237,7 @@ recent event type counts, and ownership counts. It intentionally excludes full
 `/api/snapshot`, raw event payloads, account subjects, player IDs, token values,
 and absolute durable file paths.
 
-The default `shared-poc` profile checks the public-mode environment without starting the server. It expects hardened PoC deployment variables such as `PUBLIC_DEPLOYMENT=true`, strict sessions, account auth, strong distinct non-placeholder credentials capped at 4096 bytes, exact allowed Origins, bounded JWT issuer/audience identity config, a parseable IP `BIND_ADDR`, bounded and internally consistent capacity/payload budgets, non-draining admission posture, and chain mode disabled. Use `npm run preflight:deployment -- --profile production` to see the fail-closed list of missing production systems; today that profile intentionally fails until durable datastore, signer/indexer, and cross-process admission/rate-limit services exist. The identity blocker clears only when `ACCOUNT_AUTH_MODE=jwt-hs256` includes a strong secret, valid non-local HTTPS issuer, and bounded printable audience. For an intentional rollback or shard-removal rollout, pass `--allowDraining` so `DRAINING=true` remains explicit in the deploy command.
+The default `shared-poc` profile checks the public-mode environment without starting the server. It expects hardened PoC deployment variables such as `PUBLIC_DEPLOYMENT=true`, strict sessions, account auth, strong distinct non-placeholder credentials capped at 4096 bytes, exact allowed Origins, bounded JWT issuer/audience identity config, a parseable IP `BIND_ADDR`, bounded hex `GIT_SHA` build provenance, bounded and internally consistent capacity/payload budgets, non-draining admission posture, and chain mode disabled. Use `npm run preflight:deployment -- --profile production` to see the fail-closed list of missing production systems; today that profile intentionally fails until durable datastore, signer/indexer, and cross-process admission/rate-limit services exist. The identity blocker clears only when `ACCOUNT_AUTH_MODE=jwt-hs256` includes a strong secret, valid non-local HTTPS issuer, and bounded printable audience. For an intentional rollback or shard-removal rollout, pass `--allowDraining` so `DRAINING=true` remains explicit in the deploy command.
 Set `HTTP_BODY_LIMIT_BYTES` to cap plain HTTP request bodies. The default is `4096`, which is enough for current session/admin traffic and prevents oversized POST bodies from occupying shard work.
 Every HTTP response includes `x-request-id`. If an upstream proxy sends a safe bounded `x-request-id`, the server echoes it; otherwise the server generates a UUID. Unsafe request IDs with spaces, separators, control characters, or more than 64 bytes are replaced rather than reflected.
 Set `ADMIN_EVENT_LIMIT_CAP` to cap a single `/admin/events` response. The default is `200`; the endpoint default query limit is `50`.
