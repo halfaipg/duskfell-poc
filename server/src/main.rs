@@ -170,6 +170,21 @@ impl PersistenceBackend {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum AdmissionBackend {
+    InMemory,
+    Redis,
+}
+
+impl AdmissionBackend {
+    fn name(self) -> &'static str {
+        match self {
+            AdmissionBackend::InMemory => "in-memory",
+            AdmissionBackend::Redis => "redis",
+        }
+    }
+}
+
 #[derive(Clone)]
 struct AppState {
     sim: Arc<Mutex<SimWorld>>,
@@ -197,6 +212,7 @@ struct AppState {
     session_issue_rate_limit_config: SessionIssueRateLimitConfig,
     account_session_limiter: Arc<Mutex<SessionAccountRateLimiter>>,
     account_session_rate_limit_config: SessionIssueRateLimitConfig,
+    admission_backend: AdmissionBackend,
     websocket_config: WebSocketConfig,
     ingress_config: ClientIngressConfig,
     max_snapshot_bytes: usize,
@@ -297,6 +313,9 @@ async fn main() -> anyhow::Result<()> {
     let account_auth = account_auth_config()?;
     let session_issue_rate_limit_config = session_issue_rate_limit_config()?;
     let account_session_rate_limit_config = account_session_rate_limit_config()?;
+    let admission_backend_configured = std::env::var("ADMISSION_BACKEND").is_ok();
+    let admission_backend = admission_backend()?;
+    validate_supported_admission_backend(admission_backend)?;
     let metrics_handle = Arc::new(AppMetrics::default());
     let websocket_config = websocket_config()?;
     let ingress_config = client_ingress_config()?;
@@ -360,6 +379,8 @@ async fn main() -> anyhow::Result<()> {
         durable_sync_writes,
         persistence_backend_configured,
         persistence_backend,
+        admission_backend_configured,
+        admission_backend,
     )?;
     validate_bind_addr(public_deployment, addr)?;
     validate_chain_mode(public_deployment, settlement_config.chain_enabled)?;
@@ -426,6 +447,7 @@ async fn main() -> anyhow::Result<()> {
         account_session_limiter: Arc::new(Mutex::new(SessionAccountRateLimiter::new(
             account_session_rate_limit_config.clone(),
         ))),
+        admission_backend,
         session_config,
         session_issue_rate_limit_config,
         account_session_rate_limit_config,
@@ -944,6 +966,14 @@ async fn readyz(State(state): State<AppState>) -> impl IntoResponse {
         detail: format!(
             "{} persistence backend active",
             state.persistence_backend.name()
+        ),
+    });
+    checks.push(ReadinessCheck {
+        name: "admissionBackendActive",
+        ok: state.admission_backend == AdmissionBackend::InMemory,
+        detail: format!(
+            "{} admission backend active",
+            state.admission_backend.name()
         ),
     });
     checks.push(ReadinessCheck {
@@ -1641,6 +1671,20 @@ async fn metrics(
     );
     append_metric(
         &mut metrics,
+        "sundermere_admission_backend_in_memory",
+        "Whether ADMISSION_BACKEND is in-memory.",
+        "gauge",
+        u64::from(state.admission_backend == AdmissionBackend::InMemory),
+    );
+    append_metric(
+        &mut metrics,
+        "sundermere_admission_backend_redis",
+        "Whether ADMISSION_BACKEND is redis.",
+        "gauge",
+        u64::from(state.admission_backend == AdmissionBackend::Redis),
+    );
+    append_metric(
+        &mut metrics,
         "sundermere_draining",
         "Whether this shard is refusing new session admission for drain or rollback.",
         "gauge",
@@ -1824,6 +1868,7 @@ struct AdminSummary {
     origin_allowed_count: usize,
     deployment_profile: &'static str,
     public_deployment: bool,
+    admission_backend: &'static str,
     draining: bool,
     require_session: bool,
     require_account: bool,
@@ -1940,6 +1985,7 @@ async fn admin_summary(
         origin_allowed_count: state.origin_allowlist.allowed_count(),
         deployment_profile: state.deployment_profile.name(),
         public_deployment: state.public_deployment,
+        admission_backend: state.admission_backend.name(),
         draining: state.draining,
         require_session: state.session_config.require_session,
         require_account: state.account_auth.require_account,
@@ -3002,6 +3048,8 @@ fn validate_public_deployment(
     durable_sync_writes: bool,
     persistence_backend_configured: bool,
     persistence_backend: PersistenceBackend,
+    admission_backend_configured: bool,
+    admission_backend: AdmissionBackend,
 ) -> anyhow::Result<()> {
     if !public_deployment {
         return Ok(());
@@ -3039,6 +3087,9 @@ fn validate_public_deployment(
     }
     if !persistence_backend_configured || persistence_backend != PersistenceBackend::Jsonl {
         missing.push("PERSISTENCE_BACKEND=jsonl");
+    }
+    if !admission_backend_configured || admission_backend != AdmissionBackend::InMemory {
+        missing.push("ADMISSION_BACKEND=in-memory");
     }
     if admin_token.is_none() {
         missing.push("ADMIN_TOKEN");
@@ -3990,6 +4041,34 @@ fn validate_supported_persistence_backend(
     ))
 }
 
+fn admission_backend() -> anyhow::Result<AdmissionBackend> {
+    match std::env::var("ADMISSION_BACKEND") {
+        Ok(value) => parse_admission_backend_value(&value),
+        Err(std::env::VarError::NotPresent) => Ok(AdmissionBackend::InMemory),
+        Err(err) => Err(anyhow!("ADMISSION_BACKEND is not readable: {err}")),
+    }
+}
+
+fn parse_admission_backend_value(value: &str) -> anyhow::Result<AdmissionBackend> {
+    match value.trim() {
+        "" | "in-memory" => Ok(AdmissionBackend::InMemory),
+        "redis" => Ok(AdmissionBackend::Redis),
+        other => Err(anyhow!(
+            "ADMISSION_BACKEND must be in-memory or redis, got {other}"
+        )),
+    }
+}
+
+fn validate_supported_admission_backend(admission_backend: AdmissionBackend) -> anyhow::Result<()> {
+    if admission_backend == AdmissionBackend::InMemory {
+        return Ok(());
+    }
+
+    Err(anyhow!(
+        "ADMISSION_BACKEND=redis is reserved for shared session/admission/rate-limit state, but this PoC runtime only implements ADMISSION_BACKEND=in-memory"
+    ))
+}
+
 fn bind_addr() -> anyhow::Result<SocketAddr> {
     std::env::var("BIND_ADDR")
         .unwrap_or_else(|_| "127.0.0.1:4107".to_string())
@@ -4125,18 +4204,19 @@ fn status_notice(
 mod config_tests {
     use super::{
         bounded_bearer_token, bounded_header_str, constant_time_eq, durable_parent_status,
-        durable_persistence_check, has_hidden_path_segment, is_safe_request_id, parse_bool_value,
-        parse_deployment_profile_value, parse_origin_allowlist_value,
-        parse_persistence_backend_value, parse_positive_f32_value, parse_positive_u32_value,
-        parse_positive_u64_value, parse_positive_usize_value, redacted_durable_path_basename,
-        sanitized_trace_path, session_body_content_type, session_display_name_from_body,
-        settlement_queue_capacity_check, validate_account_jwt, validate_account_subject,
-        validate_bind_addr, validate_chain_mode, validate_deployment_profile,
-        validate_public_deployment, validate_runtime_budget_config,
-        validate_supported_persistence_backend, validate_websocket_timing, AccountAuthConfig,
-        AccountAuthMode, DeploymentProfile, OriginAllowlistConfig, PersistenceBackend,
-        RuntimeBudgetConfig, WebSocketConfig, MAX_ACCOUNT_SUBJECT_BYTES, MAX_ALLOWED_ORIGINS,
-        MAX_AUTH_TOKEN_BYTES, MAX_JWT_AUDIENCE_BYTES, MAX_JWT_ISSUER_BYTES, MAX_ORIGIN_BYTES,
+        durable_persistence_check, has_hidden_path_segment, is_safe_request_id,
+        parse_admission_backend_value, parse_bool_value, parse_deployment_profile_value,
+        parse_origin_allowlist_value, parse_persistence_backend_value, parse_positive_f32_value,
+        parse_positive_u32_value, parse_positive_u64_value, parse_positive_usize_value,
+        redacted_durable_path_basename, sanitized_trace_path, session_body_content_type,
+        session_display_name_from_body, settlement_queue_capacity_check, validate_account_jwt,
+        validate_account_subject, validate_bind_addr, validate_chain_mode,
+        validate_deployment_profile, validate_public_deployment, validate_runtime_budget_config,
+        validate_supported_admission_backend, validate_supported_persistence_backend,
+        validate_websocket_timing, AccountAuthConfig, AccountAuthMode, AdmissionBackend,
+        DeploymentProfile, OriginAllowlistConfig, PersistenceBackend, RuntimeBudgetConfig,
+        WebSocketConfig, MAX_ACCOUNT_SUBJECT_BYTES, MAX_ALLOWED_ORIGINS, MAX_AUTH_TOKEN_BYTES,
+        MAX_JWT_AUDIENCE_BYTES, MAX_JWT_ISSUER_BYTES, MAX_ORIGIN_BYTES,
     };
     use crate::ingress::ClientIngressConfig;
     use crate::metrics::AppMetrics;
@@ -4205,6 +4285,30 @@ mod config_tests {
         assert!(postgres_message.contains("PERSISTENCE_BACKEND=postgres"));
         assert!(postgres_message.contains("production database/event-store"));
         assert!(postgres_message.contains("PERSISTENCE_BACKEND=jsonl"));
+    }
+
+    #[test]
+    fn parses_and_guards_admission_backend_values() {
+        assert_eq!(
+            parse_admission_backend_value("").expect("empty backend defaults in-memory"),
+            AdmissionBackend::InMemory
+        );
+        assert_eq!(
+            parse_admission_backend_value("in-memory").expect("in-memory parses"),
+            AdmissionBackend::InMemory
+        );
+        assert_eq!(
+            parse_admission_backend_value("redis").expect("redis parses"),
+            AdmissionBackend::Redis
+        );
+        assert!(parse_admission_backend_value("local").is_err());
+        assert!(validate_supported_admission_backend(AdmissionBackend::InMemory).is_ok());
+        let redis_err = validate_supported_admission_backend(AdmissionBackend::Redis)
+            .expect_err("redis admission backend remains reserved");
+        let redis_message = redis_err.to_string();
+        assert!(redis_message.contains("ADMISSION_BACKEND=redis"));
+        assert!(redis_message.contains("shared session/admission/rate-limit state"));
+        assert!(redis_message.contains("ADMISSION_BACKEND=in-memory"));
     }
 
     #[test]
@@ -4572,6 +4676,8 @@ mod config_tests {
             false,
             false,
             PersistenceBackend::Jsonl,
+            false,
+            AdmissionBackend::InMemory,
         )
         .is_ok());
 
@@ -4585,6 +4691,8 @@ mod config_tests {
             false,
             false,
             PersistenceBackend::Jsonl,
+            false,
+            AdmissionBackend::InMemory,
         )
         .expect_err("public deployment rejects local defaults");
         let message = err.to_string();
@@ -4595,6 +4703,7 @@ mod config_tests {
         assert!(message.contains("ALLOWED_ORIGINS"));
         assert!(message.contains("DURABLE_SYNC_WRITES=true"));
         assert!(message.contains("PERSISTENCE_BACKEND=jsonl"));
+        assert!(message.contains("ADMISSION_BACKEND=in-memory"));
         assert!(message.contains("ADMIN_TOKEN"));
         assert!(message.contains("METRICS_TOKEN"));
 
@@ -4608,6 +4717,8 @@ mod config_tests {
             true,
             true,
             PersistenceBackend::Jsonl,
+            true,
+            AdmissionBackend::InMemory,
         )
         .is_ok());
 
@@ -4621,6 +4732,8 @@ mod config_tests {
             true,
             true,
             PersistenceBackend::Jsonl,
+            true,
+            AdmissionBackend::InMemory,
         )
         .is_ok());
 
@@ -4634,6 +4747,8 @@ mod config_tests {
             false,
             true,
             PersistenceBackend::Jsonl,
+            true,
+            AdmissionBackend::InMemory,
         )
         .expect_err("public deployment requires synced durable writes");
         assert!(unsynced_durable_err
@@ -4655,6 +4770,8 @@ mod config_tests {
             true,
             true,
             PersistenceBackend::Jsonl,
+            true,
+            AdmissionBackend::InMemory,
         )
         .expect_err("public deployment rejects weak tokens");
         let weak_message = weak_err.to_string();
@@ -4679,6 +4796,8 @@ mod config_tests {
             true,
             true,
             PersistenceBackend::Jsonl,
+            true,
+            AdmissionBackend::InMemory,
         )
         .expect_err("public deployment rejects oversized configured tokens");
         let oversized_message = oversized_err.to_string();
@@ -4701,6 +4820,8 @@ mod config_tests {
             true,
             true,
             PersistenceBackend::Jsonl,
+            true,
+            AdmissionBackend::InMemory,
         )
         .expect_err("public deployment rejects placeholder tokens");
         let placeholder_message = placeholder_err.to_string();
@@ -4723,6 +4844,8 @@ mod config_tests {
             true,
             true,
             PersistenceBackend::Jsonl,
+            true,
+            AdmissionBackend::InMemory,
         )
         .expect_err("public deployment rejects reused token");
         assert!(reused_err.to_string().contains("must be distinct"));
@@ -4744,6 +4867,8 @@ mod config_tests {
             true,
             true,
             PersistenceBackend::Jsonl,
+            true,
+            AdmissionBackend::InMemory,
         )
         .expect_err("public deployment requires jwt issuer and audience");
         let jwt_message = jwt_missing_claims_err.to_string();
@@ -4767,6 +4892,8 @@ mod config_tests {
             true,
             true,
             PersistenceBackend::Jsonl,
+            true,
+            AdmissionBackend::InMemory,
         )
         .expect_err("public deployment rejects weak jwt identity config");
         let jwt_bad_identity_message = jwt_bad_identity_config_err.to_string();
@@ -4797,6 +4924,8 @@ mod config_tests {
             true,
             true,
             PersistenceBackend::Jsonl,
+            true,
+            AdmissionBackend::InMemory,
         )
         .expect_err("public deployment rejects jwt issuer query");
         assert!(jwt_query_issuer_err
@@ -4820,6 +4949,8 @@ mod config_tests {
             true,
             true,
             PersistenceBackend::Jsonl,
+            true,
+            AdmissionBackend::InMemory,
         )
         .expect_err("public deployment rejects oversized jwt identity config");
         let jwt_oversized_identity_message = jwt_oversized_identity_config_err.to_string();

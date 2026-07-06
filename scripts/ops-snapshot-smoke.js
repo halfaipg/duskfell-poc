@@ -45,11 +45,13 @@ try {
       snapshot.summary?.publicDeployment === true &&
       snapshot.summary?.deploymentProfile === "shared-poc" &&
       snapshot.summary?.persistenceBackend === "jsonl" &&
+      snapshot.summary?.admissionBackend === "in-memory" &&
       snapshot.summary?.requireSession === true &&
       snapshot.summary?.requireAccount === true &&
       snapshot.posture?.publicDeployment === true &&
       snapshot.posture?.deploymentProfile === "shared-poc" &&
       snapshot.posture?.persistenceBackend === "jsonl" &&
+      snapshot.posture?.admissionBackend === "in-memory" &&
       snapshot.posture?.requireSession === true &&
       snapshot.posture?.requireAccount === true &&
       snapshot.posture?.originAllowlistEnabled === true &&
@@ -65,6 +67,8 @@ try {
       snapshot.metrics?.sundermere_deployment_profile_shared_poc === 1 &&
       snapshot.metrics?.sundermere_persistence_backend_jsonl === 1 &&
       snapshot.metrics?.sundermere_persistence_backend_postgres === 0 &&
+      snapshot.metrics?.sundermere_admission_backend_in_memory === 1 &&
+      snapshot.metrics?.sundermere_admission_backend_redis === 0 &&
       snapshot.metrics?.sundermere_require_account === 1,
     port,
     forbidden,
@@ -83,6 +87,9 @@ try {
         sundermere_persistence_backend_jsonl: snapshot.metrics?.sundermere_persistence_backend_jsonl,
         sundermere_persistence_backend_postgres:
           snapshot.metrics?.sundermere_persistence_backend_postgres,
+        sundermere_admission_backend_in_memory:
+          snapshot.metrics?.sundermere_admission_backend_in_memory,
+        sundermere_admission_backend_redis: snapshot.metrics?.sundermere_admission_backend_redis,
         sundermere_origin_allowed_origins: snapshot.metrics?.sundermere_origin_allowed_origins,
         sundermere_session_pending_tickets: snapshot.metrics?.sundermere_session_pending_tickets,
         sundermere_session_ticket_capacity: snapshot.metrics?.sundermere_session_ticket_capacity,
@@ -116,6 +123,7 @@ async function startServer() {
       GIT_SHA: expectedGitSha,
       DEPLOYMENT_PROFILE: "shared-poc",
       PERSISTENCE_BACKEND: "jsonl",
+      ADMISSION_BACKEND: "in-memory",
       PUBLIC_DEPLOYMENT: "true",
       REQUIRE_SESSION: "true",
       REQUIRE_ACCOUNT: "true",

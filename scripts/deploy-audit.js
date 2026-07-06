@@ -165,6 +165,8 @@ async function checkMetrics() {
       "sundermere_deployment_profile_production",
       "sundermere_persistence_backend_jsonl",
       "sundermere_persistence_backend_postgres",
+      "sundermere_admission_backend_in_memory",
+      "sundermere_admission_backend_redis",
       "sundermere_draining",
       "sundermere_require_session",
       "sundermere_require_account",
@@ -208,6 +210,11 @@ function checkRuntimePosture(runtime, summary) {
       "persistence-backend-jsonl",
       summary.persistenceBackend === "jsonl",
       `persistenceBackend=${summary.persistenceBackend}`,
+    );
+    add(
+      "admission-backend-in-memory",
+      summary.admissionBackend === "in-memory",
+      `admissionBackend=${summary.admissionBackend}`,
     );
     add("public-deployment-enabled", summary.publicDeployment === true, `publicDeployment=${summary.publicDeployment}`);
     add("not-draining", summary.draining === false, `draining=${summary.draining}`);
@@ -267,6 +274,12 @@ function checkMetricsPosture(metrics) {
       metrics.sundermere_persistence_backend_jsonl === 1 &&
         metrics.sundermere_persistence_backend_postgres === 0,
       `jsonl=${metrics.sundermere_persistence_backend_jsonl} postgres=${metrics.sundermere_persistence_backend_postgres}`,
+    );
+    add(
+      "metrics-admission-backend-in-memory",
+      metrics.sundermere_admission_backend_in_memory === 1 &&
+        metrics.sundermere_admission_backend_redis === 0,
+      `inMemory=${metrics.sundermere_admission_backend_in_memory} redis=${metrics.sundermere_admission_backend_redis}`,
     );
     add("metrics-public-deployment", metrics.sundermere_public_deployment === 1, `value=${metrics.sundermere_public_deployment}`);
     add("metrics-not-draining", metrics.sundermere_draining === 0, `value=${metrics.sundermere_draining}`);

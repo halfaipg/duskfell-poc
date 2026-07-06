@@ -31,6 +31,8 @@ try {
     "-e",
     "PERSISTENCE_BACKEND=jsonl",
     "-e",
+    "ADMISSION_BACKEND=in-memory",
+    "-e",
     "PUBLIC_DEPLOYMENT=true",
     "-e",
     "REQUIRE_SESSION=true",

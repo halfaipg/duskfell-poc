@@ -57,6 +57,7 @@ if (!["local", "shared-poc", "production"].includes(profile)) {
 checkKnownProfile();
 checkDeploymentProfile();
 checkPersistenceBackend();
+checkAdmissionBackend();
 checkPublicMode();
 checkBuildProvenance();
 checkAccountAuth();
@@ -175,6 +176,64 @@ function checkPersistenceBackend() {
     backend === "jsonl",
     profile === "local" ? "warn" : "error",
     "local and shared-poc profiles use PERSISTENCE_BACKEND=jsonl until the Postgres event-store is implemented",
+  );
+}
+
+function checkAdmissionBackend() {
+  const backend = env.ADMISSION_BACKEND ?? "in-memory";
+  const known = ["in-memory", "redis"].includes(backend);
+  add(
+    "admission-backend-known",
+    known,
+    "error",
+    "ADMISSION_BACKEND must be in-memory or redis when set",
+  );
+  if (!known) {
+    return;
+  }
+
+  if (profile !== "local") {
+    add(
+      "admission-backend-explicit",
+      Boolean(env.ADMISSION_BACKEND),
+      "error",
+      "shared and production profiles require explicit ADMISSION_BACKEND",
+    );
+  }
+
+  if (profile === "production") {
+    add(
+      "production-admission-backend-redis",
+      backend === "redis",
+      "error",
+      "production requires ADMISSION_BACKEND=redis",
+    );
+    add(
+      "production-redis-url-present",
+      Boolean(env.REDIS_URL),
+      "error",
+      "production requires REDIS_URL for shared session/admission/rate-limit state",
+    );
+    add(
+      "production-redis-url-bounded",
+      typeof env.REDIS_URL === "string" && Buffer.byteLength(env.REDIS_URL) <= 4096,
+      "error",
+      "REDIS_URL must be at most 4096 bytes",
+    );
+    add(
+      "production-redis-url-redis",
+      hasValidRedisUrl(),
+      "error",
+      "REDIS_URL must use redis:// or rediss://",
+    );
+    return;
+  }
+
+  add(
+    "admission-backend-in-memory",
+    backend === "in-memory",
+    profile === "local" ? "warn" : "error",
+    "local and shared-poc profiles use ADMISSION_BACKEND=in-memory until Redis admission state is implemented",
   );
 }
 
@@ -598,9 +657,17 @@ function checkProductionBlockers() {
   );
   add(
     "cross-process-rate-limits-configured",
-    false,
+    env.ADMISSION_BACKEND === "redis" && hasValidRedisUrl(),
     "error",
     "production needs shared session/admission/rate-limit state outside one sim process",
+  );
+}
+
+function hasValidRedisUrl() {
+  return (
+    typeof env.REDIS_URL === "string" &&
+    Buffer.byteLength(env.REDIS_URL) <= 4096 &&
+    (env.REDIS_URL.startsWith("redis://") || env.REDIS_URL.startsWith("rediss://"))
   );
 }
 
