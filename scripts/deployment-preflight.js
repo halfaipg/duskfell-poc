@@ -15,6 +15,36 @@ const MAX_JWT_ISSUER_BYTES = 512;
 const MAX_JWT_AUDIENCE_BYTES = 256;
 const MAX_ALLOWED_ORIGINS = 16;
 const MAX_ORIGIN_BYTES = 512;
+const BUDGET_LIMITS = {
+  MAX_ACTIVE_CONNECTIONS: [1, 10_000],
+  MAX_CONNECTIONS_PER_IP: [1, 10_000],
+  SESSION_TICKET_CAPACITY: [1, 100_000],
+  SESSION_TICKET_TTL_SECONDS: [1, 3_600],
+  SESSION_ISSUE_RATE_LIMIT_PER_MINUTE: [1, 60_000],
+  SESSION_ISSUE_RATE_LIMIT_BURST: [1, 10_000],
+  SESSION_ISSUE_RATE_LIMIT_MAX_CLIENTS: [1, 100_000],
+  ACCOUNT_SESSION_RATE_LIMIT_PER_MINUTE: [1, 60_000],
+  ACCOUNT_SESSION_RATE_LIMIT_BURST: [1, 10_000],
+  ACCOUNT_SESSION_RATE_LIMIT_MAX_SUBJECTS: [1, 100_000],
+  WS_MAX_TEXT_BYTES: [128, 65_536],
+  WS_MESSAGE_BURST: [1, 1_000],
+  WS_MESSAGE_REFILL_PER_SECOND: [1, 1_000],
+  CLIENT_REJECT_LIMIT: [1, 100],
+  SNAPSHOT_INTERVAL_MS: [1, 5_000],
+  INTEREST_RADIUS: [1, 10_000],
+  MAX_SNAPSHOT_BYTES: [1_024, 1_048_576],
+  MAX_ADMIN_SNAPSHOT_BYTES: [1_024, 4_194_304],
+  HTTP_BODY_LIMIT_BYTES: [256, 1_048_576],
+  MAX_JOURNAL_BYTES: [1_024, 1_073_741_824],
+  MAX_SETTLEMENT_OUTBOX_BYTES: [1_024, 1_073_741_824],
+  MAX_DURABLE_LINE_BYTES: [128, 1_048_576],
+  MAX_RUNTIME_MANIFEST_BYTES: [1_024, 1_048_576],
+  MAX_RUNTIME_ASSET_BYTES: [1_024, 10_485_760],
+  MAX_CONTENT_OBJECTS: [1, 100_000],
+  ADMIN_EVENT_LIMIT_CAP: [1, 10_000],
+  WS_HEARTBEAT_SECONDS: [1, 300],
+  WS_IDLE_TIMEOUT_SECONDS: [2, 3_600],
+};
 
 const checks = [];
 
@@ -282,32 +312,63 @@ function checkChainMode() {
 }
 
 function checkNumericBudgets() {
-  positiveNumber("MAX_ACTIVE_CONNECTIONS", 512, 1);
-  positiveNumber("MAX_CONNECTIONS_PER_IP", 64, 1);
-  positiveNumber("SESSION_TICKET_CAPACITY", 2048, 1);
-  positiveNumber("SESSION_TICKET_TTL_SECONDS", 30, 1);
-  positiveNumber("SESSION_ISSUE_RATE_LIMIT_PER_MINUTE", 120, 1);
-  positiveNumber("SESSION_ISSUE_RATE_LIMIT_BURST", 30, 1);
-  positiveNumber("SESSION_ISSUE_RATE_LIMIT_MAX_CLIENTS", 4096, 1);
-  positiveNumber("ACCOUNT_SESSION_RATE_LIMIT_PER_MINUTE", 60, 1);
-  positiveNumber("ACCOUNT_SESSION_RATE_LIMIT_BURST", 10, 1);
-  positiveNumber("ACCOUNT_SESSION_RATE_LIMIT_MAX_SUBJECTS", 4096, 1);
-  positiveNumber("WS_MAX_TEXT_BYTES", 4096, 128);
-  positiveNumber("WS_MESSAGE_BURST", 20, 1);
-  positiveNumber("WS_MESSAGE_REFILL_PER_SECOND", 30, 1);
-  positiveNumber("CLIENT_REJECT_LIMIT", 8, 1);
-  positiveNumber("SNAPSHOT_INTERVAL_MS", 50, 1);
-  positiveNumber("INTEREST_RADIUS", 520, 1);
-  positiveNumber("MAX_SNAPSHOT_BYTES", 65_536, 1024);
-  positiveNumber("MAX_ADMIN_SNAPSHOT_BYTES", 262_144, 1024);
-  positiveNumber("HTTP_BODY_LIMIT_BYTES", 4096, 256);
-  positiveNumber("MAX_JOURNAL_BYTES", 16 * 1024 * 1024, 1024);
-  positiveNumber("MAX_SETTLEMENT_OUTBOX_BYTES", 16 * 1024 * 1024, 1024);
-  positiveNumber("MAX_DURABLE_LINE_BYTES", 256 * 1024, 128);
-  positiveNumber("MAX_RUNTIME_MANIFEST_BYTES", 256 * 1024, 1024);
-  positiveNumber("MAX_RUNTIME_ASSET_BYTES", 2 * 1024 * 1024, 1024);
-  positiveNumber("MAX_CONTENT_OBJECTS", 10_000, 1);
-  positiveNumber("ADMIN_EVENT_LIMIT_CAP", 200, 1);
+  const budgets = {
+    MAX_ACTIVE_CONNECTIONS: integerBudget("MAX_ACTIVE_CONNECTIONS", 512),
+    MAX_CONNECTIONS_PER_IP: integerBudget("MAX_CONNECTIONS_PER_IP", 64),
+    SESSION_TICKET_CAPACITY: integerBudget("SESSION_TICKET_CAPACITY", 2048),
+    SESSION_TICKET_TTL_SECONDS: integerBudget("SESSION_TICKET_TTL_SECONDS", 30),
+    SESSION_ISSUE_RATE_LIMIT_PER_MINUTE: integerBudget("SESSION_ISSUE_RATE_LIMIT_PER_MINUTE", 120),
+    SESSION_ISSUE_RATE_LIMIT_BURST: integerBudget("SESSION_ISSUE_RATE_LIMIT_BURST", 30),
+    SESSION_ISSUE_RATE_LIMIT_MAX_CLIENTS: integerBudget("SESSION_ISSUE_RATE_LIMIT_MAX_CLIENTS", 4096),
+    ACCOUNT_SESSION_RATE_LIMIT_PER_MINUTE: integerBudget("ACCOUNT_SESSION_RATE_LIMIT_PER_MINUTE", 60),
+    ACCOUNT_SESSION_RATE_LIMIT_BURST: integerBudget("ACCOUNT_SESSION_RATE_LIMIT_BURST", 10),
+    ACCOUNT_SESSION_RATE_LIMIT_MAX_SUBJECTS: integerBudget("ACCOUNT_SESSION_RATE_LIMIT_MAX_SUBJECTS", 4096),
+    WS_MAX_TEXT_BYTES: integerBudget("WS_MAX_TEXT_BYTES", 4096),
+    WS_MESSAGE_BURST: integerBudget("WS_MESSAGE_BURST", 20),
+    WS_MESSAGE_REFILL_PER_SECOND: integerBudget("WS_MESSAGE_REFILL_PER_SECOND", 30),
+    CLIENT_REJECT_LIMIT: integerBudget("CLIENT_REJECT_LIMIT", 8),
+    SNAPSHOT_INTERVAL_MS: integerBudget("SNAPSHOT_INTERVAL_MS", 50),
+    INTEREST_RADIUS: floatBudget("INTEREST_RADIUS", 520),
+    MAX_SNAPSHOT_BYTES: integerBudget("MAX_SNAPSHOT_BYTES", 65_536),
+    MAX_ADMIN_SNAPSHOT_BYTES: integerBudget("MAX_ADMIN_SNAPSHOT_BYTES", 262_144),
+    HTTP_BODY_LIMIT_BYTES: integerBudget("HTTP_BODY_LIMIT_BYTES", 4096),
+    MAX_JOURNAL_BYTES: integerBudget("MAX_JOURNAL_BYTES", 16 * 1024 * 1024),
+    MAX_SETTLEMENT_OUTBOX_BYTES: integerBudget("MAX_SETTLEMENT_OUTBOX_BYTES", 16 * 1024 * 1024),
+    MAX_DURABLE_LINE_BYTES: integerBudget("MAX_DURABLE_LINE_BYTES", 256 * 1024),
+    MAX_RUNTIME_MANIFEST_BYTES: integerBudget("MAX_RUNTIME_MANIFEST_BYTES", 256 * 1024),
+    MAX_RUNTIME_ASSET_BYTES: integerBudget("MAX_RUNTIME_ASSET_BYTES", 2 * 1024 * 1024),
+    MAX_CONTENT_OBJECTS: integerBudget("MAX_CONTENT_OBJECTS", 10_000),
+    ADMIN_EVENT_LIMIT_CAP: integerBudget("ADMIN_EVENT_LIMIT_CAP", 200),
+    WS_HEARTBEAT_SECONDS: integerBudget("WS_HEARTBEAT_SECONDS", 30),
+    WS_IDLE_TIMEOUT_SECONDS: integerBudget("WS_IDLE_TIMEOUT_SECONDS", 180),
+  };
+
+  add(
+    "max_connections_per_ip-within-active-connections",
+    budgets.MAX_CONNECTIONS_PER_IP.value <= budgets.MAX_ACTIVE_CONNECTIONS.value,
+    "error",
+    "MAX_CONNECTIONS_PER_IP must be <= MAX_ACTIVE_CONNECTIONS",
+  );
+  add(
+    "session_issue_rate_limit_burst-within-per-minute",
+    budgets.SESSION_ISSUE_RATE_LIMIT_BURST.value <=
+      budgets.SESSION_ISSUE_RATE_LIMIT_PER_MINUTE.value,
+    "error",
+    "SESSION_ISSUE_RATE_LIMIT_BURST must be <= SESSION_ISSUE_RATE_LIMIT_PER_MINUTE",
+  );
+  add(
+    "account_session_rate_limit_burst-within-per-minute",
+    budgets.ACCOUNT_SESSION_RATE_LIMIT_BURST.value <=
+      budgets.ACCOUNT_SESSION_RATE_LIMIT_PER_MINUTE.value,
+    "error",
+    "ACCOUNT_SESSION_RATE_LIMIT_BURST must be <= ACCOUNT_SESSION_RATE_LIMIT_PER_MINUTE",
+  );
+  add(
+    "ws_idle_timeout_seconds-greater-than-heartbeat",
+    budgets.WS_IDLE_TIMEOUT_SECONDS.value > budgets.WS_HEARTBEAT_SECONDS.value,
+    "error",
+    "WS_IDLE_TIMEOUT_SECONDS must be greater than WS_HEARTBEAT_SECONDS",
+  );
 }
 
 function checkDurabilityMode() {
@@ -389,15 +450,42 @@ function checkProductionBlockers() {
   );
 }
 
-function positiveNumber(name, defaultValue, min) {
+function integerBudget(name, defaultValue) {
   const raw = env[name] ?? String(defaultValue);
+  const [min, max] = BUDGET_LIMITS[name];
+  const value = /^\d+$/u.test(raw) ? Number(raw) : NaN;
+  add(
+    `${name.toLowerCase()}-numeric`,
+    Number.isSafeInteger(value),
+    "error",
+    `${name} must be an integer`,
+  );
+  add(
+    `${name.toLowerCase()}-bounded`,
+    Number.isSafeInteger(value) && value >= min && value <= max,
+    "error",
+    `${name} must be between ${min} and ${max}`,
+  );
+  return { name, value };
+}
+
+function floatBudget(name, defaultValue) {
+  const raw = env[name] ?? String(defaultValue);
+  const [min, max] = BUDGET_LIMITS[name];
   const value = Number(raw);
   add(
     `${name.toLowerCase()}-numeric`,
-    Number.isFinite(value) && value >= min,
+    Number.isFinite(value),
     "error",
-    `${name} must be numeric and >= ${min}`,
+    `${name} must be numeric`,
   );
+  add(
+    `${name.toLowerCase()}-bounded`,
+    Number.isFinite(value) && value >= min && value <= max,
+    "error",
+    `${name} must be between ${min} and ${max}`,
+  );
+  return { name, value };
 }
 
 function add(name, ok, level, detail) {

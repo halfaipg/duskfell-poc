@@ -122,6 +122,57 @@ const cases = [
     expectedOkChecks: ["bind-addr-parse"],
   },
   {
+    name: "shared-poc-rejects-oversized-numeric-budgets",
+    args: [],
+    env: hardenedEnv({
+      MAX_ACTIVE_CONNECTIONS: "10001",
+      SESSION_TICKET_CAPACITY: "100001",
+      MAX_SNAPSHOT_BYTES: "1048577",
+      MAX_JOURNAL_BYTES: "1073741825",
+    }),
+    expectOk: false,
+    expectedChecks: [
+      "max_active_connections-bounded",
+      "session_ticket_capacity-bounded",
+      "max_snapshot_bytes-bounded",
+      "max_journal_bytes-bounded",
+    ],
+  },
+  {
+    name: "shared-poc-rejects-decimal-integer-budgets",
+    args: [],
+    env: hardenedEnv({
+      SESSION_TICKET_CAPACITY: "1.5",
+      WS_MESSAGE_BURST: "2.5",
+    }),
+    expectOk: false,
+    expectedChecks: [
+      "session_ticket_capacity-numeric",
+      "ws_message_burst-numeric",
+    ],
+  },
+  {
+    name: "shared-poc-rejects-inconsistent-capacity-budgets",
+    args: [],
+    env: hardenedEnv({
+      MAX_ACTIVE_CONNECTIONS: "10",
+      MAX_CONNECTIONS_PER_IP: "11",
+      SESSION_ISSUE_RATE_LIMIT_PER_MINUTE: "10",
+      SESSION_ISSUE_RATE_LIMIT_BURST: "11",
+      ACCOUNT_SESSION_RATE_LIMIT_PER_MINUTE: "10",
+      ACCOUNT_SESSION_RATE_LIMIT_BURST: "11",
+      WS_HEARTBEAT_SECONDS: "30",
+      WS_IDLE_TIMEOUT_SECONDS: "30",
+    }),
+    expectOk: false,
+    expectedChecks: [
+      "max_connections_per_ip-within-active-connections",
+      "session_issue_rate_limit_burst-within-per-minute",
+      "account_session_rate_limit_burst-within-per-minute",
+      "ws_idle_timeout_seconds-greater-than-heartbeat",
+    ],
+  },
+  {
     name: "shared-poc-jwt-pass",
     args: [],
     env: jwtEnv(),
