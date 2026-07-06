@@ -162,6 +162,12 @@ async function checkMetrics() {
       "sundermere_require_session",
       "sundermere_require_account",
       "sundermere_chain_enabled",
+      "sundermere_origin_allowlist_enabled",
+      "sundermere_origin_allowed_origins",
+      "sundermere_active_connections",
+      "sundermere_max_active_connections",
+      "sundermere_session_pending_tickets",
+      "sundermere_session_ticket_capacity",
       "sundermere_durable_journal_persist_failed_total",
       "sundermere_durable_settlement_persist_failed_total",
       "sundermere_settlement_queue_capacity",
@@ -188,6 +194,25 @@ function checkRuntimePosture(runtime, summary) {
     add("strict-session-required", summary.requireSession === true, `requireSession=${summary.requireSession}`);
     add("account-gate-required", summary.requireAccount === true, `requireAccount=${summary.requireAccount}`);
     add("chain-stub-disabled", summary.chainEnabled === false, `chainEnabled=${summary.chainEnabled}`);
+    add(
+      "origin-allowlist-enabled",
+      summary.originAllowlistEnabled === true && summary.originAllowedCount > 0,
+      `enabled=${summary.originAllowlistEnabled} count=${summary.originAllowedCount}`,
+    );
+    add(
+      "session-ticket-capacity-available",
+      Number.isFinite(summary.sessionPendingTickets) &&
+        Number.isFinite(summary.sessionTicketCapacity) &&
+        summary.sessionPendingTickets < summary.sessionTicketCapacity,
+      `pending=${summary.sessionPendingTickets} capacity=${summary.sessionTicketCapacity}`,
+    );
+    add(
+      "connection-capacity-available",
+      Number.isFinite(summary.activeConnections) &&
+        Number.isFinite(summary.maxActiveConnections) &&
+        summary.activeConnections < summary.maxActiveConnections,
+      `active=${summary.activeConnections} max=${summary.maxActiveConnections}`,
+    );
   }
   if (runtime && summary.content) {
     add(
@@ -207,6 +232,22 @@ function checkMetricsPosture(metrics) {
     add("metrics-require-session", metrics.sundermere_require_session === 1, `value=${metrics.sundermere_require_session}`);
     add("metrics-require-account", metrics.sundermere_require_account === 1, `value=${metrics.sundermere_require_account}`);
     add("metrics-chain-disabled", metrics.sundermere_chain_enabled === 0, `value=${metrics.sundermere_chain_enabled}`);
+    add(
+      "metrics-origin-allowlist-enabled",
+      metrics.sundermere_origin_allowlist_enabled === 1 &&
+        metrics.sundermere_origin_allowed_origins > 0,
+      `enabled=${metrics.sundermere_origin_allowlist_enabled} count=${metrics.sundermere_origin_allowed_origins}`,
+    );
+    add(
+      "metrics-session-ticket-capacity-available",
+      metrics.sundermere_session_pending_tickets < metrics.sundermere_session_ticket_capacity,
+      `pending=${metrics.sundermere_session_pending_tickets} capacity=${metrics.sundermere_session_ticket_capacity}`,
+    );
+    add(
+      "metrics-connection-capacity-available",
+      metrics.sundermere_active_connections < metrics.sundermere_max_active_connections,
+      `active=${metrics.sundermere_active_connections} max=${metrics.sundermere_max_active_connections}`,
+    );
   }
   add(
     "durable-persistence-healthy",

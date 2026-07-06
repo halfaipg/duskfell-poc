@@ -25,10 +25,19 @@ let result;
 try {
   server = await startServer();
   const audit = await runAudit();
+  const expectedChecksPresent = [
+    "origin-allowlist-enabled",
+    "session-ticket-capacity-available",
+    "connection-capacity-available",
+    "metrics-origin-allowlist-enabled",
+    "metrics-session-ticket-capacity-available",
+    "metrics-connection-capacity-available",
+  ].every((name) => audit.checks?.some((check) => check.name === name && check.ok === true));
   result = {
-    ok: audit.ok,
+    ok: audit.ok && expectedChecksPresent,
     port,
     audit,
+    expectedChecksPresent,
     elapsedMs: round(performance.now() - startedAt),
   };
 } catch (err) {

@@ -209,8 +209,9 @@ node scripts/deploy-audit.js \
 The audit checks health/readiness, token protection on `/admin/runtime` and
 `/metrics`, Duskfell/Base `$DUSK` runtime identity, build Git SHA when provided,
 content/runtime consistency, verified sprite and terrain asset pins, public-mode
-guardrails, non-draining admission posture, durable persistence failure counters,
-and settlement queue capacity.
+guardrails, Origin allowlist posture, non-draining admission posture, WebSocket
+and session-ticket admission headroom, durable persistence failure counters, and
+settlement queue capacity.
 
 For incident notes or rollback triage, capture a bounded redacted operations
 snapshot:
