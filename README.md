@@ -110,6 +110,7 @@ npm run smoke:container
 npm run smoke:content-schema
 npm run smoke:deploy-audit
 npm run smoke:deed
+npm run smoke:drain-mode
 npm run smoke:ops-snapshot
 npm run smoke:external-bind-guard
 npm run smoke:gameplay-journal-replay
@@ -163,7 +164,7 @@ local port.
 
 - `GET /api/snapshot` returns the full debug/admin world snapshot. When `ADMIN_TOKEN` is set, it requires `x-admin-token`, and `MAX_ADMIN_SNAPSHOT_BYTES` caps the serialized response.
 - `GET /healthz` returns a lightweight liveness response.
-- `GET /readyz` returns readiness JSON and uses `503` when runtime dependencies, settlement queue health/capacity, durable file parent directories, durable append health, or admission capacity are not ready.
+- `GET /readyz` returns readiness JSON and uses `503` when runtime dependencies, settlement queue health/capacity, durable file parent directories, durable append health, admission capacity, or drain mode are not ready.
 - `POST /api/session` issues a short-lived, single-use WebSocket session ticket. It may accept JSON like `{"name":"Wayfarer"}`; the server validates the display name, rejects names already pending or active on the shard, and binds the accepted name to the one-use ticket before player spawn. When `REQUIRE_ACCOUNT=true`, the request must include a valid `Authorization: Bearer ...` account token before a ticket can be minted.
 - `GET /metrics` returns Prometheus-style runtime counters and gauges, including WebSocket flow, outbound payload sizes, interest-filtered snapshot player/object counts, admin snapshot cap state, tick/player counts, tick timing/overruns, settlement counts, settlement queue pressure/capacity, content object count, admission limits, admission rejection counters, account-auth rejections, Origin allowlist state, session issue rate limits, invalid session request bodies, display-name rejections, durable persistence failures, and pending session tickets.
 - `GET /admin/summary` returns tick/player/journal/settlement/admission counters plus the loaded content manifest.
@@ -183,6 +184,7 @@ Set `SESSION_ISSUE_RATE_LIMIT_PER_MINUTE`, `SESSION_ISSUE_RATE_LIMIT_BURST`, and
 Set `ACCOUNT_SESSION_RATE_LIMIT_PER_MINUTE`, `ACCOUNT_SESSION_RATE_LIMIT_BURST`, and `ACCOUNT_SESSION_RATE_LIMIT_MAX_SUBJECTS` to tune the per-account-subject token bucket on authenticated JWT session issuance. The limiter runs after account authentication but before request-body display-name validation, so malformed authenticated issue attempts consume the same account budget as valid ticket requests. Defaults are `60` per minute, burst `10`, and `4096` tracked account-subject buckets.
 Set `ALLOWED_ORIGINS` to a comma-separated list of exact HTTP(S) origins to require matching `Origin` headers on `POST /api/session` and `/ws` upgrades. Leave it unset or empty for local dev. Example: `ALLOWED_ORIGINS=https://play.example.com,http://localhost:4107`.
 Set `PUBLIC_DEPLOYMENT=true` for any shared or internet-reachable environment. In that mode the server refuses to boot unless `REQUIRE_SESSION=true`, `REQUIRE_ACCOUNT=true`, a strong account credential for the selected `ACCOUNT_AUTH_MODE`, strong distinct `ADMIN_TOKEN` and `METRICS_TOKEN` values, and `ALLOWED_ORIGINS` are all configured, preventing the local-dev open endpoints from being exposed by accident. Public JWT mode also requires `ACCOUNT_JWT_ISSUER` and `ACCOUNT_JWT_AUDIENCE`.
+Set `DRAINING=true` before planned rollback or shard removal to keep `/healthz` alive while `/readyz` returns `503` and new `/api/session` admissions return `503`. The state is visible in `/admin/summary` and `/metrics` as `sundermere_draining`, and rejected admissions increment `sundermere_session_draining_rejected_total`.
 Set `BIND_ADDR` to choose the listener address. The default is `127.0.0.1:4107`. Non-loopback binds such as `0.0.0.0:4107` require `PUBLIC_DEPLOYMENT=true` and the public deployment guardrails above.
 `CHAIN_ENABLED=true` is still a local-only settlement stub. Public deployments refuse to start with chain mode enabled until signer and indexer configuration are implemented.
 
@@ -206,7 +208,8 @@ node scripts/deploy-audit.js \
 The audit checks health/readiness, token protection on `/admin/runtime` and
 `/metrics`, Duskfell/Base `$DUSK` runtime identity, build Git SHA when provided,
 content/runtime consistency, verified sprite and terrain asset pins, public-mode
-guardrails, durable persistence failure counters, and settlement queue capacity.
+guardrails, non-draining admission posture, durable persistence failure counters,
+and settlement queue capacity.
 
 For incident notes or rollback triage, capture a bounded redacted operations
 snapshot:
@@ -263,10 +266,11 @@ npm run verify:ci
 
 The command runs Rust formatting, locked Rust check/tests, supply-chain smoke,
 client projection/protocol/asset-loader tests, sprite and terrain manifest tests,
-runtime asset verification, deployment preflight smoke, runtime manifest/integrity
-smokes, runtime build-provenance smoke, asset serving smoke, metrics smoke,
-readiness smoke, and git whitespace checks. GitHub Actions runs the same command
-on pushes to `main` and `codex/**`, pull requests, and manual dispatches.
+runtime asset verification, deployment preflight smoke, deploy audit smoke,
+drain-mode smoke, ops snapshot smoke, runtime manifest/integrity smokes, runtime
+build-provenance smoke, asset serving smoke, metrics smoke, readiness smoke, and
+git whitespace checks. GitHub Actions runs the same command on pushes to `main`
+and `codex/**`, pull requests, and manual dispatches.
 
 Run the broad local verification gate:
 
@@ -295,6 +299,16 @@ The command starts a hardened isolated server, captures an operations snapshot,
 and verifies the output keeps tokens plus absolute durable paths out of the
 artifact while preserving runtime identity, readiness, metrics, journal, and
 settlement summaries.
+
+Run the drain-mode smoke:
+
+```sh
+npm run smoke:drain-mode
+```
+
+The command starts an isolated drained shard, verifies `/healthz` remains live,
+`/readyz` reports unavailable with `shardNotDraining`, `/api/session` returns
+`503`, and admin/metrics expose the drain state plus rejected-admission counter.
 
 Run the supply-chain smoke:
 

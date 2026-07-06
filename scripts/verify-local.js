@@ -22,6 +22,7 @@ try {
   await step("deployment-preflight-smoke", () =>
     run("npm", ["run", "smoke:deployment-preflight"]),
   );
+  await step("drain-mode-smoke", () => run("npm", ["run", "smoke:drain-mode"]));
   await step("assets-smoke", () => run("npm", ["run", "smoke:assets"]));
   await step("bad-config-smoke", () => run("npm", ["run", "smoke:bad-config"]));
   await step("chain-public-guard-smoke", () =>

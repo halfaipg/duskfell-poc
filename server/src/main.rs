@@ -127,6 +127,7 @@ struct AppState {
     max_connections_per_ip: usize,
     content_manifest: ContentManifest,
     public_deployment: bool,
+    draining: bool,
     admin_token: Option<String>,
     metrics_token: Option<String>,
     http_body_limit_bytes: usize,
@@ -216,6 +217,7 @@ async fn main() -> anyhow::Result<()> {
     let admin_token = env_optional_nonempty_string("ADMIN_TOKEN")?;
     let metrics_token = env_optional_nonempty_string("METRICS_TOKEN")?;
     let public_deployment = env_bool("PUBLIC_DEPLOYMENT", false)?;
+    let draining = env_bool("DRAINING", false)?;
     let http_body_limit_bytes =
         env_positive_usize("HTTP_BODY_LIMIT_BYTES", DEFAULT_HTTP_BODY_LIMIT_BYTES)?;
     let admin_event_limit_cap =
@@ -312,6 +314,7 @@ async fn main() -> anyhow::Result<()> {
         max_connections_per_ip,
         content_manifest,
         public_deployment,
+        draining,
         admin_token,
         metrics_token,
         http_body_limit_bytes,
@@ -780,6 +783,15 @@ async fn readyz(State(state): State<AppState>) -> impl IntoResponse {
 
     let mut checks = Vec::new();
     checks.push(ReadinessCheck {
+        name: "shardNotDraining",
+        ok: !state.draining,
+        detail: if state.draining {
+            "shard is draining and refusing new sessions".to_string()
+        } else {
+            "shard is accepting new sessions".to_string()
+        },
+    });
+    checks.push(ReadinessCheck {
         name: "contentLoaded",
         ok: state.content_manifest.object_count > 0,
         detail: format!(
@@ -972,6 +984,13 @@ async fn issue_session(
     body: Bytes,
 ) -> Result<Json<SessionTicketResponse>, (StatusCode, String)> {
     authorize_origin(&state, &headers)?;
+    if state.draining {
+        state.metrics.session_draining_rejected();
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            "shard is draining and refusing new sessions".to_string(),
+        ));
+    }
     if !state.session_issue_limiter.lock().await.allow(addr.ip()) {
         state.metrics.session_issue_rate_limited();
         return Err((
@@ -1405,6 +1424,13 @@ async fn metrics(
     );
     append_metric(
         &mut metrics,
+        "sundermere_draining",
+        "Whether this shard is refusing new session admission for drain or rollback.",
+        "gauge",
+        u64::from(state.draining),
+    );
+    append_metric(
+        &mut metrics,
         "sundermere_require_session",
         "Whether WebSocket session tickets are required.",
         "gauge",
@@ -1577,6 +1603,7 @@ struct AdminSummary {
     origin_allowlist_enabled: bool,
     origin_allowed_count: usize,
     public_deployment: bool,
+    draining: bool,
     require_session: bool,
     require_account: bool,
     account_auth_mode: &'static str,
@@ -1687,6 +1714,7 @@ async fn admin_summary(
         origin_allowlist_enabled: state.origin_allowlist.enabled(),
         origin_allowed_count: state.origin_allowlist.allowed_count(),
         public_deployment: state.public_deployment,
+        draining: state.draining,
         require_session: state.session_config.require_session,
         require_account: state.account_auth.require_account,
         account_auth_mode: state.account_auth.mode_name(),

@@ -14,6 +14,7 @@ await step("terrain-atlas-tests", () => run("npm", ["run", "test:terrain"]));
 await step("assets-verify", () => run("npm", ["run", "assets:verify"]));
 await step("deployment-preflight-smoke", () => run("npm", ["run", "smoke:deployment-preflight"]));
 await step("deploy-audit-smoke", () => run("npm", ["run", "smoke:deploy-audit"]));
+await step("drain-mode-smoke", () => run("npm", ["run", "smoke:drain-mode"]));
 await step("ops-snapshot-smoke", () => run("npm", ["run", "smoke:ops-snapshot"]));
 await step("runtime-asset-integrity-smoke", () =>
   run("npm", ["run", "smoke:runtime-asset-integrity"]),

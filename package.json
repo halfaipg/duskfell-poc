@@ -50,6 +50,7 @@
     "smoke:public-deployment": "node scripts/public-deployment-smoke.js",
     "smoke:deployment-preflight": "node scripts/deployment-preflight-smoke.js",
     "smoke:deploy-audit": "node scripts/deploy-audit-smoke.js",
+    "smoke:drain-mode": "node scripts/drain-mode-smoke.js",
     "smoke:ops-snapshot": "node scripts/ops-snapshot-smoke.js",
     "smoke:readiness": "node scripts/readiness-smoke.js",
     "smoke:resource-gather": "node scripts/resource-gather-smoke.js",

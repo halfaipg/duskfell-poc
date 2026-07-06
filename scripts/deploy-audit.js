@@ -158,6 +158,7 @@ async function checkMetrics() {
     const metrics = parseMetrics(text);
     const required = [
       "sundermere_public_deployment",
+      "sundermere_draining",
       "sundermere_require_session",
       "sundermere_require_account",
       "sundermere_chain_enabled",
@@ -183,6 +184,7 @@ function checkRuntimePosture(runtime, summary) {
   if (!summary) return;
   if (profile === "shared-poc") {
     add("public-deployment-enabled", summary.publicDeployment === true, `publicDeployment=${summary.publicDeployment}`);
+    add("not-draining", summary.draining === false, `draining=${summary.draining}`);
     add("strict-session-required", summary.requireSession === true, `requireSession=${summary.requireSession}`);
     add("account-gate-required", summary.requireAccount === true, `requireAccount=${summary.requireAccount}`);
     add("chain-stub-disabled", summary.chainEnabled === false, `chainEnabled=${summary.chainEnabled}`);
@@ -201,6 +203,7 @@ function checkMetricsPosture(metrics) {
   if (!metrics) return;
   if (profile === "shared-poc") {
     add("metrics-public-deployment", metrics.sundermere_public_deployment === 1, `value=${metrics.sundermere_public_deployment}`);
+    add("metrics-not-draining", metrics.sundermere_draining === 0, `value=${metrics.sundermere_draining}`);
     add("metrics-require-session", metrics.sundermere_require_session === 1, `value=${metrics.sundermere_require_session}`);
     add("metrics-require-account", metrics.sundermere_require_account === 1, `value=${metrics.sundermere_require_account}`);
     add("metrics-chain-disabled", metrics.sundermere_chain_enabled === 0, `value=${metrics.sundermere_chain_enabled}`);

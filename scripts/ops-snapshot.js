@@ -179,6 +179,7 @@ function summarizeAdminSummary(summary) {
 function summarizeMetrics(metrics) {
   const names = [
     "sundermere_public_deployment",
+    "sundermere_draining",
     "sundermere_require_session",
     "sundermere_require_account",
     "sundermere_chain_enabled",
@@ -199,6 +200,7 @@ function summarizeMetrics(metrics) {
     "sundermere_session_ticket_capacity_rejected_total",
     "sundermere_session_issue_rate_limited_total",
     "sundermere_session_account_rate_limited_total",
+    "sundermere_session_draining_rejected_total",
     "sundermere_tick_duration_last_us",
     "sundermere_tick_duration_max_us",
     "sundermere_tick_overruns_total",

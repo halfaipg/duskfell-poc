@@ -28,6 +28,7 @@ pub struct AppMetrics {
     session_request_invalid_total: AtomicU64,
     session_issue_rate_limited_total: AtomicU64,
     session_account_rate_limited_total: AtomicU64,
+    session_draining_rejected_total: AtomicU64,
     session_display_name_invalid_total: AtomicU64,
     session_display_name_conflict_total: AtomicU64,
     account_auth_rejected_total: AtomicU64,
@@ -146,6 +147,11 @@ impl AppMetrics {
 
     pub fn session_account_rate_limited(&self) {
         self.session_account_rate_limited_total
+            .fetch_add(1, Ordering::Relaxed);
+    }
+
+    pub fn session_draining_rejected(&self) {
+        self.session_draining_rejected_total
             .fetch_add(1, Ordering::Relaxed);
     }
 
@@ -288,6 +294,8 @@ impl AppMetrics {
         let session_account_rate_limited_total = self
             .session_account_rate_limited_total
             .load(Ordering::Relaxed);
+        let session_draining_rejected_total =
+            self.session_draining_rejected_total.load(Ordering::Relaxed);
         let session_display_name_invalid_total = self
             .session_display_name_invalid_total
             .load(Ordering::Relaxed);
@@ -488,6 +496,13 @@ impl AppMetrics {
         );
         write_metric(
             &mut output,
+            "sundermere_session_draining_rejected_total",
+            "Session ticket issue requests rejected because the shard is draining.",
+            "counter",
+            session_draining_rejected_total,
+        );
+        write_metric(
+            &mut output,
             "sundermere_session_request_invalid_total",
             "Session ticket issue requests rejected because the JSON body did not match the allowed request shape.",
             "counter",
@@ -649,6 +664,7 @@ mod tests {
         metrics.session_request_invalid();
         metrics.session_issue_rate_limited();
         metrics.session_account_rate_limited();
+        metrics.session_draining_rejected();
         metrics.session_display_name_invalid();
         metrics.session_display_name_conflict();
         metrics.account_auth_rejected();
@@ -694,6 +710,7 @@ mod tests {
         assert!(rendered.contains("sundermere_session_request_invalid_total 1"));
         assert!(rendered.contains("sundermere_session_issue_rate_limited_total 1"));
         assert!(rendered.contains("sundermere_session_account_rate_limited_total 1"));
+        assert!(rendered.contains("sundermere_session_draining_rejected_total 1"));
         assert!(rendered.contains("sundermere_session_display_name_invalid_total 1"));
         assert!(rendered.contains("sundermere_session_display_name_conflict_total 1"));
         assert!(rendered.contains("sundermere_account_auth_rejected_total 1"));
