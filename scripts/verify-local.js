@@ -70,6 +70,9 @@ try {
   await step("session-expired-ws-smoke", () =>
     run("npm", ["run", "smoke:session-expired-ws"]),
   );
+  await step("session-token-hardening-smoke", () =>
+    run("npm", ["run", "smoke:session-token-hardening"]),
+  );
   await step("session-rate-limit-smoke", () =>
     run("npm", ["run", "smoke:session-rate-limit"]),
   );

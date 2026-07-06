@@ -2,7 +2,10 @@ use std::collections::HashMap;
 use std::net::IpAddr;
 use std::time::{Duration, Instant};
 
+use sha2::{Digest, Sha256};
 use uuid::Uuid;
+
+const MAX_SESSION_TOKEN_BYTES: usize = 128;
 
 #[derive(Debug, Clone)]
 pub struct SessionConfig {
@@ -62,7 +65,7 @@ struct StoredTicket {
 pub struct SessionTickets {
     ttl: Duration,
     capacity: usize,
-    tickets: HashMap<String, StoredTicket>,
+    tickets: HashMap<[u8; 32], StoredTicket>,
 }
 
 impl SessionTickets {
@@ -106,7 +109,7 @@ impl SessionTickets {
         let token = Uuid::new_v4().to_string();
         let session_id = Uuid::new_v4();
         self.tickets.insert(
-            token.clone(),
+            token_key(&token),
             StoredTicket {
                 session_id,
                 display_name: display_name.clone(),
@@ -129,16 +132,20 @@ impl SessionTickets {
         token: Option<&str>,
         require_session: bool,
     ) -> Result<SessionAuth, SessionRejectReason> {
-        let Some(token) = token.filter(|value| !value.is_empty()) else {
+        let Some(token) = normalize_token(token) else {
             return if require_session {
                 Err(SessionRejectReason::Missing)
             } else {
                 Ok(SessionAuth::AnonymousDev)
             };
         };
+        if token.len() > MAX_SESSION_TOKEN_BYTES {
+            return Err(SessionRejectReason::Invalid);
+        }
+        let key = token_key(token);
 
         let now = Instant::now();
-        let Some(ticket) = self.tickets.remove(token) else {
+        let Some(ticket) = self.tickets.remove(&key) else {
             self.cleanup_expired(now);
             return Err(SessionRejectReason::Invalid);
         };
@@ -160,16 +167,20 @@ impl SessionTickets {
         token: Option<&str>,
         require_session: bool,
     ) -> Result<(), SessionRejectReason> {
-        let Some(token) = token.filter(|value| !value.is_empty()) else {
+        let Some(token) = normalize_token(token) else {
             return if require_session {
                 Err(SessionRejectReason::Missing)
             } else {
                 Ok(())
             };
         };
+        if token.len() > MAX_SESSION_TOKEN_BYTES {
+            return Err(SessionRejectReason::Invalid);
+        }
+        let key = token_key(token);
 
         let now = Instant::now();
-        let Some(expires_at) = self.tickets.get(token).map(|ticket| ticket.expires_at) else {
+        let Some(expires_at) = self.tickets.get(&key).map(|ticket| ticket.expires_at) else {
             self.cleanup_expired(now);
             return Err(SessionRejectReason::Invalid);
         };
@@ -206,6 +217,14 @@ impl SessionTickets {
 
 fn display_name_key(display_name: &str) -> String {
     display_name.to_ascii_lowercase()
+}
+
+fn normalize_token(token: Option<&str>) -> Option<&str> {
+    token.filter(|value| !value.is_empty())
+}
+
+fn token_key(token: &str) -> [u8; 32] {
+    Sha256::digest(token.as_bytes()).into()
 }
 
 impl Default for SessionTickets {
@@ -339,8 +358,9 @@ mod tests {
     use std::time::Duration;
 
     use super::{
-        SessionAccountRateLimiter, SessionAuth, SessionIssueError, SessionIssueRateLimitConfig,
-        SessionIssueRateLimiter, SessionRejectReason, SessionTickets,
+        token_key, SessionAccountRateLimiter, SessionAuth, SessionIssueError,
+        SessionIssueRateLimitConfig, SessionIssueRateLimiter, SessionRejectReason, SessionTickets,
+        MAX_SESSION_TOKEN_BYTES,
     };
 
     #[test]
@@ -364,6 +384,15 @@ mod tests {
             tickets.validate(Some(&ticket.token), true),
             Err(SessionRejectReason::Invalid)
         );
+    }
+
+    #[test]
+    fn pending_tickets_are_keyed_by_token_hash() {
+        let mut tickets = SessionTickets::new(Duration::from_secs(60), 8);
+        let ticket = tickets.issue().expect("ticket issued");
+
+        assert!(tickets.tickets.contains_key(&token_key(&ticket.token)));
+        assert_eq!(tickets.tickets.len(), 1);
     }
 
     #[test]
@@ -473,6 +502,7 @@ mod tests {
     fn preflight_validation_rejects_bad_tickets_without_consuming_good_tickets() {
         let mut tickets = SessionTickets::new(Duration::from_secs(60), 8);
         let ticket = tickets.issue().expect("ticket issued");
+        let oversized_token = "x".repeat(MAX_SESSION_TOKEN_BYTES + 1);
 
         assert_eq!(
             tickets.preflight_validate(None, true),
@@ -482,6 +512,10 @@ mod tests {
             tickets.preflight_validate(Some("not-a-ticket"), true),
             Err(SessionRejectReason::Invalid)
         );
+        assert_eq!(
+            tickets.preflight_validate(Some(&oversized_token), true),
+            Err(SessionRejectReason::Invalid)
+        );
         tickets
             .preflight_validate(Some(&ticket.token), true)
             .expect("valid ticket passes preflight");
@@ -489,6 +523,22 @@ mod tests {
         tickets
             .validate(Some(&ticket.token), true)
             .expect("valid ticket is still consumable");
+    }
+
+    #[test]
+    fn oversized_ticket_is_rejected_without_consuming_good_ticket() {
+        let mut tickets = SessionTickets::new(Duration::from_secs(60), 8);
+        let ticket = tickets.issue().expect("ticket issued");
+        let oversized_token = "x".repeat(MAX_SESSION_TOKEN_BYTES + 1);
+
+        assert_eq!(
+            tickets.validate(Some(&oversized_token), true),
+            Err(SessionRejectReason::Invalid)
+        );
+        assert_eq!(tickets.pending_count(), 1);
+        tickets
+            .validate(Some(&ticket.token), true)
+            .expect("valid ticket remains consumable");
     }
 
     #[test]

@@ -49,6 +49,7 @@ The PoC is intentionally small but shaped around the production constraints:
 - `scripts/session-capacity-smoke.js` verifies pending session ticket admission and visibility.
 - `scripts/session-expiry-smoke.js` verifies expired unconsumed session tickets are cleaned before pending-ticket capacity decisions.
 - `scripts/session-expired-ws-smoke.js` verifies an expired ticket is rejected before WebSocket upgrade and before player spawn.
+- `scripts/session-token-hardening-smoke.js` verifies oversized fake tickets are rejected before upgrade without consuming a valid pending ticket.
 - `scripts/session-rate-limit-smoke.js` verifies per-client-IP session issue throttling and visibility.
 - `scripts/rename-validation-smoke.js` verifies ticket-bound spawn names and later player-submitted rename messages are bounded, normalized, pending/active-shard unique, and rejected without mutation when invalid.
 - `scripts/snapshot-interval-smoke.js` verifies the per-client snapshot cadence can be tuned and observed.
@@ -173,7 +174,7 @@ For hosted browser builds, `ALLOWED_ORIGINS` can be set to exact allowed HTTP(S)
 
 `SESSION_ISSUE_RATE_LIMIT_PER_MINUTE` and `SESSION_ISSUE_RATE_LIMIT_BURST` cap `POST /api/session` issuance per client IP before ticket capacity is consumed. `SESSION_ISSUE_RATE_LIMIT_MAX_CLIENTS` caps the number of in-process client-IP buckets retained by that limiter so address churn cannot grow the map without bound. This is an in-process PoC guardrail; production should back the same boundary with Redis or the shard/router layer so limits apply across sim processes and authenticated accounts.
 
-Expired unconsumed session tickets are cleaned before issue, validation, and pending-count reporting. This keeps a client from pinning `SESSION_TICKET_CAPACITY` forever by requesting tickets without opening WebSockets. An expired ticket presented to `/ws` is rejected before upgrade and before any player entity is spawned.
+Expired unconsumed session tickets are cleaned before issue, validation, and pending-count reporting. Pending tickets are keyed by SHA-256 token hashes in memory, and oversized ticket inputs are rejected before lookup. This keeps a client from pinning `SESSION_TICKET_CAPACITY` forever by requesting tickets without opening WebSockets, and keeps invalid ticket probes from consuming valid pending tickets. An expired ticket presented to `/ws` is rejected before upgrade and before any player entity is spawned.
 
 Admission and auth rejections are counted in `/metrics`: account-token failures, admin-token failures, metrics-token failures, Origin allowlist failures, missing/invalid/expired WebSocket tickets, pending-ticket capacity exhaustion, invalid display names, pending/active display-name conflicts, session issue rate limits, and WebSocket capacity exhaustion. These counters turn failed-closed behavior into something visible during shared tests.
 

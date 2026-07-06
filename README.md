@@ -141,6 +141,7 @@ npm run smoke:settlement-idempotency
 npm run smoke:trace-redaction
 npm run smoke:shutdown
 npm run smoke:session-capacity
+npm run smoke:session-token-hardening
 npm run smoke:ws-admission-preflight
 npm run smoke:ws-idle-timeout
 npm run bench:ws -- --clients 20 --durationMs 5000 --inputHz 10
@@ -190,7 +191,7 @@ Set `METRICS_TOKEN` to require an `x-metrics-token` header on `/metrics`. Withou
 Configured admin, metrics, and account bearer tokens are capped at 4096 bytes per request before exact token comparison or JWT validation. Public deployment startup and `npm run preflight:deployment` also reject configured credentials over 4096 bytes.
 When `PUBLIC_DEPLOYMENT=true`, the selected account credential, `ADMIN_TOKEN`, and `METRICS_TOKEN` must be distinct, have no surrounding whitespace, avoid placeholder text, and be at least 24 bytes long.
 
-Set `REQUIRE_SESSION=true` to reject `/ws` connections unless they include a valid `?session=...` ticket issued by `POST /api/session`. Tickets are short-lived and single-use. Ticketed WebSocket connections use the issued `sessionId` as the spawned `playerId`, so session issuance, welcome messages, journal events, and settlement jobs share the same identity. If session issuance includes a `name`, the same bounded player-name validator used by rename messages trims and checks it before a ticket is minted, rejects case-insensitive collisions with pending ticket names or active player names, then applies it exactly once at spawn. The spawn path re-checks active-name uniqueness when the ticket is consumed so delayed connects cannot race into duplicate visible identities. The default remains anonymous-dev compatible so local iteration and older scripts do not break.
+Set `REQUIRE_SESSION=true` to reject `/ws` connections unless they include a valid `?session=...` ticket issued by `POST /api/session`. Tickets are short-lived and single-use. Pending tickets are keyed by a SHA-256 token hash internally, and oversized ticket inputs are rejected before lookup so invalid probes do not consume valid tickets. Ticketed WebSocket connections use the issued `sessionId` as the spawned `playerId`, so session issuance, welcome messages, journal events, and settlement jobs share the same identity. If session issuance includes a `name`, the same bounded player-name validator used by rename messages trims and checks it before a ticket is minted, rejects case-insensitive collisions with pending ticket names or active player names, then applies it exactly once at spawn. The spawn path re-checks active-name uniqueness when the ticket is consumed so delayed connects cannot race into duplicate visible identities. The default remains anonymous-dev compatible so local iteration and older scripts do not break.
 Set `SESSION_TICKET_TTL_SECONDS` and `SESSION_TICKET_CAPACITY` to tune pending ticket lifetime and capacity.
 Set `REQUIRE_ACCOUNT=true` to require account authentication before `/api/session` issues a WebSocket ticket. `ACCOUNT_AUTH_MODE=dev-token` uses a temporary `DEV_ACCOUNT_TOKEN` bearer token for quick hardened demos and does not provide durable account identity. `ACCOUNT_AUTH_MODE=jwt-hs256` validates a signed HS256 JWT bearer token with required `sub` and `exp` claims, plus optional `ACCOUNT_JWT_ISSUER` and `ACCOUNT_JWT_AUDIENCE` checks. Accepted JWT subjects are bounded, printable ASCII, and bound into the issued session ticket as `accountSubject`; ticketed spawns carry that subject into player snapshots, ownership journal events, settlement receipts, and `/admin/ownership`. This is still a PoC account boundary; production should move to managed account/OAuth/JWKS or wallet-auth with durable account and character records.
 Set `SESSION_ISSUE_RATE_LIMIT_PER_MINUTE`, `SESSION_ISSUE_RATE_LIMIT_BURST`, and `SESSION_ISSUE_RATE_LIMIT_MAX_CLIENTS` to tune the per-client-IP token bucket on `POST /api/session`. The limiter runs before request-body display-name validation, so malformed or invalid-name issue attempts consume the same abuse budget as valid ticket requests. Defaults are `120` per minute, burst `30`, and `4096` tracked client-IP buckets.
@@ -287,7 +288,7 @@ client projection/protocol/asset-loader tests, sprite and terrain manifest tests
 runtime asset verification, deploy/preflight smokes, startup/config/content
 guard smokes, runtime budget guard smokes, durable replay/corruption/lock/sync smokes, account/admin/metrics auth
 smokes, public deployment guardrails, ops snapshot/runtime provenance smokes,
-readiness/metrics smokes, trace redaction smoke, session/admission smokes,
+readiness/metrics smokes, trace redaction smoke, session/admission token-hardening smokes,
 movement and interest-radius authority smokes, journal/restart/settlement replay
 smokes, WebSocket abuse and admission-ordering/payload-cap smokes, and git
 whitespace checks. GitHub Actions runs the same command on pushes to `main` and
@@ -299,7 +300,7 @@ Run the broad local verification gate:
 npm run verify:local
 ```
 
-The command runs Rust formatting/tests, supply-chain smoke, client projection/protocol/asset-loader tests, sprite manifest tests, sprite asset verification, deployment preflight smoke, asset serving smoke, bad-config startup smoke, public chain-mode guard smoke, local chain-stub honesty smoke, external bind guard smoke, HTTP hardening smoke, bad-content-schema startup smoke, bad-content-contract startup smoke, bad-content-size startup smoke, durable-file-size startup smoke, durable-corruption startup smoke, durable-lock startup smoke, durable-sync smoke, dev-token account auth smoke, JWT account auth smoke, account session rate-limit smoke, account-bound settlement smoke, admin auth smoke, admin event-limit smoke, admin snapshot-size smoke, metrics auth smoke, Origin allowlist smoke, public deployment guard smoke, metrics smoke, readiness smoke, trace redaction smoke, session ticket capacity smoke, session ticket expiry smoke, expired-ticket WebSocket rejection smoke, session issue rate-limit smoke, interest-radius smoke, movement authority smoke, journal anomaly smoke, journal replay smoke, gameplay journal replay smoke, settlement idempotency smoke, restart reconciliation smoke, graceful shutdown smoke, WebSocket admission preflight smoke, WebSocket ingress config smoke, WebSocket snapshot-size smoke, WebSocket payload-metrics smoke, WebSocket peer-capacity smoke, stale-WebSocket timeout smoke, a side-port client protocol smoke, a side-port deed smoke, a side-port resource-gather smoke, a side-port crafting smoke, a side-port WebSocket load smoke, and a side-port capacity smoke.
+The command runs Rust formatting/tests, supply-chain smoke, client projection/protocol/asset-loader tests, sprite manifest tests, sprite asset verification, deployment preflight smoke, asset serving smoke, bad-config startup smoke, public chain-mode guard smoke, local chain-stub honesty smoke, external bind guard smoke, HTTP hardening smoke, bad-content-schema startup smoke, bad-content-contract startup smoke, bad-content-size startup smoke, durable-file-size startup smoke, durable-corruption startup smoke, durable-lock startup smoke, durable-sync smoke, dev-token account auth smoke, JWT account auth smoke, account session rate-limit smoke, account-bound settlement smoke, admin auth smoke, admin event-limit smoke, admin snapshot-size smoke, metrics auth smoke, Origin allowlist smoke, public deployment guard smoke, metrics smoke, readiness smoke, trace redaction smoke, session ticket capacity smoke, session ticket expiry smoke, expired-ticket WebSocket rejection smoke, session token-hardening smoke, session issue rate-limit smoke, interest-radius smoke, movement authority smoke, journal anomaly smoke, journal replay smoke, gameplay journal replay smoke, settlement idempotency smoke, restart reconciliation smoke, graceful shutdown smoke, WebSocket admission preflight smoke, WebSocket ingress config smoke, WebSocket snapshot-size smoke, WebSocket payload-metrics smoke, WebSocket peer-capacity smoke, stale-WebSocket timeout smoke, a side-port client protocol smoke, a side-port deed smoke, a side-port resource-gather smoke, a side-port crafting smoke, a side-port WebSocket load smoke, and a side-port capacity smoke.
 
 Run the live server doctor against an already-running development server:
 
@@ -686,6 +687,14 @@ npm run smoke:session-expired-ws
 ```
 
 The command starts an isolated strict-session server with a one-second ticket TTL, waits for a real issued ticket to expire, attempts a raw WebSocket upgrade with that token, and verifies the server rejects it before upgrade/player spawn while recording rejection metrics.
+
+Run the session token-hardening smoke:
+
+```sh
+npm run smoke:session-token-hardening
+```
+
+The command issues one valid ticket, attempts a raw WebSocket upgrade with an oversized fake ticket, verifies the rejection does not consume the valid pending ticket, then connects with the valid ticket and observes the expected welcome.
 
 Run the session issue rate-limit smoke:
 

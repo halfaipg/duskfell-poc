@@ -54,6 +54,9 @@ await step("trace-redaction-smoke", () => run("npm", ["run", "smoke:trace-redact
 await step("session-capacity-smoke", () => run("npm", ["run", "smoke:session-capacity"]));
 await step("session-expiry-smoke", () => run("npm", ["run", "smoke:session-expiry"]));
 await step("session-expired-ws-smoke", () => run("npm", ["run", "smoke:session-expired-ws"]));
+await step("session-token-hardening-smoke", () =>
+  run("npm", ["run", "smoke:session-token-hardening"]),
+);
 await step("session-rate-limit-smoke", () => run("npm", ["run", "smoke:session-rate-limit"]));
 await step("interest-radius-smoke", () => run("npm", ["run", "smoke:interest-radius"]));
 await step("movement-authority-smoke", () => run("npm", ["run", "smoke:movement-authority"]));

@@ -66,6 +66,7 @@
     "smoke:trace-redaction": "node scripts/trace-redaction-smoke.js",
     "smoke:session-expiry": "node scripts/session-expiry-smoke.js",
     "smoke:session-expired-ws": "node scripts/session-expired-ws-smoke.js",
+    "smoke:session-token-hardening": "node scripts/session-token-hardening-smoke.js",
     "smoke:session-rate-limit": "node scripts/session-rate-limit-smoke.js",
     "smoke:snapshot-interval": "node scripts/snapshot-interval-smoke.js",
     "smoke:shutdown": "node scripts/shutdown-smoke.js",

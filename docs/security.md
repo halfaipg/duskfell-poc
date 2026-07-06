@@ -82,7 +82,7 @@ Implemented ingress protections:
 - Ticketed WebSocket spawns use the issued `sessionId` as `playerId`, giving ownership-affecting events a stable server-issued identity for that connection.
 - Session ticket issuance and WebSocket upgrades can be restricted to exact allowed browser origins with `ALLOWED_ORIGINS`.
 - Session ticket issuance is rate-limited per client IP with `SESSION_ISSUE_RATE_LIMIT_PER_MINUTE` and `SESSION_ISSUE_RATE_LIMIT_BURST` before request-body display-name validation runs, so malformed or invalid-name issue attempts consume the same abuse budget as valid ticket requests; `SESSION_ISSUE_RATE_LIMIT_MAX_CLIENTS` caps the in-process client-IP bucket map. Deployment preflight bounds these shared-PoC budgets and rejects bursts above their per-minute refill budgets. Rejected requests are visible in `/metrics`.
-- Pending session ticket capacity is enforced before WebSocket spawn, expired pending tickets are cleaned before capacity checks, expired tickets are rejected before WebSocket upgrade/player spawn, and pending ticket state is visible through admin summary and `/metrics`.
+- Pending session ticket capacity is enforced before WebSocket spawn, expired pending tickets are cleaned before capacity checks, expired tickets are rejected before WebSocket upgrade/player spawn, pending tickets are keyed by SHA-256 token hashes in memory, oversized ticket inputs are rejected before lookup, and pending ticket state is visible through admin summary and `/metrics`.
 - WebSocket admission is capped by `MAX_ACTIVE_CONNECTIONS` before player entities are created.
 - WebSocket admission is also capped per peer IP with `MAX_CONNECTIONS_PER_IP` before one-use session tickets are consumed, and peer-capacity rejections are visible in `/metrics`.
 - WebSocket heartbeat pings and idle timeouts evict stale connections and release their player entity/admission permit.
@@ -125,6 +125,7 @@ Implemented ingress protections:
 - `scripts/content-contract-smoke.js` verifies missing or mis-typed required registrar content fails startup before serving clients.
 - `scripts/content-size-smoke.js` verifies oversized world content fails startup before serving clients.
 - `scripts/account-auth-smoke.js` verifies missing, wrong, or oversized account bearer tokens reject session issuance and do not fall through to body parsing or ticket minting.
+- `scripts/session-token-hardening-smoke.js` verifies an oversized fake WebSocket ticket is rejected before upgrade and does not consume a valid pending ticket.
 - `scripts/account-session-rate-limit-smoke.js` verifies authenticated JWT session issuance is throttled by account subject independently of the client-IP limiter.
 - `scripts/account-settlement-smoke.js` verifies a JWT-authenticated player can claim a deed and the same `accountSubject` reaches the snapshot, receipt, ownership endpoint, and journal.
 - `scripts/durable-corruption-smoke.js` verifies malformed journal JSONL, oversized durable JSONL lines, and malformed or semantically invalid settlement outbox JSONL fails startup before serving clients.
