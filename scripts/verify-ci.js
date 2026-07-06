@@ -66,6 +66,9 @@ await step("settlement-idempotency-smoke", () =>
 );
 await step("restart-reconcile-smoke", () => run("npm", ["run", "smoke:restart-reconcile"]));
 await step("shutdown-smoke", () => run("npm", ["run", "smoke:shutdown"]));
+await step("ws-admission-preflight-smoke", () =>
+  run("npm", ["run", "smoke:ws-admission-preflight"]),
+);
 await step("ws-binary-reject-smoke", () => run("npm", ["run", "smoke:ws-binary-reject"]));
 await step("ws-ingress-config-smoke", () => run("npm", ["run", "smoke:ws-ingress-config"]));
 await step("ws-snapshot-size-smoke", () => run("npm", ["run", "smoke:ws-snapshot-size"]));

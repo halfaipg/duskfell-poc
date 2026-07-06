@@ -155,6 +155,33 @@ impl SessionTickets {
         })
     }
 
+    pub fn preflight_validate(
+        &mut self,
+        token: Option<&str>,
+        require_session: bool,
+    ) -> Result<(), SessionRejectReason> {
+        let Some(token) = token.filter(|value| !value.is_empty()) else {
+            return if require_session {
+                Err(SessionRejectReason::Missing)
+            } else {
+                Ok(())
+            };
+        };
+
+        let now = Instant::now();
+        let Some(expires_at) = self.tickets.get(token).map(|ticket| ticket.expires_at) else {
+            self.cleanup_expired(now);
+            return Err(SessionRejectReason::Invalid);
+        };
+
+        self.cleanup_expired(now);
+        if expires_at <= now {
+            return Err(SessionRejectReason::Expired);
+        }
+
+        Ok(())
+    }
+
     pub fn pending_count(&mut self) -> usize {
         self.cleanup_expired(Instant::now());
         self.tickets.len()
@@ -440,6 +467,40 @@ mod tests {
         assert!(tickets
             .issue_with_display_name(Some("scout_7".to_string()))
             .is_ok());
+    }
+
+    #[test]
+    fn preflight_validation_rejects_bad_tickets_without_consuming_good_tickets() {
+        let mut tickets = SessionTickets::new(Duration::from_secs(60), 8);
+        let ticket = tickets.issue().expect("ticket issued");
+
+        assert_eq!(
+            tickets.preflight_validate(None, true),
+            Err(SessionRejectReason::Missing)
+        );
+        assert_eq!(
+            tickets.preflight_validate(Some("not-a-ticket"), true),
+            Err(SessionRejectReason::Invalid)
+        );
+        tickets
+            .preflight_validate(Some(&ticket.token), true)
+            .expect("valid ticket passes preflight");
+        assert_eq!(tickets.pending_count(), 1);
+        tickets
+            .validate(Some(&ticket.token), true)
+            .expect("valid ticket is still consumable");
+    }
+
+    #[test]
+    fn preflight_validation_expires_stale_tickets() {
+        let mut tickets = SessionTickets::new(Duration::ZERO, 8);
+        let ticket = tickets.issue().expect("ticket issued");
+
+        assert_eq!(
+            tickets.preflight_validate(Some(&ticket.token), true),
+            Err(SessionRejectReason::Expired)
+        );
+        assert_eq!(tickets.pending_count(), 0);
     }
 
     #[test]

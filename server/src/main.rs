@@ -1818,6 +1818,14 @@ async fn ws_handler(
         return err.into_response();
     }
 
+    if let Err(reason) = state.sessions.lock().await.preflight_validate(
+        query.session.as_deref(),
+        state.session_config.require_session,
+    ) {
+        state.metrics.session_ticket_rejected();
+        return session_reject_response(reason).into_response();
+    }
+
     let Ok(connection_permit) = state.connection_permits.clone().try_acquire_owned() else {
         state.metrics.ws_capacity_rejected();
         return (

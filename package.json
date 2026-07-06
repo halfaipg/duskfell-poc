@@ -68,6 +68,7 @@
     "smoke:shutdown": "node scripts/shutdown-smoke.js",
     "smoke:session-capacity": "node scripts/session-capacity-smoke.js",
     "smoke:ws-binary-reject": "node scripts/ws-binary-reject-smoke.js",
+    "smoke:ws-admission-preflight": "node scripts/ws-admission-preflight-smoke.js",
     "smoke:ws-idle-timeout": "node scripts/ws-idle-timeout-smoke.js",
     "smoke:ws-ingress-config": "node scripts/ws-ingress-config-smoke.js",
     "smoke:ws-peer-capacity": "node scripts/ws-peer-capacity-smoke.js",
