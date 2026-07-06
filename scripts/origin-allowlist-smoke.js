@@ -24,6 +24,22 @@ let result;
 const startedAt = performance.now();
 
 try {
+  const pathOriginStartup = await expectStartupFailure(
+    "path-origin",
+    "https://allowed.example/path",
+    "without path, query, or fragment",
+  );
+  const tooManyOriginsStartup = await expectStartupFailure(
+    "too-many-origins",
+    Array.from({ length: 17 }, (_, index) => `https://allowed-${index}.example`).join(","),
+    "at most 16 origins",
+  );
+  const oversizedOriginStartup = await expectStartupFailure(
+    "oversized-origin",
+    `https://${"a".repeat(512)}`,
+    "at most 512 bytes",
+  );
+
   server = await startServer();
 
   const health = await fetchText("/healthz");
@@ -44,6 +60,9 @@ try {
 
   result = {
     port,
+    pathOriginStartup,
+    tooManyOriginsStartup,
+    oversizedOriginStartup,
     health,
     sessionStatuses: {
       missing: missingSession.status,
@@ -62,6 +81,9 @@ try {
     metrics,
     elapsedMs: round(performance.now() - startedAt),
     ok:
+      pathOriginStartup.ok &&
+      tooManyOriginsStartup.ok &&
+      oversizedOriginStartup.ok &&
       health === "ok" &&
       missingSession.status === 403 &&
       wrongSession.status === 403 &&
@@ -95,23 +117,53 @@ if (!result?.ok) {
   process.exitCode = 1;
 }
 
+async function expectStartupFailure(name, allowedOrigins, expectedOutput) {
+  const child = spawnServer(name, {
+    ALLOWED_ORIGINS: allowedOrigins,
+    REQUIRE_SESSION: "true",
+  });
+  let stdout = "";
+  let stderr = "";
+  child.stdout.on("data", (chunk) => {
+    stdout += String(chunk);
+  });
+  child.stderr.on("data", (chunk) => {
+    stderr += String(chunk);
+  });
+  const exit = await waitForExit(child, 10000);
+  const output = `${stdout}\n${stderr}`;
+  const mentionedExpectedOutput = output.includes(expectedOutput);
+  return {
+    code: exit.code,
+    signal: exit.signal,
+    mentionedExpectedOutput,
+    ok: exit.code !== 0 && mentionedExpectedOutput,
+  };
+}
+
 async function startServer() {
-  const child = spawn("cargo", ["run", "-p", "sundermere-server"], {
-    cwd: process.cwd(),
-    env: {
-      ...process.env,
-      BIND_ADDR: `127.0.0.1:${port}`,
-      JOURNAL_PATH: path.join(runtimeDir, `${runId}-journal.jsonl`),
-      SETTLEMENT_OUTBOX_PATH: path.join(runtimeDir, `${runId}-settlement-outbox.jsonl`),
-      REQUIRE_SESSION: "true",
-      ALLOWED_ORIGINS: allowedOrigin,
-      RUST_LOG: "sundermere_server=warn,tower_http=warn",
-    },
-    stdio: ["ignore", "pipe", "pipe"],
+  const child = spawnServer("valid", {
+    ALLOWED_ORIGINS: allowedOrigin,
+    REQUIRE_SESSION: "true",
   });
 
   await waitForHealth(child);
   return child;
+}
+
+function spawnServer(name, env) {
+  return spawn("cargo", ["run", "-p", "sundermere-server"], {
+    cwd: process.cwd(),
+    env: {
+      ...process.env,
+      ...env,
+      BIND_ADDR: `127.0.0.1:${port}`,
+      JOURNAL_PATH: path.join(runtimeDir, `${runId}-${name}-journal.jsonl`),
+      SETTLEMENT_OUTBOX_PATH: path.join(runtimeDir, `${runId}-${name}-settlement-outbox.jsonl`),
+      RUST_LOG: "sundermere_server=warn,tower_http=warn",
+    },
+    stdio: ["ignore", "pipe", "pipe"],
+  });
 }
 
 async function waitForHealth(child) {
@@ -131,6 +183,22 @@ async function waitForHealth(child) {
     await sleep(120);
   }
   throw new Error(`server did not become healthy on ${httpUrl}`);
+}
+
+async function waitForExit(child, timeoutMs) {
+  if (child.exitCode != null) {
+    return { code: child.exitCode, signal: child.signalCode };
+  }
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      child.kill("SIGKILL");
+      reject(new Error("server did not exit before startup failure timeout"));
+    }, timeoutMs);
+    child.once("exit", (code, signal) => {
+      clearTimeout(timer);
+      resolve({ code, signal });
+    });
+  });
 }
 
 async function stopServer(child) {

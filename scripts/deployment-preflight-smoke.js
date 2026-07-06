@@ -76,6 +76,24 @@ const cases = [
     ],
   },
   {
+    name: "shared-poc-rejects-too-many-origins",
+    args: [],
+    env: hardenedEnv({
+      ALLOWED_ORIGINS: Array.from({ length: 17 }, (_, index) => `https://game-${index}.example`).join(","),
+    }),
+    expectOk: false,
+    expectedChecks: ["allowed-origins-count"],
+  },
+  {
+    name: "shared-poc-rejects-oversized-origin",
+    args: [],
+    env: hardenedEnv({
+      ALLOWED_ORIGINS: `https://${"a".repeat(512)}`,
+    }),
+    expectOk: false,
+    expectedChecks: ["allowed-origins-bounded"],
+  },
+  {
     name: "shared-poc-jwt-pass",
     args: [],
     env: jwtEnv(),

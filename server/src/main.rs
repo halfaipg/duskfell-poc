@@ -80,6 +80,8 @@ const DEFAULT_ACCOUNT_SESSION_RATE_LIMIT_BURST: u32 = 10;
 const DEFAULT_ACCOUNT_SESSION_RATE_LIMIT_MAX_SUBJECTS: usize = 4096;
 const MAX_ACCOUNT_SUBJECT_BYTES: usize = 128;
 const MAX_AUTH_TOKEN_BYTES: usize = 4096;
+const MAX_ALLOWED_ORIGINS: usize = 16;
+const MAX_ORIGIN_BYTES: usize = 512;
 const MIN_PUBLIC_DEPLOYMENT_TOKEN_BYTES: usize = 24;
 const CONTENT_SECURITY_POLICY: &str = concat!(
     "default-src 'self'; ",
@@ -3010,17 +3012,24 @@ fn parse_origin_allowlist_value(value: &str) -> anyhow::Result<OriginAllowlistCo
         return Ok(OriginAllowlistConfig::disabled());
     }
 
-    let mut allowed = Vec::new();
-    for origin in value
+    let origins: Vec<&str> = value
         .split(',')
         .map(str::trim)
         .filter(|entry| !entry.is_empty())
-    {
-        if !origin.starts_with("http://") && !origin.starts_with("https://") {
-            return Err(anyhow!(
-                "ALLOWED_ORIGINS entries must be exact http:// or https:// origins"
-            ));
-        }
+        .collect();
+
+    if origins.is_empty() {
+        return Err(anyhow!("ALLOWED_ORIGINS must include at least one origin"));
+    }
+    if origins.len() > MAX_ALLOWED_ORIGINS {
+        return Err(anyhow!(
+            "ALLOWED_ORIGINS must include at most {MAX_ALLOWED_ORIGINS} origins"
+        ));
+    }
+
+    let mut allowed = Vec::new();
+    for origin in origins {
+        validate_allowed_origin(origin)?;
         if !allowed
             .iter()
             .any(|allowed_origin| allowed_origin == origin)
@@ -3029,11 +3038,45 @@ fn parse_origin_allowlist_value(value: &str) -> anyhow::Result<OriginAllowlistCo
         }
     }
 
-    if allowed.is_empty() {
-        return Err(anyhow!("ALLOWED_ORIGINS must include at least one origin"));
+    Ok(OriginAllowlistConfig { allowed })
+}
+
+fn validate_allowed_origin(origin: &str) -> anyhow::Result<()> {
+    if origin.len() > MAX_ORIGIN_BYTES {
+        return Err(anyhow!(
+            "ALLOWED_ORIGINS entries must be at most {MAX_ORIGIN_BYTES} bytes"
+        ));
+    }
+    if origin
+        .chars()
+        .any(|character| character.is_ascii_whitespace() || character.is_control())
+    {
+        return Err(anyhow!(
+            "ALLOWED_ORIGINS entries must not contain whitespace or control characters"
+        ));
     }
 
-    Ok(OriginAllowlistConfig { allowed })
+    let host = if let Some(host) = origin.strip_prefix("http://") {
+        host
+    } else if let Some(host) = origin.strip_prefix("https://") {
+        host
+    } else {
+        return Err(anyhow!(
+            "ALLOWED_ORIGINS entries must be exact http:// or https:// origins"
+        ));
+    };
+
+    if host.is_empty()
+        || host
+            .chars()
+            .any(|character| matches!(character, '/' | '?' | '#'))
+    {
+        return Err(anyhow!(
+            "ALLOWED_ORIGINS entries must be exact http:// or https:// origins without path, query, or fragment"
+        ));
+    }
+
+    Ok(())
 }
 
 fn websocket_config() -> anyhow::Result<WebSocketConfig> {
@@ -3264,7 +3307,8 @@ mod config_tests {
         session_display_name_from_body, settlement_queue_capacity_check, validate_account_jwt,
         validate_account_subject, validate_bind_addr, validate_chain_mode,
         validate_public_deployment, validate_websocket_timing, AccountAuthConfig, AccountAuthMode,
-        OriginAllowlistConfig, MAX_ACCOUNT_SUBJECT_BYTES, MAX_AUTH_TOKEN_BYTES,
+        OriginAllowlistConfig, MAX_ACCOUNT_SUBJECT_BYTES, MAX_ALLOWED_ORIGINS,
+        MAX_AUTH_TOKEN_BYTES, MAX_ORIGIN_BYTES,
     };
     use crate::metrics::AppMetrics;
     use crate::session::SessionConfig;
@@ -3497,6 +3541,21 @@ mod config_tests {
     fn rejects_non_origin_allowlist_entries() {
         assert!(parse_origin_allowlist_value("game.example").is_err());
         assert!(parse_origin_allowlist_value("ftp://game.example").is_err());
+        assert!(parse_origin_allowlist_value("https://").is_err());
+        assert!(parse_origin_allowlist_value("https://game.example/path").is_err());
+        assert!(parse_origin_allowlist_value("https://game.example?debug=true").is_err());
+        assert!(parse_origin_allowlist_value("https://game.example#fragment").is_err());
+        assert!(
+            parse_origin_allowlist_value(&format!("https://{}", "a".repeat(MAX_ORIGIN_BYTES)))
+                .is_err()
+        );
+        assert!(parse_origin_allowlist_value(
+            &(0..=MAX_ALLOWED_ORIGINS)
+                .map(|index| format!("https://game-{index}.example"))
+                .collect::<Vec<_>>()
+                .join(","),
+        )
+        .is_err());
     }
 
     #[test]

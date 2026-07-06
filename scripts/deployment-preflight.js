@@ -9,6 +9,8 @@ const PLACEHOLDER_SECRET_MARKERS = [
   "todo",
 ];
 const MAX_AUTH_TOKEN_BYTES = 4096;
+const MAX_ALLOWED_ORIGINS = 16;
+const MAX_ORIGIN_BYTES = 512;
 
 const checks = [];
 
@@ -165,6 +167,18 @@ function checkOrigins() {
     .filter(Boolean);
   const parsed = origins.map(parseOrigin);
   add("allowed-origins-present", origins.length > 0, "error", "ALLOWED_ORIGINS must be set");
+  add(
+    "allowed-origins-count",
+    origins.length > 0 && origins.length <= MAX_ALLOWED_ORIGINS,
+    "error",
+    `ALLOWED_ORIGINS must include at most ${MAX_ALLOWED_ORIGINS} origins`,
+  );
+  add(
+    "allowed-origins-bounded",
+    origins.length > 0 && origins.every((origin) => Buffer.byteLength(origin) <= MAX_ORIGIN_BYTES),
+    "error",
+    `ALLOWED_ORIGINS entries must be at most ${MAX_ORIGIN_BYTES} bytes`,
+  );
   add(
     "allowed-origins-parse",
     origins.length > 0 && parsed.every((origin) => origin.ok),
