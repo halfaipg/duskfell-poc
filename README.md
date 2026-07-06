@@ -225,10 +225,10 @@ node scripts/ops-snapshot.js \
 ```
 
 The snapshot includes runtime identity, content and asset fingerprints,
-readiness, selected metrics, journal/outbox counters, recent event type counts,
-and ownership counts. It intentionally excludes full `/api/snapshot`, raw event
-payloads, account subjects, player IDs, token values, and absolute durable file
-paths.
+readiness, public/admission posture, selected metrics, journal/outbox counters,
+recent event type counts, and ownership counts. It intentionally excludes full
+`/api/snapshot`, raw event payloads, account subjects, player IDs, token values,
+and absolute durable file paths.
 
 The default `shared-poc` profile checks the public-mode environment without starting the server. It expects hardened PoC deployment variables such as `PUBLIC_DEPLOYMENT=true`, strict sessions, account auth, strong distinct non-placeholder credentials, exact allowed Origins, sane positive capacity and payload budgets, non-draining admission posture, and chain mode disabled. Use `npm run preflight:deployment -- --profile production` to see the fail-closed list of missing production systems; today that profile intentionally fails until durable datastore, signer/indexer, and cross-process admission/rate-limit services exist. The identity blocker clears only when `ACCOUNT_AUTH_MODE=jwt-hs256` includes a strong secret, issuer, and audience. For an intentional rollback or shard-removal rollout, pass `--allowDraining` so `DRAINING=true` remains explicit in the deploy command.
 Set `HTTP_BODY_LIMIT_BYTES` to cap plain HTTP request bodies. The default is `4096`, which is enough for current session/admin traffic and prevents oversized POST bodies from occupying shard work.

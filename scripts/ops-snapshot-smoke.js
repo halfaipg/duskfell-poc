@@ -45,6 +45,16 @@ try {
       snapshot.summary?.publicDeployment === true &&
       snapshot.summary?.requireSession === true &&
       snapshot.summary?.requireAccount === true &&
+      snapshot.posture?.publicDeployment === true &&
+      snapshot.posture?.requireSession === true &&
+      snapshot.posture?.requireAccount === true &&
+      snapshot.posture?.originAllowlistEnabled === true &&
+      snapshot.posture?.notDraining === true &&
+      snapshot.posture?.chainStubDisabled === true &&
+      snapshot.posture?.sessionTicketCapacityAvailable === true &&
+      snapshot.posture?.connectionCapacityAvailable === true &&
+      snapshot.posture?.durablePersistenceHealthy === true &&
+      snapshot.posture?.settlementQueueHasCapacity === true &&
       snapshot.summary?.journal?.pathBasename === "journal.jsonl" &&
       snapshot.summary?.settlement?.outboxPathBasename === "settlement-outbox.jsonl" &&
       snapshot.metrics?.sundermere_public_deployment === 1 &&
@@ -56,8 +66,17 @@ try {
       health: snapshot.health,
       readiness: snapshot.readiness,
       app: snapshot.runtime?.app,
+      posture: snapshot.posture,
       journal: snapshot.summary?.journal,
       settlement: snapshot.summary?.settlement,
+      metrics: {
+        sundermere_origin_allowlist_enabled: snapshot.metrics?.sundermere_origin_allowlist_enabled,
+        sundermere_origin_allowed_origins: snapshot.metrics?.sundermere_origin_allowed_origins,
+        sundermere_session_pending_tickets: snapshot.metrics?.sundermere_session_pending_tickets,
+        sundermere_session_ticket_capacity: snapshot.metrics?.sundermere_session_ticket_capacity,
+        sundermere_active_connections: snapshot.metrics?.sundermere_active_connections,
+        sundermere_max_active_connections: snapshot.metrics?.sundermere_max_active_connections,
+      },
       events: snapshot.events,
       ownership: snapshot.ownership,
     },

@@ -34,6 +34,7 @@ const [health, ready, runtime, summary, metricsText, events, ownership] = await 
   fetchJson("/admin/ownership", { headers: adminHeaders() }),
 ]);
 
+const metrics = parseMetrics(metricsText.body);
 const snapshot = {
   schemaVersion: "duskfell-ops-snapshot-v1",
   capturedAt: new Date().toISOString(),
@@ -46,7 +47,8 @@ const snapshot = {
   readiness: summarizeReady(ready.body),
   runtime: summarizeRuntime(runtime.body),
   summary: summarizeAdminSummary(summary.body),
-  metrics: summarizeMetrics(parseMetrics(metricsText.body)),
+  posture: summarizePosture(summary.body, metrics),
+  metrics: summarizeMetrics(metrics),
   events: summarizeEvents(events.body ?? events),
   ownership: summarizeOwnership(ownership.body),
 };
@@ -176,6 +178,36 @@ function summarizeAdminSummary(summary) {
   };
 }
 
+function summarizePosture(summary, metrics) {
+  const originAllowlistEnabled =
+    summary?.originAllowlistEnabled === true && Number(summary?.originAllowedCount ?? 0) > 0;
+  const sessionTicketCapacityAvailable =
+    Number.isFinite(summary?.sessionPendingTickets) &&
+    Number.isFinite(summary?.sessionTicketCapacity) &&
+    summary.sessionPendingTickets < summary.sessionTicketCapacity;
+  const connectionCapacityAvailable =
+    Number.isFinite(summary?.activeConnections) &&
+    Number.isFinite(summary?.maxActiveConnections) &&
+    summary.activeConnections < summary.maxActiveConnections;
+  const durablePersistenceHealthy =
+    metrics.sundermere_durable_journal_persist_failed_total === 0 &&
+    metrics.sundermere_durable_settlement_persist_failed_total === 0;
+  const settlementQueueHasCapacity = metrics.sundermere_settlement_queue_capacity > 0;
+
+  return {
+    publicDeployment: summary?.publicDeployment === true,
+    requireSession: summary?.requireSession === true,
+    requireAccount: summary?.requireAccount === true,
+    originAllowlistEnabled,
+    notDraining: summary?.draining === false,
+    chainStubDisabled: summary?.chainEnabled === false,
+    sessionTicketCapacityAvailable,
+    connectionCapacityAvailable,
+    durablePersistenceHealthy,
+    settlementQueueHasCapacity,
+  };
+}
+
 function summarizeMetrics(metrics) {
   const names = [
     "sundermere_public_deployment",
@@ -183,9 +215,12 @@ function summarizeMetrics(metrics) {
     "sundermere_require_session",
     "sundermere_require_account",
     "sundermere_chain_enabled",
+    "sundermere_origin_allowlist_enabled",
+    "sundermere_origin_allowed_origins",
     "sundermere_tick",
     "sundermere_players",
     "sundermere_active_connections",
+    "sundermere_max_active_connections",
     "sundermere_ws_connections_total",
     "sundermere_ws_messages_rejected_total",
     "sundermere_ws_capacity_rejected_total",
@@ -201,6 +236,8 @@ function summarizeMetrics(metrics) {
     "sundermere_session_issue_rate_limited_total",
     "sundermere_session_account_rate_limited_total",
     "sundermere_session_draining_rejected_total",
+    "sundermere_session_pending_tickets",
+    "sundermere_session_ticket_capacity",
     "sundermere_tick_duration_last_us",
     "sundermere_tick_duration_max_us",
     "sundermere_tick_overruns_total",
