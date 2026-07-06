@@ -1,0 +1,9 @@
+.git
+.github
+.DS_Store
+.env
+*.log
+node_modules
+target
+var
+**/.DS_Store

@@ -39,10 +39,49 @@ Then open [http://127.0.0.1:4107](http://127.0.0.1:4107).
 
 Use WASD or arrow keys to move. Press `E` near groves or ore veins to gather inventory resources, near the Field Forge to craft a Trail Kit from `wood + ore`, or near the Title Office to claim a dry-run deed. The deed appears immediately in the game state, while the settlement worker confirms the queued job asynchronously. Settlement jobs are durably appended before worker handoff, and a full settlement queue is surfaced through readiness and metrics instead of blocking the simulation tick.
 
+## Container
+
+Build and smoke-test the deployment image:
+
+```sh
+npm run smoke:container
+```
+
+The smoke builds `duskfell-poc:smoke`, starts it with hardened public-mode
+environment variables, verifies `/healthz`, `/readyz`, token-protected
+`/admin/runtime`, token-protected `/metrics`, the non-root image user, and the
+container healthcheck, then removes the container. It requires a running Docker
+daemon and network access to the configured base images.
+
+For a shared demo, run the image with explicit public deployment guardrails:
+
+```sh
+docker build -t duskfell-poc:local .
+docker run --rm -p 127.0.0.1:4107:4107 \
+  -e PUBLIC_DEPLOYMENT=true \
+  -e REQUIRE_SESSION=true \
+  -e REQUIRE_ACCOUNT=true \
+  -e ACCOUNT_AUTH_MODE=dev-token \
+  -e DEV_ACCOUNT_TOKEN=replace-with-strong-account-token \
+  -e ADMIN_TOKEN=replace-with-strong-admin-token \
+  -e METRICS_TOKEN=replace-with-strong-metrics-token \
+  -e ALLOWED_ORIGINS=http://127.0.0.1:4107 \
+  -v duskfell-data:/data \
+  duskfell-poc:local
+```
+
+The image listens on `0.0.0.0:4107` inside the container, runs as
+`duskfell:duskfell`, serves bundled `client/`, `assets/`, and
+`server/data/world.json`, writes JSONL journal/outbox state under `/data`, and
+uses `/readyz` for its Docker healthcheck. Real public deployments should use
+JWT account mode, distinct high-entropy secrets, exact HTTPS origins, and a
+persistent volume or managed durable store.
+
 ## Development Commands
 
 ```sh
 npm run doctor:server
+npm run verify:ci
 npm run verify:local
 ```
 
@@ -65,6 +104,7 @@ npm run smoke:assets
 npm run smoke:admin-auth
 npm run smoke:bad-config
 npm run smoke:client-protocol
+npm run smoke:container
 npm run smoke:content-schema
 npm run smoke:deed
 npm run smoke:external-bind-guard
