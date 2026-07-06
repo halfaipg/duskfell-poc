@@ -409,6 +409,8 @@ function checkNumericBudgets() {
 function checkDurabilityMode() {
   const value = env.DURABLE_SYNC_WRITES;
   const enabled = boolEnv("DURABLE_SYNC_WRITES") === true;
+  const journalPath = env.JOURNAL_PATH ?? "var/journal.jsonl";
+  const settlementOutboxPath = env.SETTLEMENT_OUTBOX_PATH ?? "var/settlement-outbox.jsonl";
   add(
     "durable-sync-writes-boolean",
     value == null || boolEnv("DURABLE_SYNC_WRITES") != null,
@@ -420,6 +422,12 @@ function checkDurabilityMode() {
     profile === "local" || enabled,
     "error",
     "shared and production profiles require DURABLE_SYNC_WRITES=true while JSONL is the durable store",
+  );
+  add(
+    "durable-paths-distinct",
+    journalPath !== settlementOutboxPath,
+    "error",
+    "JOURNAL_PATH and SETTLEMENT_OUTBOX_PATH must be distinct durable files",
   );
 }
 

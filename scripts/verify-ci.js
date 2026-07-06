@@ -23,6 +23,7 @@ await step("content-contract-smoke", () => run("npm", ["run", "smoke:content-con
 await step("content-size-smoke", () => run("npm", ["run", "smoke:content-size"]));
 await step("durable-size-smoke", () => run("npm", ["run", "smoke:durable-size"]));
 await step("durable-corruption-smoke", () => run("npm", ["run", "smoke:durable-corruption"]));
+await step("durable-lock-smoke", () => run("npm", ["run", "smoke:durable-lock"]));
 await step("durable-sync-smoke", () => run("npm", ["run", "smoke:durable-sync"]));
 await step("account-auth-smoke", () => run("npm", ["run", "smoke:account-auth"]));
 await step("account-jwt-auth-smoke", () => run("npm", ["run", "smoke:account-jwt-auth"]));

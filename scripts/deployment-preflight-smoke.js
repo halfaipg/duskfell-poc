@@ -255,6 +255,16 @@ const cases = [
     expectedChecks: ["durable-sync-writes-boolean"],
   },
   {
+    name: "shared-poc-rejects-shared-durable-path",
+    args: [],
+    env: hardenedEnv({
+      JOURNAL_PATH: "var/shared-durable.jsonl",
+      SETTLEMENT_OUTBOX_PATH: "var/shared-durable.jsonl",
+    }),
+    expectOk: false,
+    expectedChecks: ["durable-paths-distinct"],
+  },
+  {
     name: "production-remains-blocked",
     args: ["--profile", "production"],
     env: hardenedEnv({

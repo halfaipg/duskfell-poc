@@ -82,7 +82,9 @@ the exact source revision; keep the same bounded hex revision in the deployment
 environment so preflight can reject untraceable shared builds. Real public
 deployments should use JWT account mode, distinct high-entropy secrets, exact
 HTTPS origins, synced durable writes while JSONL is still the local store, and a
-persistent volume or managed durable store.
+persistent volume or managed durable store. The JSONL store is deliberately
+single-writer: startup takes lock files beside the journal and settlement outbox
+so a second shard process cannot append to the same local durable files.
 
 ## Development Commands
 
@@ -113,6 +115,7 @@ npm run smoke:bad-config
 npm run smoke:client-protocol
 npm run smoke:container
 npm run smoke:content-schema
+npm run smoke:durable-lock
 npm run smoke:deploy-audit
 npm run smoke:deed
 npm run smoke:drain-mode
@@ -241,7 +244,7 @@ recent event type counts, and ownership counts. It intentionally excludes full
 `/api/snapshot`, raw event payloads, account subjects, player IDs, token values,
 and absolute durable file paths.
 
-The default `shared-poc` profile checks the public-mode environment without starting the server. It expects hardened PoC deployment variables such as `PUBLIC_DEPLOYMENT=true`, strict sessions, account auth, synced durable writes, strong distinct non-placeholder credentials capped at 4096 bytes, exact allowed Origins, bounded JWT issuer/audience identity config, a parseable IP `BIND_ADDR`, bounded hex `GIT_SHA` build provenance, bounded and internally consistent capacity/payload budgets, non-draining admission posture, and chain mode disabled. Use `npm run preflight:deployment -- --profile production` to see the fail-closed list of missing production systems; today that profile intentionally fails until durable datastore, signer/indexer, and cross-process admission/rate-limit services exist. The identity blocker clears only when `ACCOUNT_AUTH_MODE=jwt-hs256` includes a strong secret, valid non-local HTTPS issuer, and bounded printable audience. For an intentional rollback or shard-removal rollout, pass `--allowDraining` so `DRAINING=true` remains explicit in the deploy command.
+The default `shared-poc` profile checks the public-mode environment without starting the server. It expects hardened PoC deployment variables such as `PUBLIC_DEPLOYMENT=true`, strict sessions, account auth, synced durable writes, distinct journal/outbox paths, strong distinct non-placeholder credentials capped at 4096 bytes, exact allowed Origins, bounded JWT issuer/audience identity config, a parseable IP `BIND_ADDR`, bounded hex `GIT_SHA` build provenance, bounded and internally consistent capacity/payload budgets, non-draining admission posture, and chain mode disabled. Use `npm run preflight:deployment -- --profile production` to see the fail-closed list of missing production systems; today that profile intentionally fails until durable datastore, signer/indexer, and cross-process admission/rate-limit services exist. The identity blocker clears only when `ACCOUNT_AUTH_MODE=jwt-hs256` includes a strong secret, valid non-local HTTPS issuer, and bounded printable audience. For an intentional rollback or shard-removal rollout, pass `--allowDraining` so `DRAINING=true` remains explicit in the deploy command.
 Set `HTTP_BODY_LIMIT_BYTES` to cap plain HTTP request bodies. The default is `4096`, which is enough for current session/admin traffic and prevents oversized POST bodies from occupying shard work.
 Every HTTP response includes `x-request-id`. If an upstream proxy sends a safe bounded `x-request-id`, the server echoes it; otherwise the server generates a UUID. Unsafe request IDs with spaces, separators, control characters, or more than 64 bytes are replaced rather than reflected.
 Set `ADMIN_EVENT_LIMIT_CAP` to cap a single `/admin/events` response. The default is `200`; the endpoint default query limit is `50`.
@@ -250,6 +253,7 @@ Set `MAX_JOURNAL_BYTES` to cap the durable JSONL journal accepted at startup. Th
 Set `MAX_SETTLEMENT_OUTBOX_BYTES` to cap the durable settlement outbox accepted at startup. The default is `16777216`; oversized outbox files fail before replay or serving clients.
 Set `MAX_DURABLE_LINE_BYTES` to cap each JSONL line accepted during journal and settlement outbox replay. The default is `262144`; oversized lines fail before JSON parsing so one record cannot allocate the whole durable-file budget.
 Set `DURABLE_SYNC_WRITES=true` to make journal and settlement outbox appends call `sync_data()` after flushing. The default is `false` for local iteration speed; `PUBLIC_DEPLOYMENT=true` requires it for stronger crash semantics while the project is still on JSONL.
+The server creates `.lock` files beside the journal and settlement outbox at startup, and refuses to boot if another process already holds the same durable path. `JOURNAL_PATH` and `SETTLEMENT_OUTBOX_PATH` must be distinct files.
 Set `MAX_RUNTIME_MANIFEST_BYTES` to cap each sprite or terrain manifest JSON checked by the server at startup. The default is `262144`; oversized runtime asset manifests fail before the server listens.
 Set `MAX_RUNTIME_ASSET_BYTES` to cap each sprite or terrain PNG checked by the server at startup. The default is `2097152`; oversized runtime asset images fail before the server listens.
 Set `MAX_ACTIVE_CONNECTIONS` to cap concurrent WebSocket players before spawning sim entities. The default is `512`.
@@ -281,7 +285,7 @@ npm run verify:ci
 The command runs Rust formatting, locked Rust check/tests, supply-chain smoke,
 client projection/protocol/asset-loader tests, sprite and terrain manifest tests,
 runtime asset verification, deploy/preflight smokes, startup/config/content
-guard smokes, runtime budget guard smokes, durable replay/corruption/sync smokes, account/admin/metrics auth
+guard smokes, runtime budget guard smokes, durable replay/corruption/lock/sync smokes, account/admin/metrics auth
 smokes, public deployment guardrails, ops snapshot/runtime provenance smokes,
 readiness/metrics smokes, trace redaction smoke, session/admission smokes,
 movement and interest-radius authority smokes, journal/restart/settlement replay
@@ -295,7 +299,7 @@ Run the broad local verification gate:
 npm run verify:local
 ```
 
-The command runs Rust formatting/tests, supply-chain smoke, client projection/protocol/asset-loader tests, sprite manifest tests, sprite asset verification, deployment preflight smoke, asset serving smoke, bad-config startup smoke, public chain-mode guard smoke, local chain-stub honesty smoke, external bind guard smoke, HTTP hardening smoke, bad-content-schema startup smoke, bad-content-contract startup smoke, bad-content-size startup smoke, durable-file-size startup smoke, durable-corruption startup smoke, durable-sync smoke, dev-token account auth smoke, JWT account auth smoke, account session rate-limit smoke, account-bound settlement smoke, admin auth smoke, admin event-limit smoke, admin snapshot-size smoke, metrics auth smoke, Origin allowlist smoke, public deployment guard smoke, metrics smoke, readiness smoke, trace redaction smoke, session ticket capacity smoke, session ticket expiry smoke, expired-ticket WebSocket rejection smoke, session issue rate-limit smoke, interest-radius smoke, movement authority smoke, journal anomaly smoke, journal replay smoke, gameplay journal replay smoke, settlement idempotency smoke, restart reconciliation smoke, graceful shutdown smoke, WebSocket admission preflight smoke, WebSocket ingress config smoke, WebSocket snapshot-size smoke, WebSocket payload-metrics smoke, WebSocket peer-capacity smoke, stale-WebSocket timeout smoke, a side-port client protocol smoke, a side-port deed smoke, a side-port resource-gather smoke, a side-port crafting smoke, a side-port WebSocket load smoke, and a side-port capacity smoke.
+The command runs Rust formatting/tests, supply-chain smoke, client projection/protocol/asset-loader tests, sprite manifest tests, sprite asset verification, deployment preflight smoke, asset serving smoke, bad-config startup smoke, public chain-mode guard smoke, local chain-stub honesty smoke, external bind guard smoke, HTTP hardening smoke, bad-content-schema startup smoke, bad-content-contract startup smoke, bad-content-size startup smoke, durable-file-size startup smoke, durable-corruption startup smoke, durable-lock startup smoke, durable-sync smoke, dev-token account auth smoke, JWT account auth smoke, account session rate-limit smoke, account-bound settlement smoke, admin auth smoke, admin event-limit smoke, admin snapshot-size smoke, metrics auth smoke, Origin allowlist smoke, public deployment guard smoke, metrics smoke, readiness smoke, trace redaction smoke, session ticket capacity smoke, session ticket expiry smoke, expired-ticket WebSocket rejection smoke, session issue rate-limit smoke, interest-radius smoke, movement authority smoke, journal anomaly smoke, journal replay smoke, gameplay journal replay smoke, settlement idempotency smoke, restart reconciliation smoke, graceful shutdown smoke, WebSocket admission preflight smoke, WebSocket ingress config smoke, WebSocket snapshot-size smoke, WebSocket payload-metrics smoke, WebSocket peer-capacity smoke, stale-WebSocket timeout smoke, a side-port client protocol smoke, a side-port deed smoke, a side-port resource-gather smoke, a side-port crafting smoke, a side-port WebSocket load smoke, and a side-port capacity smoke.
 
 Run the live server doctor against an already-running development server:
 
@@ -442,6 +446,14 @@ npm run smoke:durable-corruption
 ```
 
 The command starts isolated servers with malformed journal JSONL, oversized durable JSONL lines, and malformed or semantically invalid settlement outbox JSONL, then expects startup to fail before serving clients.
+
+Run the durable lock smoke:
+
+```sh
+npm run smoke:durable-lock
+```
+
+The command starts one server against a shared journal/outbox pair, then verifies a second server using the same durable paths fails startup on the single-writer lock before serving clients.
 
 Run the durable sync smoke:
 

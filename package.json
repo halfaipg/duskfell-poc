@@ -35,6 +35,7 @@
     "smoke:content-size": "node scripts/content-size-smoke.js",
     "smoke:deed": "node scripts/deed-claim-smoke.js",
     "smoke:durable-corruption": "node scripts/durable-corruption-smoke.js",
+    "smoke:durable-lock": "node scripts/durable-lock-smoke.js",
     "smoke:durable-size": "node scripts/durable-size-smoke.js",
     "smoke:durable-sync": "node scripts/durable-sync-smoke.js",
     "smoke:external-bind-guard": "node scripts/external-bind-guard-smoke.js",

@@ -40,7 +40,8 @@ use journal::{EventJournal, JournalEvent, JournalEventKind, DEFAULT_RETAINED_EVE
 use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
 use metrics::AppMetrics;
 use persistence::{
-    ensure_file_within_size, load_journal_events, JsonlEventWriter, DEFAULT_MAX_DURABLE_LINE_BYTES,
+    ensure_file_within_size, load_journal_events, validate_distinct_durable_paths, DurableFileLock,
+    JsonlEventWriter, DEFAULT_MAX_DURABLE_LINE_BYTES,
 };
 use protocol::{ClientMessage, NoticeLevel, PlayerId, ServerMessage};
 use serde::{Deserialize, Serialize};
@@ -142,6 +143,8 @@ struct AppState {
     max_journal_bytes: u64,
     max_settlement_outbox_bytes: u64,
     max_durable_line_bytes: usize,
+    _journal_file_lock: Arc<DurableFileLock>,
+    _settlement_outbox_file_lock: Arc<DurableFileLock>,
     durable_sync_writes: bool,
     max_content_objects: usize,
     metrics: Arc<AppMetrics>,
@@ -194,6 +197,13 @@ async fn main() -> anyhow::Result<()> {
     let max_durable_line_bytes =
         env_positive_usize("MAX_DURABLE_LINE_BYTES", DEFAULT_MAX_DURABLE_LINE_BYTES)?;
     let settlement_outbox_path = settlement_outbox_path();
+    let journal_path = journal_path();
+    validate_distinct_durable_paths(&journal_path, &settlement_outbox_path)?;
+    let settlement_outbox_file_lock = Arc::new(DurableFileLock::acquire_for_path(
+        &settlement_outbox_path,
+        "settlement outbox",
+    )?);
+    let journal_file_lock = Arc::new(DurableFileLock::acquire_for_path(&journal_path, "journal")?);
     ensure_file_within_size(
         &settlement_outbox_path,
         max_settlement_outbox_bytes,
@@ -210,7 +220,6 @@ async fn main() -> anyhow::Result<()> {
     settlement::seed_confirmed_receipts(confirmed_receipts, &settlement_ledger).await;
     let journal_retained_events =
         env_positive_usize("JOURNAL_RETAINED_EVENTS", DEFAULT_RETAINED_EVENTS)?;
-    let journal_path = journal_path();
     ensure_file_within_size(
         &journal_path,
         max_journal_bytes,
@@ -343,6 +352,8 @@ async fn main() -> anyhow::Result<()> {
         max_journal_bytes,
         max_settlement_outbox_bytes,
         max_durable_line_bytes,
+        _journal_file_lock: journal_file_lock,
+        _settlement_outbox_file_lock: settlement_outbox_file_lock,
         durable_sync_writes,
         max_content_objects,
         metrics: metrics_handle,
