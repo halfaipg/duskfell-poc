@@ -48,6 +48,7 @@
     "smoke:metrics": "node scripts/metrics-smoke.js",
     "smoke:movement-authority": "node scripts/movement-authority-smoke.js",
     "smoke:origin-allowlist": "node scripts/origin-allowlist-smoke.js",
+    "smoke:production-profile-guard": "node scripts/production-profile-guard-smoke.js",
     "smoke:public-deployment": "node scripts/public-deployment-smoke.js",
     "smoke:deployment-preflight": "node scripts/deployment-preflight-smoke.js",
     "smoke:deploy-audit": "node scripts/deploy-audit-smoke.js",

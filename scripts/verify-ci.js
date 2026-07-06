@@ -17,6 +17,9 @@ await step("bad-config-smoke", () => run("npm", ["run", "smoke:bad-config"]));
 await step("runtime-budget-smoke", () => run("npm", ["run", "smoke:runtime-budget"]));
 await step("external-bind-guard-smoke", () => run("npm", ["run", "smoke:external-bind-guard"]));
 await step("chain-public-guard-smoke", () => run("npm", ["run", "smoke:chain-public-guard"]));
+await step("production-profile-guard-smoke", () =>
+  run("npm", ["run", "smoke:production-profile-guard"]),
+);
 await step("chain-local-stub-smoke", () => run("npm", ["run", "smoke:chain-local-stub"]));
 await step("content-schema-smoke", () => run("npm", ["run", "smoke:content-schema"]));
 await step("content-contract-smoke", () => run("npm", ["run", "smoke:content-contract"]));

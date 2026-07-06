@@ -131,6 +131,30 @@ const CONTENT_SECURITY_POLICY: &str = concat!(
     "frame-ancestors 'none'"
 );
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum DeploymentProfile {
+    Local,
+    SharedPoc,
+    Production,
+}
+
+impl DeploymentProfile {
+    fn name(self) -> &'static str {
+        match self {
+            DeploymentProfile::Local => "local",
+            DeploymentProfile::SharedPoc => "shared-poc",
+            DeploymentProfile::Production => "production",
+        }
+    }
+
+    fn requires_public_deployment(self) -> bool {
+        matches!(
+            self,
+            DeploymentProfile::SharedPoc | DeploymentProfile::Production
+        )
+    }
+}
+
 #[derive(Clone)]
 struct AppState {
     sim: Arc<Mutex<SimWorld>>,
@@ -170,6 +194,7 @@ struct AppState {
     account_connections: Arc<Mutex<AccountConnectionCounts>>,
     max_connections_per_account: usize,
     content_manifest: ContentManifest,
+    deployment_profile: DeploymentProfile,
     public_deployment: bool,
     draining: bool,
     admin_token: Option<String>,
@@ -270,6 +295,7 @@ async fn main() -> anyhow::Result<()> {
     )?;
     let admin_token = env_optional_nonempty_string("ADMIN_TOKEN")?;
     let metrics_token = env_optional_nonempty_string("METRICS_TOKEN")?;
+    let deployment_profile = deployment_profile()?;
     let public_deployment = env_bool("PUBLIC_DEPLOYMENT", false)?;
     let draining = env_bool("DRAINING", false)?;
     let http_body_limit_bytes =
@@ -315,6 +341,7 @@ async fn main() -> anyhow::Result<()> {
     )?;
     validate_bind_addr(public_deployment, addr)?;
     validate_chain_mode(public_deployment, settlement_config.chain_enabled)?;
+    validate_deployment_profile(deployment_profile, public_deployment)?;
 
     tokio::spawn(settlement::run_worker(
         settlement_config.clone(),
@@ -393,6 +420,7 @@ async fn main() -> anyhow::Result<()> {
         account_connections: Arc::new(Mutex::new(AccountConnectionCounts::default())),
         max_connections_per_account,
         content_manifest,
+        deployment_profile,
         public_deployment,
         draining,
         admin_token,
@@ -1548,6 +1576,27 @@ async fn metrics(
     );
     append_metric(
         &mut metrics,
+        "sundermere_deployment_profile_local",
+        "Whether DEPLOYMENT_PROFILE is local.",
+        "gauge",
+        u64::from(state.deployment_profile == DeploymentProfile::Local),
+    );
+    append_metric(
+        &mut metrics,
+        "sundermere_deployment_profile_shared_poc",
+        "Whether DEPLOYMENT_PROFILE is shared-poc.",
+        "gauge",
+        u64::from(state.deployment_profile == DeploymentProfile::SharedPoc),
+    );
+    append_metric(
+        &mut metrics,
+        "sundermere_deployment_profile_production",
+        "Whether DEPLOYMENT_PROFILE is production.",
+        "gauge",
+        u64::from(state.deployment_profile == DeploymentProfile::Production),
+    );
+    append_metric(
+        &mut metrics,
         "sundermere_draining",
         "Whether this shard is refusing new session admission for drain or rollback.",
         "gauge",
@@ -1728,6 +1777,7 @@ struct AdminSummary {
     client_reject_limit: usize,
     origin_allowlist_enabled: bool,
     origin_allowed_count: usize,
+    deployment_profile: &'static str,
     public_deployment: bool,
     draining: bool,
     require_session: bool,
@@ -1842,6 +1892,7 @@ async fn admin_summary(
         client_reject_limit: state.client_reject_limit,
         origin_allowlist_enabled: state.origin_allowlist.enabled(),
         origin_allowed_count: state.origin_allowlist.allowed_count(),
+        deployment_profile: state.deployment_profile.name(),
         public_deployment: state.public_deployment,
         draining: state.draining,
         require_session: state.session_config.require_session,
@@ -3180,6 +3231,26 @@ fn validate_chain_mode(public_deployment: bool, chain_enabled: bool) -> anyhow::
     ))
 }
 
+fn validate_deployment_profile(
+    deployment_profile: DeploymentProfile,
+    public_deployment: bool,
+) -> anyhow::Result<()> {
+    if deployment_profile.requires_public_deployment() && !public_deployment {
+        return Err(anyhow!(
+            "DEPLOYMENT_PROFILE={} requires PUBLIC_DEPLOYMENT=true",
+            deployment_profile.name()
+        ));
+    }
+
+    if deployment_profile != DeploymentProfile::Production {
+        return Ok(());
+    }
+
+    Err(anyhow!(
+        "DEPLOYMENT_PROFILE=production is not supported until durable database/event-store, isolated signer/indexer services, and cross-process admission/rate-limit state are implemented"
+    ))
+}
+
 struct RuntimeBudgetConfig {
     session_config: SessionConfig,
     session_issue_rate_limit_config: SessionIssueRateLimitConfig,
@@ -3813,6 +3884,25 @@ fn env_optional_nonempty_string(name: &str) -> anyhow::Result<Option<String>> {
     }
 }
 
+fn deployment_profile() -> anyhow::Result<DeploymentProfile> {
+    match std::env::var("DEPLOYMENT_PROFILE") {
+        Ok(value) => parse_deployment_profile_value(&value),
+        Err(std::env::VarError::NotPresent) => Ok(DeploymentProfile::Local),
+        Err(err) => Err(anyhow!("DEPLOYMENT_PROFILE is not readable: {err}")),
+    }
+}
+
+fn parse_deployment_profile_value(value: &str) -> anyhow::Result<DeploymentProfile> {
+    match value.trim() {
+        "" | "local" => Ok(DeploymentProfile::Local),
+        "shared-poc" => Ok(DeploymentProfile::SharedPoc),
+        "production" => Ok(DeploymentProfile::Production),
+        other => Err(anyhow!(
+            "DEPLOYMENT_PROFILE must be local, shared-poc, or production, got {other}"
+        )),
+    }
+}
+
 fn bind_addr() -> anyhow::Result<SocketAddr> {
     std::env::var("BIND_ADDR")
         .unwrap_or_else(|_| "127.0.0.1:4107".to_string())
@@ -3949,15 +4039,16 @@ mod config_tests {
     use super::{
         bounded_bearer_token, bounded_header_str, constant_time_eq, durable_parent_status,
         durable_persistence_check, has_hidden_path_segment, is_safe_request_id, parse_bool_value,
-        parse_origin_allowlist_value, parse_positive_f32_value, parse_positive_u32_value,
-        parse_positive_u64_value, parse_positive_usize_value, redacted_durable_path_basename,
-        sanitized_trace_path, session_body_content_type, session_display_name_from_body,
-        settlement_queue_capacity_check, validate_account_jwt, validate_account_subject,
-        validate_bind_addr, validate_chain_mode, validate_public_deployment,
-        validate_runtime_budget_config, validate_websocket_timing, AccountAuthConfig,
-        AccountAuthMode, OriginAllowlistConfig, RuntimeBudgetConfig, WebSocketConfig,
-        MAX_ACCOUNT_SUBJECT_BYTES, MAX_ALLOWED_ORIGINS, MAX_AUTH_TOKEN_BYTES,
-        MAX_JWT_AUDIENCE_BYTES, MAX_JWT_ISSUER_BYTES, MAX_ORIGIN_BYTES,
+        parse_deployment_profile_value, parse_origin_allowlist_value, parse_positive_f32_value,
+        parse_positive_u32_value, parse_positive_u64_value, parse_positive_usize_value,
+        redacted_durable_path_basename, sanitized_trace_path, session_body_content_type,
+        session_display_name_from_body, settlement_queue_capacity_check, validate_account_jwt,
+        validate_account_subject, validate_bind_addr, validate_chain_mode,
+        validate_deployment_profile, validate_public_deployment, validate_runtime_budget_config,
+        validate_websocket_timing, AccountAuthConfig, AccountAuthMode, DeploymentProfile,
+        OriginAllowlistConfig, RuntimeBudgetConfig, WebSocketConfig, MAX_ACCOUNT_SUBJECT_BYTES,
+        MAX_ALLOWED_ORIGINS, MAX_AUTH_TOKEN_BYTES, MAX_JWT_AUDIENCE_BYTES, MAX_JWT_ISSUER_BYTES,
+        MAX_ORIGIN_BYTES,
     };
     use crate::ingress::ClientIngressConfig;
     use crate::metrics::AppMetrics;
@@ -3981,6 +4072,27 @@ mod config_tests {
         assert!(!parse_bool_value("TEST_BOOL", "false").expect("false parses"));
         assert!(!parse_bool_value("TEST_BOOL", "0").expect("0 parses"));
         assert!(parse_bool_value("TEST_BOOL", "maybe").is_err());
+    }
+
+    #[test]
+    fn parses_deployment_profile_values() {
+        assert_eq!(
+            parse_deployment_profile_value("").expect("empty profile defaults local"),
+            DeploymentProfile::Local
+        );
+        assert_eq!(
+            parse_deployment_profile_value("local").expect("local parses"),
+            DeploymentProfile::Local
+        );
+        assert_eq!(
+            parse_deployment_profile_value("shared-poc").expect("shared-poc parses"),
+            DeploymentProfile::SharedPoc
+        );
+        assert_eq!(
+            parse_deployment_profile_value("production").expect("production parses"),
+            DeploymentProfile::Production
+        );
+        assert!(parse_deployment_profile_value("prod").is_err());
     }
 
     #[test]
@@ -4678,6 +4790,26 @@ mod config_tests {
         assert!(message.contains("PUBLIC_DEPLOYMENT=true"));
         assert!(message.contains("signer"));
         assert!(message.contains("indexer"));
+    }
+
+    #[test]
+    fn deployment_profile_enforces_shared_and_production_posture() {
+        assert!(validate_deployment_profile(DeploymentProfile::Local, false).is_ok());
+        assert!(validate_deployment_profile(DeploymentProfile::SharedPoc, true).is_ok());
+
+        let shared_err = validate_deployment_profile(DeploymentProfile::SharedPoc, false)
+            .expect_err("shared-poc profile requires public deployment guardrails");
+        let shared_message = shared_err.to_string();
+        assert!(shared_message.contains("DEPLOYMENT_PROFILE=shared-poc"));
+        assert!(shared_message.contains("PUBLIC_DEPLOYMENT=true"));
+
+        let production_err = validate_deployment_profile(DeploymentProfile::Production, true)
+            .expect_err("production profile rejects PoC runtime");
+        let production_message = production_err.to_string();
+        assert!(production_message.contains("DEPLOYMENT_PROFILE=production"));
+        assert!(production_message.contains("durable database/event-store"));
+        assert!(production_message.contains("signer/indexer"));
+        assert!(production_message.contains("cross-process admission/rate-limit"));
     }
 
     #[test]

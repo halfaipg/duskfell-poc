@@ -28,6 +28,9 @@ try {
   await step("chain-public-guard-smoke", () =>
     run("npm", ["run", "smoke:chain-public-guard"]),
   );
+  await step("production-profile-guard-smoke", () =>
+    run("npm", ["run", "smoke:production-profile-guard"]),
+  );
   await step("chain-local-stub-smoke", () =>
     run("npm", ["run", "smoke:chain-local-stub"]),
   );

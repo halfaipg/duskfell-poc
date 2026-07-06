@@ -130,6 +130,7 @@ npm run smoke:metrics-auth
 npm run smoke:metrics
 npm run smoke:movement-authority
 npm run smoke:origin-allowlist
+npm run smoke:production-profile-guard
 npm run smoke:public-deployment
 npm run smoke:readiness
 npm run smoke:resource-gather
@@ -199,6 +200,7 @@ Set `SESSION_ISSUE_RATE_LIMIT_PER_MINUTE`, `SESSION_ISSUE_RATE_LIMIT_BURST`, and
 Set `ACCOUNT_SESSION_RATE_LIMIT_PER_MINUTE`, `ACCOUNT_SESSION_RATE_LIMIT_BURST`, and `ACCOUNT_SESSION_RATE_LIMIT_MAX_SUBJECTS` to tune the per-account-subject token bucket on authenticated JWT session issuance. The limiter runs after account authentication but before request-body display-name validation, so malformed authenticated issue attempts consume the same account budget as valid ticket requests. Defaults are `60` per minute, burst `10`, and `4096` tracked account-subject buckets.
 Set `ALLOWED_ORIGINS` to a comma-separated list of exact HTTP(S) origins to require matching `Origin` headers on `POST /api/session` and `/ws` upgrades. The list is capped at 16 entries, and each origin is capped at 512 bytes with no path, query, or fragment. Leave it unset or empty for local dev. Example: `ALLOWED_ORIGINS=https://play.example.com,http://localhost:4107`.
 Set `PUBLIC_DEPLOYMENT=true` for any shared or internet-reachable environment. In that mode the server refuses to boot unless `REQUIRE_SESSION=true`, `REQUIRE_ACCOUNT=true`, `DURABLE_SYNC_WRITES=true`, a strong bounded non-placeholder account credential for the selected `ACCOUNT_AUTH_MODE`, strong distinct bounded non-placeholder `ADMIN_TOKEN` and `METRICS_TOKEN` values, and bounded `ALLOWED_ORIGINS` are all configured, preventing the local-dev open endpoints from being exposed by accident. Public JWT mode also requires a bounded non-local HTTPS `ACCOUNT_JWT_ISSUER` without query, fragment, userinfo, whitespace, or control characters, plus a bounded printable non-placeholder `ACCOUNT_JWT_AUDIENCE`.
+Set `DEPLOYMENT_PROFILE=local`, `shared-poc`, or `production` to make the intended runtime posture explicit. The default is `local`. `shared-poc` requires `PUBLIC_DEPLOYMENT=true`, and `production` intentionally refuses startup until durable database/event-store, signer/indexer, and cross-process admission/rate-limit state exist. `/admin/summary` and `/metrics` expose the active profile.
 Set `DRAINING=true` before planned rollback or shard removal to keep `/healthz` alive while `/readyz` returns `503`, new `/api/session` admissions return `503`, and new `/ws` upgrades return `503` before session-ticket or capacity work. The state is visible in `/admin/summary` and `/metrics` as `sundermere_draining`, and rejected admissions increment `sundermere_session_draining_rejected_total`. Deployment preflight rejects drained shared/production boots unless `--allowDraining` is passed for an intentional maintenance rollout.
 Set `BIND_ADDR` to choose the listener address. It must be an IP socket address such as `127.0.0.1:4107`, `0.0.0.0:4107`, or `[::1]:4107`; hostnames such as `localhost:4107` are rejected. The default is `127.0.0.1:4107`. Non-loopback binds such as `0.0.0.0:4107` require `PUBLIC_DEPLOYMENT=true` and the public deployment guardrails above.
 `CHAIN_ENABLED=true` is still a local-only settlement stub. Public deployments refuse to start with chain mode enabled until signer and indexer configuration are implemented.
@@ -569,6 +571,14 @@ npm run smoke:chain-public-guard
 ```
 
 The command verifies a hardened `PUBLIC_DEPLOYMENT=true` server still refuses startup when `CHAIN_ENABLED=true`, because the PoC does not yet have signer or indexer configuration.
+
+Run the production profile guard smoke:
+
+```sh
+npm run smoke:production-profile-guard
+```
+
+The command verifies a hardened public JWT config still refuses `DEPLOYMENT_PROFILE=production` until durable database/event-store, signer/indexer, and cross-process admission/rate-limit state are implemented.
 
 Run the runtime budget smoke:
 
