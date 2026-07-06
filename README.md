@@ -187,7 +187,7 @@ Set `SESSION_ISSUE_RATE_LIMIT_PER_MINUTE`, `SESSION_ISSUE_RATE_LIMIT_BURST`, and
 Set `ACCOUNT_SESSION_RATE_LIMIT_PER_MINUTE`, `ACCOUNT_SESSION_RATE_LIMIT_BURST`, and `ACCOUNT_SESSION_RATE_LIMIT_MAX_SUBJECTS` to tune the per-account-subject token bucket on authenticated JWT session issuance. The limiter runs after account authentication but before request-body display-name validation, so malformed authenticated issue attempts consume the same account budget as valid ticket requests. Defaults are `60` per minute, burst `10`, and `4096` tracked account-subject buckets.
 Set `ALLOWED_ORIGINS` to a comma-separated list of exact HTTP(S) origins to require matching `Origin` headers on `POST /api/session` and `/ws` upgrades. Leave it unset or empty for local dev. Example: `ALLOWED_ORIGINS=https://play.example.com,http://localhost:4107`.
 Set `PUBLIC_DEPLOYMENT=true` for any shared or internet-reachable environment. In that mode the server refuses to boot unless `REQUIRE_SESSION=true`, `REQUIRE_ACCOUNT=true`, a strong non-placeholder account credential for the selected `ACCOUNT_AUTH_MODE`, strong distinct non-placeholder `ADMIN_TOKEN` and `METRICS_TOKEN` values, and `ALLOWED_ORIGINS` are all configured, preventing the local-dev open endpoints from being exposed by accident. Public JWT mode also requires `ACCOUNT_JWT_ISSUER` and `ACCOUNT_JWT_AUDIENCE`.
-Set `DRAINING=true` before planned rollback or shard removal to keep `/healthz` alive while `/readyz` returns `503` and new `/api/session` admissions return `503`. The state is visible in `/admin/summary` and `/metrics` as `sundermere_draining`, and rejected admissions increment `sundermere_session_draining_rejected_total`. Deployment preflight rejects drained shared/production boots unless `--allowDraining` is passed for an intentional maintenance rollout.
+Set `DRAINING=true` before planned rollback or shard removal to keep `/healthz` alive while `/readyz` returns `503`, new `/api/session` admissions return `503`, and new `/ws` upgrades return `503` before session-ticket or capacity work. The state is visible in `/admin/summary` and `/metrics` as `sundermere_draining`, and rejected admissions increment `sundermere_session_draining_rejected_total`. Deployment preflight rejects drained shared/production boots unless `--allowDraining` is passed for an intentional maintenance rollout.
 Set `BIND_ADDR` to choose the listener address. The default is `127.0.0.1:4107`. Non-loopback binds such as `0.0.0.0:4107` require `PUBLIC_DEPLOYMENT=true` and the public deployment guardrails above.
 `CHAIN_ENABLED=true` is still a local-only settlement stub. Public deployments refuse to start with chain mode enabled until signer and indexer configuration are implemented.
 
@@ -315,8 +315,9 @@ npm run smoke:drain-mode
 ```
 
 The command starts an isolated drained shard, verifies `/healthz` remains live,
-`/readyz` reports unavailable with `shardNotDraining`, `/api/session` returns
-`503`, and admin/metrics expose the drain state plus rejected-admission counter.
+`/readyz` reports unavailable with `shardNotDraining`, `/api/session` and `/ws`
+return `503`, and admin/metrics expose the drain state plus rejected-admission
+counter.
 
 Run the HTTP hardening smoke:
 

@@ -1,5 +1,7 @@
 import { spawn } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import { mkdir } from "node:fs/promises";
+import net from "node:net";
 import { performance } from "node:perf_hooks";
 import path from "node:path";
 
@@ -8,6 +10,7 @@ const port = Number(args.port ?? 4139);
 const runtimeDir = path.resolve("var", "drain-mode-smoke");
 const runId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const httpUrl = `http://127.0.0.1:${port}`;
+const wsUrl = `ws://127.0.0.1:${port}/ws`;
 
 if (!Number.isInteger(port) || port <= 0) {
   throw new Error("--port must be a positive integer");
@@ -25,6 +28,7 @@ try {
   const health = await fetchText("/healthz");
   const ready = await fetchJsonAllowStatus("/readyz");
   const session = await issueSession();
+  const websocket = await rawWebSocketHandshake();
   const summary = await fetchJson("/admin/summary");
   const metricsText = await fetchText("/metrics");
   const metrics = parseMetrics(metricsText, [
@@ -44,9 +48,11 @@ try {
       drainCheck,
     },
     session,
+    websocket,
     summary: {
       draining: summary.draining,
       sessionPendingTickets: summary.sessionPendingTickets,
+      activeConnections: summary.activeConnections,
     },
     metrics,
     elapsedMs: round(performance.now() - startedAt),
@@ -60,10 +66,13 @@ try {
       session.status === 503 &&
       typeof session.body === "string" &&
       session.body.includes("draining") &&
+      websocket.statusLine.startsWith("HTTP/1.1 503") &&
+      websocket.body.includes("draining") &&
       summary.draining === true &&
       summary.sessionPendingTickets === 0 &&
+      summary.activeConnections === 0 &&
       metrics.sundermere_draining === 1 &&
-      metrics.sundermere_session_draining_rejected_total === 1 &&
+      metrics.sundermere_session_draining_rejected_total === 2 &&
       metrics.sundermere_session_tickets_issued_total === 0 &&
       metrics.sundermere_session_pending_tickets === 0,
   };
@@ -138,6 +147,56 @@ async function issueSession() {
     status: response.status,
     body: await response.text(),
   };
+}
+
+async function rawWebSocketHandshake() {
+  const socketUrl = new URL(wsUrl);
+  const key = randomBytes(16).toString("base64");
+  const request = [
+    `GET ${socketUrl.pathname}${socketUrl.search} HTTP/1.1`,
+    `Host: ${socketUrl.host}`,
+    "Upgrade: websocket",
+    "Connection: Upgrade",
+    `Sec-WebSocket-Key: ${key}`,
+    "Sec-WebSocket-Version: 13",
+    "",
+    "",
+  ].join("\r\n");
+
+  return new Promise((resolve, reject) => {
+    const socket = net.connect({ host: socketUrl.hostname, port });
+    let data = "";
+    const timer = setTimeout(() => {
+      socket.destroy();
+      reject(new Error("drained websocket handshake timed out"));
+    }, 2000);
+
+    socket.on("connect", () => {
+      socket.write(request);
+    });
+    socket.on("data", (chunk) => {
+      data += String(chunk);
+      if (data.includes("\r\n\r\n")) {
+        clearTimeout(timer);
+        socket.destroy();
+        const [head, body = ""] = data.split("\r\n\r\n", 2);
+        resolve({
+          statusLine: head.split("\r\n")[0],
+          body,
+        });
+      }
+    });
+    socket.on("error", (err) => {
+      clearTimeout(timer);
+      reject(err);
+    });
+    socket.on("close", () => {
+      if (!data) {
+        clearTimeout(timer);
+        reject(new Error("drained websocket handshake closed without response"));
+      }
+    });
+  });
 }
 
 async function fetchJson(endpoint) {

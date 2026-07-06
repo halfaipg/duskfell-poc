@@ -497,7 +497,7 @@ impl AppMetrics {
         write_metric(
             &mut output,
             "sundermere_session_draining_rejected_total",
-            "Session ticket issue requests rejected because the shard is draining.",
+            "Session or WebSocket admission requests rejected because the shard is draining.",
             "counter",
             session_draining_rejected_total,
         );

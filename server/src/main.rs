@@ -1836,6 +1836,15 @@ async fn ws_handler(
         return err.into_response();
     }
 
+    if state.draining {
+        state.metrics.session_draining_rejected();
+        return (
+            StatusCode::SERVICE_UNAVAILABLE,
+            "shard is draining and refusing new sessions".to_string(),
+        )
+            .into_response();
+    }
+
     if let Err(reason) = state.sessions.lock().await.preflight_validate(
         query.session.as_deref(),
         state.session_config.require_session,
