@@ -68,6 +68,7 @@ The server also loads sprite and terrain manifest metadata at startup and expose
 Implemented ingress protections:
 
 - WebSocket player spawn can be gated by short-lived, single-use session tickets. Set `REQUIRE_SESSION=true` outside local-only development.
+- `POST /api/session` accepts empty ticket requests without a request body, but non-empty bodies must declare `Content-Type: application/json`; unsupported media types are rejected before JSON parsing and counted as invalid session requests.
 - `POST /api/session` JSON rejects unknown fields, so session issuance only accepts the explicit display-name request shape.
 - Optional display names submitted to `POST /api/session` are trimmed, bounded, character-validated, checked case-insensitively against pending ticket names and active shard names, bound to the one-use ticket, and applied only when that ticket is consumed by the WebSocket spawn.
 - Plain HTTP request bodies are capped by `HTTP_BODY_LIMIT_BYTES` before handlers run.

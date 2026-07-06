@@ -39,6 +39,14 @@ try {
     headers: { "x-request-id": unsafeRequestId },
   });
   await sessionOk.arrayBuffer();
+  const unsupportedMedia = await fetch(`${httpUrl}/api/session`, {
+    method: "POST",
+    headers: {
+      "content-type": "text/plain",
+    },
+    body: JSON.stringify({ name: "Plain_7" }),
+  });
+  await unsupportedMedia.arrayBuffer();
   const oversizedBody = "x".repeat(bodyLimitBytes + 1);
   const oversized = await fetch(`${httpUrl}/api/session`, {
     method: "POST",
@@ -57,12 +65,14 @@ try {
     headers: {
       index: selectedHeaders(indexResponse.headers),
       asset: selectedHeaders(assetResponse.headers),
+      unsupportedMedia: selectedHeaders(unsupportedMedia.headers),
       oversized: selectedHeaders(oversized.headers),
     },
     statuses: {
       index: indexResponse.status,
       asset: assetResponse.status,
       sessionOk: sessionOk.status,
+      unsupportedMedia: unsupportedMedia.status,
       oversized: oversized.status,
     },
     summary: {
@@ -73,12 +83,17 @@ try {
         metrics,
         "sundermere_http_body_limit_bytes",
       ),
+      sundermere_session_request_invalid_total: parseMetric(
+        metrics,
+        "sundermere_session_request_invalid_total",
+      ),
     },
     elapsedMs: round(performance.now() - startedAt),
     ok:
       indexResponse.status === 200 &&
       assetResponse.status === 200 &&
       sessionOk.status === 200 &&
+      unsupportedMedia.status === 415 &&
       oversized.status === 413 &&
       indexResponse.headers.get("x-content-type-options") === "nosniff" &&
       indexResponse.headers.get("x-request-id") === forwardedRequestId &&
@@ -90,11 +105,14 @@ try {
       isGeneratedRequestId(assetResponse.headers.get("x-request-id")) &&
       isGeneratedRequestId(sessionOk.headers.get("x-request-id")) &&
       sessionOk.headers.get("x-request-id") !== unsafeRequestId &&
+      unsupportedMedia.headers.get("x-content-type-options") === "nosniff" &&
+      unsupportedMedia.headers.get("cache-control") === "no-store" &&
       oversized.headers.get("x-content-type-options") === "nosniff" &&
       isGeneratedRequestId(oversized.headers.get("x-request-id")) &&
       oversized.headers.get("cache-control") === "no-store" &&
       summary.httpBodyLimitBytes === bodyLimitBytes &&
-      parseMetric(metrics, "sundermere_http_body_limit_bytes") === bodyLimitBytes,
+      parseMetric(metrics, "sundermere_http_body_limit_bytes") === bodyLimitBytes &&
+      parseMetric(metrics, "sundermere_session_request_invalid_total") === 1,
   };
 } finally {
   if (server) {

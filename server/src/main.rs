@@ -1043,6 +1043,10 @@ async fn issue_session(
             ));
         }
     }
+    session_body_content_type(&headers, &body).map_err(|err| {
+        state.metrics.session_request_invalid();
+        err
+    })?;
     let display_name = session_display_name_from_body(&body).map_err(|err| {
         if err.1.contains("invalid-player-name") {
             state.metrics.session_display_name_invalid();
@@ -2553,6 +2557,32 @@ fn session_display_name_from_body(body: &[u8]) -> Result<Option<String>, (Status
     }
 }
 
+fn session_body_content_type(headers: &HeaderMap, body: &[u8]) -> Result<(), (StatusCode, String)> {
+    if body.iter().all(|byte| byte.is_ascii_whitespace()) {
+        return Ok(());
+    }
+
+    let Some(content_type) = headers
+        .get(CONTENT_TYPE)
+        .and_then(|value| value.to_str().ok())
+    else {
+        return Err(unsupported_session_media_type());
+    };
+    let media_type = content_type.split(';').next().unwrap_or("").trim();
+    if media_type.eq_ignore_ascii_case("application/json") {
+        Ok(())
+    } else {
+        Err(unsupported_session_media_type())
+    }
+}
+
+fn unsupported_session_media_type() -> (StatusCode, String) {
+    (
+        StatusCode::UNSUPPORTED_MEDIA_TYPE,
+        "session request body must use Content-Type: application/json".to_string(),
+    )
+}
+
 fn player_name_response(err: PlayerNameError) -> (StatusCode, String) {
     let status = match &err {
         PlayerNameError::Taken => StatusCode::CONFLICT,
@@ -3437,16 +3467,20 @@ mod config_tests {
         durable_persistence_check, is_safe_request_id, parse_bool_value,
         parse_origin_allowlist_value, parse_positive_f32_value, parse_positive_u32_value,
         parse_positive_u64_value, parse_positive_usize_value, redacted_durable_path_basename,
-        sanitized_trace_path, session_display_name_from_body, settlement_queue_capacity_check,
-        validate_account_jwt, validate_account_subject, validate_bind_addr, validate_chain_mode,
-        validate_public_deployment, validate_websocket_timing, AccountAuthConfig, AccountAuthMode,
-        OriginAllowlistConfig, MAX_ACCOUNT_SUBJECT_BYTES, MAX_ALLOWED_ORIGINS,
-        MAX_AUTH_TOKEN_BYTES, MAX_JWT_AUDIENCE_BYTES, MAX_JWT_ISSUER_BYTES, MAX_ORIGIN_BYTES,
+        sanitized_trace_path, session_body_content_type, session_display_name_from_body,
+        settlement_queue_capacity_check, validate_account_jwt, validate_account_subject,
+        validate_bind_addr, validate_chain_mode, validate_public_deployment,
+        validate_websocket_timing, AccountAuthConfig, AccountAuthMode, OriginAllowlistConfig,
+        MAX_ACCOUNT_SUBJECT_BYTES, MAX_ALLOWED_ORIGINS, MAX_AUTH_TOKEN_BYTES,
+        MAX_JWT_AUDIENCE_BYTES, MAX_JWT_ISSUER_BYTES, MAX_ORIGIN_BYTES,
     };
     use crate::metrics::AppMetrics;
     use crate::session::SessionConfig;
     use crate::settlement::{self, SettlementJob};
-    use axum::http::{header::AUTHORIZATION, HeaderMap, HeaderValue, StatusCode};
+    use axum::http::{
+        header::{AUTHORIZATION, CONTENT_TYPE},
+        HeaderMap, HeaderValue, StatusCode,
+    };
     use jsonwebtoken::{encode, EncodingKey, Header};
     use serde_json::json;
     use std::fs;
@@ -4093,6 +4127,31 @@ mod config_tests {
             .expect_err("unknown session field rejected");
         assert_eq!(unknown_field.0, StatusCode::BAD_REQUEST);
         assert!(unknown_field.1.contains("invalid session request JSON"));
+    }
+
+    #[test]
+    fn session_body_requires_json_content_type_when_non_empty() {
+        let empty_headers = HeaderMap::new();
+        session_body_content_type(&empty_headers, b"").expect("empty body allowed");
+        session_body_content_type(&empty_headers, b" \n\t").expect("whitespace body allowed");
+
+        let mut json_headers = HeaderMap::new();
+        json_headers.insert(
+            CONTENT_TYPE,
+            HeaderValue::from_static("application/json; charset=utf-8"),
+        );
+        session_body_content_type(&json_headers, br#"{"name":"Scout"}"#)
+            .expect("JSON content type accepted");
+
+        let missing = session_body_content_type(&empty_headers, br#"{"name":"Scout"}"#)
+            .expect_err("missing content type rejected");
+        assert_eq!(missing.0, StatusCode::UNSUPPORTED_MEDIA_TYPE);
+
+        let mut text_headers = HeaderMap::new();
+        text_headers.insert(CONTENT_TYPE, HeaderValue::from_static("text/plain"));
+        let wrong = session_body_content_type(&text_headers, br#"{"name":"Scout"}"#)
+            .expect_err("wrong content type rejected");
+        assert_eq!(wrong.0, StatusCode::UNSUPPORTED_MEDIA_TYPE);
     }
 
     fn unique_temp_path(prefix: &str) -> PathBuf {
