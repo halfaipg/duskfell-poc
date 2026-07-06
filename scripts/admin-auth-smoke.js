@@ -48,6 +48,22 @@ try {
   const health = await fetchText("/healthz");
   const sessionStatus = await fetchStatus("/api/session", null, { method: "POST" });
   const metrics = parseMetrics(await fetchText("/metrics"), ["sundermere_admin_auth_rejected_total"]);
+  const summary = await fetchJson("/admin/summary", adminToken);
+  const summaryText = JSON.stringify(summary);
+  const summaryPathRedaction = {
+    journalPath: summary.journalPath,
+    settlementOutboxPath: summary.settlementOutboxPath,
+    absoluteRuntimeDirAbsent:
+      !summaryText.includes(runtimeDir) &&
+      !summaryText.includes(journalPath) &&
+      !summaryText.includes(outboxPath),
+    ok:
+      summary.journalPath === "journal.jsonl" &&
+      summary.settlementOutboxPath === "settlement-outbox.jsonl" &&
+      !summaryText.includes(runtimeDir) &&
+      !summaryText.includes(journalPath) &&
+      !summaryText.includes(outboxPath),
+  };
   const allAdminProtected = checks.every(
     (check) =>
       check.missing === 401 &&
@@ -61,11 +77,13 @@ try {
     endpoints,
     checks,
     metrics,
+    summaryPathRedaction,
     health,
     sessionStatus,
     elapsedMs: round(performance.now() - startedAt),
     ok:
       allAdminProtected &&
+      summaryPathRedaction.ok &&
       metrics.sundermere_admin_auth_rejected_total === endpoints.length * 3 &&
       health === "ok" &&
       sessionStatus === 200,
@@ -151,6 +169,18 @@ async function fetchText(endpoint) {
     throw new Error(`${endpoint} returned ${response.status}`);
   }
   return response.text();
+}
+
+async function fetchJson(endpoint, token) {
+  const headers = {};
+  if (token) {
+    headers["x-admin-token"] = token;
+  }
+  const response = await fetch(`${httpUrl}${endpoint}`, { headers });
+  if (!response.ok) {
+    throw new Error(`${endpoint} returned ${response.status}`);
+  }
+  return response.json();
 }
 
 function parseMetrics(text, names) {

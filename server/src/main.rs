@@ -939,6 +939,22 @@ fn durable_parent_status(path: &Path) -> DurableParentStatus {
     }
 }
 
+fn redacted_durable_path_basename(path: &Path) -> String {
+    let Some(basename) = path.file_name().and_then(|name| name.to_str()) else {
+        return "redacted".to_string();
+    };
+
+    if basename.ends_with("settlement-outbox.jsonl") {
+        "settlement-outbox.jsonl".to_string()
+    } else if basename.ends_with("journal.jsonl") {
+        "journal.jsonl".to_string()
+    } else if basename.ends_with(".jsonl") {
+        "redacted.jsonl".to_string()
+    } else {
+        "redacted".to_string()
+    }
+}
+
 async fn snapshot(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -1658,16 +1674,16 @@ async fn admin_summary(
             journal.last_sequence(),
         )
     };
-    let journal_path = state
-        .journal_writer
-        .lock()
-        .await
-        .path()
-        .display()
-        .to_string();
+    let journal_path = {
+        let writer = state.journal_writer.lock().await;
+        redacted_durable_path_basename(writer.path())
+    };
     let (settlement_outbox_path, settlement_outbox_events) = {
         let outbox = state.settlement_outbox.lock().await;
-        (outbox.path().display().to_string(), outbox.events_written())
+        (
+            redacted_durable_path_basename(outbox.path()),
+            outbox.events_written(),
+        )
     };
     let (session_pending_tickets, session_ticket_capacity) = {
         let mut sessions = state.sessions.lock().await;
@@ -3420,9 +3436,9 @@ mod config_tests {
         bounded_bearer_token, bounded_header_str, constant_time_eq, durable_parent_status,
         durable_persistence_check, is_safe_request_id, parse_bool_value,
         parse_origin_allowlist_value, parse_positive_f32_value, parse_positive_u32_value,
-        parse_positive_u64_value, parse_positive_usize_value, sanitized_trace_path,
-        session_display_name_from_body, settlement_queue_capacity_check, validate_account_jwt,
-        validate_account_subject, validate_bind_addr, validate_chain_mode,
+        parse_positive_u64_value, parse_positive_usize_value, redacted_durable_path_basename,
+        sanitized_trace_path, session_display_name_from_body, settlement_queue_capacity_check,
+        validate_account_jwt, validate_account_subject, validate_bind_addr, validate_chain_mode,
         validate_public_deployment, validate_websocket_timing, AccountAuthConfig, AccountAuthMode,
         OriginAllowlistConfig, MAX_ACCOUNT_SUBJECT_BYTES, MAX_ALLOWED_ORIGINS,
         MAX_AUTH_TOKEN_BYTES, MAX_JWT_AUDIENCE_BYTES, MAX_JWT_ISSUER_BYTES, MAX_ORIGIN_BYTES,
@@ -3576,6 +3592,30 @@ mod config_tests {
             status.detail.contains("not a directory") || status.detail.contains("not accessible"),
             "{}",
             status.detail
+        );
+    }
+
+    #[test]
+    fn durable_path_redaction_keeps_only_expected_basenames() {
+        assert_eq!(
+            redacted_durable_path_basename(PathBuf::from("/var/dusk/123-journal.jsonl").as_path()),
+            "journal.jsonl"
+        );
+        assert_eq!(
+            redacted_durable_path_basename(
+                PathBuf::from("/var/dusk/123-settlement-outbox.jsonl").as_path()
+            ),
+            "settlement-outbox.jsonl"
+        );
+        assert_eq!(
+            redacted_durable_path_basename(
+                PathBuf::from("/var/dusk/private-ledger.jsonl").as_path()
+            ),
+            "redacted.jsonl"
+        );
+        assert_eq!(
+            redacted_durable_path_basename(PathBuf::from("/var/dusk/private-ledger.log").as_path()),
+            "redacted"
         );
     }
 

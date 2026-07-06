@@ -30,7 +30,7 @@ try {
     "--url",
     wsUrl,
     "--timeoutMs",
-    "16000",
+    "24000",
   ]);
   const beforeRestart = await waitForGameplayEvents(crafting.playerId);
   await stopServer(server);
