@@ -1779,8 +1779,13 @@ async fn admin_summary(
 
 async fn add_http_hardening_headers(request: Request<Body>, next: Next) -> Response {
     let path = request.uri().path().to_string();
+    let has_hidden_segment = has_hidden_path_segment(&path);
     let request_id = request_id_header_value(request.headers());
-    let mut response = next.run(request).await;
+    let mut response = if has_hidden_segment {
+        StatusCode::NOT_FOUND.into_response()
+    } else {
+        next.run(request).await
+    };
     let headers = response.headers_mut();
 
     headers.insert(HeaderName::from_static("x-request-id"), request_id);
@@ -1805,7 +1810,7 @@ async fn add_http_hardening_headers(request: Request<Body>, next: Next) -> Respo
         HeaderValue::from_static(CONTENT_SECURITY_POLICY),
     );
 
-    let cache_control = if path.starts_with("/assets/") {
+    let cache_control = if path.starts_with("/assets/") && !has_hidden_segment {
         "public, max-age=60"
     } else {
         "no-store"
@@ -1813,6 +1818,18 @@ async fn add_http_hardening_headers(request: Request<Body>, next: Next) -> Respo
     headers.insert(CACHE_CONTROL, HeaderValue::from_static(cache_control));
 
     response
+}
+
+fn has_hidden_path_segment(path: &str) -> bool {
+    path.split('/')
+        .filter(|segment| !segment.is_empty())
+        .any(|segment| match segment.as_bytes() {
+            [b'.', ..] => true,
+            [b'%', high, low, ..] => {
+                high.eq_ignore_ascii_case(&b'2') && low.eq_ignore_ascii_case(&b'e')
+            }
+            _ => false,
+        })
 }
 
 fn request_id_header_value(headers: &HeaderMap) -> HeaderValue {
@@ -3464,7 +3481,7 @@ fn status_notice(
 mod config_tests {
     use super::{
         bounded_bearer_token, bounded_header_str, constant_time_eq, durable_parent_status,
-        durable_persistence_check, is_safe_request_id, parse_bool_value,
+        durable_persistence_check, has_hidden_path_segment, is_safe_request_id, parse_bool_value,
         parse_origin_allowlist_value, parse_positive_f32_value, parse_positive_u32_value,
         parse_positive_u64_value, parse_positive_usize_value, redacted_durable_path_basename,
         sanitized_trace_path, session_body_content_type, session_display_name_from_body,
@@ -3601,6 +3618,19 @@ mod config_tests {
 
         let root = "/?token=secret".parse().expect("root uri parses");
         assert_eq!(sanitized_trace_path(&root), "/");
+    }
+
+    #[test]
+    fn hidden_path_segments_are_rejected_before_static_serving() {
+        assert!(!has_hidden_path_segment("/"));
+        assert!(!has_hidden_path_segment(
+            "/assets/sprites/player-placeholder.png"
+        ));
+        assert!(!has_hidden_path_segment("/tiles/stone.floor.png"));
+        assert!(has_hidden_path_segment("/.env"));
+        assert!(has_hidden_path_segment("/assets/.secret"));
+        assert!(has_hidden_path_segment("/assets/%2esecret"));
+        assert!(has_hidden_path_segment("/assets/%2Egit/config"));
     }
 
     #[test]

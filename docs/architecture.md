@@ -189,6 +189,8 @@ Admission and auth rejections are counted in `/metrics`: account-token failures,
 
 Plain HTTP ingress is intentionally small. `HTTP_BODY_LIMIT_BYTES` defaults to `4096` and rejects oversized request bodies before handlers run. The server emits conservative browser hardening headers and separates cache policy between mutable app/API responses (`no-store`) and short-cache static assets.
 
+Static client and asset serving rejects hidden path segments before filesystem lookup, including percent-encoded dot prefixes, so accidental dotfiles in deploy artifacts are not reachable through `/` or `/assets`.
+
 Every HTTP response carries `x-request-id`. A safe bounded upstream value is echoed so reverse proxies can correlate edge logs with shard responses; missing or unsafe values are replaced with generated UUIDs to avoid reflecting arbitrary header text.
 
 `MAX_ACTIVE_CONNECTIONS` caps concurrent WebSocket upgrades using an in-process semaphore. `MAX_CONNECTIONS_PER_IP` adds a per-peer cap before one-use session tickets are consumed or player entities are spawned, so one source IP cannot consume the whole local shard budget. These are deliberately simple for the PoC; production should move admission and presence into the shard/router layer so capacity is enforced consistently across sim processes.

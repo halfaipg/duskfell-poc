@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { mkdir } from "node:fs/promises";
+import { cp, mkdir, writeFile } from "node:fs/promises";
 import { performance } from "node:perf_hooks";
 import path from "node:path";
 
@@ -8,6 +8,8 @@ const port = Number(args.port ?? 4135);
 const bodyLimitBytes = Number(args.bodyLimitBytes ?? 128);
 const runtimeDir = path.resolve("var", "http-hardening-smoke");
 const runId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+const clientDir = path.join(runtimeDir, `${runId}-client`);
+const assetsDir = path.join(runtimeDir, `${runId}-assets`);
 const httpUrl = `http://127.0.0.1:${port}`;
 const startedAt = performance.now();
 const forwardedRequestId = "trace-smoke_001.edge";
@@ -21,6 +23,10 @@ if (!Number.isInteger(bodyLimitBytes) || bodyLimitBytes <= 0) {
 }
 
 await mkdir(runtimeDir, { recursive: true });
+await cp(path.resolve("client"), clientDir, { recursive: true });
+await cp(path.resolve("assets"), assetsDir, { recursive: true });
+await writeFile(path.join(clientDir, ".secret"), "client secret should not be served\n");
+await writeFile(path.join(assetsDir, ".secret"), "asset secret should not be served\n");
 
 let server = null;
 let result;
@@ -34,6 +40,12 @@ try {
   await indexResponse.arrayBuffer();
   const assetResponse = await fetch(`${httpUrl}/assets/sprites/player-placeholder.png`);
   await assetResponse.arrayBuffer();
+  const hiddenClientResponse = await fetch(`${httpUrl}/.secret`);
+  await hiddenClientResponse.arrayBuffer();
+  const hiddenAssetResponse = await fetch(`${httpUrl}/assets/.secret`);
+  await hiddenAssetResponse.arrayBuffer();
+  const encodedHiddenAssetResponse = await fetch(`${httpUrl}/assets/%2esecret`);
+  await encodedHiddenAssetResponse.arrayBuffer();
   const sessionOk = await fetch(`${httpUrl}/api/session`, {
     method: "POST",
     headers: { "x-request-id": unsafeRequestId },
@@ -65,12 +77,18 @@ try {
     headers: {
       index: selectedHeaders(indexResponse.headers),
       asset: selectedHeaders(assetResponse.headers),
+      hiddenClient: selectedHeaders(hiddenClientResponse.headers),
+      hiddenAsset: selectedHeaders(hiddenAssetResponse.headers),
+      encodedHiddenAsset: selectedHeaders(encodedHiddenAssetResponse.headers),
       unsupportedMedia: selectedHeaders(unsupportedMedia.headers),
       oversized: selectedHeaders(oversized.headers),
     },
     statuses: {
       index: indexResponse.status,
       asset: assetResponse.status,
+      hiddenClient: hiddenClientResponse.status,
+      hiddenAsset: hiddenAssetResponse.status,
+      encodedHiddenAsset: encodedHiddenAssetResponse.status,
       sessionOk: sessionOk.status,
       unsupportedMedia: unsupportedMedia.status,
       oversized: oversized.status,
@@ -92,6 +110,9 @@ try {
     ok:
       indexResponse.status === 200 &&
       assetResponse.status === 200 &&
+      hiddenClientResponse.status === 404 &&
+      hiddenAssetResponse.status === 404 &&
+      encodedHiddenAssetResponse.status === 404 &&
       sessionOk.status === 200 &&
       unsupportedMedia.status === 415 &&
       oversized.status === 413 &&
@@ -102,7 +123,13 @@ try {
       indexResponse.headers.get("content-security-policy")?.includes("default-src 'self'") &&
       indexResponse.headers.get("cache-control") === "no-store" &&
       assetResponse.headers.get("cache-control") === "public, max-age=60" &&
+      hiddenClientResponse.headers.get("cache-control") === "no-store" &&
+      hiddenAssetResponse.headers.get("cache-control") === "no-store" &&
+      encodedHiddenAssetResponse.headers.get("cache-control") === "no-store" &&
       isGeneratedRequestId(assetResponse.headers.get("x-request-id")) &&
+      isGeneratedRequestId(hiddenClientResponse.headers.get("x-request-id")) &&
+      isGeneratedRequestId(hiddenAssetResponse.headers.get("x-request-id")) &&
+      isGeneratedRequestId(encodedHiddenAssetResponse.headers.get("x-request-id")) &&
       isGeneratedRequestId(sessionOk.headers.get("x-request-id")) &&
       sessionOk.headers.get("x-request-id") !== unsafeRequestId &&
       unsupportedMedia.headers.get("x-content-type-options") === "nosniff" &&
@@ -135,6 +162,8 @@ async function startServer() {
       HTTP_BODY_LIMIT_BYTES: String(bodyLimitBytes),
       JOURNAL_PATH: path.join(runtimeDir, `${runId}-journal.jsonl`),
       SETTLEMENT_OUTBOX_PATH: path.join(runtimeDir, `${runId}-settlement-outbox.jsonl`),
+      CLIENT_DIR: clientDir,
+      ASSETS_DIR: assetsDir,
       RUST_LOG: "sundermere_server=warn,tower_http=warn",
     },
     stdio: ["ignore", "pipe", "pipe"],

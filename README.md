@@ -333,7 +333,8 @@ npm run smoke:http-hardening
 
 The command verifies security headers, response cache policy, generated and
 forwarded `x-request-id` behavior, admin/metrics visibility of
-`HTTP_BODY_LIMIT_BYTES`, and `413` rejection for oversized HTTP request bodies.
+`HTTP_BODY_LIMIT_BYTES`, `413` rejection for oversized HTTP request bodies, and
+fail-closed `404` handling for hidden client/asset path segments.
 
 Run the trace redaction smoke:
 
