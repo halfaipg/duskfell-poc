@@ -119,6 +119,7 @@ async function startServer() {
       REQUIRE_SESSION: "true",
       MAX_ACTIVE_CONNECTIONS: "1",
       MAX_CONNECTIONS_PER_IP: "1",
+      MAX_CONNECTIONS_PER_ACCOUNT: "1",
       JOURNAL_PATH: journalPath,
       SETTLEMENT_OUTBOX_PATH: outboxPath,
       RUST_LOG: "sundermere_server=warn,tower_http=warn",

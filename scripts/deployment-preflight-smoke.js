@@ -192,6 +192,7 @@ const cases = [
     env: hardenedEnv({
       MAX_ACTIVE_CONNECTIONS: "10",
       MAX_CONNECTIONS_PER_IP: "11",
+      MAX_CONNECTIONS_PER_ACCOUNT: "11",
       SESSION_ISSUE_RATE_LIMIT_PER_MINUTE: "10",
       SESSION_ISSUE_RATE_LIMIT_BURST: "11",
       ACCOUNT_SESSION_RATE_LIMIT_PER_MINUTE: "10",
@@ -202,6 +203,7 @@ const cases = [
     expectOk: false,
     expectedChecks: [
       "max_connections_per_ip-within-active-connections",
+      "max_connections_per_account-within-active-connections",
       "session_issue_rate_limit_burst-within-per-minute",
       "account_session_rate_limit_burst-within-per-minute",
       "ws_idle_timeout_seconds-greater-than-heartbeat",

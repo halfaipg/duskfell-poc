@@ -76,6 +76,7 @@
     "smoke:ws-idle-timeout": "node scripts/ws-idle-timeout-smoke.js",
     "smoke:ws-ingress-config": "node scripts/ws-ingress-config-smoke.js",
     "smoke:ws-peer-capacity": "node scripts/ws-peer-capacity-smoke.js",
+    "smoke:ws-account-capacity": "node scripts/ws-account-capacity-smoke.js",
     "smoke:ws-payload-metrics": "node scripts/ws-payload-metrics-smoke.js",
     "smoke:ws-reject-limit": "node scripts/ws-reject-limit-smoke.js",
     "smoke:ws-snapshot-size": "node scripts/ws-snapshot-size-smoke.js",

@@ -37,6 +37,7 @@ pub struct AppMetrics {
     origin_rejected_total: AtomicU64,
     ws_capacity_rejected_total: AtomicU64,
     ws_peer_capacity_rejected_total: AtomicU64,
+    ws_account_capacity_rejected_total: AtomicU64,
     admin_snapshot_payload_rejected_total: AtomicU64,
     durable_journal_persist_failed_total: AtomicU64,
     durable_settlement_persist_failed_total: AtomicU64,
@@ -194,6 +195,11 @@ impl AppMetrics {
             .fetch_add(1, Ordering::Relaxed);
     }
 
+    pub fn ws_account_capacity_rejected(&self) {
+        self.ws_account_capacity_rejected_total
+            .fetch_add(1, Ordering::Relaxed);
+    }
+
     pub fn admin_snapshot_payload_rejected(&self) {
         self.admin_snapshot_payload_rejected_total
             .fetch_add(1, Ordering::Relaxed);
@@ -309,6 +315,9 @@ impl AppMetrics {
         let ws_capacity_rejected_total = self.ws_capacity_rejected_total.load(Ordering::Relaxed);
         let ws_peer_capacity_rejected_total =
             self.ws_peer_capacity_rejected_total.load(Ordering::Relaxed);
+        let ws_account_capacity_rejected_total = self
+            .ws_account_capacity_rejected_total
+            .load(Ordering::Relaxed);
         let admin_snapshot_payload_rejected_total = self
             .admin_snapshot_payload_rejected_total
             .load(Ordering::Relaxed);
@@ -566,6 +575,13 @@ impl AppMetrics {
         );
         write_metric(
             &mut output,
+            "sundermere_ws_account_capacity_rejected_total",
+            "WebSocket upgrades rejected because one authenticated account reached its active connection cap.",
+            "counter",
+            ws_account_capacity_rejected_total,
+        );
+        write_metric(
+            &mut output,
             "sundermere_admin_snapshot_payload_rejected_total",
             "Full admin/debug snapshot responses rejected because they exceeded the configured byte cap.",
             "counter",
@@ -673,6 +689,7 @@ mod tests {
         metrics.origin_rejected();
         metrics.ws_capacity_rejected();
         metrics.ws_peer_capacity_rejected();
+        metrics.ws_account_capacity_rejected();
         metrics.admin_snapshot_payload_rejected();
         metrics.durable_journal_persist_failed();
         metrics.durable_settlement_persist_failed();
@@ -719,6 +736,7 @@ mod tests {
         assert!(rendered.contains("sundermere_origin_rejected_total 1"));
         assert!(rendered.contains("sundermere_ws_capacity_rejected_total 1"));
         assert!(rendered.contains("sundermere_ws_peer_capacity_rejected_total 1"));
+        assert!(rendered.contains("sundermere_ws_account_capacity_rejected_total 1"));
         assert!(rendered.contains("sundermere_admin_snapshot_payload_rejected_total 1"));
         assert!(rendered.contains("sundermere_durable_journal_persist_failed_total 1"));
         assert!(rendered.contains("sundermere_durable_settlement_persist_failed_total 1"));

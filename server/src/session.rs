@@ -44,6 +44,11 @@ pub enum SessionRejectReason {
     Expired,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SessionPreflight {
+    pub account_subject: Option<String>,
+}
+
 #[derive(Debug, Clone)]
 pub struct SessionTicket {
     pub token: String,
@@ -166,12 +171,14 @@ impl SessionTickets {
         &mut self,
         token: Option<&str>,
         require_session: bool,
-    ) -> Result<(), SessionRejectReason> {
+    ) -> Result<SessionPreflight, SessionRejectReason> {
         let Some(token) = normalize_token(token) else {
             return if require_session {
                 Err(SessionRejectReason::Missing)
             } else {
-                Ok(())
+                Ok(SessionPreflight {
+                    account_subject: None,
+                })
             };
         };
         if token.len() > MAX_SESSION_TOKEN_BYTES {
@@ -180,17 +187,19 @@ impl SessionTickets {
         let key = token_key(token);
 
         let now = Instant::now();
-        let Some(expires_at) = self.tickets.get(&key).map(|ticket| ticket.expires_at) else {
+        let Some(ticket) = self.tickets.get(&key) else {
             self.cleanup_expired(now);
             return Err(SessionRejectReason::Invalid);
         };
+        let expires_at = ticket.expires_at;
+        let account_subject = ticket.account_subject.clone();
 
         self.cleanup_expired(now);
         if expires_at <= now {
             return Err(SessionRejectReason::Expired);
         }
 
-        Ok(())
+        Ok(SessionPreflight { account_subject })
     }
 
     pub fn pending_count(&mut self) -> usize {
@@ -551,6 +560,23 @@ mod tests {
             Err(SessionRejectReason::Expired)
         );
         assert_eq!(tickets.pending_count(), 0);
+    }
+
+    #[test]
+    fn preflight_returns_account_subject_without_consuming_ticket() {
+        let mut tickets = SessionTickets::new(Duration::from_secs(60), 8);
+        let ticket = tickets
+            .issue_with_display_name_and_account(None, Some("acct:wallet:0xabc".to_string()))
+            .expect("ticket issued");
+
+        let preflight = tickets
+            .preflight_validate(Some(&ticket.token), true)
+            .expect("valid ticket passes preflight");
+        assert_eq!(
+            preflight.account_subject.as_deref(),
+            Some("acct:wallet:0xabc")
+        );
+        assert_eq!(tickets.pending_count(), 1);
     }
 
     #[test]

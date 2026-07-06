@@ -100,6 +100,9 @@ try {
   await step("ws-snapshot-size-smoke", () => run("npm", ["run", "smoke:ws-snapshot-size"]));
   await step("ws-payload-metrics-smoke", () => run("npm", ["run", "smoke:ws-payload-metrics"]));
   await step("ws-peer-capacity-smoke", () => run("npm", ["run", "smoke:ws-peer-capacity"]));
+  await step("ws-account-capacity-smoke", () =>
+    run("npm", ["run", "smoke:ws-account-capacity"]),
+  );
   await step("ws-reject-limit-smoke", () => run("npm", ["run", "smoke:ws-reject-limit"]));
   await step("ws-idle-timeout-smoke", () => run("npm", ["run", "smoke:ws-idle-timeout"]));
 
@@ -157,6 +160,7 @@ try {
       REQUIRE_SESSION: "true",
       MAX_ACTIVE_CONNECTIONS: "1",
       MAX_CONNECTIONS_PER_IP: "1",
+      MAX_CONNECTIONS_PER_ACCOUNT: "1",
     },
   });
   await step("capacity-smoke", () =>

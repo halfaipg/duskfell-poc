@@ -19,6 +19,7 @@ const MAX_GIT_SHA_BYTES = 64;
 const BUDGET_LIMITS = {
   MAX_ACTIVE_CONNECTIONS: [1, 10_000],
   MAX_CONNECTIONS_PER_IP: [1, 10_000],
+  MAX_CONNECTIONS_PER_ACCOUNT: [1, 1_000],
   SESSION_TICKET_CAPACITY: [1, 100_000],
   SESSION_TICKET_TTL_SECONDS: [1, 3_600],
   SESSION_ISSUE_RATE_LIMIT_PER_MINUTE: [1, 60_000],
@@ -350,6 +351,7 @@ function checkNumericBudgets() {
   const budgets = {
     MAX_ACTIVE_CONNECTIONS: integerBudget("MAX_ACTIVE_CONNECTIONS", 512),
     MAX_CONNECTIONS_PER_IP: integerBudget("MAX_CONNECTIONS_PER_IP", 64),
+    MAX_CONNECTIONS_PER_ACCOUNT: integerBudget("MAX_CONNECTIONS_PER_ACCOUNT", 4),
     SESSION_TICKET_CAPACITY: integerBudget("SESSION_TICKET_CAPACITY", 2048),
     SESSION_TICKET_TTL_SECONDS: integerBudget("SESSION_TICKET_TTL_SECONDS", 30),
     SESSION_ISSUE_RATE_LIMIT_PER_MINUTE: integerBudget("SESSION_ISSUE_RATE_LIMIT_PER_MINUTE", 120),
@@ -383,6 +385,12 @@ function checkNumericBudgets() {
     budgets.MAX_CONNECTIONS_PER_IP.value <= budgets.MAX_ACTIVE_CONNECTIONS.value,
     "error",
     "MAX_CONNECTIONS_PER_IP must be <= MAX_ACTIVE_CONNECTIONS",
+  );
+  add(
+    "max_connections_per_account-within-active-connections",
+    budgets.MAX_CONNECTIONS_PER_ACCOUNT.value <= budgets.MAX_ACTIVE_CONNECTIONS.value,
+    "error",
+    "MAX_CONNECTIONS_PER_ACCOUNT must be <= MAX_ACTIVE_CONNECTIONS",
   );
   add(
     "session_issue_rate_limit_burst-within-per-minute",

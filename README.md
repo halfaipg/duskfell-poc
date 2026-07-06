@@ -143,6 +143,7 @@ npm run smoke:shutdown
 npm run smoke:session-capacity
 npm run smoke:session-token-hardening
 npm run smoke:ws-admission-preflight
+npm run smoke:ws-account-capacity
 npm run smoke:ws-idle-timeout
 npm run bench:ws -- --clients 20 --durationMs 5000 --inputHz 10
 ```
@@ -259,6 +260,7 @@ Set `MAX_RUNTIME_MANIFEST_BYTES` to cap each sprite or terrain manifest JSON che
 Set `MAX_RUNTIME_ASSET_BYTES` to cap each sprite or terrain PNG checked by the server at startup. The default is `2097152`; oversized runtime asset images fail before the server listens.
 Set `MAX_ACTIVE_CONNECTIONS` to cap concurrent WebSocket players before spawning sim entities. The default is `512`.
 Set `MAX_CONNECTIONS_PER_IP` to cap concurrent WebSocket players from one peer IP before consuming a one-use session ticket or spawning sim entities. The default is `64`.
+Set `MAX_CONNECTIONS_PER_ACCOUNT` to cap concurrent authenticated WebSocket players from one account subject before consuming a one-use session ticket or spawning sim entities. The default is `4`. This is an in-process PoC guardrail; production should enforce the same boundary in shared admission/router state.
 Set `SNAPSHOT_INTERVAL_MS` to tune per-client WebSocket snapshot cadence. The default is `50`, matching the 20 Hz sim tick; higher values reduce bandwidth and serialization work at the cost of visual update rate.
 Set `INTEREST_RADIUS` to tune how many world units around each player are included in WebSocket snapshots. The default is `520`. Lower values reduce per-client payload size; `/api/snapshot` remains a full admin/debug snapshot.
 Set `MAX_SNAPSHOT_BYTES` to cap serialized WebSocket welcome/snapshot payloads. The default is `65536`; payloads above the cap are rejected and the connection is closed instead of sending an unexpectedly large update.
@@ -266,7 +268,7 @@ Set `MAX_ADMIN_SNAPSHOT_BYTES` to cap the serialized full debug/admin `/api/snap
 Set `WS_HEARTBEAT_SECONDS` and `WS_IDLE_TIMEOUT_SECONDS` to tune WebSocket ping cadence and stale-connection eviction. Defaults are `30` and `180`; the idle timeout must be greater than the heartbeat interval.
 Set `WS_MAX_TEXT_BYTES`, `WS_MESSAGE_BURST`, and `WS_MESSAGE_REFILL_PER_SECOND` to tune per-socket text-frame size and token-bucket ingress limits. Defaults are `4096`, `20`, and `30`.
 Set `CLIENT_REJECT_LIMIT` to close a WebSocket after repeated rejected client messages on that connection. The default is `8`.
-Invalid boolean or numeric environment values fail startup instead of silently falling back to defaults. The server also rejects runtime budgets outside the shared deployment envelope, `MAX_CONNECTIONS_PER_IP` above `MAX_ACTIVE_CONNECTIONS`, rate-limit bursts above their per-minute budgets, and WebSocket idle timeouts that are not greater than the heartbeat interval. Deployment preflight checks the same capacity and payload budget invariants before boot.
+Invalid boolean or numeric environment values fail startup instead of silently falling back to defaults. The server also rejects runtime budgets outside the shared deployment envelope, `MAX_CONNECTIONS_PER_IP` or `MAX_CONNECTIONS_PER_ACCOUNT` above `MAX_ACTIVE_CONNECTIONS`, rate-limit bursts above their per-minute budgets, and WebSocket idle timeouts that are not greater than the heartbeat interval. Deployment preflight checks the same capacity and payload budget invariants before boot.
 
 Set `JOURNAL_PATH` to override the durable append-only audit file. The default is `var/journal.jsonl`, which is ignored by git.
 Set `SETTLEMENT_OUTBOX_PATH` to override the durable settlement outbox. The default is `var/settlement-outbox.jsonl`, which is ignored by git.
@@ -300,7 +302,7 @@ Run the broad local verification gate:
 npm run verify:local
 ```
 
-The command runs Rust formatting/tests, supply-chain smoke, client projection/protocol/asset-loader tests, sprite manifest tests, sprite asset verification, deployment preflight smoke, asset serving smoke, bad-config startup smoke, public chain-mode guard smoke, local chain-stub honesty smoke, external bind guard smoke, HTTP hardening smoke, bad-content-schema startup smoke, bad-content-contract startup smoke, bad-content-size startup smoke, durable-file-size startup smoke, durable-corruption startup smoke, durable-lock startup smoke, durable-sync smoke, dev-token account auth smoke, JWT account auth smoke, account session rate-limit smoke, account-bound settlement smoke, admin auth smoke, admin event-limit smoke, admin snapshot-size smoke, metrics auth smoke, Origin allowlist smoke, public deployment guard smoke, metrics smoke, readiness smoke, trace redaction smoke, session ticket capacity smoke, session ticket expiry smoke, expired-ticket WebSocket rejection smoke, session token-hardening smoke, session issue rate-limit smoke, interest-radius smoke, movement authority smoke, journal anomaly smoke, journal replay smoke, gameplay journal replay smoke, settlement idempotency smoke, restart reconciliation smoke, graceful shutdown smoke, WebSocket admission preflight smoke, WebSocket ingress config smoke, WebSocket snapshot-size smoke, WebSocket payload-metrics smoke, WebSocket peer-capacity smoke, stale-WebSocket timeout smoke, a side-port client protocol smoke, a side-port deed smoke, a side-port resource-gather smoke, a side-port crafting smoke, a side-port WebSocket load smoke, and a side-port capacity smoke.
+The command runs Rust formatting/tests, supply-chain smoke, client projection/protocol/asset-loader tests, sprite manifest tests, sprite asset verification, deployment preflight smoke, asset serving smoke, bad-config startup smoke, public chain-mode guard smoke, local chain-stub honesty smoke, external bind guard smoke, HTTP hardening smoke, bad-content-schema startup smoke, bad-content-contract startup smoke, bad-content-size startup smoke, durable-file-size startup smoke, durable-corruption startup smoke, durable-lock startup smoke, durable-sync smoke, dev-token account auth smoke, JWT account auth smoke, account session rate-limit smoke, account-bound settlement smoke, admin auth smoke, admin event-limit smoke, admin snapshot-size smoke, metrics auth smoke, Origin allowlist smoke, public deployment guard smoke, metrics smoke, readiness smoke, trace redaction smoke, session ticket capacity smoke, session ticket expiry smoke, expired-ticket WebSocket rejection smoke, session token-hardening smoke, session issue rate-limit smoke, interest-radius smoke, movement authority smoke, journal anomaly smoke, journal replay smoke, gameplay journal replay smoke, settlement idempotency smoke, restart reconciliation smoke, graceful shutdown smoke, WebSocket admission preflight smoke, WebSocket ingress config smoke, WebSocket snapshot-size smoke, WebSocket payload-metrics smoke, WebSocket peer-capacity smoke, WebSocket account-capacity smoke, stale-WebSocket timeout smoke, a side-port client protocol smoke, a side-port deed smoke, a side-port resource-gather smoke, a side-port crafting smoke, a side-port WebSocket load smoke, and a side-port capacity smoke.
 
 Run the live server doctor against an already-running development server:
 
@@ -775,6 +777,14 @@ npm run smoke:ws-peer-capacity
 ```
 
 The command starts an isolated strict-session server with `MAX_CONNECTIONS_PER_IP=1`, holds one connection open, verifies a second connection from the same peer IP receives `503` before WebSocket upgrade without consuming its session ticket, and checks admin/metrics visibility.
+
+Run the WebSocket account-capacity smoke:
+
+```sh
+npm run smoke:ws-account-capacity
+```
+
+The command starts an isolated JWT-gated strict-session server with `MAX_CONNECTIONS_PER_ACCOUNT=1`, holds one account-bound connection open, verifies a second ticket for the same account receives `503` before WebSocket upgrade without consuming its session ticket, and checks admin/metrics visibility.
 
 Run the WebSocket reject-limit smoke:
 

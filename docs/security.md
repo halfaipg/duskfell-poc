@@ -85,6 +85,7 @@ Implemented ingress protections:
 - Pending session ticket capacity is enforced before WebSocket spawn, expired pending tickets are cleaned before capacity checks, expired tickets are rejected before WebSocket upgrade/player spawn, pending tickets are keyed by SHA-256 token hashes in memory, oversized ticket inputs are rejected before lookup, and pending ticket state is visible through admin summary and `/metrics`.
 - WebSocket admission is capped by `MAX_ACTIVE_CONNECTIONS` before player entities are created.
 - WebSocket admission is also capped per peer IP with `MAX_CONNECTIONS_PER_IP` before one-use session tickets are consumed, and peer-capacity rejections are visible in `/metrics`.
+- Authenticated WebSocket admission is capped per account subject with `MAX_CONNECTIONS_PER_ACCOUNT` before one-use session tickets are consumed, and account-capacity rejections are visible in `/metrics`.
 - WebSocket heartbeat pings and idle timeouts evict stale connections and release their player entity/admission permit.
 - WebSocket text frames are capped with `WS_MAX_TEXT_BYTES`, defaulting to `4096`.
 - Unsupported binary WebSocket frames are rejected, recorded in the journal, and the socket is closed.
@@ -127,6 +128,7 @@ Implemented ingress protections:
 - `scripts/account-auth-smoke.js` verifies missing, wrong, or oversized account bearer tokens reject session issuance and do not fall through to body parsing or ticket minting.
 - `scripts/session-token-hardening-smoke.js` verifies an oversized fake WebSocket ticket is rejected before upgrade and does not consume a valid pending ticket.
 - `scripts/account-session-rate-limit-smoke.js` verifies authenticated JWT session issuance is throttled by account subject independently of the client-IP limiter.
+- `scripts/ws-account-capacity-smoke.js` verifies authenticated account WebSocket caps reject before upgrade and do not consume a valid pending ticket.
 - `scripts/account-settlement-smoke.js` verifies a JWT-authenticated player can claim a deed and the same `accountSubject` reaches the snapshot, receipt, ownership endpoint, and journal.
 - `scripts/durable-corruption-smoke.js` verifies malformed journal JSONL, oversized durable JSONL lines, and malformed or semantically invalid settlement outbox JSONL fails startup before serving clients.
 - `scripts/durable-sync-smoke.js` verifies synced durable appends work through a real deed claim and are visible in admin summary plus metrics.

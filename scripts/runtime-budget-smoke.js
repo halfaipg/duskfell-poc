@@ -25,8 +25,18 @@ const cases = [
     expected: "MAX_CONNECTIONS_PER_IP must be <= MAX_ACTIVE_CONNECTIONS",
   },
   {
-    name: "ip-session-burst-exceeds-refill",
+    name: "account-cap-exceeds-total-cap",
     port: basePort + 1,
+    env: {
+      MAX_ACTIVE_CONNECTIONS: "2",
+      MAX_CONNECTIONS_PER_IP: "2",
+      MAX_CONNECTIONS_PER_ACCOUNT: "3",
+    },
+    expected: "MAX_CONNECTIONS_PER_ACCOUNT must be <= MAX_ACTIVE_CONNECTIONS",
+  },
+  {
+    name: "ip-session-burst-exceeds-refill",
+    port: basePort + 2,
     env: {
       SESSION_ISSUE_RATE_LIMIT_PER_MINUTE: "10",
       SESSION_ISSUE_RATE_LIMIT_BURST: "11",
@@ -35,7 +45,7 @@ const cases = [
   },
   {
     name: "account-session-burst-exceeds-refill",
-    port: basePort + 2,
+    port: basePort + 3,
     env: {
       ACCOUNT_SESSION_RATE_LIMIT_PER_MINUTE: "10",
       ACCOUNT_SESSION_RATE_LIMIT_BURST: "11",
@@ -44,7 +54,7 @@ const cases = [
   },
   {
     name: "ws-text-cap-too-small",
-    port: basePort + 3,
+    port: basePort + 4,
     env: {
       WS_MAX_TEXT_BYTES: "1",
     },
@@ -52,7 +62,7 @@ const cases = [
   },
   {
     name: "snapshot-cap-too-large",
-    port: basePort + 4,
+    port: basePort + 5,
     env: {
       MAX_SNAPSHOT_BYTES: "1048577",
     },

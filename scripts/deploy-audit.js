@@ -168,6 +168,8 @@ async function checkMetrics() {
       "sundermere_origin_allowed_origins",
       "sundermere_active_connections",
       "sundermere_max_active_connections",
+      "sundermere_active_connection_accounts",
+      "sundermere_max_connections_per_account",
       "sundermere_session_pending_tickets",
       "sundermere_session_ticket_capacity",
       "sundermere_durable_journal_persist_failed_total",
@@ -217,6 +219,13 @@ function checkRuntimePosture(runtime, summary) {
         summary.activeConnections < summary.maxActiveConnections,
       `active=${summary.activeConnections} max=${summary.maxActiveConnections}`,
     );
+    add(
+      "account-connection-capacity-available",
+      Number.isFinite(summary.activeConnectionAccounts) &&
+        Number.isFinite(summary.maxConnectionsPerAccount) &&
+        summary.activeConnectionAccounts < summary.maxConnectionsPerAccount,
+      `activeAccounts=${summary.activeConnectionAccounts} maxPerAccount=${summary.maxConnectionsPerAccount}`,
+    );
   }
   if (runtime && summary.content) {
     add(
@@ -252,6 +261,11 @@ function checkMetricsPosture(metrics) {
       "metrics-connection-capacity-available",
       metrics.sundermere_active_connections < metrics.sundermere_max_active_connections,
       `active=${metrics.sundermere_active_connections} max=${metrics.sundermere_max_active_connections}`,
+    );
+    add(
+      "metrics-account-connection-capacity-available",
+      metrics.sundermere_active_connection_accounts < metrics.sundermere_max_connections_per_account,
+      `activeAccounts=${metrics.sundermere_active_connection_accounts} maxPerAccount=${metrics.sundermere_max_connections_per_account}`,
     );
   }
   add(

@@ -33,10 +33,12 @@ try {
     "durable-sync-writes-enabled",
     "session-ticket-capacity-available",
     "connection-capacity-available",
+    "account-connection-capacity-available",
     "metrics-origin-allowlist-enabled",
     "metrics-durable-sync-writes",
     "metrics-session-ticket-capacity-available",
     "metrics-connection-capacity-available",
+    "metrics-account-connection-capacity-available",
   ].every((name) => audit.checks?.some((check) => check.name === name && check.ok === true));
   const missingExpectedGitShaRejected =
     missingExpectedGitShaAudit.ok === false &&

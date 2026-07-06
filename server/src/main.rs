@@ -75,6 +75,7 @@ const DEFAULT_MAX_RUNTIME_ASSET_BYTES: usize = 2 * 1024 * 1024;
 const DEFAULT_MAX_SNAPSHOT_BYTES: usize = 65_536;
 const DEFAULT_MAX_ADMIN_SNAPSHOT_BYTES: usize = 262_144;
 const DEFAULT_MAX_CONNECTIONS_PER_IP: usize = 64;
+const DEFAULT_MAX_CONNECTIONS_PER_ACCOUNT: usize = 4;
 const DEFAULT_SESSION_ISSUE_RATE_LIMIT_MAX_CLIENTS: usize = 4096;
 const DEFAULT_ACCOUNT_SESSION_RATE_LIMIT_PER_MINUTE: u32 = 60;
 const DEFAULT_ACCOUNT_SESSION_RATE_LIMIT_BURST: u32 = 10;
@@ -88,6 +89,7 @@ const MAX_ORIGIN_BYTES: usize = 512;
 const MIN_PUBLIC_DEPLOYMENT_TOKEN_BYTES: usize = 24;
 const MAX_RUNTIME_ACTIVE_CONNECTIONS: usize = 10_000;
 const MAX_RUNTIME_CONNECTIONS_PER_IP: usize = 10_000;
+const MAX_RUNTIME_CONNECTIONS_PER_ACCOUNT: usize = 1_000;
 const MAX_RUNTIME_SESSION_TICKET_CAPACITY: usize = 100_000;
 const MAX_RUNTIME_SESSION_TICKET_TTL_SECONDS: u64 = 3_600;
 const MAX_RUNTIME_SESSION_RATE_LIMIT_PER_MINUTE: u32 = 60_000;
@@ -165,6 +167,8 @@ struct AppState {
     max_active_connections: usize,
     peer_connections: Arc<Mutex<PeerConnectionCounts>>,
     max_connections_per_ip: usize,
+    account_connections: Arc<Mutex<AccountConnectionCounts>>,
+    max_connections_per_account: usize,
     content_manifest: ContentManifest,
     public_deployment: bool,
     draining: bool,
@@ -260,6 +264,10 @@ async fn main() -> anyhow::Result<()> {
     let max_active_connections = env_positive_usize("MAX_ACTIVE_CONNECTIONS", 512)?;
     let max_connections_per_ip =
         env_positive_usize("MAX_CONNECTIONS_PER_IP", DEFAULT_MAX_CONNECTIONS_PER_IP)?;
+    let max_connections_per_account = env_positive_usize(
+        "MAX_CONNECTIONS_PER_ACCOUNT",
+        DEFAULT_MAX_CONNECTIONS_PER_ACCOUNT,
+    )?;
     let admin_token = env_optional_nonempty_string("ADMIN_TOKEN")?;
     let metrics_token = env_optional_nonempty_string("METRICS_TOKEN")?;
     let public_deployment = env_bool("PUBLIC_DEPLOYMENT", false)?;
@@ -285,6 +293,7 @@ async fn main() -> anyhow::Result<()> {
         max_admin_snapshot_bytes,
         max_active_connections,
         max_connections_per_ip,
+        max_connections_per_account,
         http_body_limit_bytes,
         client_reject_limit,
         admin_event_limit_cap,
@@ -381,6 +390,8 @@ async fn main() -> anyhow::Result<()> {
         max_active_connections,
         peer_connections: Arc::new(Mutex::new(PeerConnectionCounts::default())),
         max_connections_per_ip,
+        account_connections: Arc::new(Mutex::new(AccountConnectionCounts::default())),
+        max_connections_per_account,
         content_manifest,
         public_deployment,
         draining,
@@ -1189,6 +1200,7 @@ async fn metrics(
         .lock()
         .await
         .tracked_subjects();
+    let active_connection_accounts = state.account_connections.lock().await.active_accounts();
 
     let mut metrics = state.metrics.render_prometheus();
 
@@ -1428,6 +1440,20 @@ async fn metrics(
         "Peer IPs with at least one active WebSocket connection.",
         "gauge",
         state.peer_connections.lock().await.active_ips() as u64,
+    );
+    append_metric(
+        &mut metrics,
+        "sundermere_max_connections_per_account",
+        "Configured active WebSocket connection capacity for one authenticated account subject.",
+        "gauge",
+        state.max_connections_per_account as u64,
+    );
+    append_metric(
+        &mut metrics,
+        "sundermere_active_connection_accounts",
+        "Authenticated account subjects with at least one active WebSocket connection.",
+        "gauge",
+        active_connection_accounts as u64,
     );
     append_metric(
         &mut metrics,
@@ -1687,6 +1713,8 @@ struct AdminSummary {
     max_active_connections: usize,
     max_connections_per_ip: usize,
     active_connection_ips: usize,
+    max_connections_per_account: usize,
+    active_connection_accounts: usize,
     tick_budget_us: u64,
     snapshot_interval_ms: u64,
     interest_radius_units: f32,
@@ -1765,6 +1793,7 @@ async fn admin_summary(
         .await
         .tracked_subjects();
     let active_connection_ips = state.peer_connections.lock().await.active_ips();
+    let active_connection_accounts = state.account_connections.lock().await.active_accounts();
 
     Ok(Json(AdminSummary {
         tick: sim.tick_count(),
@@ -1798,6 +1827,8 @@ async fn admin_summary(
         max_active_connections: state.max_active_connections,
         max_connections_per_ip: state.max_connections_per_ip,
         active_connection_ips,
+        max_connections_per_account: state.max_connections_per_account,
+        active_connection_accounts,
         tick_budget_us: SERVER_TICK_BUDGET.as_micros() as u64,
         snapshot_interval_ms: state.websocket_config.snapshot_interval.as_millis() as u64,
         interest_radius_units: state.websocket_config.interest_radius,
@@ -1951,13 +1982,16 @@ async fn ws_handler(
             .into_response();
     }
 
-    if let Err(reason) = state.sessions.lock().await.preflight_validate(
+    let preflight = match state.sessions.lock().await.preflight_validate(
         query.session.as_deref(),
         state.session_config.require_session,
     ) {
-        state.metrics.session_ticket_rejected();
-        return session_reject_response(reason).into_response();
-    }
+        Ok(preflight) => preflight,
+        Err(reason) => {
+            state.metrics.session_ticket_rejected();
+            return session_reject_response(reason).into_response();
+        }
+    };
 
     let Ok(connection_permit) = state.connection_permits.clone().try_acquire_owned() else {
         state.metrics.ws_capacity_rejected();
@@ -1978,12 +2012,25 @@ async fn ws_handler(
             .into_response();
     };
 
+    let Some(account_permit) =
+        AccountConnectionPermit::try_acquire(&state, preflight.account_subject.as_deref()).await
+    else {
+        state.metrics.ws_account_capacity_rejected();
+        peer_permit.release().await;
+        return (
+            StatusCode::SERVICE_UNAVAILABLE,
+            "server account connection capacity reached".to_string(),
+        )
+            .into_response();
+    };
+
     let auth = match state.sessions.lock().await.validate(
         query.session.as_deref(),
         state.session_config.require_session,
     ) {
         Ok(auth) => auth,
         Err(reason) => {
+            account_permit.release().await;
             peer_permit.release().await;
             state.metrics.session_ticket_rejected();
             return session_reject_response(reason).into_response();
@@ -1999,6 +2046,7 @@ async fn ws_handler(
             state,
             connection_permit,
             peer_permit,
+            account_permit,
             player_id,
             display_name,
             account_subject,
@@ -2012,6 +2060,7 @@ async fn player_socket(
     state: AppState,
     _connection_permit: OwnedSemaphorePermit,
     peer_permit: PeerConnectionPermit,
+    account_permit: AccountConnectionPermit,
     player_id: PlayerId,
     display_name: Option<String>,
     account_subject: Option<String>,
@@ -2034,6 +2083,7 @@ async fn player_socket(
             .await;
             let _ = socket.send(Message::Close(None)).await;
             state.metrics.connection_closed();
+            account_permit.release().await;
             peer_permit.release().await;
             return;
         }
@@ -2053,6 +2103,7 @@ async fn player_socket(
         error!(%err, "failed to send welcome");
         remove_player(&state, player_id).await;
         state.metrics.connection_closed();
+        account_permit.release().await;
         peer_permit.release().await;
         return;
     }
@@ -2134,6 +2185,7 @@ async fn player_socket(
 
     remove_player(&state, player_id).await;
     state.metrics.connection_closed();
+    account_permit.release().await;
     peer_permit.release().await;
 }
 
@@ -3138,6 +3190,7 @@ struct RuntimeBudgetConfig {
     max_admin_snapshot_bytes: usize,
     max_active_connections: usize,
     max_connections_per_ip: usize,
+    max_connections_per_account: usize,
     http_body_limit_bytes: usize,
     client_reject_limit: usize,
     admin_event_limit_cap: usize,
@@ -3165,6 +3218,17 @@ fn validate_runtime_budget_config(config: RuntimeBudgetConfig) -> anyhow::Result
     if config.max_connections_per_ip > config.max_active_connections {
         return Err(anyhow!(
             "MAX_CONNECTIONS_PER_IP must be <= MAX_ACTIVE_CONNECTIONS"
+        ));
+    }
+    validate_usize_budget(
+        "MAX_CONNECTIONS_PER_ACCOUNT",
+        config.max_connections_per_account,
+        1,
+        MAX_RUNTIME_CONNECTIONS_PER_ACCOUNT,
+    )?;
+    if config.max_connections_per_account > config.max_active_connections {
+        return Err(anyhow!(
+            "MAX_CONNECTIONS_PER_ACCOUNT must be <= MAX_ACTIVE_CONNECTIONS"
         ));
     }
 
@@ -3475,6 +3539,109 @@ impl Drop for PeerConnectionPermit {
             handle.spawn(async move {
                 connections.lock().await.release(peer_ip);
             });
+        }
+    }
+}
+
+#[derive(Debug, Default)]
+struct AccountConnectionCounts {
+    active_by_subject: HashMap<String, usize>,
+}
+
+impl AccountConnectionCounts {
+    fn try_acquire(&mut self, account_subject: &str, limit: usize) -> bool {
+        let active = self
+            .active_by_subject
+            .entry(account_subject.to_string())
+            .or_insert(0);
+        if *active >= limit {
+            return false;
+        }
+
+        *active += 1;
+        true
+    }
+
+    fn release(&mut self, account_subject: &str) {
+        if let Some(active) = self.active_by_subject.get_mut(account_subject) {
+            *active = active.saturating_sub(1);
+            if *active == 0 {
+                self.active_by_subject.remove(account_subject);
+            }
+        }
+    }
+
+    fn active_accounts(&self) -> usize {
+        self.active_by_subject.len()
+    }
+}
+
+#[derive(Debug)]
+struct AccountConnectionPermit {
+    connections: Option<Arc<Mutex<AccountConnectionCounts>>>,
+    account_subject: Option<String>,
+    released: bool,
+}
+
+impl AccountConnectionPermit {
+    async fn try_acquire(state: &AppState, account_subject: Option<&str>) -> Option<Self> {
+        let Some(account_subject) = account_subject else {
+            return Some(Self {
+                connections: None,
+                account_subject: None,
+                released: true,
+            });
+        };
+
+        if !state
+            .account_connections
+            .lock()
+            .await
+            .try_acquire(account_subject, state.max_connections_per_account)
+        {
+            return None;
+        }
+
+        Some(Self {
+            connections: Some(state.account_connections.clone()),
+            account_subject: Some(account_subject.to_string()),
+            released: false,
+        })
+    }
+
+    async fn release(mut self) {
+        self.release_inner().await;
+    }
+
+    async fn release_inner(&mut self) {
+        if self.released {
+            return;
+        }
+
+        if let (Some(connections), Some(account_subject)) =
+            (self.connections.as_ref(), self.account_subject.as_deref())
+        {
+            connections.lock().await.release(account_subject);
+        }
+        self.released = true;
+    }
+}
+
+impl Drop for AccountConnectionPermit {
+    fn drop(&mut self) {
+        if self.released {
+            return;
+        }
+
+        let connections = self.connections.clone();
+        let account_subject = self.account_subject.clone();
+        self.released = true;
+        if let (Some(connections), Some(account_subject)) = (connections, account_subject) {
+            if let Ok(handle) = tokio::runtime::Handle::try_current() {
+                handle.spawn(async move {
+                    connections.lock().await.release(&account_subject);
+                });
+            }
         }
     }
 }
@@ -4057,6 +4224,16 @@ mod config_tests {
             .to_string()
             .contains("MAX_CONNECTIONS_PER_IP must be <= MAX_ACTIVE_CONNECTIONS"));
 
+        let mut bad_account_connection_budget = valid_runtime_budget_config();
+        bad_account_connection_budget.max_active_connections = 2;
+        bad_account_connection_budget.max_connections_per_ip = 2;
+        bad_account_connection_budget.max_connections_per_account = 3;
+        let account_connection_err = validate_runtime_budget_config(bad_account_connection_budget)
+            .expect_err("account connection budget rejects");
+        assert!(account_connection_err
+            .to_string()
+            .contains("MAX_CONNECTIONS_PER_ACCOUNT must be <= MAX_ACTIVE_CONNECTIONS"));
+
         let mut bad_ip_burst = valid_runtime_budget_config();
         bad_ip_burst
             .session_issue_rate_limit_config
@@ -4588,6 +4765,7 @@ mod config_tests {
             max_admin_snapshot_bytes: 262_144,
             max_active_connections: 512,
             max_connections_per_ip: 64,
+            max_connections_per_account: 4,
             http_body_limit_bytes: 4096,
             client_reject_limit: 8,
             admin_event_limit_cap: 200,
