@@ -55,6 +55,22 @@ try {
       "METRICS_TOKEN must not use placeholder text",
     ],
   );
+  const oversizedTokenStartup = await expectStartupFailure(
+    {
+      PUBLIC_DEPLOYMENT: "true",
+      REQUIRE_SESSION: "true",
+      REQUIRE_ACCOUNT: "true",
+      DEV_ACCOUNT_TOKEN: "a".repeat(4097),
+      ADMIN_TOKEN: "b".repeat(4097),
+      METRICS_TOKEN: "c".repeat(4097),
+      ALLOWED_ORIGINS: allowedOrigin,
+    },
+    [
+      "DEV_ACCOUNT_TOKEN length <= 4096 bytes",
+      "ADMIN_TOKEN length <= 4096 bytes",
+      "METRICS_TOKEN length <= 4096 bytes",
+    ],
+  );
 
   server = await startServer({
     PUBLIC_DEPLOYMENT: "true",
@@ -92,6 +108,7 @@ try {
     refusedStartup,
     weakTokenStartup,
     placeholderTokenStartup,
+    oversizedTokenStartup,
     health,
     adminMissing,
     adminSummary: {
@@ -124,6 +141,7 @@ try {
       refusedStartup.ok &&
       weakTokenStartup.ok &&
       placeholderTokenStartup.ok &&
+      oversizedTokenStartup.ok &&
       health === "ok" &&
       adminMissing === 401 &&
       adminSummary.publicDeployment === true &&

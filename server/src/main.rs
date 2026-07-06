@@ -2816,6 +2816,15 @@ fn validate_public_deployment_token(
             _ => "token length >= 24 bytes",
         });
     }
+    if token.len() > MAX_AUTH_TOKEN_BYTES {
+        missing.push(match name {
+            "ADMIN_TOKEN" => "ADMIN_TOKEN length <= 4096 bytes",
+            "METRICS_TOKEN" => "METRICS_TOKEN length <= 4096 bytes",
+            "DEV_ACCOUNT_TOKEN" => "DEV_ACCOUNT_TOKEN length <= 4096 bytes",
+            "ACCOUNT_JWT_HS256_SECRET" => "ACCOUNT_JWT_HS256_SECRET length <= 4096 bytes",
+            _ => "token length <= 4096 bytes",
+        });
+    }
     if looks_like_placeholder_secret(token) {
         missing.push(match name {
             "ADMIN_TOKEN" => "ADMIN_TOKEN must not use placeholder text",
@@ -3590,6 +3599,25 @@ mod config_tests {
         assert!(weak_message.contains("ADMIN_TOKEN length"));
         assert!(weak_message.contains("METRICS_TOKEN length"));
         assert!(weak_message.contains("METRICS_TOKEN without surrounding whitespace"));
+
+        let oversized_err = validate_public_deployment(
+            true,
+            &strict_sessions,
+            &AccountAuthConfig {
+                require_account: true,
+                mode: AccountAuthMode::DevToken {
+                    token: "a".repeat(MAX_AUTH_TOKEN_BYTES + 1),
+                },
+            },
+            &origins,
+            Some(&"b".repeat(MAX_AUTH_TOKEN_BYTES + 1)),
+            Some(&"c".repeat(MAX_AUTH_TOKEN_BYTES + 1)),
+        )
+        .expect_err("public deployment rejects oversized configured tokens");
+        let oversized_message = oversized_err.to_string();
+        assert!(oversized_message.contains("DEV_ACCOUNT_TOKEN length <= 4096 bytes"));
+        assert!(oversized_message.contains("ADMIN_TOKEN length <= 4096 bytes"));
+        assert!(oversized_message.contains("METRICS_TOKEN length <= 4096 bytes"));
 
         let placeholder_err = validate_public_deployment(
             true,

@@ -8,6 +8,7 @@ const PLACEHOLDER_SECRET_MARKERS = [
   "change-me",
   "todo",
 ];
+const MAX_AUTH_TOKEN_BYTES = 4096;
 
 const checks = [];
 
@@ -123,6 +124,12 @@ function checkAccountAuth() {
       typeof token === "string" && Buffer.byteLength(token) >= 24,
       "error",
       `${name} must be at least 24 bytes`,
+    );
+    add(
+      `${name.toLowerCase()}-bounded`,
+      typeof token === "string" && Buffer.byteLength(token) <= MAX_AUTH_TOKEN_BYTES,
+      "error",
+      `${name} must be at most ${MAX_AUTH_TOKEN_BYTES} bytes`,
     );
     add(
       `${name.toLowerCase()}-trimmed`,

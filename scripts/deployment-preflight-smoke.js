@@ -61,6 +61,21 @@ const cases = [
     ],
   },
   {
+    name: "shared-poc-rejects-oversized-secrets",
+    args: [],
+    env: hardenedEnv({
+      DEV_ACCOUNT_TOKEN: "a".repeat(4097),
+      ADMIN_TOKEN: "b".repeat(4097),
+      METRICS_TOKEN: "c".repeat(4097),
+    }),
+    expectOk: false,
+    expectedChecks: [
+      "dev_account_token-bounded",
+      "admin_token-bounded",
+      "metrics_token-bounded",
+    ],
+  },
+  {
     name: "shared-poc-jwt-pass",
     args: [],
     env: jwtEnv(),
