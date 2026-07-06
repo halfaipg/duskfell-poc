@@ -244,7 +244,7 @@ Set `DURABLE_SYNC_WRITES=true` to make journal and settlement outbox appends cal
 Set `MAX_RUNTIME_MANIFEST_BYTES` to cap each sprite or terrain manifest JSON checked by the server at startup. The default is `262144`; oversized runtime asset manifests fail before the server listens.
 Set `MAX_RUNTIME_ASSET_BYTES` to cap each sprite or terrain PNG checked by the server at startup. The default is `2097152`; oversized runtime asset images fail before the server listens.
 Set `MAX_ACTIVE_CONNECTIONS` to cap concurrent WebSocket players before spawning sim entities. The default is `512`.
-Set `MAX_CONNECTIONS_PER_IP` to cap concurrent WebSocket players from one peer IP before spawning sim entities. The default is `64`.
+Set `MAX_CONNECTIONS_PER_IP` to cap concurrent WebSocket players from one peer IP before consuming a one-use session ticket or spawning sim entities. The default is `64`.
 Set `SNAPSHOT_INTERVAL_MS` to tune per-client WebSocket snapshot cadence. The default is `50`, matching the 20 Hz sim tick; higher values reduce bandwidth and serialization work at the cost of visual update rate.
 Set `INTEREST_RADIUS` to tune how many world units around each player are included in WebSocket snapshots. The default is `520`. Lower values reduce per-client payload size; `/api/snapshot` remains a full admin/debug snapshot.
 Set `MAX_SNAPSHOT_BYTES` to cap serialized WebSocket welcome/snapshot payloads. The default is `65536`; payloads above the cap are rejected and the connection is closed instead of sending an unexpectedly large update.
@@ -734,7 +734,7 @@ Run the WebSocket peer-capacity smoke:
 npm run smoke:ws-peer-capacity
 ```
 
-The command starts an isolated strict-session server with `MAX_CONNECTIONS_PER_IP=1`, holds one connection open, verifies a second connection from the same peer IP is closed before welcome, and checks admin/metrics visibility.
+The command starts an isolated strict-session server with `MAX_CONNECTIONS_PER_IP=1`, holds one connection open, verifies a second connection from the same peer IP receives `503` before WebSocket upgrade without consuming its session ticket, and checks admin/metrics visibility.
 
 Run the WebSocket reject-limit smoke:
 

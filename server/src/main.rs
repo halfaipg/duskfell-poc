@@ -1853,12 +1853,23 @@ async fn ws_handler(
             .into_response();
     };
 
+    let peer_ip = addr.ip();
+    let Some(peer_permit) = PeerConnectionPermit::try_acquire(&state, peer_ip).await else {
+        state.metrics.ws_peer_capacity_rejected();
+        return (
+            StatusCode::SERVICE_UNAVAILABLE,
+            "server peer connection capacity reached".to_string(),
+        )
+            .into_response();
+    };
+
     let auth = match state.sessions.lock().await.validate(
         query.session.as_deref(),
         state.session_config.require_session,
     ) {
         Ok(auth) => auth,
         Err(reason) => {
+            peer_permit.release().await;
             state.metrics.session_ticket_rejected();
             return session_reject_response(reason).into_response();
         }
@@ -1866,17 +1877,16 @@ async fn ws_handler(
     let player_id = player_id_for_auth(&auth);
     let display_name = display_name_for_auth(&auth);
     let account_subject = account_subject_for_auth(&auth);
-    let peer_ip = addr.ip();
 
     ws.on_upgrade(move |socket| {
         player_socket(
             socket,
             state,
             connection_permit,
+            peer_permit,
             player_id,
             display_name,
             account_subject,
-            peer_ip,
         )
     })
     .into_response()
@@ -1886,17 +1896,11 @@ async fn player_socket(
     mut socket: WebSocket,
     state: AppState,
     _connection_permit: OwnedSemaphorePermit,
+    peer_permit: PeerConnectionPermit,
     player_id: PlayerId,
     display_name: Option<String>,
     account_subject: Option<String>,
-    peer_ip: IpAddr,
 ) {
-    if !track_peer_connection(&state, peer_ip).await {
-        state.metrics.ws_peer_capacity_rejected();
-        let _ = socket.send(Message::Close(None)).await;
-        return;
-    }
-
     state.metrics.connection_opened();
     {
         let mut sim = state.sim.lock().await;
@@ -1915,7 +1919,7 @@ async fn player_socket(
             .await;
             let _ = socket.send(Message::Close(None)).await;
             state.metrics.connection_closed();
-            release_peer_connection(&state, peer_ip).await;
+            peer_permit.release().await;
             return;
         }
         record_journal(
@@ -1934,7 +1938,7 @@ async fn player_socket(
         error!(%err, "failed to send welcome");
         remove_player(&state, player_id).await;
         state.metrics.connection_closed();
-        release_peer_connection(&state, peer_ip).await;
+        peer_permit.release().await;
         return;
     }
 
@@ -2015,7 +2019,7 @@ async fn player_socket(
 
     remove_player(&state, player_id).await;
     state.metrics.connection_closed();
-    release_peer_connection(&state, peer_ip).await;
+    peer_permit.release().await;
 }
 
 async fn send_welcome(
@@ -2910,16 +2914,60 @@ impl PeerConnectionCounts {
     }
 }
 
-async fn track_peer_connection(state: &AppState, peer_ip: IpAddr) -> bool {
-    state
-        .peer_connections
-        .lock()
-        .await
-        .try_acquire(peer_ip, state.max_connections_per_ip)
+#[derive(Debug)]
+struct PeerConnectionPermit {
+    connections: Arc<Mutex<PeerConnectionCounts>>,
+    peer_ip: IpAddr,
+    released: bool,
 }
 
-async fn release_peer_connection(state: &AppState, peer_ip: IpAddr) {
-    state.peer_connections.lock().await.release(peer_ip);
+impl PeerConnectionPermit {
+    async fn try_acquire(state: &AppState, peer_ip: IpAddr) -> Option<Self> {
+        if !state
+            .peer_connections
+            .lock()
+            .await
+            .try_acquire(peer_ip, state.max_connections_per_ip)
+        {
+            return None;
+        }
+
+        Some(Self {
+            connections: state.peer_connections.clone(),
+            peer_ip,
+            released: false,
+        })
+    }
+
+    async fn release(mut self) {
+        self.release_inner().await;
+    }
+
+    async fn release_inner(&mut self) {
+        if self.released {
+            return;
+        }
+
+        self.connections.lock().await.release(self.peer_ip);
+        self.released = true;
+    }
+}
+
+impl Drop for PeerConnectionPermit {
+    fn drop(&mut self) {
+        if self.released {
+            return;
+        }
+
+        let connections = self.connections.clone();
+        let peer_ip = self.peer_ip;
+        self.released = true;
+        if let Ok(handle) = tokio::runtime::Handle::try_current() {
+            handle.spawn(async move {
+                connections.lock().await.release(peer_ip);
+            });
+        }
+    }
 }
 
 fn origin_allowlist_config() -> anyhow::Result<OriginAllowlistConfig> {

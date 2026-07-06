@@ -83,7 +83,7 @@ Implemented ingress protections:
 - Session ticket issuance is rate-limited per client IP with `SESSION_ISSUE_RATE_LIMIT_PER_MINUTE` and `SESSION_ISSUE_RATE_LIMIT_BURST` before request-body display-name validation runs, so malformed or invalid-name issue attempts consume the same abuse budget as valid ticket requests; `SESSION_ISSUE_RATE_LIMIT_MAX_CLIENTS` caps the in-process client-IP bucket map. Rejected requests are visible in `/metrics`.
 - Pending session ticket capacity is enforced before WebSocket spawn, expired pending tickets are cleaned before capacity checks, expired tickets are rejected before WebSocket upgrade/player spawn, and pending ticket state is visible through admin summary and `/metrics`.
 - WebSocket admission is capped by `MAX_ACTIVE_CONNECTIONS` before player entities are created.
-- WebSocket admission is also capped per peer IP with `MAX_CONNECTIONS_PER_IP`, and peer-capacity rejections are visible in `/metrics`.
+- WebSocket admission is also capped per peer IP with `MAX_CONNECTIONS_PER_IP` before one-use session tickets are consumed, and peer-capacity rejections are visible in `/metrics`.
 - WebSocket heartbeat pings and idle timeouts evict stale connections and release their player entity/admission permit.
 - WebSocket text frames are capped with `WS_MAX_TEXT_BYTES`, defaulting to `4096`.
 - Unsupported binary WebSocket frames are rejected, recorded in the journal, and the socket is closed.

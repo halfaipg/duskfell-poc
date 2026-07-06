@@ -1,5 +1,7 @@
 import { spawn } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import { mkdir } from "node:fs/promises";
+import net from "node:net";
 import { performance } from "node:perf_hooks";
 import path from "node:path";
 
@@ -36,6 +38,8 @@ try {
     "sundermere_max_connections_per_ip",
     "sundermere_active_connection_ips",
     "sundermere_ws_peer_capacity_rejected_total",
+    "sundermere_session_pending_tickets",
+    "sundermere_session_ticket_rejected_total",
   ]);
 
   result = {
@@ -50,21 +54,25 @@ try {
       activeConnections: summary.activeConnections,
       maxConnectionsPerIp: summary.maxConnectionsPerIp,
       activeConnectionIps: summary.activeConnectionIps,
+      sessionPendingTickets: summary.sessionPendingTickets,
     },
     metrics,
     elapsedMs: round(performance.now() - startedAt),
     ok:
       first.welcomed &&
       first.identityMatched &&
-      !second.welcomed &&
-      second.closed &&
+      second.statusLine.startsWith("HTTP/1.1 503") &&
+      second.rejectedBeforeUpgrade &&
       summary.activeConnections === 1 &&
       summary.maxConnectionsPerIp === maxConnectionsPerIp &&
       summary.activeConnectionIps === 1 &&
+      summary.sessionPendingTickets === 1 &&
       metrics.sundermere_active_connections === 1 &&
       metrics.sundermere_max_connections_per_ip === maxConnectionsPerIp &&
       metrics.sundermere_active_connection_ips === 1 &&
-      metrics.sundermere_ws_peer_capacity_rejected_total === 1,
+      metrics.sundermere_ws_peer_capacity_rejected_total === 1 &&
+      metrics.sundermere_session_pending_tickets === 1 &&
+      metrics.sundermere_session_ticket_rejected_total === 0,
   };
 } finally {
   if (first) {
@@ -149,46 +157,63 @@ async function connectAndHold() {
 
 async function connectAndObserve(durationMs) {
   const session = await issueSession();
-  const socketUrl = new URL(wsUrl);
-  socketUrl.searchParams.set("session", session.sessionToken);
-  const socket = new WebSocket(socketUrl);
-  let welcomed = false;
-  let closed = false;
-  let closeCode = null;
-
-  await new Promise((resolve) => {
-    const timer = setTimeout(() => {
-      try {
-        socket.close(1000, "ws-peer-capacity-timeout");
-      } catch {
-        // Best effort.
-      }
-      resolve();
-    }, durationMs);
-    socket.addEventListener("message", (event) => {
-      const message = JSON.parse(String(event.data));
-      if (message.type === "welcome") {
-        welcomed = true;
-      }
-    });
-    socket.addEventListener("close", (event) => {
-      closed = true;
-      closeCode = event.code;
-      clearTimeout(timer);
-      resolve();
-    });
-    socket.addEventListener("error", () => {
-      clearTimeout(timer);
-      resolve();
-    });
-  });
+  const handshake = await rawWebSocketHandshake(session.sessionToken, durationMs);
 
   return {
     sessionId: session.sessionId,
-    welcomed,
-    closed,
-    closeCode,
+    statusLine: handshake.statusLine,
+    rejectedBeforeUpgrade: !handshake.statusLine.includes("101 Switching Protocols"),
   };
+}
+
+async function rawWebSocketHandshake(sessionToken, timeoutMs) {
+  const socketUrl = new URL(wsUrl);
+  socketUrl.searchParams.set("session", sessionToken);
+  const key = randomBytes(16).toString("base64");
+  const request = [
+    `GET ${socketUrl.pathname}${socketUrl.search} HTTP/1.1`,
+    `Host: ${socketUrl.host}`,
+    "Upgrade: websocket",
+    "Connection: Upgrade",
+    `Sec-WebSocket-Key: ${key}`,
+    "Sec-WebSocket-Version: 13",
+    "",
+    "",
+  ].join("\r\n");
+
+  return new Promise((resolve, reject) => {
+    const socket = net.connect({ host: socketUrl.hostname, port });
+    let data = "";
+    const timer = setTimeout(() => {
+      socket.destroy();
+      reject(new Error("second websocket handshake timed out"));
+    }, timeoutMs);
+
+    socket.on("connect", () => {
+      socket.write(request);
+    });
+    socket.on("data", (chunk) => {
+      data += String(chunk);
+      if (data.includes("\r\n\r\n")) {
+        clearTimeout(timer);
+        socket.destroy();
+        resolve({
+          statusLine: data.split("\r\n")[0],
+          raw: data,
+        });
+      }
+    });
+    socket.on("error", (err) => {
+      clearTimeout(timer);
+      reject(err);
+    });
+    socket.on("close", () => {
+      if (!data) {
+        clearTimeout(timer);
+        reject(new Error("second websocket handshake closed without response"));
+      }
+    });
+  });
 }
 
 async function issueSession() {
