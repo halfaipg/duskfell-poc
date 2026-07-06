@@ -14,6 +14,7 @@ await step("terrain-atlas-tests", () => run("npm", ["run", "test:terrain"]));
 await step("assets-verify", () => run("npm", ["run", "assets:verify"]));
 await step("deployment-preflight-smoke", () => run("npm", ["run", "smoke:deployment-preflight"]));
 await step("bad-config-smoke", () => run("npm", ["run", "smoke:bad-config"]));
+await step("runtime-budget-smoke", () => run("npm", ["run", "smoke:runtime-budget"]));
 await step("external-bind-guard-smoke", () => run("npm", ["run", "smoke:external-bind-guard"]));
 await step("chain-public-guard-smoke", () => run("npm", ["run", "smoke:chain-public-guard"]));
 await step("chain-local-stub-smoke", () => run("npm", ["run", "smoke:chain-local-stub"]));

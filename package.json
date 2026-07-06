@@ -60,6 +60,7 @@
     "smoke:runtime-asset-integrity": "node scripts/runtime-asset-integrity-smoke.js",
     "smoke:runtime-manifest": "node scripts/runtime-manifest-smoke.js",
     "smoke:runtime-provenance": "node scripts/runtime-manifest-smoke.js --port 4130 --buildGitSha runtime-provenance-smoke-sha --expectedGitSha runtime-provenance-smoke-sha",
+    "smoke:runtime-budget": "node scripts/runtime-budget-smoke.js",
     "smoke:settlement-idempotency": "node scripts/settlement-idempotency-smoke.js",
     "smoke:trace-redaction": "node scripts/trace-redaction-smoke.js",
     "smoke:session-expiry": "node scripts/session-expiry-smoke.js",

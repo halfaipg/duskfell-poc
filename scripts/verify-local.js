@@ -152,6 +152,7 @@ try {
     env: {
       REQUIRE_SESSION: "true",
       MAX_ACTIVE_CONNECTIONS: "1",
+      MAX_CONNECTIONS_PER_IP: "1",
     },
   });
   await step("capacity-smoke", () =>

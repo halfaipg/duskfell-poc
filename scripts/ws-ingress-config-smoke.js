@@ -10,7 +10,7 @@ const runId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const httpUrl = `http://127.0.0.1:${port}`;
 const wsUrl = `ws://127.0.0.1:${port}/ws`;
 const adminToken = `ws-ingress-config-${runId}`;
-const wsMaxTextBytes = 64;
+const wsMaxTextBytes = 128;
 const wsMessageBurst = 2;
 const wsMessageRefillPerSecond = 1;
 const clientRejectLimit = 3;
@@ -121,7 +121,7 @@ async function startServer() {
 
 async function sendOversizedFrame() {
   const { socket, session, playerId } = await connectWithSession();
-  const payload = JSON.stringify({ type: "rename", name: "A".repeat(80) });
+  const payload = JSON.stringify({ type: "rename", name: "A".repeat(160) });
   socket.send(payload);
   await sleep(250);
   socket.close(1000, "ws-ingress-config-oversized-complete");

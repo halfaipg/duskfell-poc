@@ -133,6 +133,7 @@ npm run smoke:resource-gather
 npm run smoke:restart-reconcile
 npm run smoke:runtime-asset-integrity
 npm run smoke:runtime-manifest
+npm run smoke:runtime-budget
 npm run smoke:settlement-idempotency
 npm run smoke:trace-redaction
 npm run smoke:shutdown
@@ -260,7 +261,7 @@ Set `MAX_ADMIN_SNAPSHOT_BYTES` to cap the serialized full debug/admin `/api/snap
 Set `WS_HEARTBEAT_SECONDS` and `WS_IDLE_TIMEOUT_SECONDS` to tune WebSocket ping cadence and stale-connection eviction. Defaults are `30` and `180`; the idle timeout must be greater than the heartbeat interval.
 Set `WS_MAX_TEXT_BYTES`, `WS_MESSAGE_BURST`, and `WS_MESSAGE_REFILL_PER_SECOND` to tune per-socket text-frame size and token-bucket ingress limits. Defaults are `4096`, `20`, and `30`.
 Set `CLIENT_REJECT_LIMIT` to close a WebSocket after repeated rejected client messages on that connection. The default is `8`.
-Invalid boolean or numeric environment values fail startup instead of silently falling back to defaults. Deployment preflight also rejects decimal values for integer-only knobs, oversized shared-PoC budgets, `MAX_CONNECTIONS_PER_IP` above `MAX_ACTIVE_CONNECTIONS`, rate-limit bursts above their per-minute budgets, and WebSocket idle timeouts that are not greater than the heartbeat interval.
+Invalid boolean or numeric environment values fail startup instead of silently falling back to defaults. The server also rejects runtime budgets outside the shared deployment envelope, `MAX_CONNECTIONS_PER_IP` above `MAX_ACTIVE_CONNECTIONS`, rate-limit bursts above their per-minute budgets, and WebSocket idle timeouts that are not greater than the heartbeat interval. Deployment preflight checks the same capacity and payload budget invariants before boot.
 
 Set `JOURNAL_PATH` to override the durable append-only audit file. The default is `var/journal.jsonl`, which is ignored by git.
 Set `SETTLEMENT_OUTBOX_PATH` to override the durable settlement outbox. The default is `var/settlement-outbox.jsonl`, which is ignored by git.
@@ -280,7 +281,7 @@ npm run verify:ci
 The command runs Rust formatting, locked Rust check/tests, supply-chain smoke,
 client projection/protocol/asset-loader tests, sprite and terrain manifest tests,
 runtime asset verification, deploy/preflight smokes, startup/config/content
-guard smokes, durable replay/corruption/sync smokes, account/admin/metrics auth
+guard smokes, runtime budget guard smokes, durable replay/corruption/sync smokes, account/admin/metrics auth
 smokes, public deployment guardrails, ops snapshot/runtime provenance smokes,
 readiness/metrics smokes, trace redaction smoke, session/admission smokes,
 movement and interest-radius authority smokes, journal/restart/settlement replay
@@ -553,6 +554,14 @@ npm run smoke:chain-public-guard
 ```
 
 The command verifies a hardened `PUBLIC_DEPLOYMENT=true` server still refuses startup when `CHAIN_ENABLED=true`, because the PoC does not yet have signer or indexer configuration.
+
+Run the runtime budget smoke:
+
+```sh
+npm run smoke:runtime-budget
+```
+
+The command verifies the server refuses inconsistent or runaway runtime capacity and payload budgets, including per-peer connection caps above the shard cap, rate-limit bursts above their per-minute refill budgets, too-small WebSocket text caps, and oversized snapshot caps.
 
 Run the local chain-stub honesty smoke:
 

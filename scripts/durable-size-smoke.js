@@ -19,7 +19,7 @@ const cases = [
     name: "journal",
     port: basePort,
     envName: "MAX_JOURNAL_BYTES",
-    journalBytes: 64,
+    journalBytes: 2048,
     outboxBytes: 0,
   },
   {
@@ -27,7 +27,7 @@ const cases = [
     port: basePort + 1,
     envName: "MAX_SETTLEMENT_OUTBOX_BYTES",
     journalBytes: 0,
-    outboxBytes: 64,
+    outboxBytes: 2048,
   },
 ];
 
@@ -65,8 +65,8 @@ async function runCase(testCase) {
       BIND_ADDR: `127.0.0.1:${testCase.port}`,
       JOURNAL_PATH: journalPath,
       SETTLEMENT_OUTBOX_PATH: outboxPath,
-      MAX_JOURNAL_BYTES: "8",
-      MAX_SETTLEMENT_OUTBOX_BYTES: "8",
+      MAX_JOURNAL_BYTES: "1024",
+      MAX_SETTLEMENT_OUTBOX_BYTES: "1024",
       RUST_LOG: "sundermere_server=warn,tower_http=warn",
     },
     stdio: ["ignore", "pipe", "pipe"],

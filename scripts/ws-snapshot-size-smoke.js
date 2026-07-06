@@ -10,7 +10,7 @@ const runId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const httpUrl = `http://127.0.0.1:${port}`;
 const wsUrl = `ws://127.0.0.1:${port}/ws`;
 const adminToken = `ws-snapshot-size-${runId}`;
-const maxSnapshotBytes = 128;
+const maxSnapshotBytes = 1024;
 
 if (!Number.isInteger(port) || port <= 0) {
   throw new Error("--port must be a positive integer");

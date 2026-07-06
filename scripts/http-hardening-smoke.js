@@ -5,7 +5,7 @@ import path from "node:path";
 
 const args = parseArgs(process.argv.slice(2));
 const port = Number(args.port ?? 4135);
-const bodyLimitBytes = Number(args.bodyLimitBytes ?? 128);
+const bodyLimitBytes = Number(args.bodyLimitBytes ?? 256);
 const runtimeDir = path.resolve("var", "http-hardening-smoke");
 const runId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const clientDir = path.join(runtimeDir, `${runId}-client`);

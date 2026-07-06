@@ -1,11 +1,11 @@
 import { spawn } from "node:child_process";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir } from "node:fs/promises";
 import { performance } from "node:perf_hooks";
 import path from "node:path";
 
 const args = parseArgs(process.argv.slice(2));
-const basePort = Number(args.port ?? 4154);
-const runtimeDir = path.resolve("var", "durable-corruption-smoke");
+const basePort = Number(args.port ?? 4178);
+const runtimeDir = path.resolve("var", "runtime-budget-smoke");
 const runId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
 if (!Number.isInteger(basePort) || basePort <= 0) {
@@ -16,69 +16,47 @@ await mkdir(runtimeDir, { recursive: true });
 
 const cases = [
   {
-    name: "journal",
+    name: "peer-cap-exceeds-total-cap",
     port: basePort,
-    journalText: "{not-json}\n",
-    outboxText: "",
-    expected: "failed to parse journal line 1",
+    env: {
+      MAX_ACTIVE_CONNECTIONS: "2",
+      MAX_CONNECTIONS_PER_IP: "3",
+    },
+    expected: "MAX_CONNECTIONS_PER_IP must be <= MAX_ACTIVE_CONNECTIONS",
   },
   {
-    name: "settlement-outbox",
+    name: "ip-session-burst-exceeds-refill",
     port: basePort + 1,
-    journalText: "",
-    outboxText: "{not-json}\n",
-    expected: "failed to parse settlement outbox line 1",
+    env: {
+      SESSION_ISSUE_RATE_LIMIT_PER_MINUTE: "10",
+      SESSION_ISSUE_RATE_LIMIT_BURST: "11",
+    },
+    expected: "SESSION_ISSUE_RATE_LIMIT_BURST",
   },
   {
-    name: "settlement-outbox-invalid-job",
+    name: "account-session-burst-exceeds-refill",
     port: basePort + 2,
-    journalText: "",
-    outboxText: `${JSON.stringify({
-      type: "jobQueued",
-      job: {
-        jobId: "11111111-1111-4111-8111-111111111111",
-        playerId: "22222222-2222-4222-8222-222222222222",
-        assetId: "",
-        reason: "registrar-demo-deed",
-      },
-    })}\n`,
-    expected: "settlement job assetId",
+    env: {
+      ACCOUNT_SESSION_RATE_LIMIT_PER_MINUTE: "10",
+      ACCOUNT_SESSION_RATE_LIMIT_BURST: "11",
+    },
+    expected: "ACCOUNT_SESSION_RATE_LIMIT_BURST",
   },
   {
-    name: "settlement-outbox-invalid-receipt",
+    name: "ws-text-cap-too-small",
     port: basePort + 3,
-    journalText: "",
-    outboxText: `${JSON.stringify({
-      type: "jobConfirmed",
-      receipt: {
-        jobId: "33333333-3333-4333-8333-333333333333",
-        playerId: "44444444-4444-4444-8444-444444444444",
-        assetId: "dryrun-deed-test",
-        status: "",
-        chainTx: null,
-      },
-    })}\n`,
-    expected: "settlement receipt status",
+    env: {
+      WS_MAX_TEXT_BYTES: "1",
+    },
+    expected: "WS_MAX_TEXT_BYTES",
   },
   {
-    name: "journal-oversized-line",
+    name: "snapshot-cap-too-large",
     port: basePort + 4,
-    journalText: `${JSON.stringify({ oversized: "j".repeat(256) })}\n`,
-    outboxText: "",
     env: {
-      MAX_DURABLE_LINE_BYTES: "128",
+      MAX_SNAPSHOT_BYTES: "1048577",
     },
-    expected: "MAX_DURABLE_LINE_BYTES",
-  },
-  {
-    name: "settlement-outbox-oversized-line",
-    port: basePort + 5,
-    journalText: "",
-    outboxText: `${JSON.stringify({ oversized: "o".repeat(256) })}\n`,
-    env: {
-      MAX_DURABLE_LINE_BYTES: "128",
-    },
-    expected: "MAX_DURABLE_LINE_BYTES",
+    expected: "MAX_SNAPSHOT_BYTES",
   },
 ];
 
@@ -106,9 +84,6 @@ async function runCase(testCase) {
   const caseId = `${runId}-${testCase.name}`;
   const journalPath = path.join(runtimeDir, `${caseId}-journal.jsonl`);
   const outboxPath = path.join(runtimeDir, `${caseId}-settlement-outbox.jsonl`);
-  await writeFile(journalPath, testCase.journalText);
-  await writeFile(outboxPath, testCase.outboxText);
-
   const server = spawn("cargo", ["run", "-p", "sundermere-server"], {
     cwd: process.cwd(),
     env: {
@@ -116,8 +91,8 @@ async function runCase(testCase) {
       BIND_ADDR: `127.0.0.1:${testCase.port}`,
       JOURNAL_PATH: journalPath,
       SETTLEMENT_OUTBOX_PATH: outboxPath,
-      ...(testCase.env ?? {}),
       RUST_LOG: "sundermere_server=warn,tower_http=warn",
+      ...testCase.env,
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -137,8 +112,6 @@ async function runCase(testCase) {
   return {
     name: testCase.name,
     port: testCase.port,
-    journalPath,
-    outboxPath,
     exit,
     mentionedExpected: output.includes(testCase.expected),
     ok: exit.code !== 0 && output.includes(testCase.expected),

@@ -8,8 +8,9 @@ const port = Number(args.port ?? 4143);
 const runtimeDir = path.resolve("var", "admin-snapshot-size-smoke");
 const runId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const httpUrl = `http://127.0.0.1:${port}`;
+const wsUrl = `ws://127.0.0.1:${port}/ws`;
 const adminToken = `admin-snapshot-size-${runId}`;
-const maxAdminSnapshotBytes = 128;
+const maxAdminSnapshotBytes = 1024;
 
 if (!Number.isInteger(port) || port <= 0) {
   throw new Error("--port must be a positive integer");
@@ -23,12 +24,19 @@ const startedAt = performance.now();
 
 try {
   server = await startServer();
+  const connections = [];
+  for (let index = 0; index < 4; index += 1) {
+    connections.push(await connectAndHold());
+  }
   const snapshot = await fetchWithAdmin("/api/snapshot");
   const summary = await fetchJsonWithAdmin("/admin/summary");
   const metrics = parseMetrics(await fetchText("/metrics"), [
     "sundermere_max_admin_snapshot_bytes",
     "sundermere_admin_snapshot_payload_rejected_total",
   ]);
+  for (const connection of connections) {
+    connection.close(1000, "admin-snapshot-size-smoke-complete");
+  }
 
   result = {
     port,
@@ -76,6 +84,7 @@ async function startServer() {
       ...process.env,
       BIND_ADDR: `127.0.0.1:${port}`,
       ADMIN_TOKEN: adminToken,
+      REQUIRE_SESSION: "true",
       MAX_ADMIN_SNAPSHOT_BYTES: String(maxAdminSnapshotBytes),
       JOURNAL_PATH: path.join(runtimeDir, `${runId}-journal.jsonl`),
       SETTLEMENT_OUTBOX_PATH: path.join(runtimeDir, `${runId}-settlement-outbox.jsonl`),
@@ -118,6 +127,43 @@ async function stopServer(child) {
       }
     }),
   ]);
+}
+
+async function connectAndHold() {
+  const session = await issueSession();
+  const socketUrl = new URL(wsUrl);
+  socketUrl.searchParams.set("session", session.sessionToken);
+  const socket = new WebSocket(socketUrl);
+
+  await new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("websocket welcome timed out")), 5000);
+    socket.addEventListener("message", (event) => {
+      const message = JSON.parse(String(event.data));
+      if (message.type === "welcome") {
+        clearTimeout(timer);
+        resolve();
+      }
+    });
+    socket.addEventListener("error", () => {
+      clearTimeout(timer);
+      reject(new Error("websocket failed"));
+    });
+  });
+
+  return socket;
+}
+
+async function issueSession() {
+  const response = await fetch(`${httpUrl}/api/session`, {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+    },
+  });
+  if (!response.ok) {
+    throw new Error(`/api/session returned ${response.status}`);
+  }
+  return response.json();
 }
 
 async function fetchWithAdmin(endpoint) {
