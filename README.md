@@ -129,6 +129,7 @@ npm run smoke:restart-reconcile
 npm run smoke:runtime-asset-integrity
 npm run smoke:runtime-manifest
 npm run smoke:settlement-idempotency
+npm run smoke:trace-redaction
 npm run smoke:shutdown
 npm run smoke:session-capacity
 npm run smoke:ws-admission-preflight
@@ -273,11 +274,11 @@ client projection/protocol/asset-loader tests, sprite and terrain manifest tests
 runtime asset verification, deploy/preflight smokes, startup/config/content
 guard smokes, durable replay/corruption/sync smokes, account/admin/metrics auth
 smokes, public deployment guardrails, ops snapshot/runtime provenance smokes,
-readiness/metrics smokes, session/admission smokes, movement and interest-radius
-authority smokes, journal/restart/settlement replay smokes, WebSocket abuse and
-admission-ordering/payload-cap smokes, and git whitespace checks. GitHub Actions
-runs the same command on pushes to `main` and `codex/**`, pull requests, and
-manual dispatches.
+readiness/metrics smokes, trace redaction smoke, session/admission smokes,
+movement and interest-radius authority smokes, journal/restart/settlement replay
+smokes, WebSocket abuse and admission-ordering/payload-cap smokes, and git
+whitespace checks. GitHub Actions runs the same command on pushes to `main` and
+`codex/**`, pull requests, and manual dispatches.
 
 Run the broad local verification gate:
 
@@ -285,7 +286,7 @@ Run the broad local verification gate:
 npm run verify:local
 ```
 
-The command runs Rust formatting/tests, supply-chain smoke, client projection/protocol/asset-loader tests, sprite manifest tests, sprite asset verification, deployment preflight smoke, asset serving smoke, bad-config startup smoke, public chain-mode guard smoke, local chain-stub honesty smoke, external bind guard smoke, HTTP hardening smoke, bad-content-schema startup smoke, bad-content-contract startup smoke, bad-content-size startup smoke, durable-file-size startup smoke, durable-corruption startup smoke, durable-sync smoke, dev-token account auth smoke, JWT account auth smoke, account session rate-limit smoke, account-bound settlement smoke, admin auth smoke, admin event-limit smoke, admin snapshot-size smoke, metrics auth smoke, Origin allowlist smoke, public deployment guard smoke, metrics smoke, readiness smoke, session ticket capacity smoke, session ticket expiry smoke, expired-ticket WebSocket rejection smoke, session issue rate-limit smoke, interest-radius smoke, movement authority smoke, journal anomaly smoke, journal replay smoke, gameplay journal replay smoke, settlement idempotency smoke, restart reconciliation smoke, graceful shutdown smoke, WebSocket admission preflight smoke, WebSocket ingress config smoke, WebSocket snapshot-size smoke, WebSocket payload-metrics smoke, WebSocket peer-capacity smoke, stale-WebSocket timeout smoke, a side-port client protocol smoke, a side-port deed smoke, a side-port resource-gather smoke, a side-port crafting smoke, a side-port WebSocket load smoke, and a side-port capacity smoke.
+The command runs Rust formatting/tests, supply-chain smoke, client projection/protocol/asset-loader tests, sprite manifest tests, sprite asset verification, deployment preflight smoke, asset serving smoke, bad-config startup smoke, public chain-mode guard smoke, local chain-stub honesty smoke, external bind guard smoke, HTTP hardening smoke, bad-content-schema startup smoke, bad-content-contract startup smoke, bad-content-size startup smoke, durable-file-size startup smoke, durable-corruption startup smoke, durable-sync smoke, dev-token account auth smoke, JWT account auth smoke, account session rate-limit smoke, account-bound settlement smoke, admin auth smoke, admin event-limit smoke, admin snapshot-size smoke, metrics auth smoke, Origin allowlist smoke, public deployment guard smoke, metrics smoke, readiness smoke, trace redaction smoke, session ticket capacity smoke, session ticket expiry smoke, expired-ticket WebSocket rejection smoke, session issue rate-limit smoke, interest-radius smoke, movement authority smoke, journal anomaly smoke, journal replay smoke, gameplay journal replay smoke, settlement idempotency smoke, restart reconciliation smoke, graceful shutdown smoke, WebSocket admission preflight smoke, WebSocket ingress config smoke, WebSocket snapshot-size smoke, WebSocket payload-metrics smoke, WebSocket peer-capacity smoke, stale-WebSocket timeout smoke, a side-port client protocol smoke, a side-port deed smoke, a side-port resource-gather smoke, a side-port crafting smoke, a side-port WebSocket load smoke, and a side-port capacity smoke.
 
 Run the live server doctor against an already-running development server:
 
@@ -326,6 +327,14 @@ npm run smoke:http-hardening
 The command verifies security headers, response cache policy, generated and
 forwarded `x-request-id` behavior, admin/metrics visibility of
 `HTTP_BODY_LIMIT_BYTES`, and `413` rejection for oversized HTTP request bodies.
+
+Run the trace redaction smoke:
+
+```sh
+npm run smoke:trace-redaction
+```
+
+The command starts an isolated strict-session server with HTTP trace logging enabled, attempts a WebSocket upgrade with a sentinel `?session=` token, and verifies the trace logs include only the sanitized path without the query string or token value.
 
 Run the supply-chain smoke:
 

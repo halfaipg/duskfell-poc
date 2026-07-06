@@ -63,6 +63,7 @@ try {
   await step("public-deployment-smoke", () => run("npm", ["run", "smoke:public-deployment"]));
   await step("metrics-smoke", () => run("npm", ["run", "smoke:metrics"]));
   await step("readiness-smoke", () => run("npm", ["run", "smoke:readiness"]));
+  await step("trace-redaction-smoke", () => run("npm", ["run", "smoke:trace-redaction"]));
   await step("session-capacity-smoke", () => run("npm", ["run", "smoke:session-capacity"]));
   await step("session-expiry-smoke", () => run("npm", ["run", "smoke:session-expiry"]));
   await step("session-expired-ws-smoke", () =>

@@ -59,7 +59,7 @@ use tokio::sync::{mpsc, Mutex, OwnedSemaphorePermit, Semaphore};
 use tower_http::limit::RequestBodyLimitLayer;
 use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
-use tracing::{error, info};
+use tracing::{debug_span, error, info};
 use uuid::Uuid;
 
 const SERVER_TICK_BUDGET: Duration = Duration::from_millis(50);
@@ -340,7 +340,16 @@ async fn main() -> anyhow::Result<()> {
         .nest_service("/", ServeDir::new(client_dir))
         .layer(DefaultBodyLimit::disable())
         .layer(RequestBodyLimitLayer::new(http_body_limit_bytes))
-        .layer(TraceLayer::new_for_http())
+        .layer(
+            TraceLayer::new_for_http().make_span_with(|request: &Request<Body>| {
+                debug_span!(
+                    "request",
+                    method = %request.method(),
+                    path = %sanitized_trace_path(request.uri()),
+                    version = ?request.version(),
+                )
+            }),
+        )
         .layer(middleware::from_fn(add_http_hardening_headers))
         .with_state(state);
 
@@ -1802,6 +1811,15 @@ fn is_safe_request_id(value: &str) -> bool {
             .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'.' | b':'))
 }
 
+fn sanitized_trace_path(uri: &axum::http::Uri) -> &str {
+    let path = uri.path();
+    if path.is_empty() {
+        "/"
+    } else {
+        path
+    }
+}
+
 #[derive(Debug, serde::Deserialize)]
 struct WsQuery {
     session: Option<String>,
@@ -3167,8 +3185,8 @@ mod config_tests {
         constant_time_eq, durable_parent_status, durable_persistence_check, is_safe_request_id,
         parse_bool_value, parse_origin_allowlist_value, parse_positive_f32_value,
         parse_positive_u32_value, parse_positive_u64_value, parse_positive_usize_value,
-        session_display_name_from_body, settlement_queue_capacity_check, validate_account_jwt,
-        validate_account_subject, validate_bind_addr, validate_chain_mode,
+        sanitized_trace_path, session_display_name_from_body, settlement_queue_capacity_check,
+        validate_account_jwt, validate_account_subject, validate_bind_addr, validate_chain_mode,
         validate_public_deployment, validate_websocket_timing, AccountAuthConfig, AccountAuthMode,
         OriginAllowlistConfig, MAX_ACCOUNT_SUBJECT_BYTES,
     };
@@ -3240,6 +3258,17 @@ mod config_tests {
         assert!(!is_safe_request_id("trace with spaces"));
         assert!(!is_safe_request_id("trace/header"));
         assert!(!is_safe_request_id("trace\nheader"));
+    }
+
+    #[test]
+    fn trace_path_redacts_query_strings() {
+        let uri = "/ws?session=session-token-that-must-not-log"
+            .parse()
+            .expect("uri parses");
+        assert_eq!(sanitized_trace_path(&uri), "/ws");
+
+        let root = "/?token=secret".parse().expect("root uri parses");
+        assert_eq!(sanitized_trace_path(&root), "/");
     }
 
     #[test]
