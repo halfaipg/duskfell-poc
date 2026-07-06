@@ -106,6 +106,34 @@ const cases = [
     ],
   },
   {
+    name: "shared-poc-rejects-weak-jwt-identity-config",
+    args: [],
+    env: jwtEnv({
+      ACCOUNT_JWT_ISSUER: "https://127.0.0.1/issuer?debug=true",
+      ACCOUNT_JWT_AUDIENCE: " replace-with-audience ",
+    }),
+    expectOk: false,
+    expectedChecks: [
+      "account-jwt-issuer-url",
+      "account-jwt-audience-trimmed",
+      "account-jwt-audience-printable",
+      "account-jwt-audience-not-placeholder",
+    ],
+  },
+  {
+    name: "shared-poc-rejects-oversized-jwt-identity-config",
+    args: [],
+    env: jwtEnv({
+      ACCOUNT_JWT_ISSUER: `https://${"a".repeat(512)}`,
+      ACCOUNT_JWT_AUDIENCE: "a".repeat(257),
+    }),
+    expectOk: false,
+    expectedChecks: [
+      "account-jwt-issuer-bounded",
+      "account-jwt-audience-bounded",
+    ],
+  },
+  {
     name: "shared-poc-rejects-invalid-durable-sync",
     args: [],
     env: hardenedEnv({ DURABLE_SYNC_WRITES: "maybe" }),

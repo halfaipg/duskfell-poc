@@ -80,6 +80,8 @@ const DEFAULT_ACCOUNT_SESSION_RATE_LIMIT_BURST: u32 = 10;
 const DEFAULT_ACCOUNT_SESSION_RATE_LIMIT_MAX_SUBJECTS: usize = 4096;
 const MAX_ACCOUNT_SUBJECT_BYTES: usize = 128;
 const MAX_AUTH_TOKEN_BYTES: usize = 4096;
+const MAX_JWT_ISSUER_BYTES: usize = 512;
+const MAX_JWT_AUDIENCE_BYTES: usize = 256;
 const MAX_ALLOWED_ORIGINS: usize = 16;
 const MAX_ORIGIN_BYTES: usize = 512;
 const MIN_PUBLIC_DEPLOYMENT_TOKEN_BYTES: usize = 24;
@@ -2746,12 +2748,8 @@ fn validate_public_deployment(
             audience,
         } => {
             validate_public_deployment_token("ACCOUNT_JWT_HS256_SECRET", secret, &mut missing);
-            if issuer.is_none() {
-                missing.push("ACCOUNT_JWT_ISSUER");
-            }
-            if audience.is_none() {
-                missing.push("ACCOUNT_JWT_AUDIENCE");
-            }
+            validate_public_jwt_issuer(issuer.as_deref(), &mut missing);
+            validate_public_jwt_audience(audience.as_deref(), &mut missing);
         }
     }
     if !origin_allowlist.enabled() {
@@ -2836,6 +2834,125 @@ fn validate_public_deployment_token(
             _ => "token must not use placeholder text",
         });
     }
+}
+
+fn validate_public_jwt_issuer(issuer: Option<&str>, missing: &mut Vec<&'static str>) {
+    let Some(issuer) = issuer else {
+        missing.push("ACCOUNT_JWT_ISSUER");
+        return;
+    };
+
+    if issuer.trim() != issuer {
+        missing.push("ACCOUNT_JWT_ISSUER without surrounding whitespace");
+    }
+    if issuer.len() > MAX_JWT_ISSUER_BYTES {
+        missing.push("ACCOUNT_JWT_ISSUER length <= 512 bytes");
+    }
+    if issuer
+        .chars()
+        .any(|character| character.is_ascii_whitespace() || character.is_control())
+    {
+        missing.push("ACCOUNT_JWT_ISSUER must not contain whitespace or control characters");
+    }
+    if issuer
+        .chars()
+        .any(|character| matches!(character, '?' | '#'))
+    {
+        missing.push("ACCOUNT_JWT_ISSUER must not include query or fragment");
+    }
+
+    match public_jwt_issuer_host(issuer) {
+        Some(host) if is_local_jwt_issuer_host(host) => {
+            missing.push("ACCOUNT_JWT_ISSUER must not use localhost or loopback");
+        }
+        Some(_) => {}
+        None => {
+            missing.push("ACCOUNT_JWT_ISSUER must be an https issuer URL with a host");
+        }
+    }
+}
+
+fn validate_public_jwt_audience(audience: Option<&str>, missing: &mut Vec<&'static str>) {
+    let Some(audience) = audience else {
+        missing.push("ACCOUNT_JWT_AUDIENCE");
+        return;
+    };
+
+    if audience.trim() != audience {
+        missing.push("ACCOUNT_JWT_AUDIENCE without surrounding whitespace");
+    }
+    if audience.len() > MAX_JWT_AUDIENCE_BYTES {
+        missing.push("ACCOUNT_JWT_AUDIENCE length <= 256 bytes");
+    }
+    if audience
+        .chars()
+        .any(|character| character.is_ascii_whitespace() || character.is_control())
+    {
+        missing.push("ACCOUNT_JWT_AUDIENCE must not contain whitespace or control characters");
+    }
+    if looks_like_placeholder_secret(audience) {
+        missing.push("ACCOUNT_JWT_AUDIENCE must not use placeholder text");
+    }
+}
+
+fn public_jwt_issuer_host(issuer: &str) -> Option<&str> {
+    let rest = issuer.strip_prefix("https://")?;
+    if rest.is_empty()
+        || rest
+            .chars()
+            .any(|character| matches!(character, '?' | '#' | '@'))
+    {
+        return None;
+    }
+
+    let authority = rest.split('/').next().unwrap_or_default();
+    if authority.is_empty() {
+        return None;
+    }
+
+    if let Some(without_open_bracket) = authority.strip_prefix('[') {
+        let close_bracket = without_open_bracket.find(']')?;
+        let host = &without_open_bracket[..close_bracket];
+        let remainder = &without_open_bracket[close_bracket + 1..];
+        if !valid_optional_port(remainder) {
+            return None;
+        }
+        return (!host.is_empty()).then_some(host);
+    }
+
+    if let Some((host, port)) = authority.split_once(':') {
+        if host.is_empty()
+            || port.is_empty()
+            || !port.chars().all(|character| character.is_ascii_digit())
+            || port.contains(':')
+        {
+            return None;
+        }
+        return Some(host);
+    }
+
+    (!authority.is_empty()).then_some(authority)
+}
+
+fn valid_optional_port(value: &str) -> bool {
+    if value.is_empty() {
+        return true;
+    }
+    let Some(port) = value.strip_prefix(':') else {
+        return false;
+    };
+    !port.is_empty() && port.chars().all(|character| character.is_ascii_digit())
+}
+
+fn is_local_jwt_issuer_host(host: &str) -> bool {
+    let normalized = host
+        .trim_matches(|character| matches!(character, '[' | ']'))
+        .to_ascii_lowercase();
+    normalized == "localhost"
+        || normalized == "::1"
+        || normalized == "0.0.0.0"
+        || normalized == "127.0.0.1"
+        || normalized.starts_with("127.")
 }
 
 fn looks_like_placeholder_secret(token: &str) -> bool {
@@ -3308,7 +3425,7 @@ mod config_tests {
         validate_account_subject, validate_bind_addr, validate_chain_mode,
         validate_public_deployment, validate_websocket_timing, AccountAuthConfig, AccountAuthMode,
         OriginAllowlistConfig, MAX_ACCOUNT_SUBJECT_BYTES, MAX_ALLOWED_ORIGINS,
-        MAX_AUTH_TOKEN_BYTES, MAX_ORIGIN_BYTES,
+        MAX_AUTH_TOKEN_BYTES, MAX_JWT_AUDIENCE_BYTES, MAX_JWT_ISSUER_BYTES, MAX_ORIGIN_BYTES,
     };
     use crate::metrics::AppMetrics;
     use crate::session::SessionConfig;
@@ -3732,6 +3849,73 @@ mod config_tests {
         let jwt_message = jwt_missing_claims_err.to_string();
         assert!(jwt_message.contains("ACCOUNT_JWT_ISSUER"));
         assert!(jwt_message.contains("ACCOUNT_JWT_AUDIENCE"));
+
+        let jwt_bad_identity_config_err = validate_public_deployment(
+            true,
+            &strict_sessions,
+            &AccountAuthConfig {
+                require_account: true,
+                mode: AccountAuthMode::JwtHs256 {
+                    secret: "account-jwt-public-secret".to_string(),
+                    issuer: Some("https://127.0.0.1/issuer".to_string()),
+                    audience: Some(" replace-with-audience ".to_string()),
+                },
+            },
+            &origins,
+            Some("admin-token-public-12345"),
+            Some("metrics-token-public-123"),
+        )
+        .expect_err("public deployment rejects weak jwt identity config");
+        let jwt_bad_identity_message = jwt_bad_identity_config_err.to_string();
+        assert!(jwt_bad_identity_message.contains("ACCOUNT_JWT_ISSUER must not use localhost"));
+        assert!(jwt_bad_identity_message
+            .contains("ACCOUNT_JWT_AUDIENCE without surrounding whitespace"));
+        assert!(
+            jwt_bad_identity_message.contains("ACCOUNT_JWT_AUDIENCE must not contain whitespace")
+        );
+        assert!(
+            jwt_bad_identity_message.contains("ACCOUNT_JWT_AUDIENCE must not use placeholder text")
+        );
+
+        let jwt_query_issuer_err = validate_public_deployment(
+            true,
+            &strict_sessions,
+            &AccountAuthConfig {
+                require_account: true,
+                mode: AccountAuthMode::JwtHs256 {
+                    secret: "account-jwt-public-secret".to_string(),
+                    issuer: Some("https://identity.example/issuer?debug=true".to_string()),
+                    audience: Some("sundermere".to_string()),
+                },
+            },
+            &origins,
+            Some("admin-token-public-12345"),
+            Some("metrics-token-public-123"),
+        )
+        .expect_err("public deployment rejects jwt issuer query");
+        assert!(jwt_query_issuer_err
+            .to_string()
+            .contains("ACCOUNT_JWT_ISSUER must not include query"));
+
+        let jwt_oversized_identity_config_err = validate_public_deployment(
+            true,
+            &strict_sessions,
+            &AccountAuthConfig {
+                require_account: true,
+                mode: AccountAuthMode::JwtHs256 {
+                    secret: "account-jwt-public-secret".to_string(),
+                    issuer: Some(format!("https://{}", "a".repeat(MAX_JWT_ISSUER_BYTES))),
+                    audience: Some("a".repeat(MAX_JWT_AUDIENCE_BYTES + 1)),
+                },
+            },
+            &origins,
+            Some("admin-token-public-12345"),
+            Some("metrics-token-public-123"),
+        )
+        .expect_err("public deployment rejects oversized jwt identity config");
+        let jwt_oversized_identity_message = jwt_oversized_identity_config_err.to_string();
+        assert!(jwt_oversized_identity_message.contains("ACCOUNT_JWT_ISSUER length <= 512 bytes"));
+        assert!(jwt_oversized_identity_message.contains("ACCOUNT_JWT_AUDIENCE length <= 256 bytes"));
     }
 
     #[test]

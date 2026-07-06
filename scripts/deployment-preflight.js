@@ -9,6 +9,8 @@ const PLACEHOLDER_SECRET_MARKERS = [
   "todo",
 ];
 const MAX_AUTH_TOKEN_BYTES = 4096;
+const MAX_JWT_ISSUER_BYTES = 512;
+const MAX_JWT_AUDIENCE_BYTES = 256;
 const MAX_ALLOWED_ORIGINS = 16;
 const MAX_ORIGIN_BYTES = 512;
 
@@ -116,6 +118,53 @@ function checkAccountAuth() {
       Boolean(env.ACCOUNT_JWT_AUDIENCE),
       "error",
       "ACCOUNT_JWT_AUDIENCE must be set for jwt-hs256 mode",
+    );
+    add(
+      "account-jwt-issuer-bounded",
+      typeof env.ACCOUNT_JWT_ISSUER === "string" &&
+        Buffer.byteLength(env.ACCOUNT_JWT_ISSUER) <= MAX_JWT_ISSUER_BYTES,
+      "error",
+      `ACCOUNT_JWT_ISSUER must be at most ${MAX_JWT_ISSUER_BYTES} bytes`,
+    );
+    add(
+      "account-jwt-issuer-trimmed",
+      typeof env.ACCOUNT_JWT_ISSUER === "string" &&
+        env.ACCOUNT_JWT_ISSUER.trim() === env.ACCOUNT_JWT_ISSUER,
+      "error",
+      "ACCOUNT_JWT_ISSUER must not have surrounding whitespace",
+    );
+    add(
+      "account-jwt-issuer-url",
+      isPublicJwtIssuer(env.ACCOUNT_JWT_ISSUER),
+      "error",
+      "ACCOUNT_JWT_ISSUER must be an https issuer URL with a non-local host and no query, fragment, or userinfo",
+    );
+    add(
+      "account-jwt-audience-bounded",
+      typeof env.ACCOUNT_JWT_AUDIENCE === "string" &&
+        Buffer.byteLength(env.ACCOUNT_JWT_AUDIENCE) <= MAX_JWT_AUDIENCE_BYTES,
+      "error",
+      `ACCOUNT_JWT_AUDIENCE must be at most ${MAX_JWT_AUDIENCE_BYTES} bytes`,
+    );
+    add(
+      "account-jwt-audience-trimmed",
+      typeof env.ACCOUNT_JWT_AUDIENCE === "string" &&
+        env.ACCOUNT_JWT_AUDIENCE.trim() === env.ACCOUNT_JWT_AUDIENCE,
+      "error",
+      "ACCOUNT_JWT_AUDIENCE must not have surrounding whitespace",
+    );
+    add(
+      "account-jwt-audience-printable",
+      isCompactPrintable(env.ACCOUNT_JWT_AUDIENCE),
+      "error",
+      "ACCOUNT_JWT_AUDIENCE must not contain whitespace or control characters",
+    );
+    add(
+      "account-jwt-audience-not-placeholder",
+      typeof env.ACCOUNT_JWT_AUDIENCE === "string" &&
+        !looksLikePlaceholderSecret(env.ACCOUNT_JWT_AUDIENCE),
+      "error",
+      "ACCOUNT_JWT_AUDIENCE must not use placeholder text",
     );
   }
 
@@ -309,10 +358,7 @@ function checkProductionBlockers() {
 
   add(
     "real-account-provider-configured",
-    env.ACCOUNT_AUTH_MODE === "jwt-hs256" &&
-      Boolean(env.ACCOUNT_JWT_HS256_SECRET) &&
-      Boolean(env.ACCOUNT_JWT_ISSUER) &&
-      Boolean(env.ACCOUNT_JWT_AUDIENCE),
+    env.ACCOUNT_AUTH_MODE === "jwt-hs256" && hasValidJwtIdentityConfig(),
     "error",
     "production needs signed account JWT validation instead of DEV_ACCOUNT_TOKEN",
   );
@@ -359,6 +405,47 @@ function boolEnv(name) {
   return null;
 }
 
+function hasValidJwtIdentityConfig() {
+  return (
+    typeof env.ACCOUNT_JWT_HS256_SECRET === "string" &&
+    Buffer.byteLength(env.ACCOUNT_JWT_HS256_SECRET) >= 24 &&
+    Buffer.byteLength(env.ACCOUNT_JWT_HS256_SECRET) <= MAX_AUTH_TOKEN_BYTES &&
+    env.ACCOUNT_JWT_HS256_SECRET.trim() === env.ACCOUNT_JWT_HS256_SECRET &&
+    !looksLikePlaceholderSecret(env.ACCOUNT_JWT_HS256_SECRET) &&
+    isPublicJwtIssuer(env.ACCOUNT_JWT_ISSUER) &&
+    typeof env.ACCOUNT_JWT_AUDIENCE === "string" &&
+    Buffer.byteLength(env.ACCOUNT_JWT_AUDIENCE) <= MAX_JWT_AUDIENCE_BYTES &&
+    env.ACCOUNT_JWT_AUDIENCE.trim() === env.ACCOUNT_JWT_AUDIENCE &&
+    isCompactPrintable(env.ACCOUNT_JWT_AUDIENCE) &&
+    !looksLikePlaceholderSecret(env.ACCOUNT_JWT_AUDIENCE)
+  );
+}
+
+function isPublicJwtIssuer(value) {
+  if (typeof value !== "string") return false;
+  if (Buffer.byteLength(value) > MAX_JWT_ISSUER_BYTES) return false;
+  if (value.trim() !== value) return false;
+  if (!isCompactPrintable(value)) return false;
+  if (value.includes("?") || value.includes("#") || value.includes("@")) return false;
+
+  let parsed;
+  try {
+    parsed = new URL(value);
+  } catch {
+    return false;
+  }
+
+  return (
+    parsed.protocol === "https:" &&
+    parsed.hostname.length > 0 &&
+    !isLocalHost(parsed.hostname)
+  );
+}
+
+function isCompactPrintable(value) {
+  return typeof value === "string" && value.length > 0 && !/[\s\x00-\x1f\x7f]/u.test(value);
+}
+
 function looksLikePlaceholderSecret(value) {
   const normalized = value.toLowerCase();
   return PLACEHOLDER_SECRET_MARKERS.some((marker) => normalized.includes(marker));
@@ -380,7 +467,13 @@ function isLoopbackBindHost(host) {
 }
 
 function isLocalHost(hostname) {
-  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+  return (
+    hostname === "localhost" ||
+    hostname === "::1" ||
+    hostname === "0.0.0.0" ||
+    hostname === "127.0.0.1" ||
+    hostname.startsWith("127.")
+  );
 }
 
 function parseOrigin(value) {
