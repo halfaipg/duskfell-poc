@@ -108,6 +108,7 @@ npm run smoke:bad-config
 npm run smoke:client-protocol
 npm run smoke:container
 npm run smoke:content-schema
+npm run smoke:deploy-audit
 npm run smoke:deed
 npm run smoke:external-bind-guard
 npm run smoke:gameplay-journal-replay
@@ -189,6 +190,22 @@ Run the deployment preflight before starting any shared environment:
 ```sh
 npm run preflight:deployment
 ```
+
+After a shared PoC deployment is running, audit the live shard:
+
+```sh
+node scripts/deploy-audit.js \
+  --url https://play.example.com \
+  --profile shared-poc \
+  --adminToken "$ADMIN_TOKEN" \
+  --metricsToken "$METRICS_TOKEN" \
+  --expectedGitSha "$GIT_SHA"
+```
+
+The audit checks health/readiness, token protection on `/admin/runtime` and
+`/metrics`, Duskfell/Base `$DUSK` runtime identity, build Git SHA when provided,
+content/runtime consistency, verified sprite and terrain asset pins, public-mode
+guardrails, durable persistence failure counters, and settlement queue capacity.
 
 The default `shared-poc` profile checks the public-mode environment without starting the server. It expects hardened PoC deployment variables such as `PUBLIC_DEPLOYMENT=true`, strict sessions, account auth, strong distinct credentials, exact allowed Origins, sane positive capacity and payload budgets, and chain mode disabled. Use `npm run preflight:deployment -- --profile production` to see the fail-closed list of missing production systems; today that profile intentionally fails until durable datastore, signer/indexer, and cross-process admission/rate-limit services exist. The identity blocker clears only when `ACCOUNT_AUTH_MODE=jwt-hs256` includes a strong secret, issuer, and audience.
 Set `HTTP_BODY_LIMIT_BYTES` to cap plain HTTP request bodies. The default is `4096`, which is enough for current session/admin traffic and prevents oversized POST bodies from occupying shard work.

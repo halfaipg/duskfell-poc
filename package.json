@@ -48,6 +48,7 @@
     "smoke:origin-allowlist": "node scripts/origin-allowlist-smoke.js",
     "smoke:public-deployment": "node scripts/public-deployment-smoke.js",
     "smoke:deployment-preflight": "node scripts/deployment-preflight-smoke.js",
+    "smoke:deploy-audit": "node scripts/deploy-audit-smoke.js",
     "smoke:readiness": "node scripts/readiness-smoke.js",
     "smoke:resource-gather": "node scripts/resource-gather-smoke.js",
     "smoke:crafting": "node scripts/crafting-smoke.js",

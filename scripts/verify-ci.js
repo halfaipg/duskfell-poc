@@ -13,6 +13,7 @@ await step("sprite-manifest-tests", () => run("npm", ["run", "test:sprites"]));
 await step("terrain-atlas-tests", () => run("npm", ["run", "test:terrain"]));
 await step("assets-verify", () => run("npm", ["run", "assets:verify"]));
 await step("deployment-preflight-smoke", () => run("npm", ["run", "smoke:deployment-preflight"]));
+await step("deploy-audit-smoke", () => run("npm", ["run", "smoke:deploy-audit"]));
 await step("runtime-asset-integrity-smoke", () =>
   run("npm", ["run", "smoke:runtime-asset-integrity"]),
 );

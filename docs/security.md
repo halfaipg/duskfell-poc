@@ -51,6 +51,8 @@ Set `PUBLIC_DEPLOYMENT=true` for any shared environment. In that mode the server
 
 Run `npm run preflight:deployment` before booting shared PoC deployments. The preflight checks the intended public-mode environment without starting the server and fails on missing strict sessions, account auth, weak or reused credentials, invalid Origins, chain-stub exposure, and invalid capacity/payload budgets. Its `production` profile intentionally fails until durable persistence, signer/indexer isolation, and cross-process admission/rate-limit state are implemented; the identity blocker clears only for configured JWT mode, not the temporary dev-token mode.
 
+Run `scripts/deploy-audit.js --profile shared-poc` against a running shared shard after deploy. It verifies health/readiness, admin and metrics token protection, runtime build provenance, asset hash verification, public deployment guardrails, durable persistence failure counters, and settlement queue capacity from the live endpoints. `scripts/deploy-audit-smoke.js` starts a hardened isolated server and verifies the audit path itself.
+
 Non-loopback `BIND_ADDR` values require `PUBLIC_DEPLOYMENT=true`, so binding to `0.0.0.0` cannot silently expose local-dev defaults. `scripts/external-bind-guard-smoke.js` verifies this fail-closed startup path.
 
 `CHAIN_ENABLED=true` is currently a local-only settlement stub that produces `needs-signer` receipts instead of signed transactions. `scripts/chain-local-stub-smoke.js` verifies a deed claim in local chain mode still returns `needs-signer` with no `chainTx`. Public deployment refuses startup with chain mode enabled until signer and indexer configuration are implemented. `scripts/chain-public-guard-smoke.js` verifies this fail-closed startup path.

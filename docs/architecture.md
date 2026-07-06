@@ -15,6 +15,7 @@ The PoC is intentionally small but shaped around the production constraints:
 - `Dockerfile` builds a release server image with bundled original client/assets/content, non-root runtime user, `/data` JSONL state, `/readyz` healthcheck, and an OCI revision label matching the compile-time `GIT_SHA`. `scripts/container-smoke.js` builds and runs that image with public-mode guardrails before treating it as deployable.
 - `scripts/supply-chain-smoke.js` verifies local dependency posture from `package.json`, workspace Cargo metadata, `Cargo.lock`, and the locked active Rust build graph.
 - `scripts/deployment-preflight.js` checks deployment environment profiles before boot. The default `shared-poc` profile must pass for hardened shared demos, while the `production` profile intentionally fails until account identity, durable state, signer/indexer, and cross-process admission/rate-limit services exist.
+- `scripts/deploy-audit.js` checks a running shared shard after deploy: readiness, token-protected admin/runtime and metrics, runtime Git SHA, content/runtime consistency, asset verification, public-mode guardrails, durable failure counters, and settlement queue capacity.
 - `scripts/bad-config-smoke.js` verifies invalid environment config fails startup.
 - `scripts/external-bind-guard-smoke.js` verifies non-loopback bind addresses require explicit public deployment mode.
 - `scripts/content-schema-smoke.js` verifies unsupported world content schema fails startup.
