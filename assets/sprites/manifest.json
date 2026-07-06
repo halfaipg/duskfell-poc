@@ -1,0 +1,120 @@
+{
+  "schemaVersion": "sundermere-sprite-manifest-v1",
+  "projection": {
+    "kind": "military-plan-oblique",
+    "tileWidth": 64,
+    "tileHeight": 64,
+    "tileAspectRatio": 1,
+    "axisAngleDegrees": 45,
+    "heightAxis": "screen-y",
+    "unitsPerTile": 64
+  },
+  "sheets": [
+    {
+      "id": "player-placeholder",
+      "image": "player-placeholder.png",
+      "imageSha256": "9f33cc048f54aba6aa71ff1034820836dc3ae28e15016394bfb15a8b3799b556",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 3,
+        "rows": 1,
+        "frameCount": 3
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 112
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1,
+        "heightTiles": 1
+      },
+      "render": {
+        "layer": "actor",
+        "sort": "footprint-y",
+        "zBias": 0,
+        "shadow": {
+          "kind": "ellipse",
+          "x": 64,
+          "y": 116,
+          "width": 42,
+          "height": 12,
+          "opacity": 0.3
+        }
+      },
+      "directions": [
+        {
+          "name": "south",
+          "startFrame": 0,
+          "frameCount": 3
+        }
+      ],
+      "provenance": {
+        "cleanRoom": true,
+        "source": "repo-local deterministic placeholder generator",
+        "createdAt": "2026-07-06",
+        "license": "project-original-placeholder",
+        "reviewer": "codex",
+        "prompt": "original plan-oblique sandbox adventurer placeholder"
+      },
+      "approval": {
+        "state": "placeholder"
+      }
+    },
+    {
+      "id": "props-placeholder",
+      "image": "props-placeholder.png",
+      "imageSha256": "e98cb00d374d276500cd5e578e1e910e0da6395ada6826f3134a0eb11a344af9",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 5,
+        "rows": 1,
+        "frameCount": 5
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 104
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1.5,
+        "heightTiles": 1.5
+      },
+      "render": {
+        "layer": "prop",
+        "sort": "footprint-y",
+        "zBias": -8,
+        "shadow": {
+          "kind": "ellipse",
+          "x": 64,
+          "y": 116,
+          "width": 58,
+          "height": 16,
+          "opacity": 0.24
+        }
+      },
+      "directions": [
+        {
+          "name": "neutral",
+          "startFrame": 0,
+          "frameCount": 5
+        }
+      ],
+      "provenance": {
+        "cleanRoom": true,
+        "source": "repo-local deterministic placeholder generator",
+        "createdAt": "2026-07-06",
+        "license": "project-original-placeholder",
+        "reviewer": "codex",
+        "prompt": "original plan-oblique sandbox prop placeholders for title office forge grove ore vein and shrine"
+      },
+      "approval": {
+        "state": "placeholder"
+      }
+    }
+  ]
+}

@@ -1,0 +1,215 @@
+{
+  "schemaVersion": "duskfell-terrain-atlas-v1",
+  "projection": {
+    "kind": "military-plan-oblique",
+    "tileWidth": 64,
+    "tileHeight": 64,
+    "tileAspectRatio": 1,
+    "axisAngleDegrees": 45,
+    "heightAxis": "screen-y",
+    "unitsPerTile": 64
+  },
+  "tileSheet": {
+    "id": "terrain-placeholder",
+    "image": "terrain-placeholder.png",
+    "sha256": "4699da64e6b162e0d299bca43b54af5d3049ca13b43a2f7b488619fd6dbf90b1",
+    "cellWidth": 64,
+    "cellHeight": 64,
+    "columns": 6,
+    "rows": 3,
+    "frameCount": 18
+  },
+  "tiles": [
+    {
+      "id": "grass-flat-placeholder",
+      "material": "grass",
+      "kind": "flat-base",
+      "frame": 0,
+      "surface": {
+        "walkable": true,
+        "role": "ground"
+      }
+    },
+    {
+      "id": "field-flat-placeholder",
+      "material": "field",
+      "kind": "flat-base",
+      "frame": 1,
+      "surface": {
+        "walkable": true,
+        "role": "ground"
+      }
+    },
+    {
+      "id": "dirt-flat-placeholder",
+      "material": "dirt",
+      "kind": "flat-base",
+      "frame": 2,
+      "surface": {
+        "walkable": true,
+        "role": "ground"
+      }
+    },
+    {
+      "id": "stone-flat-placeholder",
+      "material": "stone",
+      "kind": "flat-base",
+      "frame": 3,
+      "surface": {
+        "walkable": true,
+        "role": "ground"
+      }
+    },
+    {
+      "id": "water-flat-placeholder",
+      "material": "water",
+      "kind": "flat-base",
+      "frame": 4,
+      "surface": {
+        "walkable": false,
+        "role": "liquid"
+      }
+    },
+    {
+      "id": "settlement-flat-placeholder",
+      "material": "settlement",
+      "kind": "flat-base",
+      "frame": 5,
+      "surface": {
+        "walkable": true,
+        "role": "surface"
+      }
+    },
+    {
+      "id": "grass-slope-placeholder",
+      "material": "grass",
+      "kind": "slope-texture",
+      "frame": 6,
+      "surface": {
+        "walkable": true,
+        "role": "slope"
+      }
+    },
+    {
+      "id": "field-slope-placeholder",
+      "material": "field",
+      "kind": "slope-texture",
+      "frame": 7,
+      "surface": {
+        "walkable": true,
+        "role": "slope"
+      }
+    },
+    {
+      "id": "dirt-slope-placeholder",
+      "material": "dirt",
+      "kind": "slope-texture",
+      "frame": 8,
+      "surface": {
+        "walkable": true,
+        "role": "slope"
+      }
+    },
+    {
+      "id": "stone-slope-placeholder",
+      "material": "stone",
+      "kind": "slope-texture",
+      "frame": 9,
+      "surface": {
+        "walkable": true,
+        "role": "slope"
+      }
+    },
+    {
+      "id": "water-slope-placeholder",
+      "material": "water",
+      "kind": "slope-texture",
+      "frame": 10,
+      "surface": {
+        "walkable": false,
+        "role": "liquid-slope"
+      }
+    },
+    {
+      "id": "settlement-slope-placeholder",
+      "material": "settlement",
+      "kind": "slope-texture",
+      "frame": 11,
+      "surface": {
+        "walkable": true,
+        "role": "surface-slope"
+      }
+    },
+    {
+      "id": "grass-transition-placeholder",
+      "material": "grass",
+      "kind": "transition",
+      "frame": 12,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      }
+    },
+    {
+      "id": "field-transition-placeholder",
+      "material": "field",
+      "kind": "transition",
+      "frame": 13,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      }
+    },
+    {
+      "id": "dirt-transition-placeholder",
+      "material": "dirt",
+      "kind": "transition",
+      "frame": 14,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      }
+    },
+    {
+      "id": "stone-transition-placeholder",
+      "material": "stone",
+      "kind": "transition",
+      "frame": 15,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      }
+    },
+    {
+      "id": "water-transition-placeholder",
+      "material": "water",
+      "kind": "transition",
+      "frame": 16,
+      "surface": {
+        "walkable": false,
+        "role": "shoreline"
+      }
+    },
+    {
+      "id": "settlement-transition-placeholder",
+      "material": "settlement",
+      "kind": "transition",
+      "frame": 17,
+      "surface": {
+        "walkable": true,
+        "role": "surface-edge"
+      }
+    }
+  ],
+  "provenance": {
+    "cleanRoom": true,
+    "source": "repo-local deterministic terrain placeholder generator",
+    "createdAt": "2026-07-06",
+    "license": "project-original-placeholder",
+    "reviewer": "codex",
+    "prompt": "original plan-oblique 1:1 diamond terrain placeholder atlas"
+  },
+  "approval": {
+    "state": "placeholder"
+  }
+}

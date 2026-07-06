@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Duskfell PoC</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Clean-room sandbox MMO PoC</p>
+          <h1>Duskfell</h1>
+        </div>
+        <div class="connection" id="connection">Connecting</div>
+      </header>
+
+      <section class="playfield">
+        <canvas id="world" width="1280" height="720" aria-label="Duskfell world"></canvas>
+        <aside class="panel">
+          <div class="panel-block">
+            <h2>Player</h2>
+            <label class="name-row">
+              <span>Name</span>
+              <input id="nameInput" maxlength="20" placeholder="Wayfarer" />
+            </label>
+            <button id="renameButton" type="button">Rename</button>
+          </div>
+
+          <div class="panel-block">
+            <h2>Title Office</h2>
+            <p id="deedStatus">Walk to the Title Office and press E to claim a dry-run deed.</p>
+          </div>
+
+          <div class="panel-block">
+            <h2>Inventory</h2>
+            <p id="resourceStatus">Gather wood and ore, then craft at the Field Forge.</p>
+          </div>
+
+          <div class="panel-block">
+            <h2>Settlement</h2>
+            <dl class="metrics">
+              <div><dt>Mode</dt><dd id="chainMode">-</dd></div>
+              <div><dt>Pending</dt><dd id="pendingJobs">0</dd></div>
+              <div><dt>Confirmed</dt><dd id="confirmedJobs">0</dd></div>
+              <div><dt>Latest</dt><dd id="latestReceipt">-</dd></div>
+            </dl>
+          </div>
+        </aside>
+      </section>
+
+      <footer class="statusbar">
+        <span>Move with WASD or arrow keys.</span>
+        <span>Press E near the Title Office, groves, or ore veins.</span>
+        <span>All gameplay is server-authoritative; chain settlement is async dry-run.</span>
+      </footer>
+    </main>
+
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>
