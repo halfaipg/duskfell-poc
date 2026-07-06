@@ -55,6 +55,7 @@ if (!["local", "shared-poc", "production"].includes(profile)) {
 }
 
 checkKnownProfile();
+checkDeploymentProfile();
 checkPublicMode();
 checkBuildProvenance();
 checkAccountAuth();
@@ -84,6 +85,37 @@ if (!result.ok) {
 
 function checkKnownProfile() {
   add("profile-known", true, "error", `profile=${profile}`);
+}
+
+function checkDeploymentProfile() {
+  const runtimeProfile = env.DEPLOYMENT_PROFILE ?? "local";
+  const known = ["local", "shared-poc", "production"].includes(runtimeProfile);
+  add(
+    "deployment-profile-known",
+    known,
+    "error",
+    "DEPLOYMENT_PROFILE must be local, shared-poc, or production when set",
+  );
+  if (!known) {
+    return;
+  }
+
+  if (profile === "local") {
+    add(
+      "local-deployment-profile",
+      runtimeProfile === "local",
+      "warn",
+      "local preflight should use DEPLOYMENT_PROFILE=local or leave it unset",
+    );
+    return;
+  }
+
+  add(
+    "deployment-profile-matches-profile",
+    runtimeProfile === profile,
+    "error",
+    `DEPLOYMENT_PROFILE must be ${profile} for --profile ${profile}`,
+  );
 }
 
 function checkPublicMode() {

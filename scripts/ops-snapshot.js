@@ -109,6 +109,7 @@ function summarizeAdminSummary(summary) {
     players: summary?.players,
     content: summary?.content ?? null,
     publicDeployment: summary?.publicDeployment,
+    deploymentProfile: summary?.deploymentProfile,
     requireSession: summary?.requireSession,
     requireAccount: summary?.requireAccount,
     accountAuthMode: summary?.accountAuthMode,
@@ -196,6 +197,7 @@ function summarizePosture(summary, metrics) {
 
   return {
     publicDeployment: summary?.publicDeployment === true,
+    deploymentProfile: summary?.deploymentProfile ?? null,
     requireSession: summary?.requireSession === true,
     requireAccount: summary?.requireAccount === true,
     originAllowlistEnabled,
@@ -211,6 +213,9 @@ function summarizePosture(summary, metrics) {
 function summarizeMetrics(metrics) {
   const names = [
     "sundermere_public_deployment",
+    "sundermere_deployment_profile_local",
+    "sundermere_deployment_profile_shared_poc",
+    "sundermere_deployment_profile_production",
     "sundermere_draining",
     "sundermere_require_session",
     "sundermere_require_account",

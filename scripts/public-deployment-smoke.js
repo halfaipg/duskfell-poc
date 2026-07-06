@@ -24,11 +24,19 @@ let result;
 const startedAt = performance.now();
 
 try {
+  const missingDeploymentProfileStartup = await expectStartupFailure(
+    {
+      PUBLIC_DEPLOYMENT: "true",
+    },
+    ["DEPLOYMENT_PROFILE=shared-poc"],
+  );
   const refusedStartup = await expectStartupFailure({
+    DEPLOYMENT_PROFILE: "shared-poc",
     PUBLIC_DEPLOYMENT: "true",
   });
   const weakTokenStartup = await expectStartupFailure(
     {
+      DEPLOYMENT_PROFILE: "shared-poc",
       PUBLIC_DEPLOYMENT: "true",
       REQUIRE_SESSION: "true",
       REQUIRE_ACCOUNT: "true",
@@ -41,6 +49,7 @@ try {
   );
   const placeholderTokenStartup = await expectStartupFailure(
     {
+      DEPLOYMENT_PROFILE: "shared-poc",
       PUBLIC_DEPLOYMENT: "true",
       REQUIRE_SESSION: "true",
       REQUIRE_ACCOUNT: "true",
@@ -57,6 +66,7 @@ try {
   );
   const oversizedTokenStartup = await expectStartupFailure(
     {
+      DEPLOYMENT_PROFILE: "shared-poc",
       PUBLIC_DEPLOYMENT: "true",
       REQUIRE_SESSION: "true",
       REQUIRE_ACCOUNT: "true",
@@ -73,6 +83,7 @@ try {
   );
   const unsyncedDurableStartup = await expectStartupFailure(
     {
+      DEPLOYMENT_PROFILE: "shared-poc",
       PUBLIC_DEPLOYMENT: "true",
       REQUIRE_SESSION: "true",
       REQUIRE_ACCOUNT: "true",
@@ -86,6 +97,7 @@ try {
   );
 
   server = await startServer({
+    DEPLOYMENT_PROFILE: "shared-poc",
     PUBLIC_DEPLOYMENT: "true",
     REQUIRE_SESSION: "true",
     REQUIRE_ACCOUNT: "true",
@@ -119,6 +131,7 @@ try {
 
   result = {
     port,
+    missingDeploymentProfileStartup,
     refusedStartup,
     weakTokenStartup,
     placeholderTokenStartup,
@@ -128,6 +141,7 @@ try {
     adminMissing,
     adminSummary: {
       publicDeployment: adminSummary.publicDeployment,
+      deploymentProfile: adminSummary.deploymentProfile,
       requireSession: adminSummary.requireSession,
       requireAccount: adminSummary.requireAccount,
       devAccountTokenConfigured: adminSummary.devAccountTokenConfigured,
@@ -137,6 +151,10 @@ try {
     metricsMissing,
     metrics: {
       sundermere_public_deployment: parseMetric(metricsText, "sundermere_public_deployment"),
+      sundermere_deployment_profile_shared_poc: parseMetric(
+        metricsText,
+        "sundermere_deployment_profile_shared_poc",
+      ),
       sundermere_require_session: parseMetric(metricsText, "sundermere_require_session"),
       sundermere_require_account: parseMetric(metricsText, "sundermere_require_account"),
       sundermere_dev_account_token_configured: parseMetric(
@@ -153,6 +171,7 @@ try {
     sessionAllowedAccount,
     elapsedMs: round(performance.now() - startedAt),
     ok:
+      missingDeploymentProfileStartup.ok &&
       refusedStartup.ok &&
       weakTokenStartup.ok &&
       placeholderTokenStartup.ok &&
@@ -161,6 +180,7 @@ try {
       health === "ok" &&
       adminMissing === 401 &&
       adminSummary.publicDeployment === true &&
+      adminSummary.deploymentProfile === "shared-poc" &&
       adminSummary.requireSession === true &&
       adminSummary.requireAccount === true &&
       adminSummary.devAccountTokenConfigured === true &&
@@ -168,6 +188,7 @@ try {
       adminSummary.originAllowedCount === 1 &&
       metricsMissing === 401 &&
       parseMetric(metricsText, "sundermere_public_deployment") === 1 &&
+      parseMetric(metricsText, "sundermere_deployment_profile_shared_poc") === 1 &&
       parseMetric(metricsText, "sundermere_require_session") === 1 &&
       parseMetric(metricsText, "sundermere_require_account") === 1 &&
       parseMetric(metricsText, "sundermere_dev_account_token_configured") === 1 &&

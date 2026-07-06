@@ -27,6 +27,8 @@ try {
     "-p",
     `127.0.0.1:${port}:4107`,
     "-e",
+    "DEPLOYMENT_PROFILE=shared-poc",
+    "-e",
     "PUBLIC_DEPLOYMENT=true",
     "-e",
     "REQUIRE_SESSION=true",

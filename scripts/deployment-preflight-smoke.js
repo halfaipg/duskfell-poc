@@ -17,6 +17,7 @@ const cases = [
     env: hardenedEnv(),
     expectOk: true,
     expectedChecks: [
+      "deployment-profile-matches-profile",
       "public-deployment-enabled",
       "build-git-sha-format",
       "auth-credentials-distinct",
@@ -24,6 +25,13 @@ const cases = [
       "durable-sync-writes-enabled",
       "not-draining",
     ],
+  },
+  {
+    name: "shared-poc-rejects-missing-deployment-profile",
+    args: [],
+    env: hardenedEnv({ DEPLOYMENT_PROFILE: undefined }),
+    expectOk: false,
+    expectedChecks: ["deployment-profile-known", "deployment-profile-matches-profile"],
   },
   {
     name: "shared-poc-rejects-unsynced-durable-writes",
@@ -270,6 +278,7 @@ const cases = [
     name: "production-remains-blocked",
     args: ["--profile", "production"],
     env: hardenedEnv({
+      DEPLOYMENT_PROFILE: "production",
       ALLOWED_ORIGINS: "https://play.example",
       BIND_ADDR: "0.0.0.0:4107",
     }),
@@ -285,6 +294,7 @@ const cases = [
     name: "production-jwt-clears-identity-blocker",
     args: ["--profile", "production"],
     env: jwtEnv({
+      DEPLOYMENT_PROFILE: "production",
       ALLOWED_ORIGINS: "https://play.example",
       BIND_ADDR: "0.0.0.0:4107",
     }),
@@ -301,6 +311,7 @@ const cases = [
     name: "production-rejects-local-origin",
     args: ["--profile", "production"],
     env: hardenedEnv({
+      DEPLOYMENT_PROFILE: "production",
       ALLOWED_ORIGINS: "http://127.0.0.1:4107",
       BIND_ADDR: "0.0.0.0:4107",
     }),
@@ -396,6 +407,7 @@ function jwtEnv(overrides = {}) {
 
 function hardenedEnv(overrides = {}) {
   const values = {
+    DEPLOYMENT_PROFILE: "shared-poc",
     PUBLIC_DEPLOYMENT: "true",
     REQUIRE_SESSION: "true",
     REQUIRE_ACCOUNT: "true",

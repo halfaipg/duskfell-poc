@@ -160,6 +160,9 @@ async function checkMetrics() {
     const metrics = parseMetrics(text);
     const required = [
       "sundermere_public_deployment",
+      "sundermere_deployment_profile_local",
+      "sundermere_deployment_profile_shared_poc",
+      "sundermere_deployment_profile_production",
       "sundermere_draining",
       "sundermere_require_session",
       "sundermere_require_account",
@@ -194,6 +197,11 @@ async function checkMetrics() {
 function checkRuntimePosture(runtime, summary) {
   if (!summary) return;
   if (profile === "shared-poc") {
+    add(
+      "deployment-profile-shared-poc",
+      summary.deploymentProfile === "shared-poc",
+      `deploymentProfile=${summary.deploymentProfile}`,
+    );
     add("public-deployment-enabled", summary.publicDeployment === true, `publicDeployment=${summary.publicDeployment}`);
     add("not-draining", summary.draining === false, `draining=${summary.draining}`);
     add("strict-session-required", summary.requireSession === true, `requireSession=${summary.requireSession}`);
@@ -240,6 +248,13 @@ function checkRuntimePosture(runtime, summary) {
 function checkMetricsPosture(metrics) {
   if (!metrics) return;
   if (profile === "shared-poc") {
+    add(
+      "metrics-deployment-profile-shared-poc",
+      metrics.sundermere_deployment_profile_local === 0 &&
+        metrics.sundermere_deployment_profile_shared_poc === 1 &&
+        metrics.sundermere_deployment_profile_production === 0,
+      `local=${metrics.sundermere_deployment_profile_local} shared=${metrics.sundermere_deployment_profile_shared_poc} production=${metrics.sundermere_deployment_profile_production}`,
+    );
     add("metrics-public-deployment", metrics.sundermere_public_deployment === 1, `value=${metrics.sundermere_public_deployment}`);
     add("metrics-not-draining", metrics.sundermere_draining === 0, `value=${metrics.sundermere_draining}`);
     add("metrics-require-session", metrics.sundermere_require_session === 1, `value=${metrics.sundermere_require_session}`);

@@ -43,9 +43,11 @@ try {
       snapshot.readiness?.ready === true &&
       snapshot.runtime?.app?.buildGitSha === expectedGitSha &&
       snapshot.summary?.publicDeployment === true &&
+      snapshot.summary?.deploymentProfile === "shared-poc" &&
       snapshot.summary?.requireSession === true &&
       snapshot.summary?.requireAccount === true &&
       snapshot.posture?.publicDeployment === true &&
+      snapshot.posture?.deploymentProfile === "shared-poc" &&
       snapshot.posture?.requireSession === true &&
       snapshot.posture?.requireAccount === true &&
       snapshot.posture?.originAllowlistEnabled === true &&
@@ -58,6 +60,7 @@ try {
       snapshot.summary?.journal?.pathBasename === "journal.jsonl" &&
       snapshot.summary?.settlement?.outboxPathBasename === "settlement-outbox.jsonl" &&
       snapshot.metrics?.sundermere_public_deployment === 1 &&
+      snapshot.metrics?.sundermere_deployment_profile_shared_poc === 1 &&
       snapshot.metrics?.sundermere_require_account === 1,
     port,
     forbidden,
@@ -71,6 +74,8 @@ try {
       settlement: snapshot.summary?.settlement,
       metrics: {
         sundermere_origin_allowlist_enabled: snapshot.metrics?.sundermere_origin_allowlist_enabled,
+        sundermere_deployment_profile_shared_poc:
+          snapshot.metrics?.sundermere_deployment_profile_shared_poc,
         sundermere_origin_allowed_origins: snapshot.metrics?.sundermere_origin_allowed_origins,
         sundermere_session_pending_tickets: snapshot.metrics?.sundermere_session_pending_tickets,
         sundermere_session_ticket_capacity: snapshot.metrics?.sundermere_session_ticket_capacity,
@@ -102,6 +107,7 @@ async function startServer() {
     env: {
       ...process.env,
       GIT_SHA: expectedGitSha,
+      DEPLOYMENT_PROFILE: "shared-poc",
       PUBLIC_DEPLOYMENT: "true",
       REQUIRE_SESSION: "true",
       REQUIRE_ACCOUNT: "true",

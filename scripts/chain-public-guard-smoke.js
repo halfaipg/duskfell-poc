@@ -16,6 +16,7 @@ if (!Number.isInteger(port) || port <= 0) {
 await mkdir(runtimeDir, { recursive: true });
 
 const exit = await expectStartupFailure({
+  DEPLOYMENT_PROFILE: "shared-poc",
   PUBLIC_DEPLOYMENT: "true",
   REQUIRE_SESSION: "true",
   REQUIRE_ACCOUNT: "true",

@@ -330,6 +330,7 @@ async fn main() -> anyhow::Result<()> {
         max_runtime_asset_bytes,
         max_content_objects,
     })?;
+    validate_deployment_profile(deployment_profile, public_deployment)?;
     validate_public_deployment(
         public_deployment,
         &session_config,
@@ -341,7 +342,6 @@ async fn main() -> anyhow::Result<()> {
     )?;
     validate_bind_addr(public_deployment, addr)?;
     validate_chain_mode(public_deployment, settlement_config.chain_enabled)?;
-    validate_deployment_profile(deployment_profile, public_deployment)?;
 
     tokio::spawn(settlement::run_worker(
         settlement_config.clone(),
@@ -3235,6 +3235,12 @@ fn validate_deployment_profile(
     deployment_profile: DeploymentProfile,
     public_deployment: bool,
 ) -> anyhow::Result<()> {
+    if public_deployment && deployment_profile == DeploymentProfile::Local {
+        return Err(anyhow!(
+            "PUBLIC_DEPLOYMENT=true requires DEPLOYMENT_PROFILE=shared-poc or production"
+        ));
+    }
+
     if deployment_profile.requires_public_deployment() && !public_deployment {
         return Err(anyhow!(
             "DEPLOYMENT_PROFILE={} requires PUBLIC_DEPLOYMENT=true",
@@ -4796,6 +4802,12 @@ mod config_tests {
     fn deployment_profile_enforces_shared_and_production_posture() {
         assert!(validate_deployment_profile(DeploymentProfile::Local, false).is_ok());
         assert!(validate_deployment_profile(DeploymentProfile::SharedPoc, true).is_ok());
+
+        let public_local_err = validate_deployment_profile(DeploymentProfile::Local, true)
+            .expect_err("public deployment requires non-local profile");
+        let public_local_message = public_local_err.to_string();
+        assert!(public_local_message.contains("PUBLIC_DEPLOYMENT=true"));
+        assert!(public_local_message.contains("DEPLOYMENT_PROFILE=shared-poc"));
 
         let shared_err = validate_deployment_profile(DeploymentProfile::SharedPoc, false)
             .expect_err("shared-poc profile requires public deployment guardrails");

@@ -29,12 +29,14 @@ try {
   const expectedChecksPresent = [
     "expected-build-git-sha-format",
     "build-git-sha",
+    "deployment-profile-shared-poc",
     "origin-allowlist-enabled",
     "durable-sync-writes-enabled",
     "session-ticket-capacity-available",
     "connection-capacity-available",
     "account-connection-capacity-available",
     "metrics-origin-allowlist-enabled",
+    "metrics-deployment-profile-shared-poc",
     "metrics-durable-sync-writes",
     "metrics-session-ticket-capacity-available",
     "metrics-connection-capacity-available",
@@ -76,6 +78,7 @@ async function startServer() {
     env: {
       ...process.env,
       GIT_SHA: expectedGitSha,
+      DEPLOYMENT_PROFILE: "shared-poc",
       PUBLIC_DEPLOYMENT: "true",
       REQUIRE_SESSION: "true",
       REQUIRE_ACCOUNT: "true",
