@@ -16,6 +16,7 @@ checkBind();
 checkChainMode();
 checkNumericBudgets();
 checkDurabilityMode();
+checkDrainMode();
 checkProductionBlockers();
 
 const errors = checks.filter((check) => check.level === "error" && !check.ok);
@@ -229,6 +230,38 @@ function checkDurabilityMode() {
   );
 }
 
+function checkDrainMode() {
+  const value = env.DRAINING;
+  const draining = boolEnv("DRAINING");
+  const allowDraining = args.allowDraining === true || args.allowDraining === "true";
+
+  add(
+    "draining-boolean",
+    value == null || draining != null,
+    "error",
+    "DRAINING must be true or false when set",
+  );
+
+  if (profile === "local") {
+    add(
+      "local-draining-disabled",
+      draining !== true,
+      "warn",
+      "local profile should normally leave DRAINING unset unless testing drain mode",
+    );
+    return;
+  }
+
+  add(
+    "not-draining",
+    draining !== true || allowDraining,
+    "error",
+    allowDraining
+      ? "drain mode explicitly allowed by --allowDraining"
+      : "shared and production profiles should not boot drained unless --allowDraining was passed",
+  );
+}
+
 function checkProductionBlockers() {
   if (profile !== "production") {
     add(
@@ -333,13 +366,20 @@ function parseOrigin(value) {
 }
 
 function parseArgs(rawArgs) {
+  const flagArgs = new Set(["allowDraining"]);
   const parsed = {};
   for (let index = 0; index < rawArgs.length; index += 1) {
     const arg = rawArgs[index];
     if (!arg.startsWith("--")) continue;
     const [key, inlineValue] = arg.slice(2).split("=", 2);
-    parsed[key] = inlineValue ?? rawArgs[index + 1];
-    if (inlineValue == null) index += 1;
+    if (inlineValue != null) {
+      parsed[key] = inlineValue;
+    } else if (flagArgs.has(key)) {
+      parsed[key] = true;
+    } else {
+      parsed[key] = rawArgs[index + 1];
+      index += 1;
+    }
   }
   return parsed;
 }
