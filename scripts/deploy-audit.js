@@ -7,6 +7,7 @@ const timeoutMs = Number(args.timeoutMs ?? 5000);
 const adminToken = args.adminToken ?? process.env.ADMIN_TOKEN ?? null;
 const metricsToken = args.metricsToken ?? process.env.METRICS_TOKEN ?? null;
 const expectedGitSha = args.expectedGitSha ?? null;
+const MAX_GIT_SHA_BYTES = 64;
 
 if (!["local", "shared-poc"].includes(profile)) {
   throw new Error("--profile must be local or shared-poc");
@@ -20,6 +21,7 @@ if (baseUrl.protocol !== "http:" && baseUrl.protocol !== "https:") {
 
 const startedAt = performance.now();
 const checks = [];
+const expectedGitShaValid = checkExpectedGitSha();
 
 await checkText("healthz", "/healthz", "ok");
 const ready = await checkReady();
@@ -104,10 +106,10 @@ async function checkRuntime() {
         imagesVerified(body.assets?.terrain?.images),
       `${response.status} game=${body.app?.game ?? "?"} git=${body.app?.buildGitSha ?? "none"}`,
     );
-    if (expectedGitSha != null) {
+    if (profile === "shared-poc" || expectedGitSha != null) {
       add(
         "build-git-sha",
-        body.app?.buildGitSha === expectedGitSha,
+        expectedGitShaValid && body.app?.buildGitSha === expectedGitSha,
         `expected=${expectedGitSha} actual=${body.app?.buildGitSha ?? "missing"}`,
       );
     }
@@ -260,6 +262,35 @@ function checkMetricsPosture(metrics) {
     metrics.sundermere_settlement_queue_capacity > 0,
     `capacity=${metrics.sundermere_settlement_queue_capacity}/${metrics.sundermere_settlement_queue_max_capacity}`,
   );
+}
+
+function checkExpectedGitSha() {
+  if (profile !== "shared-poc") {
+    add("expected-build-git-sha-optional", true, "skipped outside shared-poc profile");
+    return true;
+  }
+
+  const present = typeof expectedGitSha === "string" && expectedGitSha.length > 0;
+  const bounded = present && Buffer.byteLength(expectedGitSha) <= MAX_GIT_SHA_BYTES;
+  const formatted = present && /^[0-9a-f]{7,64}$/iu.test(expectedGitSha);
+  const notUnknown = present && expectedGitSha.toLowerCase() !== "unknown";
+  add("expected-build-git-sha-present", present, "shared-poc audit requires --expectedGitSha");
+  add(
+    "expected-build-git-sha-bounded",
+    bounded,
+    `--expectedGitSha must be at most ${MAX_GIT_SHA_BYTES} bytes`,
+  );
+  add(
+    "expected-build-git-sha-format",
+    formatted,
+    "--expectedGitSha must be a 7-64 character hexadecimal Git revision",
+  );
+  add(
+    "expected-build-git-sha-not-unknown",
+    notUnknown,
+    "--expectedGitSha must not use the Dockerfile unknown default",
+  );
+  return present && bounded && formatted && notUnknown;
 }
 
 async function protectedEndpointStatus(name, path, header, token) {

@@ -10,7 +10,7 @@ const runtimeDir = path.resolve("var", "deploy-audit-smoke");
 const adminToken = "deploy-audit-admin-token-0001";
 const metricsToken = "deploy-audit-metrics-token-0001";
 const accountToken = "deploy-audit-account-token-0001";
-const expectedGitSha = "deploy-audit-smoke-sha";
+const expectedGitSha = "0123456789abcdef0123456789abcdef01234567";
 const startedAt = performance.now();
 
 if (!Number.isInteger(port) || port <= 0) {
@@ -24,8 +24,11 @@ let result;
 
 try {
   server = await startServer();
-  const audit = await runAudit();
+  const audit = await runAudit({ expectedGitSha });
+  const missingExpectedGitShaAudit = await runAudit({});
   const expectedChecksPresent = [
+    "expected-build-git-sha-format",
+    "build-git-sha",
     "origin-allowlist-enabled",
     "session-ticket-capacity-available",
     "connection-capacity-available",
@@ -33,11 +36,20 @@ try {
     "metrics-session-ticket-capacity-available",
     "metrics-connection-capacity-available",
   ].every((name) => audit.checks?.some((check) => check.name === name && check.ok === true));
+  const missingExpectedGitShaRejected =
+    missingExpectedGitShaAudit.ok === false &&
+    missingExpectedGitShaAudit.checks?.some(
+      (check) => check.name === "expected-build-git-sha-present" && check.ok === false,
+    ) &&
+    missingExpectedGitShaAudit.checks?.some(
+      (check) => check.name === "build-git-sha" && check.ok === false,
+    );
   result = {
-    ok: audit.ok && expectedChecksPresent,
+    ok: audit.ok && expectedChecksPresent && missingExpectedGitShaRejected,
     port,
     audit,
     expectedChecksPresent,
+    missingExpectedGitShaRejected,
     elapsedMs: round(performance.now() - startedAt),
   };
 } catch (err) {
@@ -80,8 +92,8 @@ async function startServer() {
   return child;
 }
 
-async function runAudit() {
-  const stdout = await runCapture("node", [
+async function runAudit({ expectedGitSha } = {}) {
+  const args = [
     "scripts/deploy-audit.js",
     "--url",
     `http://127.0.0.1:${port}`,
@@ -91,9 +103,14 @@ async function runAudit() {
     adminToken,
     "--metricsToken",
     metricsToken,
-    "--expectedGitSha",
-    expectedGitSha,
-  ]);
+  ];
+  if (expectedGitSha != null) {
+    args.push("--expectedGitSha", expectedGitSha);
+  }
+  const { stdout, stderr, code } = await runCapture("node", args);
+  if (code !== 0 && !stdout.trim()) {
+    throw new Error(`node ${args.join(" ")} failed with code ${code}: ${stderr}`);
+  }
   return JSON.parse(stdout);
 }
 
@@ -139,10 +156,7 @@ async function runCapture(command, args) {
     stderr += String(chunk);
   });
   const code = await new Promise((resolve) => child.once("exit", resolve));
-  if (code !== 0) {
-    throw new Error(`${command} ${args.join(" ")} failed with code ${code}: ${stderr || stdout}`);
-  }
-  return stdout;
+  return { stdout, stderr, code };
 }
 
 function parseArgs(rawArgs) {

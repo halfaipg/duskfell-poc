@@ -213,9 +213,10 @@ node scripts/deploy-audit.js \
   --expectedGitSha "$GIT_SHA"
 ```
 
-The audit checks health/readiness, token protection on `/admin/runtime` and
-`/metrics`, Duskfell/Base `$DUSK` runtime identity, build Git SHA when provided,
-content/runtime consistency, verified sprite and terrain asset pins, public-mode
+The shared-PoC audit requires `--expectedGitSha` and checks health/readiness,
+token protection on `/admin/runtime` and `/metrics`, Duskfell/Base `$DUSK`
+runtime identity, runtime build Git SHA, content/runtime consistency, verified
+sprite and terrain asset pins, public-mode
 guardrails, Origin allowlist posture, non-draining admission posture, WebSocket
 and session-ticket admission headroom, durable persistence failure counters, and
 settlement queue capacity.
