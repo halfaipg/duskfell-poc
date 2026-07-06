@@ -3329,7 +3329,7 @@ fn validate_chain_mode(public_deployment: bool, chain_enabled: bool) -> anyhow::
     }
 
     Err(anyhow!(
-        "CHAIN_ENABLED=true is not supported with PUBLIC_DEPLOYMENT=true until signer and indexer configuration are implemented"
+        "CHAIN_ENABLED=true is not supported with PUBLIC_DEPLOYMENT=true until SIGNER_SERVICE_URL/INDEXER_SERVICE_URL and signer/indexer implementations are available"
     ))
 }
 
@@ -3355,7 +3355,7 @@ fn validate_deployment_profile(
     }
 
     Err(anyhow!(
-        "DEPLOYMENT_PROFILE=production is not supported until durable database/event-store, isolated signer/indexer services, and cross-process admission/rate-limit state are implemented"
+        "DEPLOYMENT_PROFILE=production is not supported until durable database/event-store, isolated SIGNER_SERVICE_URL/INDEXER_SERVICE_URL signer/indexer services, and cross-process admission/rate-limit state are implemented"
     ))
 }
 

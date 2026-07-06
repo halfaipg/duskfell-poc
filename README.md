@@ -251,7 +251,7 @@ recent event type counts, and ownership counts. It intentionally excludes full
 `/api/snapshot`, raw event payloads, account subjects, player IDs, token values,
 and absolute durable file paths.
 
-The default `shared-poc` profile checks the public-mode environment without starting the server. It expects hardened PoC deployment variables such as `DEPLOYMENT_PROFILE=shared-poc`, `PERSISTENCE_BACKEND=jsonl`, `ADMISSION_BACKEND=in-memory`, `PUBLIC_DEPLOYMENT=true`, strict sessions, account auth, synced durable writes, distinct journal/outbox paths, strong distinct non-placeholder credentials capped at 4096 bytes, exact allowed Origins, bounded JWT issuer/audience identity config, a parseable IP `BIND_ADDR`, bounded hex `GIT_SHA` build provenance, bounded and internally consistent capacity/payload budgets, non-draining admission posture, and chain mode disabled. Use `npm run preflight:deployment -- --profile production` to see the fail-closed list of missing production systems; today that profile intentionally fails until durable datastore, signer/indexer, and cross-process admission/rate-limit services exist. The identity blocker clears only when `ACCOUNT_AUTH_MODE=jwt-hs256` includes a strong secret, valid non-local HTTPS issuer, and bounded printable audience. The database blocker clears in preflight only when `PERSISTENCE_BACKEND=postgres` and a bounded Postgres `DATABASE_URL` are set; the cross-process admission blocker clears in preflight only when `ADMISSION_BACKEND=redis` and a bounded Redis `REDIS_URL` are set. The runtime still rejects those reserved backends until their implementations exist. For an intentional rollback or shard-removal rollout, pass `--allowDraining` so `DRAINING=true` remains explicit in the deploy command.
+The default `shared-poc` profile checks the public-mode environment without starting the server. It expects hardened PoC deployment variables such as `DEPLOYMENT_PROFILE=shared-poc`, `PERSISTENCE_BACKEND=jsonl`, `ADMISSION_BACKEND=in-memory`, `PUBLIC_DEPLOYMENT=true`, strict sessions, account auth, synced durable writes, distinct journal/outbox paths, strong distinct non-placeholder credentials capped at 4096 bytes, exact allowed Origins, bounded JWT issuer/audience identity config, a parseable IP `BIND_ADDR`, bounded hex `GIT_SHA` build provenance, bounded and internally consistent capacity/payload budgets, non-draining admission posture, and chain mode disabled. Use `npm run preflight:deployment -- --profile production` to see the fail-closed list of missing production systems. The identity blocker clears only when `ACCOUNT_AUTH_MODE=jwt-hs256` includes a strong secret, valid non-local HTTPS issuer, and bounded printable audience. The database blocker clears in preflight only when `PERSISTENCE_BACKEND=postgres` and a bounded Postgres `DATABASE_URL` are set. The signer/indexer blocker clears only when bounded public HTTPS `SIGNER_SERVICE_URL` and `INDEXER_SERVICE_URL` values are set. The cross-process admission blocker clears only when `ADMISSION_BACKEND=redis` and a bounded Redis `REDIS_URL` are set. The runtime still rejects the production profile and reserved backends/services until their implementations exist. For an intentional rollback or shard-removal rollout, pass `--allowDraining` so `DRAINING=true` remains explicit in the deploy command.
 Set `HTTP_BODY_LIMIT_BYTES` to cap plain HTTP request bodies. The default is `4096`, which is enough for current session/admin traffic and prevents oversized POST bodies from occupying shard work.
 Every HTTP response includes `x-request-id`. If an upstream proxy sends a safe bounded `x-request-id`, the server echoes it; otherwise the server generates a UUID. Unsafe request IDs with spaces, separators, control characters, or more than 64 bytes are replaced rather than reflected.
 Set `ADMIN_EVENT_LIMIT_CAP` to cap a single `/admin/events` response. The default is `200`; the endpoint default query limit is `50`.
@@ -581,7 +581,7 @@ Run the production profile guard smoke:
 npm run smoke:production-profile-guard
 ```
 
-The command verifies a hardened public JWT config still refuses `DEPLOYMENT_PROFILE=production` until durable database/event-store, signer/indexer, and cross-process admission/rate-limit state are implemented.
+The command verifies a hardened public JWT config still refuses `DEPLOYMENT_PROFILE=production` at runtime until durable database/event-store, signer/indexer, and cross-process admission/rate-limit implementations exist. Deployment preflight separately verifies the bounded `SIGNER_SERVICE_URL` / `INDEXER_SERVICE_URL` contract that future signer and indexer services must satisfy.
 
 Run the runtime budget smoke:
 
@@ -820,10 +820,10 @@ The command opens N clients, sends input at the requested rate, scrapes `/metric
 The current server keeps the sim and settlement worker in one deployable for iteration speed, but their boundary is already queue-shaped. The intended production split is:
 
 1. Rust simulation server owns live game state.
-2. Dedicated settlement service owns keys and Base transactions.
-3. Indexer reconciles event logs back to Postgres.
+2. Dedicated settlement service owns keys and Base transactions behind a bounded public HTTPS `SIGNER_SERVICE_URL`.
+3. Indexer reconciles event logs back to Postgres behind a bounded public HTTPS `INDEXER_SERVICE_URL`.
 4. Client only reads gameplay from the sim API or app DB, never directly from chain.
 
 Base-chain token direction: reserve `$DUSK` as the Duskfell ticker for future Base deployments. The PoC does not mint or trade `$DUSK`; any token contract should wait until account identity, signer isolation, indexer reconciliation, treasury controls, and legal review are in place.
 
-Chain integration should remain optional for the core game loop. If `CHAIN_ENABLED=true` is set in local mode today, the worker deliberately returns `needs-signer`; real signing is not implemented in the PoC. Public deployment rejects `CHAIN_ENABLED=true` until signer and indexer configuration exist.
+Chain integration should remain optional for the core game loop. If `CHAIN_ENABLED=true` is set in local mode today, the worker deliberately returns `needs-signer`; real signing is not implemented in the PoC. Public deployment rejects `CHAIN_ENABLED=true` until the reserved signer and indexer service contract plus implementations exist.

@@ -16,6 +16,7 @@ const MAX_JWT_AUDIENCE_BYTES = 256;
 const MAX_ALLOWED_ORIGINS = 16;
 const MAX_ORIGIN_BYTES = 512;
 const MAX_GIT_SHA_BYTES = 64;
+const MAX_SERVICE_URL_BYTES = 512;
 const BUDGET_LIMITS = {
   MAX_ACTIVE_CONNECTIONS: [1, 10_000],
   MAX_CONNECTIONS_PER_IP: [1, 10_000],
@@ -64,6 +65,7 @@ checkAccountAuth();
 checkOrigins();
 checkBind();
 checkChainMode();
+checkProductionChainServices();
 checkNumericBudgets();
 checkDurabilityMode();
 checkDrainMode();
@@ -498,6 +500,49 @@ function checkChainMode() {
   );
 }
 
+function checkProductionChainServices() {
+  if (profile !== "production") {
+    return;
+  }
+
+  add(
+    "production-signer-service-url-present",
+    Boolean(env.SIGNER_SERVICE_URL),
+    "error",
+    "production requires SIGNER_SERVICE_URL for isolated transaction signing",
+  );
+  add(
+    "production-signer-service-url-bounded",
+    isBoundedServiceUrl(env.SIGNER_SERVICE_URL),
+    "error",
+    `SIGNER_SERVICE_URL must be at most ${MAX_SERVICE_URL_BYTES} bytes`,
+  );
+  add(
+    "production-signer-service-url-public-https",
+    isPublicServiceUrl(env.SIGNER_SERVICE_URL),
+    "error",
+    "SIGNER_SERVICE_URL must be a public https URL with no query, fragment, userinfo, whitespace, or control characters",
+  );
+  add(
+    "production-indexer-service-url-present",
+    Boolean(env.INDEXER_SERVICE_URL),
+    "error",
+    "production requires INDEXER_SERVICE_URL for chain event reconciliation",
+  );
+  add(
+    "production-indexer-service-url-bounded",
+    isBoundedServiceUrl(env.INDEXER_SERVICE_URL),
+    "error",
+    `INDEXER_SERVICE_URL must be at most ${MAX_SERVICE_URL_BYTES} bytes`,
+  );
+  add(
+    "production-indexer-service-url-public-https",
+    isPublicServiceUrl(env.INDEXER_SERVICE_URL),
+    "error",
+    "INDEXER_SERVICE_URL must be a public https URL with no query, fragment, userinfo, whitespace, or control characters",
+  );
+}
+
 function checkNumericBudgets() {
   const budgets = {
     MAX_ACTIVE_CONNECTIONS: integerBudget("MAX_ACTIVE_CONNECTIONS", 512),
@@ -651,7 +696,7 @@ function checkProductionBlockers() {
   );
   add(
     "signer-indexer-configured",
-    false,
+    hasValidSignerIndexerConfig(),
     "error",
     "production needs isolated signer and indexer services before chain settlement can be authoritative",
   );
@@ -668,6 +713,34 @@ function hasValidRedisUrl() {
     typeof env.REDIS_URL === "string" &&
     Buffer.byteLength(env.REDIS_URL) <= 4096 &&
     (env.REDIS_URL.startsWith("redis://") || env.REDIS_URL.startsWith("rediss://"))
+  );
+}
+
+function hasValidSignerIndexerConfig() {
+  return isPublicServiceUrl(env.SIGNER_SERVICE_URL) && isPublicServiceUrl(env.INDEXER_SERVICE_URL);
+}
+
+function isBoundedServiceUrl(value) {
+  return typeof value === "string" && Buffer.byteLength(value) <= MAX_SERVICE_URL_BYTES;
+}
+
+function isPublicServiceUrl(value) {
+  if (!isBoundedServiceUrl(value)) return false;
+  if (value.trim() !== value) return false;
+  if (!isCompactPrintable(value)) return false;
+  if (value.includes("?") || value.includes("#") || value.includes("@")) return false;
+
+  let parsed;
+  try {
+    parsed = new URL(value);
+  } catch {
+    return false;
+  }
+
+  return (
+    parsed.protocol === "https:" &&
+    parsed.hostname.length > 0 &&
+    !isLocalHost(parsed.hostname)
   );
 }
 
