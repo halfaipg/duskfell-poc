@@ -21,8 +21,16 @@ const cases = [
       "build-git-sha-format",
       "auth-credentials-distinct",
       "chain-mode-disabled",
+      "durable-sync-writes-enabled",
       "not-draining",
     ],
+  },
+  {
+    name: "shared-poc-rejects-unsynced-durable-writes",
+    args: [],
+    env: hardenedEnv({ DURABLE_SYNC_WRITES: "false" }),
+    expectOk: false,
+    expectedChecks: ["durable-sync-writes-boolean", "durable-sync-writes-enabled"],
   },
   {
     name: "shared-poc-rejects-draining-by-default",
@@ -385,6 +393,7 @@ function hardenedEnv(overrides = {}) {
     ALLOWED_ORIGINS: "https://play.example",
     BIND_ADDR: "127.0.0.1:4107",
     GIT_SHA: "0123456789abcdef0123456789abcdef01234567",
+    DURABLE_SYNC_WRITES: "true",
     ...overrides,
   };
   for (const [key, value] of Object.entries(values)) {

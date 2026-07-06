@@ -81,6 +81,7 @@ async function startServer() {
       REQUIRE_SESSION: "true",
       JOURNAL_PATH: journalPath,
       SETTLEMENT_OUTBOX_PATH: outboxPath,
+      CARGO_TERM_COLOR: "never",
       RUST_LOG: "trace",
     },
     stdio: ["ignore", "pipe", "pipe"],
@@ -190,7 +191,11 @@ async function waitForLogs(predicate) {
 }
 
 function getLogs() {
-  return server?.getLogs?.() ?? "";
+  return stripAnsi(server?.getLogs?.() ?? "");
+}
+
+function stripAnsi(value) {
+  return value.replace(/\u001b\[[0-?]*[ -/]*[@-~]/g, "");
 }
 
 function sleep(ms) {

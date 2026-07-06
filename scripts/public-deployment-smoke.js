@@ -71,6 +71,19 @@ try {
       "METRICS_TOKEN length <= 4096 bytes",
     ],
   );
+  const unsyncedDurableStartup = await expectStartupFailure(
+    {
+      PUBLIC_DEPLOYMENT: "true",
+      REQUIRE_SESSION: "true",
+      REQUIRE_ACCOUNT: "true",
+      DEV_ACCOUNT_TOKEN: accountToken,
+      ADMIN_TOKEN: adminToken,
+      METRICS_TOKEN: metricsToken,
+      ALLOWED_ORIGINS: allowedOrigin,
+      DURABLE_SYNC_WRITES: "false",
+    },
+    ["DURABLE_SYNC_WRITES=true"],
+  );
 
   server = await startServer({
     PUBLIC_DEPLOYMENT: "true",
@@ -80,6 +93,7 @@ try {
     ADMIN_TOKEN: adminToken,
     METRICS_TOKEN: metricsToken,
     ALLOWED_ORIGINS: allowedOrigin,
+    DURABLE_SYNC_WRITES: "true",
   });
 
   const health = await fetchText("/healthz");
@@ -109,6 +123,7 @@ try {
     weakTokenStartup,
     placeholderTokenStartup,
     oversizedTokenStartup,
+    unsyncedDurableStartup,
     health,
     adminMissing,
     adminSummary: {
@@ -142,6 +157,7 @@ try {
       weakTokenStartup.ok &&
       placeholderTokenStartup.ok &&
       oversizedTokenStartup.ok &&
+      unsyncedDurableStartup.ok &&
       health === "ok" &&
       adminMissing === 401 &&
       adminSummary.publicDeployment === true &&

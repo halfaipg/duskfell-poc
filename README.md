@@ -67,6 +67,7 @@ docker run --rm -p 127.0.0.1:4107:4107 \
   -e ADMIN_TOKEN=replace-with-strong-admin-token \
   -e METRICS_TOKEN=replace-with-strong-metrics-token \
   -e ALLOWED_ORIGINS=http://127.0.0.1:4107 \
+  -e DURABLE_SYNC_WRITES=true \
   -e GIT_SHA="$GIT_SHA" \
   -v duskfell-data:/data \
   duskfell-poc:local
@@ -80,7 +81,8 @@ uses `/readyz` for its Docker healthcheck. Pass `GIT_SHA` at build time so
 the exact source revision; keep the same bounded hex revision in the deployment
 environment so preflight can reject untraceable shared builds. Real public
 deployments should use JWT account mode, distinct high-entropy secrets, exact
-HTTPS origins, and a persistent volume or managed durable store.
+HTTPS origins, synced durable writes while JSONL is still the local store, and a
+persistent volume or managed durable store.
 
 ## Development Commands
 
@@ -190,7 +192,7 @@ Set `REQUIRE_ACCOUNT=true` to require account authentication before `/api/sessio
 Set `SESSION_ISSUE_RATE_LIMIT_PER_MINUTE`, `SESSION_ISSUE_RATE_LIMIT_BURST`, and `SESSION_ISSUE_RATE_LIMIT_MAX_CLIENTS` to tune the per-client-IP token bucket on `POST /api/session`. The limiter runs before request-body display-name validation, so malformed or invalid-name issue attempts consume the same abuse budget as valid ticket requests. Defaults are `120` per minute, burst `30`, and `4096` tracked client-IP buckets.
 Set `ACCOUNT_SESSION_RATE_LIMIT_PER_MINUTE`, `ACCOUNT_SESSION_RATE_LIMIT_BURST`, and `ACCOUNT_SESSION_RATE_LIMIT_MAX_SUBJECTS` to tune the per-account-subject token bucket on authenticated JWT session issuance. The limiter runs after account authentication but before request-body display-name validation, so malformed authenticated issue attempts consume the same account budget as valid ticket requests. Defaults are `60` per minute, burst `10`, and `4096` tracked account-subject buckets.
 Set `ALLOWED_ORIGINS` to a comma-separated list of exact HTTP(S) origins to require matching `Origin` headers on `POST /api/session` and `/ws` upgrades. The list is capped at 16 entries, and each origin is capped at 512 bytes with no path, query, or fragment. Leave it unset or empty for local dev. Example: `ALLOWED_ORIGINS=https://play.example.com,http://localhost:4107`.
-Set `PUBLIC_DEPLOYMENT=true` for any shared or internet-reachable environment. In that mode the server refuses to boot unless `REQUIRE_SESSION=true`, `REQUIRE_ACCOUNT=true`, a strong bounded non-placeholder account credential for the selected `ACCOUNT_AUTH_MODE`, strong distinct bounded non-placeholder `ADMIN_TOKEN` and `METRICS_TOKEN` values, and bounded `ALLOWED_ORIGINS` are all configured, preventing the local-dev open endpoints from being exposed by accident. Public JWT mode also requires a bounded non-local HTTPS `ACCOUNT_JWT_ISSUER` without query, fragment, userinfo, whitespace, or control characters, plus a bounded printable non-placeholder `ACCOUNT_JWT_AUDIENCE`.
+Set `PUBLIC_DEPLOYMENT=true` for any shared or internet-reachable environment. In that mode the server refuses to boot unless `REQUIRE_SESSION=true`, `REQUIRE_ACCOUNT=true`, `DURABLE_SYNC_WRITES=true`, a strong bounded non-placeholder account credential for the selected `ACCOUNT_AUTH_MODE`, strong distinct bounded non-placeholder `ADMIN_TOKEN` and `METRICS_TOKEN` values, and bounded `ALLOWED_ORIGINS` are all configured, preventing the local-dev open endpoints from being exposed by accident. Public JWT mode also requires a bounded non-local HTTPS `ACCOUNT_JWT_ISSUER` without query, fragment, userinfo, whitespace, or control characters, plus a bounded printable non-placeholder `ACCOUNT_JWT_AUDIENCE`.
 Set `DRAINING=true` before planned rollback or shard removal to keep `/healthz` alive while `/readyz` returns `503`, new `/api/session` admissions return `503`, and new `/ws` upgrades return `503` before session-ticket or capacity work. The state is visible in `/admin/summary` and `/metrics` as `sundermere_draining`, and rejected admissions increment `sundermere_session_draining_rejected_total`. Deployment preflight rejects drained shared/production boots unless `--allowDraining` is passed for an intentional maintenance rollout.
 Set `BIND_ADDR` to choose the listener address. It must be an IP socket address such as `127.0.0.1:4107`, `0.0.0.0:4107`, or `[::1]:4107`; hostnames such as `localhost:4107` are rejected. The default is `127.0.0.1:4107`. Non-loopback binds such as `0.0.0.0:4107` require `PUBLIC_DEPLOYMENT=true` and the public deployment guardrails above.
 `CHAIN_ENABLED=true` is still a local-only settlement stub. Public deployments refuse to start with chain mode enabled until signer and indexer configuration are implemented.
@@ -238,7 +240,7 @@ recent event type counts, and ownership counts. It intentionally excludes full
 `/api/snapshot`, raw event payloads, account subjects, player IDs, token values,
 and absolute durable file paths.
 
-The default `shared-poc` profile checks the public-mode environment without starting the server. It expects hardened PoC deployment variables such as `PUBLIC_DEPLOYMENT=true`, strict sessions, account auth, strong distinct non-placeholder credentials capped at 4096 bytes, exact allowed Origins, bounded JWT issuer/audience identity config, a parseable IP `BIND_ADDR`, bounded hex `GIT_SHA` build provenance, bounded and internally consistent capacity/payload budgets, non-draining admission posture, and chain mode disabled. Use `npm run preflight:deployment -- --profile production` to see the fail-closed list of missing production systems; today that profile intentionally fails until durable datastore, signer/indexer, and cross-process admission/rate-limit services exist. The identity blocker clears only when `ACCOUNT_AUTH_MODE=jwt-hs256` includes a strong secret, valid non-local HTTPS issuer, and bounded printable audience. For an intentional rollback or shard-removal rollout, pass `--allowDraining` so `DRAINING=true` remains explicit in the deploy command.
+The default `shared-poc` profile checks the public-mode environment without starting the server. It expects hardened PoC deployment variables such as `PUBLIC_DEPLOYMENT=true`, strict sessions, account auth, synced durable writes, strong distinct non-placeholder credentials capped at 4096 bytes, exact allowed Origins, bounded JWT issuer/audience identity config, a parseable IP `BIND_ADDR`, bounded hex `GIT_SHA` build provenance, bounded and internally consistent capacity/payload budgets, non-draining admission posture, and chain mode disabled. Use `npm run preflight:deployment -- --profile production` to see the fail-closed list of missing production systems; today that profile intentionally fails until durable datastore, signer/indexer, and cross-process admission/rate-limit services exist. The identity blocker clears only when `ACCOUNT_AUTH_MODE=jwt-hs256` includes a strong secret, valid non-local HTTPS issuer, and bounded printable audience. For an intentional rollback or shard-removal rollout, pass `--allowDraining` so `DRAINING=true` remains explicit in the deploy command.
 Set `HTTP_BODY_LIMIT_BYTES` to cap plain HTTP request bodies. The default is `4096`, which is enough for current session/admin traffic and prevents oversized POST bodies from occupying shard work.
 Every HTTP response includes `x-request-id`. If an upstream proxy sends a safe bounded `x-request-id`, the server echoes it; otherwise the server generates a UUID. Unsafe request IDs with spaces, separators, control characters, or more than 64 bytes are replaced rather than reflected.
 Set `ADMIN_EVENT_LIMIT_CAP` to cap a single `/admin/events` response. The default is `200`; the endpoint default query limit is `50`.
@@ -246,7 +248,7 @@ Set `MAX_CONTENT_OBJECTS` to cap world content objects accepted at startup. The 
 Set `MAX_JOURNAL_BYTES` to cap the durable JSONL journal accepted at startup. The default is `16777216`; oversized journal files fail before the server listens.
 Set `MAX_SETTLEMENT_OUTBOX_BYTES` to cap the durable settlement outbox accepted at startup. The default is `16777216`; oversized outbox files fail before replay or serving clients.
 Set `MAX_DURABLE_LINE_BYTES` to cap each JSONL line accepted during journal and settlement outbox replay. The default is `262144`; oversized lines fail before JSON parsing so one record cannot allocate the whole durable-file budget.
-Set `DURABLE_SYNC_WRITES=true` to make journal and settlement outbox appends call `sync_data()` after flushing. The default is `false` for local iteration speed; shared PoC environments can enable it for stronger crash semantics while the project is still on JSONL.
+Set `DURABLE_SYNC_WRITES=true` to make journal and settlement outbox appends call `sync_data()` after flushing. The default is `false` for local iteration speed; `PUBLIC_DEPLOYMENT=true` requires it for stronger crash semantics while the project is still on JSONL.
 Set `MAX_RUNTIME_MANIFEST_BYTES` to cap each sprite or terrain manifest JSON checked by the server at startup. The default is `262144`; oversized runtime asset manifests fail before the server listens.
 Set `MAX_RUNTIME_ASSET_BYTES` to cap each sprite or terrain PNG checked by the server at startup. The default is `2097152`; oversized runtime asset images fail before the server listens.
 Set `MAX_ACTIVE_CONNECTIONS` to cap concurrent WebSocket players before spawning sim entities. The default is `512`.
@@ -542,7 +544,7 @@ Run the public deployment smoke:
 npm run smoke:public-deployment
 ```
 
-The command verifies `PUBLIC_DEPLOYMENT=true` refuses unsafe local defaults, weak public tokens, and placeholder public tokens, then starts an isolated hardened server and checks account bearer protection before session issuance, admin token protection, metrics token protection, strict sessions, Origin allowlisting, and the public-deployment admin/metrics signal.
+The command verifies `PUBLIC_DEPLOYMENT=true` refuses unsafe local defaults, weak public tokens, placeholder public tokens, and unsynced durable writes, then starts an isolated hardened server and checks account bearer protection before session issuance, admin token protection, metrics token protection, strict sessions, Origin allowlisting, and the public-deployment admin/metrics signal.
 
 Run the public chain-mode guard smoke:
 

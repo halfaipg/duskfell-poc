@@ -408,11 +408,18 @@ function checkNumericBudgets() {
 
 function checkDurabilityMode() {
   const value = env.DURABLE_SYNC_WRITES;
+  const enabled = boolEnv("DURABLE_SYNC_WRITES") === true;
   add(
     "durable-sync-writes-boolean",
     value == null || boolEnv("DURABLE_SYNC_WRITES") != null,
     "error",
     "DURABLE_SYNC_WRITES must be true or false when set",
+  );
+  add(
+    "durable-sync-writes-enabled",
+    profile === "local" || enabled,
+    "error",
+    "shared and production profiles require DURABLE_SYNC_WRITES=true while JSONL is the durable store",
   );
 }
 

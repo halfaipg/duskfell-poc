@@ -241,6 +241,7 @@ async fn main() -> anyhow::Result<()> {
         &origin_allowlist,
         admin_token.as_deref(),
         metrics_token.as_deref(),
+        durable_sync_writes,
     )?;
     validate_bind_addr(public_deployment, addr)?;
     validate_chain_mode(public_deployment, settlement_config.chain_enabled)?;
@@ -2786,6 +2787,7 @@ fn validate_public_deployment(
     origin_allowlist: &OriginAllowlistConfig,
     admin_token: Option<&str>,
     metrics_token: Option<&str>,
+    durable_sync_writes: bool,
 ) -> anyhow::Result<()> {
     if !public_deployment {
         return Ok(());
@@ -2817,6 +2819,9 @@ fn validate_public_deployment(
     }
     if !origin_allowlist.enabled() {
         missing.push("ALLOWED_ORIGINS");
+    }
+    if !durable_sync_writes {
+        missing.push("DURABLE_SYNC_WRITES=true");
     }
     if admin_token.is_none() {
         missing.push("ADMIN_TOKEN");
@@ -3823,6 +3828,7 @@ mod config_tests {
             &OriginAllowlistConfig::disabled(),
             None,
             None,
+            false,
         )
         .is_ok());
 
@@ -3833,6 +3839,7 @@ mod config_tests {
             &OriginAllowlistConfig::disabled(),
             None,
             None,
+            false,
         )
         .expect_err("public deployment rejects local defaults");
         let message = err.to_string();
@@ -3841,6 +3848,7 @@ mod config_tests {
         assert!(message.contains("REQUIRE_ACCOUNT=true"));
         assert!(message.contains("ACCOUNT_AUTH_MODE"));
         assert!(message.contains("ALLOWED_ORIGINS"));
+        assert!(message.contains("DURABLE_SYNC_WRITES=true"));
         assert!(message.contains("ADMIN_TOKEN"));
         assert!(message.contains("METRICS_TOKEN"));
 
@@ -3851,6 +3859,7 @@ mod config_tests {
             &origins,
             Some("admin-token-public-12345"),
             Some("metrics-token-public-123"),
+            true,
         )
         .is_ok());
 
@@ -3861,8 +3870,23 @@ mod config_tests {
             &origins,
             Some("admin-token-public-12345"),
             Some("metrics-token-public-123"),
+            true,
         )
         .is_ok());
+
+        let unsynced_durable_err = validate_public_deployment(
+            true,
+            &strict_sessions,
+            &strict_account,
+            &origins,
+            Some("admin-token-public-12345"),
+            Some("metrics-token-public-123"),
+            false,
+        )
+        .expect_err("public deployment requires synced durable writes");
+        assert!(unsynced_durable_err
+            .to_string()
+            .contains("DURABLE_SYNC_WRITES=true"));
 
         let weak_err = validate_public_deployment(
             true,
@@ -3876,6 +3900,7 @@ mod config_tests {
             &origins,
             Some("short-admin-token"),
             Some(" short-metrics-token "),
+            true,
         )
         .expect_err("public deployment rejects weak tokens");
         let weak_message = weak_err.to_string();
@@ -3897,6 +3922,7 @@ mod config_tests {
             &origins,
             Some(&"b".repeat(MAX_AUTH_TOKEN_BYTES + 1)),
             Some(&"c".repeat(MAX_AUTH_TOKEN_BYTES + 1)),
+            true,
         )
         .expect_err("public deployment rejects oversized configured tokens");
         let oversized_message = oversized_err.to_string();
@@ -3916,6 +3942,7 @@ mod config_tests {
             &origins,
             Some("replace-with-strong-admin-token"),
             Some("metrics-token-placeholder-123"),
+            true,
         )
         .expect_err("public deployment rejects placeholder tokens");
         let placeholder_message = placeholder_err.to_string();
@@ -3935,6 +3962,7 @@ mod config_tests {
             &origins,
             Some("shared-public-token-1234"),
             Some("metrics-token-public-123"),
+            true,
         )
         .expect_err("public deployment rejects reused token");
         assert!(reused_err.to_string().contains("must be distinct"));
@@ -3953,6 +3981,7 @@ mod config_tests {
             &origins,
             Some("admin-token-public-12345"),
             Some("metrics-token-public-123"),
+            true,
         )
         .expect_err("public deployment requires jwt issuer and audience");
         let jwt_message = jwt_missing_claims_err.to_string();
@@ -3973,6 +4002,7 @@ mod config_tests {
             &origins,
             Some("admin-token-public-12345"),
             Some("metrics-token-public-123"),
+            true,
         )
         .expect_err("public deployment rejects weak jwt identity config");
         let jwt_bad_identity_message = jwt_bad_identity_config_err.to_string();
@@ -4000,6 +4030,7 @@ mod config_tests {
             &origins,
             Some("admin-token-public-12345"),
             Some("metrics-token-public-123"),
+            true,
         )
         .expect_err("public deployment rejects jwt issuer query");
         assert!(jwt_query_issuer_err
@@ -4020,6 +4051,7 @@ mod config_tests {
             &origins,
             Some("admin-token-public-12345"),
             Some("metrics-token-public-123"),
+            true,
         )
         .expect_err("public deployment rejects oversized jwt identity config");
         let jwt_oversized_identity_message = jwt_oversized_identity_config_err.to_string();

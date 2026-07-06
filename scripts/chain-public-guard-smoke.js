@@ -23,6 +23,7 @@ const exit = await expectStartupFailure({
   ADMIN_TOKEN: "admin-chain-public-smoke",
   METRICS_TOKEN: "metrics-chain-public-smoke",
   ALLOWED_ORIGINS: "https://play.example",
+  DURABLE_SYNC_WRITES: "true",
   CHAIN_ENABLED: "true",
 });
 

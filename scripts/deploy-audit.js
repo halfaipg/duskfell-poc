@@ -172,6 +172,7 @@ async function checkMetrics() {
       "sundermere_session_ticket_capacity",
       "sundermere_durable_journal_persist_failed_total",
       "sundermere_durable_settlement_persist_failed_total",
+      "sundermere_durable_sync_writes",
       "sundermere_settlement_queue_capacity",
       "sundermere_settlement_queue_max_capacity",
     ];
@@ -196,6 +197,7 @@ function checkRuntimePosture(runtime, summary) {
     add("strict-session-required", summary.requireSession === true, `requireSession=${summary.requireSession}`);
     add("account-gate-required", summary.requireAccount === true, `requireAccount=${summary.requireAccount}`);
     add("chain-stub-disabled", summary.chainEnabled === false, `chainEnabled=${summary.chainEnabled}`);
+    add("durable-sync-writes-enabled", summary.durableSyncWrites === true, `durableSyncWrites=${summary.durableSyncWrites}`);
     add(
       "origin-allowlist-enabled",
       summary.originAllowlistEnabled === true && summary.originAllowedCount > 0,
@@ -234,6 +236,7 @@ function checkMetricsPosture(metrics) {
     add("metrics-require-session", metrics.sundermere_require_session === 1, `value=${metrics.sundermere_require_session}`);
     add("metrics-require-account", metrics.sundermere_require_account === 1, `value=${metrics.sundermere_require_account}`);
     add("metrics-chain-disabled", metrics.sundermere_chain_enabled === 0, `value=${metrics.sundermere_chain_enabled}`);
+    add("metrics-durable-sync-writes", metrics.sundermere_durable_sync_writes === 1, `value=${metrics.sundermere_durable_sync_writes}`);
     add(
       "metrics-origin-allowlist-enabled",
       metrics.sundermere_origin_allowlist_enabled === 1 &&

@@ -110,6 +110,7 @@ async function startServer() {
       ADMIN_TOKEN: adminToken,
       METRICS_TOKEN: metricsToken,
       ALLOWED_ORIGINS: `http://127.0.0.1:${port}`,
+      DURABLE_SYNC_WRITES: "true",
       BIND_ADDR: `127.0.0.1:${port}`,
       JOURNAL_PATH: path.join(runtimeDir, `${runId}-journal.jsonl`),
       SETTLEMENT_OUTBOX_PATH: path.join(runtimeDir, `${runId}-settlement-outbox.jsonl`),

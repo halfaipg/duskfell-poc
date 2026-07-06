@@ -42,6 +42,8 @@ try {
     `METRICS_TOKEN=${metricsToken}`,
     "-e",
     `ALLOWED_ORIGINS=http://127.0.0.1:${port}`,
+    "-e",
+    "DURABLE_SYNC_WRITES=true",
     image,
   ]);
 
