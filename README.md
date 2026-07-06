@@ -269,11 +269,12 @@ npm run verify:ci
 The command runs Rust formatting, locked Rust check/tests, supply-chain smoke,
 client projection/protocol/asset-loader tests, sprite and terrain manifest tests,
 runtime asset verification, deployment preflight smoke, deploy audit smoke,
-drain-mode smoke, HTTP hardening smoke, ops snapshot smoke, runtime
-manifest/integrity smokes, runtime build-provenance smoke, asset serving smoke,
-metrics smoke, readiness smoke, and git whitespace checks. GitHub Actions runs
-the same command on pushes to `main` and `codex/**`, pull requests, and manual
-dispatches.
+bad-config startup smoke, external bind guard smoke, public chain-mode guard
+smoke, Origin allowlist smoke, drain-mode smoke, public deployment smoke, HTTP
+hardening smoke, ops snapshot smoke, runtime manifest/integrity smokes, runtime
+build-provenance smoke, asset serving smoke, metrics smoke, readiness smoke, and
+git whitespace checks. GitHub Actions runs the same command on pushes to `main`
+and `codex/**`, pull requests, and manual dispatches.
 
 Run the broad local verification gate:
 
