@@ -10,6 +10,8 @@ const runtimeDir = path.resolve("var", "http-hardening-smoke");
 const runId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const httpUrl = `http://127.0.0.1:${port}`;
 const startedAt = performance.now();
+const forwardedRequestId = "trace-smoke_001.edge";
+const unsafeRequestId = "trace smoke with spaces";
 
 if (!Number.isInteger(port) || port <= 0) {
   throw new Error("--port must be a positive integer");
@@ -26,11 +28,16 @@ let result;
 try {
   server = await startServer();
 
-  const indexResponse = await fetch(`${httpUrl}/`);
+  const indexResponse = await fetch(`${httpUrl}/`, {
+    headers: { "x-request-id": forwardedRequestId },
+  });
   await indexResponse.arrayBuffer();
   const assetResponse = await fetch(`${httpUrl}/assets/sprites/player-placeholder.png`);
   await assetResponse.arrayBuffer();
-  const sessionOk = await fetch(`${httpUrl}/api/session`, { method: "POST" });
+  const sessionOk = await fetch(`${httpUrl}/api/session`, {
+    method: "POST",
+    headers: { "x-request-id": unsafeRequestId },
+  });
   await sessionOk.arrayBuffer();
   const oversizedBody = "x".repeat(bodyLimitBytes + 1);
   const oversized = await fetch(`${httpUrl}/api/session`, {
@@ -74,12 +81,17 @@ try {
       sessionOk.status === 200 &&
       oversized.status === 413 &&
       indexResponse.headers.get("x-content-type-options") === "nosniff" &&
+      indexResponse.headers.get("x-request-id") === forwardedRequestId &&
       indexResponse.headers.get("referrer-policy") === "no-referrer" &&
       indexResponse.headers.get("permissions-policy")?.includes("geolocation=()") &&
       indexResponse.headers.get("content-security-policy")?.includes("default-src 'self'") &&
       indexResponse.headers.get("cache-control") === "no-store" &&
       assetResponse.headers.get("cache-control") === "public, max-age=60" &&
+      isGeneratedRequestId(assetResponse.headers.get("x-request-id")) &&
+      isGeneratedRequestId(sessionOk.headers.get("x-request-id")) &&
+      sessionOk.headers.get("x-request-id") !== unsafeRequestId &&
       oversized.headers.get("x-content-type-options") === "nosniff" &&
+      isGeneratedRequestId(oversized.headers.get("x-request-id")) &&
       oversized.headers.get("cache-control") === "no-store" &&
       summary.httpBodyLimitBytes === bodyLimitBytes &&
       parseMetric(metrics, "sundermere_http_body_limit_bytes") === bodyLimitBytes,
@@ -162,8 +174,15 @@ function selectedHeaders(headers) {
     crossOriginResourcePolicy: headers.get("cross-origin-resource-policy"),
     permissionsPolicy: headers.get("permissions-policy"),
     referrerPolicy: headers.get("referrer-policy"),
+    xRequestId: headers.get("x-request-id"),
     xContentTypeOptions: headers.get("x-content-type-options"),
   };
+}
+
+function isGeneratedRequestId(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(
+    value ?? "",
+  );
 }
 
 function parseMetric(text, name) {

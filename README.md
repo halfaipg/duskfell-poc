@@ -115,6 +115,7 @@ npm run smoke:ops-snapshot
 npm run smoke:external-bind-guard
 npm run smoke:gameplay-journal-replay
 npm run smoke:crafting
+npm run smoke:http-hardening
 npm run smoke:journal-anomaly
 npm run smoke:journal-replay
 npm run smoke:metrics-auth
@@ -230,6 +231,7 @@ paths.
 
 The default `shared-poc` profile checks the public-mode environment without starting the server. It expects hardened PoC deployment variables such as `PUBLIC_DEPLOYMENT=true`, strict sessions, account auth, strong distinct credentials, exact allowed Origins, sane positive capacity and payload budgets, and chain mode disabled. Use `npm run preflight:deployment -- --profile production` to see the fail-closed list of missing production systems; today that profile intentionally fails until durable datastore, signer/indexer, and cross-process admission/rate-limit services exist. The identity blocker clears only when `ACCOUNT_AUTH_MODE=jwt-hs256` includes a strong secret, issuer, and audience.
 Set `HTTP_BODY_LIMIT_BYTES` to cap plain HTTP request bodies. The default is `4096`, which is enough for current session/admin traffic and prevents oversized POST bodies from occupying shard work.
+Every HTTP response includes `x-request-id`. If an upstream proxy sends a safe bounded `x-request-id`, the server echoes it; otherwise the server generates a UUID. Unsafe request IDs with spaces, separators, control characters, or more than 64 bytes are replaced rather than reflected.
 Set `ADMIN_EVENT_LIMIT_CAP` to cap a single `/admin/events` response. The default is `200`; the endpoint default query limit is `50`.
 Set `MAX_CONTENT_OBJECTS` to cap world content objects accepted at startup. The default is `10000`; oversized content files fail before the server listens.
 Set `MAX_JOURNAL_BYTES` to cap the durable JSONL journal accepted at startup. The default is `16777216`; oversized journal files fail before the server listens.
@@ -267,10 +269,11 @@ npm run verify:ci
 The command runs Rust formatting, locked Rust check/tests, supply-chain smoke,
 client projection/protocol/asset-loader tests, sprite and terrain manifest tests,
 runtime asset verification, deployment preflight smoke, deploy audit smoke,
-drain-mode smoke, ops snapshot smoke, runtime manifest/integrity smokes, runtime
-build-provenance smoke, asset serving smoke, metrics smoke, readiness smoke, and
-git whitespace checks. GitHub Actions runs the same command on pushes to `main`
-and `codex/**`, pull requests, and manual dispatches.
+drain-mode smoke, HTTP hardening smoke, ops snapshot smoke, runtime
+manifest/integrity smokes, runtime build-provenance smoke, asset serving smoke,
+metrics smoke, readiness smoke, and git whitespace checks. GitHub Actions runs
+the same command on pushes to `main` and `codex/**`, pull requests, and manual
+dispatches.
 
 Run the broad local verification gate:
 
@@ -309,6 +312,16 @@ npm run smoke:drain-mode
 The command starts an isolated drained shard, verifies `/healthz` remains live,
 `/readyz` reports unavailable with `shardNotDraining`, `/api/session` returns
 `503`, and admin/metrics expose the drain state plus rejected-admission counter.
+
+Run the HTTP hardening smoke:
+
+```sh
+npm run smoke:http-hardening
+```
+
+The command verifies security headers, response cache policy, generated and
+forwarded `x-request-id` behavior, admin/metrics visibility of
+`HTTP_BODY_LIMIT_BYTES`, and `413` rejection for oversized HTTP request bodies.
 
 Run the supply-chain smoke:
 

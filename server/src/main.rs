@@ -1745,9 +1745,11 @@ async fn admin_summary(
 
 async fn add_http_hardening_headers(request: Request<Body>, next: Next) -> Response {
     let path = request.uri().path().to_string();
+    let request_id = request_id_header_value(request.headers());
     let mut response = next.run(request).await;
     let headers = response.headers_mut();
 
+    headers.insert(HeaderName::from_static("x-request-id"), request_id);
     headers.insert(
         HeaderName::from_static("x-content-type-options"),
         HeaderValue::from_static("nosniff"),
@@ -1777,6 +1779,27 @@ async fn add_http_hardening_headers(request: Request<Body>, next: Next) -> Respo
     headers.insert(CACHE_CONTROL, HeaderValue::from_static(cache_control));
 
     response
+}
+
+fn request_id_header_value(headers: &HeaderMap) -> HeaderValue {
+    if let Some(value) = headers
+        .get("x-request-id")
+        .and_then(|value| value.to_str().ok())
+        .filter(|value| is_safe_request_id(value))
+    {
+        return HeaderValue::from_str(value).expect("validated request id is a header value");
+    }
+
+    HeaderValue::from_str(&Uuid::new_v4().to_string()).expect("uuid is a header value")
+}
+
+fn is_safe_request_id(value: &str) -> bool {
+    let bytes = value.as_bytes();
+    !bytes.is_empty()
+        && bytes.len() <= 64
+        && bytes
+            .iter()
+            .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'_' | b'.' | b':'))
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -3111,13 +3134,13 @@ fn status_notice(
 #[cfg(test)]
 mod config_tests {
     use super::{
-        constant_time_eq, durable_parent_status, durable_persistence_check, parse_bool_value,
-        parse_origin_allowlist_value, parse_positive_f32_value, parse_positive_u32_value,
-        parse_positive_u64_value, parse_positive_usize_value, session_display_name_from_body,
-        settlement_queue_capacity_check, validate_account_jwt, validate_account_subject,
-        validate_bind_addr, validate_chain_mode, validate_public_deployment,
-        validate_websocket_timing, AccountAuthConfig, AccountAuthMode, OriginAllowlistConfig,
-        MAX_ACCOUNT_SUBJECT_BYTES,
+        constant_time_eq, durable_parent_status, durable_persistence_check, is_safe_request_id,
+        parse_bool_value, parse_origin_allowlist_value, parse_positive_f32_value,
+        parse_positive_u32_value, parse_positive_u64_value, parse_positive_usize_value,
+        session_display_name_from_body, settlement_queue_capacity_check, validate_account_jwt,
+        validate_account_subject, validate_bind_addr, validate_chain_mode,
+        validate_public_deployment, validate_websocket_timing, AccountAuthConfig, AccountAuthMode,
+        OriginAllowlistConfig, MAX_ACCOUNT_SUBJECT_BYTES,
     };
     use crate::metrics::AppMetrics;
     use crate::session::SessionConfig;
@@ -3176,6 +3199,17 @@ mod config_tests {
         assert!(!constant_time_eq("admin-token", "admin-token-extra"));
         assert!(!constant_time_eq("admin-token-extra", "admin-token"));
         assert!(!constant_time_eq("", "admin-token"));
+    }
+
+    #[test]
+    fn request_ids_are_bounded_visible_tokens() {
+        assert!(is_safe_request_id("trace-abc_123.4:edge"));
+        assert!(is_safe_request_id(&"a".repeat(64)));
+        assert!(!is_safe_request_id(""));
+        assert!(!is_safe_request_id(&"a".repeat(65)));
+        assert!(!is_safe_request_id("trace with spaces"));
+        assert!(!is_safe_request_id("trace/header"));
+        assert!(!is_safe_request_id("trace\nheader"));
     }
 
     #[test]
