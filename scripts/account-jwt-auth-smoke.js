@@ -13,6 +13,7 @@ const secret = `account-jwt-secret-${runId}`;
 const issuer = "https://identity.example";
 const audience = "sundermere";
 const subject = "acct:wallet:0xabc123";
+const oversizedToken = "x".repeat(5000);
 
 if (!Number.isInteger(port) || port <= 0) {
   throw new Error("--port must be a positive integer");
@@ -75,6 +76,9 @@ try {
   const emptySubject = await issueSession({
     authorization: `Bearer ${emptySubjectToken}`,
   });
+  const oversized = await issueSession({
+    authorization: `Bearer ${oversizedToken}`,
+  });
   const correct = await issueSession({
     authorization: `Bearer ${correctToken}`,
     body: JSON.stringify({ name: "Jwt_7" }),
@@ -101,6 +105,7 @@ try {
       expired: expired.status,
       wrongAudience: wrongAudience.status,
       emptySubject: emptySubject.status,
+      oversized: oversized.status,
       correct: correct.status,
     },
     correctBody: correct.body,
@@ -120,6 +125,7 @@ try {
       expired.status === 401 &&
       wrongAudience.status === 401 &&
       emptySubject.status === 401 &&
+      oversized.status === 401 &&
       correct.status === 200 &&
       correct.body?.displayName === "Jwt_7" &&
       correct.body?.accountSubject === subject &&
@@ -130,7 +136,7 @@ try {
       summary.accountJwtIssuerConfigured === true &&
       summary.accountJwtAudienceConfigured === true &&
       summary.sessionPendingTickets === 1 &&
-      metrics.sundermere_account_auth_rejected_total === 5 &&
+      metrics.sundermere_account_auth_rejected_total === 6 &&
       metrics.sundermere_session_tickets_issued_total === 1 &&
       metrics.sundermere_session_pending_tickets === 1 &&
       metrics.sundermere_require_account === 1 &&

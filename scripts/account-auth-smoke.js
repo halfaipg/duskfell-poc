@@ -9,6 +9,7 @@ const runtimeDir = path.resolve("var", "account-auth-smoke");
 const runId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const httpUrl = `http://127.0.0.1:${port}`;
 const accountToken = `account-auth-${runId}`;
+const oversizedToken = "x".repeat(5000);
 
 if (!Number.isInteger(port) || port <= 0) {
   throw new Error("--port must be a positive integer");
@@ -26,6 +27,9 @@ try {
   const missing = await issueSession();
   const wrong = await issueSession({
     authorization: "Bearer wrong-account-token",
+  });
+  const oversized = await issueSession({
+    authorization: `Bearer ${oversizedToken}`,
   });
   const invalidBodyWithoutAuth = await issueSession({
     body: "not-json",
@@ -53,6 +57,7 @@ try {
     statuses: {
       missing: missing.status,
       wrong: wrong.status,
+      oversized: oversized.status,
       invalidBodyWithoutAuth: invalidBodyWithoutAuth.status,
       correct: correct.status,
     },
@@ -70,6 +75,8 @@ try {
       missing.body === "invalid account token" &&
       wrong.status === 401 &&
       wrong.body === "invalid account token" &&
+      oversized.status === 401 &&
+      oversized.body === "invalid account token" &&
       invalidBodyWithoutAuth.status === 401 &&
       correct.status === 200 &&
       correct.body?.displayName === "Account_7" &&
@@ -78,7 +85,7 @@ try {
       summary.accountAuthMode === "dev-token" &&
       summary.devAccountTokenConfigured === true &&
       summary.sessionPendingTickets === 1 &&
-      metrics.sundermere_account_auth_rejected_total === 3 &&
+      metrics.sundermere_account_auth_rejected_total === 4 &&
       metrics.sundermere_session_request_invalid_total === 0 &&
       metrics.sundermere_session_tickets_issued_total === 1 &&
       metrics.sundermere_session_pending_tickets === 1 &&

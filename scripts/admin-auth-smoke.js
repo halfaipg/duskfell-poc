@@ -7,6 +7,7 @@ const args = parseArgs(process.argv.slice(2));
 const port = Number(args.port ?? 4111);
 const startupTimeoutMs = Number(args.startupTimeoutMs ?? 10000);
 const adminToken = args.adminToken ?? `admin-smoke-${Date.now()}`;
+const oversizedToken = "x".repeat(5000);
 const runId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const runtimeDir = path.resolve("var", "admin-auth-smoke");
 const journalPath = path.join(runtimeDir, `${runId}-journal.jsonl`);
@@ -39,6 +40,7 @@ try {
       endpoint,
       missing: await fetchStatus(endpoint),
       wrong: await fetchStatus(endpoint, "wrong-token"),
+      oversized: await fetchStatus(endpoint, oversizedToken),
       correct: await fetchStatus(endpoint, adminToken),
     });
   }
@@ -47,7 +49,11 @@ try {
   const sessionStatus = await fetchStatus("/api/session", null, { method: "POST" });
   const metrics = parseMetrics(await fetchText("/metrics"), ["sundermere_admin_auth_rejected_total"]);
   const allAdminProtected = checks.every(
-    (check) => check.missing === 401 && check.wrong === 401 && check.correct === 200,
+    (check) =>
+      check.missing === 401 &&
+      check.wrong === 401 &&
+      check.oversized === 401 &&
+      check.correct === 200,
   );
 
   result = {
@@ -60,7 +66,7 @@ try {
     elapsedMs: round(performance.now() - startedAt),
     ok:
       allAdminProtected &&
-      metrics.sundermere_admin_auth_rejected_total === endpoints.length * 2 &&
+      metrics.sundermere_admin_auth_rejected_total === endpoints.length * 3 &&
       health === "ok" &&
       sessionStatus === 200,
   };

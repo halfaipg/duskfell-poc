@@ -6,6 +6,7 @@ import path from "node:path";
 const args = parseArgs(process.argv.slice(2));
 const port = Number(args.port ?? 4119);
 const metricsToken = args.metricsToken ?? `metrics-smoke-${Date.now()}`;
+const oversizedToken = "x".repeat(5000);
 const runtimeDir = path.resolve("var", "metrics-auth-smoke");
 const runId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const httpUrl = `http://127.0.0.1:${port}`;
@@ -24,6 +25,7 @@ try {
   server = await startServer();
   const missing = await fetchStatus("/metrics");
   const wrong = await fetchStatus("/metrics", "wrong-token");
+  const oversized = await fetchStatus("/metrics", oversizedToken);
   const correctResponse = await fetchMetrics(metricsToken);
   const metrics = parseMetrics(correctResponse.text, ["sundermere_metrics_auth_rejected_total"]);
   const health = await fetchText("/healthz");
@@ -33,6 +35,7 @@ try {
     port,
     missing,
     wrong,
+    oversized,
     correct: correctResponse.status,
     metrics,
     health,
@@ -41,8 +44,9 @@ try {
     ok:
       missing === 401 &&
       wrong === 401 &&
+      oversized === 401 &&
       correctResponse.status === 200 &&
-      metrics.sundermere_metrics_auth_rejected_total === 2 &&
+      metrics.sundermere_metrics_auth_rejected_total === 3 &&
       health === "ok" &&
       sessionStatus === 200,
   };

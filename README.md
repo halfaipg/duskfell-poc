@@ -178,6 +178,7 @@ local port.
 
 Set `ADMIN_TOKEN` to require an `x-admin-token` header on admin endpoints and the full debug `/api/snapshot`. Without `ADMIN_TOKEN`, these local inspection endpoints are open on the local dev server only; do not expose that mode publicly.
 Set `METRICS_TOKEN` to require an `x-metrics-token` header on `/metrics`. Without `METRICS_TOKEN`, metrics are open for local development only; do not expose that mode publicly.
+Configured admin, metrics, and account bearer tokens are capped at 4096 bytes per request before exact token comparison or JWT validation.
 When `PUBLIC_DEPLOYMENT=true`, the selected account credential, `ADMIN_TOKEN`, and `METRICS_TOKEN` must be distinct, have no surrounding whitespace, avoid placeholder text, and be at least 24 bytes long.
 
 Set `REQUIRE_SESSION=true` to reject `/ws` connections unless they include a valid `?session=...` ticket issued by `POST /api/session`. Tickets are short-lived and single-use. Ticketed WebSocket connections use the issued `sessionId` as the spawned `playerId`, so session issuance, welcome messages, journal events, and settlement jobs share the same identity. If session issuance includes a `name`, the same bounded player-name validator used by rename messages trims and checks it before a ticket is minted, rejects case-insensitive collisions with pending ticket names or active player names, then applies it exactly once at spawn. The spawn path re-checks active-name uniqueness when the ticket is consumed so delayed connects cannot race into duplicate visible identities. The default remains anonymous-dev compatible so local iteration and older scripts do not break.
@@ -447,7 +448,7 @@ Run the admin auth smoke:
 npm run smoke:admin-auth
 ```
 
-The command starts an isolated server with `ADMIN_TOKEN` set, verifies admin endpoints and the full debug `/api/snapshot` reject missing/wrong tokens, verifies the right token works, and checks health/session endpoints remain usable.
+The command starts an isolated server with `ADMIN_TOKEN` set, verifies admin endpoints and the full debug `/api/snapshot` reject missing, wrong, and oversized tokens, verifies the right token works, and checks health/session endpoints remain usable.
 
 Run the account auth smoke:
 
@@ -455,7 +456,7 @@ Run the account auth smoke:
 npm run smoke:account-auth
 ```
 
-The command starts an isolated server with `REQUIRE_ACCOUNT=true`, verifies `/api/session` rejects missing or wrong bearer account tokens before parsing the request body, verifies the right bearer issues a ticket, and checks account-auth summary plus metrics visibility.
+The command starts an isolated server with `REQUIRE_ACCOUNT=true`, verifies `/api/session` rejects missing, wrong, or oversized bearer account tokens before parsing the request body, verifies the right bearer issues a ticket, and checks account-auth summary plus metrics visibility.
 
 Run the JWT account auth smoke:
 
@@ -463,7 +464,7 @@ Run the JWT account auth smoke:
 npm run smoke:account-jwt-auth
 ```
 
-The command starts an isolated server with `ACCOUNT_AUTH_MODE=jwt-hs256`, verifies missing, wrongly signed, expired, wrong-audience, and empty-subject JWT bearer tokens are rejected before ticket issuance, verifies a correct JWT mints a ticket with `accountSubject`, and checks account-auth summary plus metrics visibility.
+The command starts an isolated server with `ACCOUNT_AUTH_MODE=jwt-hs256`, verifies missing, wrongly signed, expired, wrong-audience, empty-subject, and oversized JWT bearer tokens are rejected before ticket issuance, verifies a correct JWT mints a ticket with `accountSubject`, and checks account-auth summary plus metrics visibility.
 
 Run the account session rate-limit smoke:
 
@@ -503,7 +504,7 @@ Run the metrics auth smoke:
 npm run smoke:metrics-auth
 ```
 
-The command starts an isolated server with `METRICS_TOKEN` set, verifies `/metrics` rejects missing/wrong tokens, verifies the right `x-metrics-token` works, and checks health/session endpoints remain usable.
+The command starts an isolated server with `METRICS_TOKEN` set, verifies `/metrics` rejects missing, wrong, and oversized tokens, verifies the right `x-metrics-token` works, and checks health/session endpoints remain usable.
 
 Run the metrics smoke:
 

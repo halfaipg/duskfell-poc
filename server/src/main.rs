@@ -79,6 +79,7 @@ const DEFAULT_ACCOUNT_SESSION_RATE_LIMIT_PER_MINUTE: u32 = 60;
 const DEFAULT_ACCOUNT_SESSION_RATE_LIMIT_BURST: u32 = 10;
 const DEFAULT_ACCOUNT_SESSION_RATE_LIMIT_MAX_SUBJECTS: usize = 4096;
 const MAX_ACCOUNT_SUBJECT_BYTES: usize = 128;
+const MAX_AUTH_TOKEN_BYTES: usize = 4096;
 const MIN_PUBLIC_DEPLOYMENT_TOKEN_BYTES: usize = 24;
 const CONTENT_SECURITY_POLICY: &str = concat!(
     "default-src 'self'; ",
@@ -2316,9 +2317,7 @@ async fn record_journal(state: &AppState, tick: u64, kind: JournalEventKind) {
 
 fn authorize_admin(state: &AppState, headers: &HeaderMap) -> Result<(), (StatusCode, String)> {
     if let Some(expected) = &state.admin_token {
-        let provided = headers
-            .get("x-admin-token")
-            .and_then(|value| value.to_str().ok());
+        let provided = bounded_header_str(headers, "x-admin-token");
         if !provided.is_some_and(|provided| constant_time_eq(provided, expected)) {
             state.metrics.admin_auth_rejected();
             return Err((StatusCode::UNAUTHORIZED, "invalid admin token".to_string()));
@@ -2329,9 +2328,7 @@ fn authorize_admin(state: &AppState, headers: &HeaderMap) -> Result<(), (StatusC
 
 fn authorize_metrics(state: &AppState, headers: &HeaderMap) -> Result<(), (StatusCode, String)> {
     if let Some(expected) = &state.metrics_token {
-        let provided = headers
-            .get("x-metrics-token")
-            .and_then(|value| value.to_str().ok());
+        let provided = bounded_header_str(headers, "x-metrics-token");
         if !provided.is_some_and(|provided| constant_time_eq(provided, expected)) {
             state.metrics.metrics_auth_rejected();
             return Err((
@@ -2351,10 +2348,7 @@ fn authorize_account_session_issue(
         return Ok(None);
     }
 
-    let provided = headers
-        .get(AUTHORIZATION)
-        .and_then(|value| value.to_str().ok())
-        .and_then(|value| value.strip_prefix("Bearer "));
+    let provided = bounded_bearer_token(headers);
 
     let authorized = match (&state.account_auth.mode, provided) {
         (AccountAuthMode::DevToken { token }, Some(provided)) => {
@@ -2382,6 +2376,21 @@ fn authorize_account_session_issue(
             "invalid account token".to_string(),
         ))
     }
+}
+
+fn bounded_header_str<'a>(headers: &'a HeaderMap, name: &'static str) -> Option<&'a str> {
+    headers
+        .get(name)
+        .and_then(|value| value.to_str().ok())
+        .filter(|value| value.len() <= MAX_AUTH_TOKEN_BYTES)
+}
+
+fn bounded_bearer_token(headers: &HeaderMap) -> Option<&str> {
+    headers
+        .get(AUTHORIZATION)
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| value.strip_prefix("Bearer "))
+        .filter(|token| token.len() <= MAX_AUTH_TOKEN_BYTES)
 }
 
 #[derive(Debug, Deserialize)]
@@ -3239,18 +3248,19 @@ fn status_notice(
 #[cfg(test)]
 mod config_tests {
     use super::{
-        constant_time_eq, durable_parent_status, durable_persistence_check, is_safe_request_id,
-        parse_bool_value, parse_origin_allowlist_value, parse_positive_f32_value,
-        parse_positive_u32_value, parse_positive_u64_value, parse_positive_usize_value,
-        sanitized_trace_path, session_display_name_from_body, settlement_queue_capacity_check,
-        validate_account_jwt, validate_account_subject, validate_bind_addr, validate_chain_mode,
+        bounded_bearer_token, bounded_header_str, constant_time_eq, durable_parent_status,
+        durable_persistence_check, is_safe_request_id, parse_bool_value,
+        parse_origin_allowlist_value, parse_positive_f32_value, parse_positive_u32_value,
+        parse_positive_u64_value, parse_positive_usize_value, sanitized_trace_path,
+        session_display_name_from_body, settlement_queue_capacity_check, validate_account_jwt,
+        validate_account_subject, validate_bind_addr, validate_chain_mode,
         validate_public_deployment, validate_websocket_timing, AccountAuthConfig, AccountAuthMode,
-        OriginAllowlistConfig, MAX_ACCOUNT_SUBJECT_BYTES,
+        OriginAllowlistConfig, MAX_ACCOUNT_SUBJECT_BYTES, MAX_AUTH_TOKEN_BYTES,
     };
     use crate::metrics::AppMetrics;
     use crate::session::SessionConfig;
     use crate::settlement::{self, SettlementJob};
-    use axum::http::StatusCode;
+    use axum::http::{header::AUTHORIZATION, HeaderMap, HeaderValue, StatusCode};
     use jsonwebtoken::{encode, EncodingKey, Header};
     use serde_json::json;
     use std::fs;
@@ -3304,6 +3314,51 @@ mod config_tests {
         assert!(!constant_time_eq("admin-token", "admin-token-extra"));
         assert!(!constant_time_eq("admin-token-extra", "admin-token"));
         assert!(!constant_time_eq("", "admin-token"));
+    }
+
+    #[test]
+    fn auth_headers_are_bounded_before_validation() {
+        let mut headers = HeaderMap::new();
+        headers.insert("x-admin-token", HeaderValue::from_static("short-token"));
+        assert_eq!(
+            bounded_header_str(&headers, "x-admin-token"),
+            Some("short-token")
+        );
+
+        let max_token = "a".repeat(MAX_AUTH_TOKEN_BYTES);
+        headers.insert(
+            "x-admin-token",
+            HeaderValue::from_str(&max_token).expect("max token is valid header value"),
+        );
+        assert_eq!(
+            bounded_header_str(&headers, "x-admin-token"),
+            Some(max_token.as_str())
+        );
+
+        let oversized_token = "a".repeat(MAX_AUTH_TOKEN_BYTES + 1);
+        headers.insert(
+            "x-admin-token",
+            HeaderValue::from_str(&oversized_token).expect("oversized token is valid header value"),
+        );
+        assert_eq!(bounded_header_str(&headers, "x-admin-token"), None);
+
+        let bearer = format!("Bearer {}", "b".repeat(MAX_AUTH_TOKEN_BYTES));
+        headers.insert(
+            AUTHORIZATION,
+            HeaderValue::from_str(&bearer).expect("max bearer token is valid header value"),
+        );
+        assert_eq!(
+            bounded_bearer_token(&headers),
+            Some("b".repeat(MAX_AUTH_TOKEN_BYTES).as_str())
+        );
+
+        let oversized_bearer = format!("Bearer {}", "b".repeat(MAX_AUTH_TOKEN_BYTES + 1));
+        headers.insert(
+            AUTHORIZATION,
+            HeaderValue::from_str(&oversized_bearer)
+                .expect("oversized bearer token is valid header value"),
+        );
+        assert_eq!(bounded_bearer_token(&headers), None);
     }
 
     #[test]
