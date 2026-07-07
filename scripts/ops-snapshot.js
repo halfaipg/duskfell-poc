@@ -76,6 +76,7 @@ function summarizeRuntime(body) {
     assets: {
       sprites: summarizeAssetManifest(body?.assets?.sprites),
       terrain: summarizeAssetManifest(body?.assets?.terrain),
+      terrainAuthority: summarizeTerrainAuthority(body?.assets?.terrainAuthority),
     },
   };
 }
@@ -100,6 +101,23 @@ function summarizeAssetManifest(manifest) {
           approvalState: image.approvalState,
         }))
       : [],
+  };
+}
+
+function summarizeTerrainAuthority(manifest) {
+  if (!manifest) return null;
+  return {
+    schemaVersion: manifest.schemaVersion,
+    manifestFingerprint: manifest.manifestFingerprint,
+    manifestBytes: manifest.manifestBytes,
+    maxManifestBytes: manifest.maxManifestBytes,
+    projection: manifest.projection,
+    profile: manifest.profile,
+    seed: manifest.seed,
+    unitsPerTile: manifest.unitsPerTile,
+    blockerCount: manifest.blockerCount,
+    resourceNodeCount: manifest.resourceNodeCount,
+    decayConsumerCount: manifest.decayConsumerCount,
   };
 }
 

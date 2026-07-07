@@ -40,10 +40,11 @@ use journal::{EventJournal, JournalEvent, JournalEventKind, DEFAULT_RETAINED_EVE
 use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
 use metrics::AppMetrics;
 use persistence::{
-    ensure_file_within_size, load_journal_events, validate_distinct_durable_paths, DurableFileLock,
-    JsonlEventWriter, DEFAULT_MAX_DURABLE_LINE_BYTES,
+    ensure_file_within_size, for_each_jsonl_line, load_journal_events,
+    validate_distinct_durable_paths, DurableFileLock, JsonlEventWriter,
+    DEFAULT_MAX_DURABLE_LINE_BYTES,
 };
-use protocol::{ClientMessage, NoticeLevel, PlayerId, ServerMessage};
+use protocol::{ClientMessage, NoticeLevel, PlayerId, ResourceKind, ServerMessage};
 use serde::{Deserialize, Serialize};
 use session::{
     SessionAccountRateLimiter, SessionAuth, SessionConfig, SessionIssueError,
@@ -54,7 +55,10 @@ use settlement::{
     SettlementOutboxHandle,
 };
 use sha2::{Digest, Sha256};
-use sim::{validate_player_name, PlayerInput, PlayerNameError, SimWorld, INTEREST_RADIUS};
+use sim::{
+    validate_player_name, PlayerInput, PlayerNameError, SimWorld, TerrainDetailAuthority,
+    INTEREST_RADIUS,
+};
 use tokio::net::TcpListener;
 use tokio::sync::{mpsc, Mutex, OwnedSemaphorePermit, Semaphore};
 use tower_http::limit::RequestBodyLimitLayer;
@@ -124,7 +128,7 @@ const MAX_RUNTIME_ADMIN_EVENT_LIMIT_CAP: usize = 10_000;
 const CONTENT_SECURITY_POLICY: &str = concat!(
     "default-src 'self'; ",
     "connect-src 'self' ws: wss:; ",
-    "img-src 'self' data:; ",
+    "img-src 'self' data: blob:; ",
     "style-src 'self'; ",
     "script-src 'self'; ",
     "base-uri 'none'; ",
@@ -296,6 +300,8 @@ async fn main() -> anyhow::Result<()> {
         journal_retained_events,
         max_durable_line_bytes,
     )?;
+    let replayed_resource_nodes =
+        replay_resource_node_states(&journal_path, max_durable_line_bytes)?;
     let replayed_journal_event_count = replayed_journal.total_events;
     let journal = Arc::new(Mutex::new(EventJournal::from_replayed(
         replayed_journal.events.clone(),
@@ -417,9 +423,24 @@ async fn main() -> anyhow::Result<()> {
         max_runtime_manifest_bytes,
         max_runtime_asset_bytes,
     )?;
+    let terrain_detail_authority =
+        load_terrain_detail_authority_for_sim(&assets_dir, max_runtime_manifest_bytes)?;
+
+    let mut sim = SimWorld::from_content_with_terrain_detail_authority(
+        loaded_content.content,
+        Some(terrain_detail_authority),
+    )
+    .map_err(|err| anyhow!(err))?;
+    let replayed_resource_node_count = sim.apply_resource_node_replay(&replayed_resource_nodes);
+    if replayed_resource_node_count > 0 {
+        info!(
+            count = replayed_resource_node_count,
+            "replayed resource node state"
+        );
+    }
 
     let state = AppState {
-        sim: Arc::new(Mutex::new(SimWorld::from_content(loaded_content.content))),
+        sim: Arc::new(Mutex::new(sim)),
         settlement_tx,
         settlement_ledger,
         settlement_outbox,
@@ -548,6 +569,41 @@ async fn shutdown_signal() {
     info!("shutdown signal received");
 }
 
+fn replay_resource_node_states(
+    journal_path: &Path,
+    max_line_bytes: usize,
+) -> anyhow::Result<HashMap<String, (ResourceKind, u32)>> {
+    let mut states = HashMap::new();
+    for_each_jsonl_line(
+        journal_path,
+        max_line_bytes,
+        "journal",
+        |line_number, line| {
+            if line.trim().is_empty() {
+                return Ok(());
+            }
+            let event = serde_json::from_str::<JournalEvent>(line).with_context(|| {
+                format!(
+                    "failed to parse journal line {} from {} for resource-node replay",
+                    line_number,
+                    journal_path.display()
+                )
+            })?;
+            if let JournalEventKind::ResourceNodeChanged {
+                object_id,
+                resource,
+                amount,
+                max_amount,
+            } = event.kind
+            {
+                states.insert(object_id, (resource, amount.min(max_amount)));
+            }
+            Ok(())
+        },
+    )?;
+    Ok(states)
+}
+
 async fn healthz() -> &'static str {
     "ok"
 }
@@ -577,6 +633,7 @@ struct RuntimeAppManifest {
 struct RuntimeAssetManifests {
     sprites: RuntimeAssetManifest,
     terrain: RuntimeAssetManifest,
+    terrain_authority: RuntimeTerrainAuthorityManifest,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -592,6 +649,24 @@ struct RuntimeAssetManifest {
     projection: RuntimeProjection,
     entry_count: usize,
     images: Vec<RuntimeAssetImage>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct RuntimeTerrainAuthorityManifest {
+    kind: &'static str,
+    schema_version: String,
+    path: String,
+    manifest_fingerprint: String,
+    manifest_bytes: u64,
+    max_manifest_bytes: u64,
+    projection: String,
+    profile: String,
+    seed: u64,
+    units_per_tile: u64,
+    blocker_count: usize,
+    resource_node_count: usize,
+    decay_consumer_count: usize,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -645,6 +720,10 @@ impl RuntimeManifest {
                     assets_dir,
                     max_runtime_manifest_bytes,
                     max_runtime_asset_bytes,
+                )?,
+                terrain_authority: load_terrain_authority_runtime_manifest(
+                    assets_dir,
+                    max_runtime_manifest_bytes,
                 )?,
             },
         })
@@ -780,6 +859,83 @@ fn load_terrain_runtime_manifest(
     })
 }
 
+fn load_terrain_authority_runtime_manifest(
+    assets_dir: &Path,
+    max_runtime_manifest_bytes: u64,
+) -> anyhow::Result<RuntimeTerrainAuthorityManifest> {
+    let manifest_path = assets_dir.join("terrain").join("detail-authority.json");
+    ensure_file_within_size(
+        &manifest_path,
+        max_runtime_manifest_bytes,
+        "MAX_RUNTIME_MANIFEST_BYTES",
+        "terrain detail authority manifest",
+    )?;
+    let raw = fs::read_to_string(&manifest_path)
+        .with_context(|| format!("failed to read {}", manifest_path.display()))?;
+    let json: serde_json::Value = serde_json::from_str(&raw)
+        .with_context(|| format!("failed to parse {}", manifest_path.display()))?;
+    let schema_version = required_string(&json, "schemaVersion")?;
+    if schema_version != "duskfell-terrain-detail-authority-v1" {
+        return Err(anyhow!(
+            "{} schemaVersion must be duskfell-terrain-detail-authority-v1",
+            manifest_path.display()
+        ));
+    }
+    let projection = required_string(&json, "projection").context("terrainAuthority.projection")?;
+    if projection != "military-plan-oblique" {
+        return Err(anyhow!(
+            "{} projection must be military-plan-oblique",
+            manifest_path.display()
+        ));
+    }
+    let profile = required_string(&json, "profile").context("terrainAuthority.profile")?;
+    let seed = required_u64(&json, "seed").context("terrainAuthority.seed")?;
+    let units_per_tile =
+        required_u64(&json, "unitsPerTile").context("terrainAuthority.unitsPerTile")?;
+    let blocker_count = required_array_len(&json, "blockers")?;
+    let resource_node_count = required_array_len(&json, "resourceNodes")?;
+    let decay_consumer_count = required_array_len(&json, "decayConsumers")?;
+    if blocker_count == 0 || resource_node_count == 0 || decay_consumer_count == 0 {
+        return Err(anyhow!(
+            "{} terrain detail authority manifest must include blockers, resourceNodes, and decayConsumers",
+            manifest_path.display()
+        ));
+    }
+
+    Ok(RuntimeTerrainAuthorityManifest {
+        kind: "terrain-authority",
+        schema_version,
+        path: manifest_path.display().to_string(),
+        manifest_fingerprint: stable_runtime_fingerprint(raw.as_bytes()),
+        manifest_bytes: raw.len() as u64,
+        max_manifest_bytes: max_runtime_manifest_bytes,
+        projection,
+        profile,
+        seed,
+        units_per_tile,
+        blocker_count,
+        resource_node_count,
+        decay_consumer_count,
+    })
+}
+
+fn load_terrain_detail_authority_for_sim(
+    assets_dir: &Path,
+    max_runtime_manifest_bytes: u64,
+) -> anyhow::Result<TerrainDetailAuthority> {
+    let manifest_path = assets_dir.join("terrain").join("detail-authority.json");
+    ensure_file_within_size(
+        &manifest_path,
+        max_runtime_manifest_bytes,
+        "MAX_RUNTIME_MANIFEST_BYTES",
+        "terrain detail authority manifest",
+    )?;
+    let raw = fs::read_to_string(&manifest_path)
+        .with_context(|| format!("failed to read {}", manifest_path.display()))?;
+    serde_json::from_str(&raw)
+        .with_context(|| format!("failed to parse {}", manifest_path.display()))
+}
+
 fn runtime_projection(json: &serde_json::Value) -> anyhow::Result<RuntimeProjection> {
     let projection = json
         .get("projection")
@@ -872,6 +1028,13 @@ fn required_u64(json: &serde_json::Value, field: &str) -> anyhow::Result<u64> {
     json.get(field)
         .and_then(serde_json::Value::as_u64)
         .ok_or_else(|| anyhow!("{field} must be an unsigned integer"))
+}
+
+fn required_array_len(json: &serde_json::Value, field: &str) -> anyhow::Result<usize> {
+    json.get(field)
+        .and_then(serde_json::Value::as_array)
+        .map(Vec::len)
+        .ok_or_else(|| anyhow!("{field} must be an array"))
 }
 
 fn required_f64(json: &serde_json::Value, field: &str) -> anyhow::Result<f64> {
@@ -2538,6 +2701,36 @@ async fn run_tick_loop(state: AppState) {
                     resource: event.resource,
                     amount: event.amount,
                     total: event.total,
+                },
+            )
+            .await;
+        }
+        for event in outcome.resource_feed_events {
+            record_journal(
+                &state,
+                tick,
+                JournalEventKind::ResourceFed {
+                    player_id: event.player_id,
+                    object_id: event.object_id,
+                    input_resource: event.input_resource,
+                    input_amount: event.input_amount,
+                    input_total: event.input_total,
+                    output_resource: event.output_resource,
+                    output_amount: event.output_amount,
+                    output_total: event.output_total,
+                },
+            )
+            .await;
+        }
+        for event in outcome.resource_node_events {
+            record_journal(
+                &state,
+                tick,
+                JournalEventKind::ResourceNodeChanged {
+                    object_id: event.object_id,
+                    resource: event.resource,
+                    amount: event.amount,
+                    max_amount: event.max_amount,
                 },
             )
             .await;

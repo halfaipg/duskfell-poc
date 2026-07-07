@@ -1,0 +1,5723 @@
+{
+  "schemaVersion": "duskfell-terrain-detail-authority-v1",
+  "projection": "military-plan-oblique",
+  "profile": "duskfell-terrain-v1",
+  "seed": 7341,
+  "unitsPerTile": 64,
+  "sourceWorld": {
+    "schemaVersion": "sundermere-world-v1",
+    "width": 1800,
+    "height": 1100,
+    "safeZoneRadius": 260,
+    "terrainProfile": "duskfell-terrain-v1"
+  },
+  "counts": {
+    "blockers": 19,
+    "resourceNodes": 123,
+    "decayConsumers": 43
+  },
+  "blockers": [
+    {
+      "id": "ancient-viaduct-kit-ruin-18-8-5922",
+      "stableKey": "duskfell-terrain-v1:7341:ancient-viaduct-kit:broken-pier:ruin:18:8:5922",
+      "kind": "ruin",
+      "x": 1187.2,
+      "y": 542.72,
+      "z": 0.9299999999999999,
+      "tile": {
+        "x": 18,
+        "y": 8
+      },
+      "source": "composition-kit",
+      "kitId": "ancient-viaduct-kit",
+      "kitKind": "ancient-viaduct",
+      "kitRole": "broken-pier",
+      "collision": {
+        "blocksMovement": true,
+        "shape": "aabb",
+        "widthTiles": 1.35,
+        "heightTiles": 1.1,
+        "reserveRadiusTiles": 1
+      }
+    },
+    {
+      "id": "ancient-viaduct-kit-ruin-21-5-7372",
+      "stableKey": "duskfell-terrain-v1:7341:ancient-viaduct-kit:fallen-arch:ruin:21:5:7372",
+      "kind": "ruin",
+      "x": 1374.72,
+      "y": 354.56,
+      "z": -1,
+      "tile": {
+        "x": 21,
+        "y": 5
+      },
+      "source": "composition-kit",
+      "kitId": "ancient-viaduct-kit",
+      "kitKind": "ancient-viaduct",
+      "kitRole": "fallen-arch",
+      "collision": {
+        "blocksMovement": true,
+        "shape": "aabb",
+        "widthTiles": 1.35,
+        "heightTiles": 1.1,
+        "reserveRadiusTiles": 1
+      }
+    },
+    {
+      "id": "ancient-viaduct-kit-ruin-24-2-1043",
+      "stableKey": "duskfell-terrain-v1:7341:ancient-viaduct-kit:sunken-pier:ruin:24:2:1043",
+      "kind": "ruin",
+      "x": 1569.28,
+      "y": 160,
+      "z": -1,
+      "tile": {
+        "x": 24,
+        "y": 2
+      },
+      "source": "composition-kit",
+      "kitId": "ancient-viaduct-kit",
+      "kitKind": "ancient-viaduct",
+      "kitRole": "sunken-pier",
+      "collision": {
+        "blocksMovement": true,
+        "shape": "aabb",
+        "widthTiles": 1.35,
+        "heightTiles": 1.1,
+        "reserveRadiusTiles": 1
+      }
+    },
+    {
+      "id": "old-grove-ring-tree-10-5-9526",
+      "stableKey": "duskfell-terrain-v1:7341:old-grove-ring:canopy:tree:10:5:9526",
+      "kind": "tree",
+      "x": 687.472267407205,
+      "y": 359.82777932826144,
+      "z": -0.2582458217624215,
+      "tile": {
+        "x": 10,
+        "y": 5
+      },
+      "source": "composition-kit",
+      "kitId": "old-grove-ring",
+      "kitKind": "old-grove",
+      "kitRole": "canopy",
+      "collision": {
+        "blocksMovement": true,
+        "shape": "aabb",
+        "widthTiles": 1.18,
+        "heightTiles": 1.04,
+        "reserveRadiusTiles": 2
+      }
+    },
+    {
+      "id": "boulder-5-1-7439",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:boulder:5:1:7439",
+      "kind": "boulder",
+      "x": 372.3491056346588,
+      "y": 113.60877951555159,
+      "z": 1.816072382482408,
+      "tile": {
+        "x": 5,
+        "y": 1
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "collision": {
+        "blocksMovement": true,
+        "shape": "aabb",
+        "widthTiles": 0.86,
+        "heightTiles": 0.72,
+        "reserveRadiusTiles": 1
+      }
+    },
+    {
+      "id": "ruin-6-9-9111",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:ruin:6:9:9111",
+      "kind": "ruin",
+      "x": 420.54133930788873,
+      "y": 620.1862361507178,
+      "z": -0.5709584266857612,
+      "tile": {
+        "x": 6,
+        "y": 9
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "collision": {
+        "blocksMovement": true,
+        "shape": "aabb",
+        "widthTiles": 1.35,
+        "heightTiles": 1.1,
+        "reserveRadiusTiles": 1
+      }
+    },
+    {
+      "id": "ruin-8-1-9881",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:ruin:8:1:9881",
+      "kind": "ruin",
+      "x": 554.9232755829495,
+      "y": 85.71673620461411,
+      "z": 0.7724234734197102,
+      "tile": {
+        "x": 8,
+        "y": 1
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "collision": {
+        "blocksMovement": true,
+        "shape": "aabb",
+        "widthTiles": 1.35,
+        "heightTiles": 1.1,
+        "reserveRadiusTiles": 1
+      }
+    },
+    {
+      "id": "tree-10-10-9537",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:tree:10:10:9537",
+      "kind": "tree",
+      "x": 669.7631707043208,
+      "y": 651.7355275059248,
+      "z": -1,
+      "tile": {
+        "x": 10,
+        "y": 10
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "collision": {
+        "blocksMovement": true,
+        "shape": "aabb",
+        "widthTiles": 1.18,
+        "heightTiles": 1.04,
+        "reserveRadiusTiles": 2
+      }
+    },
+    {
+      "id": "tree-2-10-7976",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:tree:2:10:7976",
+      "kind": "tree",
+      "x": 164.8619815694685,
+      "y": 658.8343845193726,
+      "z": -0.7057127418848017,
+      "tile": {
+        "x": 2,
+        "y": 10
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "collision": {
+        "blocksMovement": true,
+        "shape": "aabb",
+        "widthTiles": 1.18,
+        "heightTiles": 1.04,
+        "reserveRadiusTiles": 2
+      }
+    },
+    {
+      "id": "tree-2-5-6567",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:tree:2:5:6567",
+      "kind": "tree",
+      "x": 141.69590057423707,
+      "y": 367.01133338800895,
+      "z": -1,
+      "tile": {
+        "x": 2,
+        "y": 5
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "collision": {
+        "blocksMovement": true,
+        "shape": "aabb",
+        "widthTiles": 1.18,
+        "heightTiles": 1.04,
+        "reserveRadiusTiles": 2
+      }
+    },
+    {
+      "id": "tree-22-11-6552",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:tree:22:11:6552",
+      "kind": "tree",
+      "x": 1430.4782147051576,
+      "y": 745.081697289674,
+      "z": -1,
+      "tile": {
+        "x": 22,
+        "y": 11
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "collision": {
+        "blocksMovement": true,
+        "shape": "aabb",
+        "widthTiles": 1.18,
+        "heightTiles": 1.04,
+        "reserveRadiusTiles": 2
+      }
+    },
+    {
+      "id": "tree-26-6-6968",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:tree:26:6:6968",
+      "kind": "tree",
+      "x": 1715.8279369257361,
+      "y": 433.08771090428525,
+      "z": -1,
+      "tile": {
+        "x": 26,
+        "y": 6
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "collision": {
+        "blocksMovement": true,
+        "shape": "aabb",
+        "widthTiles": 1.18,
+        "heightTiles": 1.04,
+        "reserveRadiusTiles": 2
+      }
+    },
+    {
+      "id": "river-reedbed-ruin-6-14-9846",
+      "stableKey": "duskfell-terrain-v1:7341:river-reedbed:wet-edge:ruin:6:14:9846",
+      "kind": "ruin",
+      "x": 417.145139136581,
+      "y": 936.7897160979709,
+      "z": -0.1520337597289871,
+      "tile": {
+        "x": 6,
+        "y": 14
+      },
+      "source": "composition-kit",
+      "kitId": "river-reedbed",
+      "kitKind": "river-reedbed",
+      "kitRole": "wet-edge",
+      "collision": {
+        "blocksMovement": true,
+        "shape": "aabb",
+        "widthTiles": 1.35,
+        "heightTiles": 1.1,
+        "reserveRadiusTiles": 1
+      }
+    },
+    {
+      "id": "sunken-courtyard-kit-boulder-15-1-7043",
+      "stableKey": "duskfell-terrain-v1:7341:sunken-courtyard-kit:courtyard-rubble:boulder:15:1:7043",
+      "kind": "boulder",
+      "x": 984.6794291813019,
+      "y": 90.84435421346788,
+      "z": 1,
+      "tile": {
+        "x": 15,
+        "y": 1
+      },
+      "source": "composition-kit",
+      "kitId": "sunken-courtyard-kit",
+      "kitKind": "sunken-courtyard",
+      "kitRole": "courtyard-rubble",
+      "collision": {
+        "blocksMovement": true,
+        "shape": "aabb",
+        "widthTiles": 0.86,
+        "heightTiles": 0.72,
+        "reserveRadiusTiles": 1
+      }
+    },
+    {
+      "id": "sunken-courtyard-kit-wall-21-4-5638",
+      "stableKey": "duskfell-terrain-v1:7341:sunken-courtyard-kit:wall-east:wall:21:4:5638",
+      "kind": "wall",
+      "x": 1388.8,
+      "y": 288,
+      "z": -1,
+      "tile": {
+        "x": 21,
+        "y": 4
+      },
+      "source": "composition-kit",
+      "kitId": "sunken-courtyard-kit",
+      "kitKind": "sunken-courtyard",
+      "kitRole": "wall-east",
+      "collision": {
+        "blocksMovement": true,
+        "shape": "aabb",
+        "widthTiles": 1.16,
+        "heightTiles": 0.52,
+        "reserveRadiusTiles": 0
+      }
+    },
+    {
+      "id": "sunken-courtyard-kit-wall-16-2-3061",
+      "stableKey": "duskfell-terrain-v1:7341:sunken-courtyard-kit:wall-north:wall:16:2:3061",
+      "kind": "wall",
+      "x": 1056,
+      "y": 145.92000000000002,
+      "z": 1.7800000000000002,
+      "tile": {
+        "x": 16,
+        "y": 2
+      },
+      "source": "composition-kit",
+      "kitId": "sunken-courtyard-kit",
+      "kitKind": "sunken-courtyard",
+      "kitRole": "wall-north",
+      "collision": {
+        "blocksMovement": true,
+        "shape": "aabb",
+        "widthTiles": 1.16,
+        "heightTiles": 0.52,
+        "reserveRadiusTiles": 0
+      }
+    },
+    {
+      "id": "sunken-courtyard-kit-wall-18-2-7267",
+      "stableKey": "duskfell-terrain-v1:7341:sunken-courtyard-kit:wall-north:wall:18:2:7267",
+      "kind": "wall",
+      "x": 1184,
+      "y": 147.2,
+      "z": 1.3499999999999999,
+      "tile": {
+        "x": 18,
+        "y": 2
+      },
+      "source": "composition-kit",
+      "kitId": "sunken-courtyard-kit",
+      "kitKind": "sunken-courtyard",
+      "kitRole": "wall-north",
+      "collision": {
+        "blocksMovement": true,
+        "shape": "aabb",
+        "widthTiles": 1.16,
+        "heightTiles": 0.52,
+        "reserveRadiusTiles": 0
+      }
+    },
+    {
+      "id": "sunken-courtyard-kit-wall-20-2-6731",
+      "stableKey": "duskfell-terrain-v1:7341:sunken-courtyard-kit:wall-north:wall:20:2:6731",
+      "kind": "wall",
+      "x": 1312,
+      "y": 148.48,
+      "z": 0.5,
+      "tile": {
+        "x": 20,
+        "y": 2
+      },
+      "source": "composition-kit",
+      "kitId": "sunken-courtyard-kit",
+      "kitKind": "sunken-courtyard",
+      "kitRole": "wall-north",
+      "collision": {
+        "blocksMovement": true,
+        "shape": "aabb",
+        "widthTiles": 1.16,
+        "heightTiles": 0.52,
+        "reserveRadiusTiles": 0
+      }
+    },
+    {
+      "id": "sunken-courtyard-kit-wall-15-4-5219",
+      "stableKey": "duskfell-terrain-v1:7341:sunken-courtyard-kit:wall-west:wall:15:4:5219",
+      "kind": "wall",
+      "x": 979.2,
+      "y": 289.28,
+      "z": 1.48,
+      "tile": {
+        "x": 15,
+        "y": 4
+      },
+      "source": "composition-kit",
+      "kitId": "sunken-courtyard-kit",
+      "kitKind": "sunken-courtyard",
+      "kitRole": "wall-west",
+      "collision": {
+        "blocksMovement": true,
+        "shape": "aabb",
+        "widthTiles": 1.16,
+        "heightTiles": 0.52,
+        "reserveRadiusTiles": 0
+      }
+    }
+  ],
+  "resourceNodes": [
+    {
+      "id": "ancient-viaduct-kit-ruin-18-8-5922",
+      "stableKey": "duskfell-terrain-v1:7341:ancient-viaduct-kit:broken-pier:ruin:18:8:5922",
+      "kind": "ruin",
+      "x": 1187.2,
+      "y": 542.72,
+      "z": 0.9299999999999999,
+      "tile": {
+        "x": 18,
+        "y": 8
+      },
+      "source": "composition-kit",
+      "kitId": "ancient-viaduct-kit",
+      "kitKind": "ancient-viaduct",
+      "kitRole": "broken-pier",
+      "resourceNodeId": "terrain-detail:ancient-viaduct-kit-ruin-18-8-5922",
+      "resources": [
+        {
+          "kind": "stone",
+          "amount": 4,
+          "maxAmount": 6
+        }
+      ],
+      "lifecycle": {
+        "family": "mineral",
+        "stage": "ancient-ruin",
+        "species": "weathered-viaduct-stone",
+        "ageYears": 68417,
+        "health": 0.48,
+        "decay": 0.5165310012075424,
+        "growth": 0
+      }
+    },
+    {
+      "id": "ancient-viaduct-kit-ruin-21-5-7372",
+      "stableKey": "duskfell-terrain-v1:7341:ancient-viaduct-kit:fallen-arch:ruin:21:5:7372",
+      "kind": "ruin",
+      "x": 1374.72,
+      "y": 354.56,
+      "z": -1,
+      "tile": {
+        "x": 21,
+        "y": 5
+      },
+      "source": "composition-kit",
+      "kitId": "ancient-viaduct-kit",
+      "kitKind": "ancient-viaduct",
+      "kitRole": "fallen-arch",
+      "resourceNodeId": "terrain-detail:ancient-viaduct-kit-ruin-21-5-7372",
+      "resources": [
+        {
+          "kind": "stone",
+          "amount": 3,
+          "maxAmount": 6
+        }
+      ],
+      "lifecycle": {
+        "family": "mineral",
+        "stage": "ancient-ruin",
+        "species": "weathered-viaduct-stone",
+        "ageYears": 45513,
+        "health": 0.36135970228737224,
+        "decay": 0.7426049973402649,
+        "growth": 0
+      }
+    },
+    {
+      "id": "ancient-viaduct-kit-stump-23-4-9228",
+      "stableKey": "duskfell-terrain-v1:7341:ancient-viaduct-kit:rubble:stump:23:4:9228",
+      "kind": "stump",
+      "x": 1492.0213064308887,
+      "y": 304.4327077474708,
+      "z": -1,
+      "tile": {
+        "x": 23,
+        "y": 4
+      },
+      "source": "composition-kit",
+      "kitId": "ancient-viaduct-kit",
+      "kitKind": "ancient-viaduct",
+      "kitRole": "rubble",
+      "resourceNodeId": "terrain-detail:ancient-viaduct-kit-stump-23-4-9228",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.15801808707369913,
+        "growth": 0
+      }
+    },
+    {
+      "id": "ancient-viaduct-kit-ruin-24-2-1043",
+      "stableKey": "duskfell-terrain-v1:7341:ancient-viaduct-kit:sunken-pier:ruin:24:2:1043",
+      "kind": "ruin",
+      "x": 1569.28,
+      "y": 160,
+      "z": -1,
+      "tile": {
+        "x": 24,
+        "y": 2
+      },
+      "source": "composition-kit",
+      "kitId": "ancient-viaduct-kit",
+      "kitKind": "ancient-viaduct",
+      "kitRole": "sunken-pier",
+      "resourceNodeId": "terrain-detail:ancient-viaduct-kit-ruin-24-2-1043",
+      "resources": [
+        {
+          "kind": "stone",
+          "amount": 3,
+          "maxAmount": 6
+        }
+      ],
+      "lifecycle": {
+        "family": "mineral",
+        "stage": "ancient-ruin",
+        "species": "weathered-viaduct-stone",
+        "ageYears": 86366,
+        "health": 0.22721791529180901,
+        "decay": 0.898583819428129,
+        "growth": 0
+      }
+    },
+    {
+      "id": "old-grove-ring-fallen-log-4-6-9901",
+      "stableKey": "duskfell-terrain-v1:7341:old-grove-ring:canopy:fallen-log:4:6:9901",
+      "kind": "fallen-log",
+      "x": 293.56601582179917,
+      "y": 409.0173440010979,
+      "z": -0.3575251640699487,
+      "tile": {
+        "x": 4,
+        "y": 6
+      },
+      "source": "composition-kit",
+      "kitId": "old-grove-ring",
+      "kitKind": "old-grove",
+      "kitRole": "canopy",
+      "resourceNodeId": "terrain-detail:old-grove-ring-fallen-log-4-6-9901",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.5301932244399081,
+        "growth": 0
+      }
+    },
+    {
+      "id": "old-grove-ring-fallen-log-8-4-7752",
+      "stableKey": "duskfell-terrain-v1:7341:old-grove-ring:canopy:fallen-log:8:4:7752",
+      "kind": "fallen-log",
+      "x": 535.3136404827874,
+      "y": 297.34162208297795,
+      "z": -0.36427563254355355,
+      "tile": {
+        "x": 8,
+        "y": 4
+      },
+      "source": "composition-kit",
+      "kitId": "old-grove-ring",
+      "kitKind": "old-grove",
+      "kitRole": "canopy",
+      "resourceNodeId": "terrain-detail:old-grove-ring-fallen-log-8-4-7752",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        },
+        {
+          "kind": "spores",
+          "amount": 1,
+          "maxAmount": 2
+        }
+      ],
+      "lifecycle": {
+        "stage": "decaying",
+        "decay": 0.6471371919957775,
+        "growth": 0
+      }
+    },
+    {
+      "id": "old-grove-ring-fallen-log-9-6-7023",
+      "stableKey": "duskfell-terrain-v1:7341:old-grove-ring:canopy:fallen-log:9:6:7023",
+      "kind": "fallen-log",
+      "x": 622.8474450765847,
+      "y": 412.81922311231943,
+      "z": -1,
+      "tile": {
+        "x": 9,
+        "y": 6
+      },
+      "source": "composition-kit",
+      "kitId": "old-grove-ring",
+      "kitKind": "old-grove",
+      "kitRole": "canopy",
+      "resourceNodeId": "terrain-detail:old-grove-ring-fallen-log-9-6-7023",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.19359639943428253,
+        "growth": 0
+      }
+    },
+    {
+      "id": "old-grove-ring-mushroom-10-4-8800",
+      "stableKey": "duskfell-terrain-v1:7341:old-grove-ring:canopy:mushroom:10:4:8800",
+      "kind": "mushroom",
+      "x": 674.9073172623728,
+      "y": 293.0712989389783,
+      "z": -0.45457316777542545,
+      "tile": {
+        "x": 10,
+        "y": 4
+      },
+      "source": "composition-kit",
+      "kitId": "old-grove-ring",
+      "kitKind": "old-grove",
+      "kitRole": "canopy",
+      "resourceNodeId": "terrain-detail:old-grove-ring-mushroom-10-4-8800",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.8880140923867035,
+        "growth": 0.8880140923867035
+      }
+    },
+    {
+      "id": "old-grove-ring-mushroom-10-8-7802",
+      "stableKey": "duskfell-terrain-v1:7341:old-grove-ring:canopy:mushroom:10:8:7802",
+      "kind": "mushroom",
+      "x": 667.3737398184495,
+      "y": 557.401845625183,
+      "z": -1,
+      "tile": {
+        "x": 10,
+        "y": 8
+      },
+      "source": "composition-kit",
+      "kitId": "old-grove-ring",
+      "kitKind": "old-grove",
+      "kitRole": "canopy",
+      "resourceNodeId": "terrain-detail:old-grove-ring-mushroom-10-8-7802",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.7945880064378931,
+        "growth": 0.7945880064378931
+      }
+    },
+    {
+      "id": "old-grove-ring-mushroom-4-6-8213",
+      "stableKey": "duskfell-terrain-v1:7341:old-grove-ring:canopy:mushroom:4:6:8213",
+      "kind": "mushroom",
+      "x": 275.7657624740726,
+      "y": 411.4099463404459,
+      "z": -0.17656989979206947,
+      "tile": {
+        "x": 4,
+        "y": 6
+      },
+      "source": "composition-kit",
+      "kitId": "old-grove-ring",
+      "kitKind": "old-grove",
+      "kitRole": "canopy",
+      "resourceNodeId": "terrain-detail:old-grove-ring-mushroom-4-6-8213",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.7387579880745052,
+        "growth": 0.7387579880745052
+      }
+    },
+    {
+      "id": "old-grove-ring-mushroom-8-4-9195",
+      "stableKey": "duskfell-terrain-v1:7341:old-grove-ring:canopy:mushroom:8:4:9195",
+      "kind": "mushroom",
+      "x": 533.2547580550925,
+      "y": 295.28283723523907,
+      "z": -0.33210559461081995,
+      "tile": {
+        "x": 8,
+        "y": 4
+      },
+      "source": "composition-kit",
+      "kitId": "old-grove-ring",
+      "kitKind": "old-grove",
+      "kitRole": "canopy",
+      "resourceNodeId": "terrain-detail:old-grove-ring-mushroom-8-4-9195",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.7124280301999366,
+        "growth": 0.7124280301999366
+      }
+    },
+    {
+      "id": "old-grove-ring-mushroom-8-5-8197",
+      "stableKey": "duskfell-terrain-v1:7341:old-grove-ring:canopy:mushroom:8:5:8197",
+      "kind": "mushroom",
+      "x": 551.1650096671574,
+      "y": 336.23323185076777,
+      "z": -0.7103790954059291,
+      "tile": {
+        "x": 8,
+        "y": 5
+      },
+      "source": "composition-kit",
+      "kitId": "old-grove-ring",
+      "kitKind": "old-grove",
+      "kitRole": "canopy",
+      "resourceNodeId": "terrain-detail:old-grove-ring-mushroom-8-5-8197",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.9838177477088332,
+        "growth": 0.9838177477088332
+      }
+    },
+    {
+      "id": "old-grove-ring-mushroom-8-6-9538",
+      "stableKey": "duskfell-terrain-v1:7341:old-grove-ring:canopy:mushroom:8:6:9538",
+      "kind": "mushroom",
+      "x": 561.3588205520992,
+      "y": 431.1945827567192,
+      "z": -1,
+      "tile": {
+        "x": 8,
+        "y": 6
+      },
+      "source": "composition-kit",
+      "kitId": "old-grove-ring",
+      "kitKind": "old-grove",
+      "kitRole": "canopy",
+      "resourceNodeId": "terrain-detail:old-grove-ring-mushroom-8-6-9538",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.8341130904583525,
+        "growth": 0.8341130904583525
+      }
+    },
+    {
+      "id": "old-grove-ring-mushroom-9-2-8223",
+      "stableKey": "duskfell-terrain-v1:7341:old-grove-ring:canopy:mushroom:9:2:8223",
+      "kind": "mushroom",
+      "x": 588.2939355375185,
+      "y": 141.88344436700535,
+      "z": -0.21692881823445875,
+      "tile": {
+        "x": 9,
+        "y": 2
+      },
+      "source": "composition-kit",
+      "kitId": "old-grove-ring",
+      "kitKind": "old-grove",
+      "kitRole": "canopy",
+      "resourceNodeId": "terrain-detail:old-grove-ring-mushroom-9-2-8223",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.5766558969455435,
+        "growth": 0.5766558969455435
+      }
+    },
+    {
+      "id": "old-grove-ring-mushroom-9-4-8042",
+      "stableKey": "duskfell-terrain-v1:7341:old-grove-ring:canopy:mushroom:9:4:8042",
+      "kind": "mushroom",
+      "x": 596.7201115915739,
+      "y": 279.45994688312055,
+      "z": -1,
+      "tile": {
+        "x": 9,
+        "y": 4
+      },
+      "source": "composition-kit",
+      "kitId": "old-grove-ring",
+      "kitKind": "old-grove",
+      "kitRole": "canopy",
+      "resourceNodeId": "terrain-detail:old-grove-ring-mushroom-9-4-8042",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.7052402712067682,
+        "growth": 0.7052402712067682
+      }
+    },
+    {
+      "id": "old-grove-ring-stump-10-6-6833",
+      "stableKey": "duskfell-terrain-v1:7341:old-grove-ring:canopy:stump:10:6:6833",
+      "kind": "stump",
+      "x": 669.1891793959749,
+      "y": 436.12173791877035,
+      "z": -0.5439190719378924,
+      "tile": {
+        "x": 10,
+        "y": 6
+      },
+      "source": "composition-kit",
+      "kitId": "old-grove-ring",
+      "kitKind": "old-grove",
+      "kitRole": "canopy",
+      "resourceNodeId": "terrain-detail:old-grove-ring-stump-10-6-6833",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 2,
+          "maxAmount": 4
+        },
+        {
+          "kind": "spores",
+          "amount": 1,
+          "maxAmount": 2
+        }
+      ],
+      "lifecycle": {
+        "stage": "decaying",
+        "decay": 0.8186524968637742,
+        "growth": 0
+      }
+    },
+    {
+      "id": "old-grove-ring-stump-11-5-6505",
+      "stableKey": "duskfell-terrain-v1:7341:old-grove-ring:canopy:stump:11:5:6505",
+      "kind": "stump",
+      "x": 718.2837372786281,
+      "y": 357.2161047613845,
+      "z": 0,
+      "tile": {
+        "x": 11,
+        "y": 5
+      },
+      "source": "composition-kit",
+      "kitId": "old-grove-ring",
+      "kitKind": "old-grove",
+      "kitRole": "canopy",
+      "resourceNodeId": "terrain-detail:old-grove-ring-stump-11-5-6505",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 2,
+          "maxAmount": 4
+        },
+        {
+          "kind": "spores",
+          "amount": 1,
+          "maxAmount": 2
+        }
+      ],
+      "lifecycle": {
+        "stage": "decaying",
+        "decay": 0.7363564536758597,
+        "growth": 0
+      }
+    },
+    {
+      "id": "old-grove-ring-tree-10-5-9526",
+      "stableKey": "duskfell-terrain-v1:7341:old-grove-ring:canopy:tree:10:5:9526",
+      "kind": "tree",
+      "x": 687.472267407205,
+      "y": 359.82777932826144,
+      "z": -0.2582458217624215,
+      "tile": {
+        "x": 10,
+        "y": 5
+      },
+      "source": "composition-kit",
+      "kitId": "old-grove-ring",
+      "kitKind": "old-grove",
+      "kitRole": "canopy",
+      "resourceNodeId": "terrain-detail:old-grove-ring-tree-10-5-9526",
+      "resources": [
+        {
+          "kind": "wood",
+          "amount": 6,
+          "maxAmount": 9
+        },
+        {
+          "kind": "seed",
+          "amount": 1,
+          "maxAmount": 1
+        }
+      ],
+      "lifecycle": {
+        "stage": "mature",
+        "species": "paleoak",
+        "ageYears": 36,
+        "health": 0.5750550035503034,
+        "decay": 0.49663527670216046,
+        "growth": 0.72
+      }
+    },
+    {
+      "id": "old-grove-ring-mushroom-5-8-9547",
+      "stableKey": "duskfell-terrain-v1:7341:old-grove-ring:understory:mushroom:5:8:9547",
+      "kind": "mushroom",
+      "x": 370.662282771641,
+      "y": 544.6339447452114,
+      "z": 0,
+      "tile": {
+        "x": 5,
+        "y": 8
+      },
+      "source": "composition-kit",
+      "kitId": "old-grove-ring",
+      "kitKind": "old-grove",
+      "kitRole": "understory",
+      "resourceNodeId": "terrain-detail:old-grove-ring-mushroom-5-8-9547",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.8438839064081861,
+        "growth": 0.8438839064081861
+      }
+    },
+    {
+      "id": "old-grove-ring-mushroom-6-8-8843",
+      "stableKey": "duskfell-terrain-v1:7341:old-grove-ring:understory:mushroom:6:8:8843",
+      "kind": "mushroom",
+      "x": 403.375143291395,
+      "y": 528.6352362549294,
+      "z": -0.3027366139280462,
+      "tile": {
+        "x": 6,
+        "y": 8
+      },
+      "source": "composition-kit",
+      "kitId": "old-grove-ring",
+      "kitKind": "old-grove",
+      "kitRole": "understory",
+      "resourceNodeId": "terrain-detail:old-grove-ring-mushroom-6-8-8843",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.9583170269868144,
+        "growth": 0.9583170269868144
+      }
+    },
+    {
+      "id": "boulder-5-1-7439",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:boulder:5:1:7439",
+      "kind": "boulder",
+      "x": 372.3491056346588,
+      "y": 113.60877951555159,
+      "z": 1.816072382482408,
+      "tile": {
+        "x": 5,
+        "y": 1
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:boulder-5-1-7439",
+      "resources": [
+        {
+          "kind": "ore",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "mineral",
+        "decay": 0,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-0-13-8849",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:0:13:8849",
+      "kind": "fallen-log",
+      "x": 36.1003564605723,
+      "y": 865.3606047585795,
+      "z": 1.0853275190492457,
+      "tile": {
+        "x": 0,
+        "y": 13
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-0-13-8849",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 2,
+          "maxAmount": 4
+        },
+        {
+          "kind": "spores",
+          "amount": 1,
+          "maxAmount": 2
+        }
+      ],
+      "lifecycle": {
+        "stage": "decaying",
+        "decay": 0.705785771763368,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-1-13-8594",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:1:13:8594",
+      "kind": "fallen-log",
+      "x": 92.78325356885401,
+      "y": 883.7151095674641,
+      "z": 1.4446381592520303,
+      "tile": {
+        "x": 1,
+        "y": 13
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-1-13-8594",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 2,
+          "maxAmount": 4
+        },
+        {
+          "kind": "spores",
+          "amount": 1,
+          "maxAmount": 2
+        }
+      ],
+      "lifecycle": {
+        "stage": "decaying",
+        "decay": 0.8368229677055085,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-1-14-8644",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:1:14:8644",
+      "kind": "fallen-log",
+      "x": 98.46455626068277,
+      "y": 922.8206847035747,
+      "z": 1.6871658682208706,
+      "tile": {
+        "x": 1,
+        "y": 14
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-1-14-8644",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.20096977874659228,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-12-0-8601",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:12:0:8601",
+      "kind": "fallen-log",
+      "x": 809.496376273459,
+      "y": 16.839199601458198,
+      "z": 0.3516191207272046,
+      "tile": {
+        "x": 12,
+        "y": 0
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-12-0-8601",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.06297473354800015,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-13-13-9398",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:13:13:9398",
+      "kind": "fallen-log",
+      "x": 874.385831811462,
+      "y": 851.4538532084817,
+      "z": 1.4609681361704079,
+      "tile": {
+        "x": 13,
+        "y": 13
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-13-13-9398",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.3943580315435207,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-15-13-8319",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:15:13:8319",
+      "kind": "fallen-log",
+      "x": 1006.5178708920903,
+      "y": 875.7775231055025,
+      "z": 2.1291294458723007,
+      "tile": {
+        "x": 15,
+        "y": 13
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-15-13-8319",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 2,
+          "maxAmount": 4
+        },
+        {
+          "kind": "spores",
+          "amount": 1,
+          "maxAmount": 2
+        }
+      ],
+      "lifecycle": {
+        "stage": "decaying",
+        "decay": 0.9320398394325841,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-15-14-9097",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:15:14:9097",
+      "kind": "fallen-log",
+      "x": 979.6589942760344,
+      "y": 933.6865571464427,
+      "z": 1.896024240976205,
+      "tile": {
+        "x": 15,
+        "y": 14
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-15-14-9097",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        },
+        {
+          "kind": "spores",
+          "amount": 1,
+          "maxAmount": 2
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.6140644651870394,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-16-13-9959",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:16:13:9959",
+      "kind": "fallen-log",
+      "x": 1049.5713655313782,
+      "y": 880.5031791105548,
+      "z": 2.1453910315884257,
+      "tile": {
+        "x": 16,
+        "y": 13
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-16-13-9959",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.3372051779500221,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-2-6-9561",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:2:6:9561",
+      "kind": "fallen-log",
+      "x": 163.6889031275755,
+      "y": 402.81147537401216,
+      "z": -1,
+      "tile": {
+        "x": 2,
+        "y": 6
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-2-6-9561",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 2,
+          "maxAmount": 4
+        },
+        {
+          "kind": "spores",
+          "amount": 1,
+          "maxAmount": 2
+        }
+      ],
+      "lifecycle": {
+        "stage": "decaying",
+        "decay": 0.9773439350485206,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-20-10-7905",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:20:10:7905",
+      "kind": "fallen-log",
+      "x": 1308.5346174661197,
+      "y": 671.8492242192871,
+      "z": 0.27837879927343656,
+      "tile": {
+        "x": 20,
+        "y": 10
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-20-10-7905",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 2,
+          "maxAmount": 4
+        },
+        {
+          "kind": "spores",
+          "amount": 1,
+          "maxAmount": 2
+        }
+      ],
+      "lifecycle": {
+        "stage": "decaying",
+        "decay": 0.7332473270905314,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-23-11-8688",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:23:11:8688",
+      "kind": "fallen-log",
+      "x": 1494.9750735023467,
+      "y": 724.2356138535765,
+      "z": -0.8864954307492616,
+      "tile": {
+        "x": 23,
+        "y": 11
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-23-11-8688",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.4415236032664598,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-23-12-7808",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:23:12:7808",
+      "kind": "fallen-log",
+      "x": 1491.853206178698,
+      "y": 811.3602798631415,
+      "z": 0.2448827797218741,
+      "tile": {
+        "x": 23,
+        "y": 12
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-23-12-7808",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.3231862078707633,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-23-13-7418",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:23:13:7418",
+      "kind": "fallen-log",
+      "x": 1509.0360441267294,
+      "y": 851.5830646247564,
+      "z": 0.11532642575803354,
+      "tile": {
+        "x": 23,
+        "y": 13
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-23-13-7418",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 2,
+          "maxAmount": 4
+        },
+        {
+          "kind": "spores",
+          "amount": 1,
+          "maxAmount": 2
+        }
+      ],
+      "lifecycle": {
+        "stage": "decaying",
+        "decay": 0.9821617277297567,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-23-14-8141",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:23:14:8141",
+      "kind": "fallen-log",
+      "x": 1513.7212965749486,
+      "y": 930.0779655604432,
+      "z": -0.11942704710164728,
+      "tile": {
+        "x": 23,
+        "y": 14
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-23-14-8141",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.37813927335155645,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-23-9-8850",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:23:9:8850",
+      "kind": "fallen-log",
+      "x": 1489.1450866330847,
+      "y": 595.884825508158,
+      "z": -1,
+      "tile": {
+        "x": 23,
+        "y": 9
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-23-9-8850",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 2,
+          "maxAmount": 4
+        },
+        {
+          "kind": "spores",
+          "amount": 1,
+          "maxAmount": 2
+        }
+      ],
+      "lifecycle": {
+        "stage": "decaying",
+        "decay": 0.8062087855781914,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-24-8-9872",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:24:8:9872",
+      "kind": "fallen-log",
+      "x": 1566.515952162397,
+      "y": 560.5441388979331,
+      "z": -1,
+      "tile": {
+        "x": 24,
+        "y": 8
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-24-8-9872",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.35808544125363356,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-25-13-7429",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:25:13:7429",
+      "kind": "fallen-log",
+      "x": 1622.9782579448674,
+      "y": 847.3343059071839,
+      "z": 0.08602432532733811,
+      "tile": {
+        "x": 25,
+        "y": 13
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-25-13-7429",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.08902629723051242,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-25-3-9917",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:25:3:9917",
+      "kind": "fallen-log",
+      "x": 1620.2302720376267,
+      "y": 220.44912032521543,
+      "z": -0.8594889054174109,
+      "tile": {
+        "x": 25,
+        "y": 3
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-25-3-9917",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        },
+        {
+          "kind": "spores",
+          "amount": 1,
+          "maxAmount": 2
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.5859032777570894,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-25-5-7408",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:25:5:7408",
+      "kind": "fallen-log",
+      "x": 1636.5347395096846,
+      "y": 333.60225964594684,
+      "z": -1,
+      "tile": {
+        "x": 25,
+        "y": 5
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-25-5-7408",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.4207646226093091,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-25-8-7443",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:25:8:7443",
+      "kind": "fallen-log",
+      "x": 1644.7412611847978,
+      "y": 559.4816977012441,
+      "z": -1,
+      "tile": {
+        "x": 25,
+        "y": 8
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-25-8-7443",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.31146465668256035,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-26-10-9863",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:26:10:9863",
+      "kind": "fallen-log",
+      "x": 1711.799747475488,
+      "y": 664.867702172526,
+      "z": -0.9016447619874812,
+      "tile": {
+        "x": 26,
+        "y": 10
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-26-10-9863",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.5265216933392272,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-26-12-7234",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:26:12:7234",
+      "kind": "fallen-log",
+      "x": 1699.4890513666646,
+      "y": 786.0366593948278,
+      "z": -0.39824105364269075,
+      "tile": {
+        "x": 26,
+        "y": 12
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-26-12-7234",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 2,
+          "maxAmount": 4
+        },
+        {
+          "kind": "spores",
+          "amount": 1,
+          "maxAmount": 2
+        }
+      ],
+      "lifecycle": {
+        "stage": "decaying",
+        "decay": 0.9865230198452536,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-26-4-8284",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:26:4:8284",
+      "kind": "fallen-log",
+      "x": 1711.9763824452405,
+      "y": 279.8945326070987,
+      "z": -0.3733520719859172,
+      "tile": {
+        "x": 26,
+        "y": 4
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-26-4-8284",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.47468722436453387,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-26-5-9872",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:26:5:9872",
+      "kind": "fallen-log",
+      "x": 1710.4643322549166,
+      "y": 343.5318374375654,
+      "z": -1,
+      "tile": {
+        "x": 26,
+        "y": 5
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-26-5-9872",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 2,
+          "maxAmount": 4
+        },
+        {
+          "kind": "spores",
+          "amount": 1,
+          "maxAmount": 2
+        }
+      ],
+      "lifecycle": {
+        "stage": "decaying",
+        "decay": 0.7755048733147571,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-27-12-8028",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:27:12:8028",
+      "kind": "fallen-log",
+      "x": 1763.646183887377,
+      "y": 796.5771649686474,
+      "z": 0.0034898258753796874,
+      "tile": {
+        "x": 27,
+        "y": 12
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-27-12-8028",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.1876845113438751,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-28-13-8814",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:28:13:8814",
+      "kind": "fallen-log",
+      "x": 1826.5455467182364,
+      "y": 863.805462222054,
+      "z": 0.7745674625655773,
+      "tile": {
+        "x": 28,
+        "y": 13
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-28-13-8814",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        },
+        {
+          "kind": "spores",
+          "amount": 1,
+          "maxAmount": 2
+        }
+      ],
+      "lifecycle": {
+        "stage": "decaying",
+        "decay": 0.6678421294008945,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-28-2-8195",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:28:2:8195",
+      "kind": "fallen-log",
+      "x": 1819.2731822336636,
+      "y": 157.43794506490184,
+      "z": 2,
+      "tile": {
+        "x": 28,
+        "y": 2
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-28-2-8195",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.06752072020143285,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-28-4-9467",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:28:4:9467",
+      "kind": "fallen-log",
+      "x": 1806.0692114263747,
+      "y": 272.80882404450534,
+      "z": -0.04280644715828977,
+      "tile": {
+        "x": 28,
+        "y": 4
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-28-4-9467",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 2,
+          "maxAmount": 4
+        },
+        {
+          "kind": "spores",
+          "amount": 1,
+          "maxAmount": 2
+        }
+      ],
+      "lifecycle": {
+        "stage": "decaying",
+        "decay": 0.8715116823724265,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-28-7-8942",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:28:7:8942",
+      "kind": "fallen-log",
+      "x": 1817.5230412038982,
+      "y": 496.45555768872975,
+      "z": -1,
+      "tile": {
+        "x": 28,
+        "y": 7
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-28-7-8942",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 2,
+          "maxAmount": 4
+        },
+        {
+          "kind": "spores",
+          "amount": 1,
+          "maxAmount": 2
+        }
+      ],
+      "lifecycle": {
+        "stage": "decaying",
+        "decay": 0.8963018448316263,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-9-0-7353",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:9:0:7353",
+      "kind": "fallen-log",
+      "x": 608.8078261901829,
+      "y": 15.354821968971478,
+      "z": 1,
+      "tile": {
+        "x": 9,
+        "y": 0
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-9-0-7353",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 2,
+          "maxAmount": 4
+        },
+        {
+          "kind": "spores",
+          "amount": 1,
+          "maxAmount": 2
+        }
+      ],
+      "lifecycle": {
+        "stage": "decaying",
+        "decay": 0.9070098062295023,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-9-1-8412",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:9:1:8412",
+      "kind": "fallen-log",
+      "x": 615.5196139496192,
+      "y": 95.30082639201098,
+      "z": 0.5109245876248285,
+      "tile": {
+        "x": 9,
+        "y": 1
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-9-1-8412",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.4507457605681256,
+        "growth": 0
+      }
+    },
+    {
+      "id": "fallen-log-9-10-9794",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:fallen-log:9:10:9794",
+      "kind": "fallen-log",
+      "x": 620.1116868476457,
+      "y": 666.0835423026615,
+      "z": -1,
+      "tile": {
+        "x": 9,
+        "y": 10
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:fallen-log-9-10-9794",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.18297880589565696,
+        "growth": 0
+      }
+    },
+    {
+      "id": "mushroom-0-10-8946",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:0:10:8946",
+      "kind": "mushroom",
+      "x": 37.50981300959126,
+      "y": 659.4816999930799,
+      "z": -0.8215930361695841,
+      "tile": {
+        "x": 0,
+        "y": 10
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:mushroom-0-10-8946",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.5896693924999958,
+        "growth": 0.5896693924999958
+      }
+    },
+    {
+      "id": "mushroom-0-12-9945",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:0:12:9945",
+      "kind": "mushroom",
+      "x": 41.69992934929671,
+      "y": 806.3844055524432,
+      "z": 0.6515613960827611,
+      "tile": {
+        "x": 0,
+        "y": 12
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:mushroom-0-12-9945",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.5768139739117618,
+        "growth": 0.5768139739117618
+      }
+    },
+    {
+      "id": "mushroom-1-13-9725",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:1:13:9725",
+      "kind": "mushroom",
+      "x": 103.90899923985567,
+      "y": 854.4563760210705,
+      "z": 1.1320792411605702,
+      "tile": {
+        "x": 1,
+        "y": 13
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:mushroom-1-13-9725",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.6608850803717238,
+        "growth": 0.6608850803717238
+      }
+    },
+    {
+      "id": "mushroom-1-6-8987",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:1:6:8987",
+      "kind": "mushroom",
+      "x": 88.3653823214875,
+      "y": 425.5722731564874,
+      "z": -1,
+      "tile": {
+        "x": 1,
+        "y": 6
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:mushroom-1-6-8987",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.7431692707336437,
+        "growth": 0.7431692707336437
+      }
+    },
+    {
+      "id": "mushroom-11-4-7021",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:11:4:7021",
+      "kind": "mushroom",
+      "x": 719.6434052953784,
+      "y": 294.5751820245793,
+      "z": 0,
+      "tile": {
+        "x": 11,
+        "y": 4
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:mushroom-11-4-7021",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.9082207837161191,
+        "growth": 0.9082207837161191
+      }
+    },
+    {
+      "id": "mushroom-12-2-9531",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:12:2:9531",
+      "kind": "mushroom",
+      "x": 799.1666405628172,
+      "y": 156.42699566281098,
+      "z": 0.28515166935141406,
+      "tile": {
+        "x": 12,
+        "y": 2
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:mushroom-12-2-9531",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.5666578289975082,
+        "growth": 0.5666578289975082
+      }
+    },
+    {
+      "id": "mushroom-12-3-9093",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:12:3:9093",
+      "kind": "mushroom",
+      "x": 819.1548728558316,
+      "y": 220.22229419143457,
+      "z": -0.3524677419586696,
+      "tile": {
+        "x": 12,
+        "y": 3
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:mushroom-12-3-9093",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.5948012948722582,
+        "growth": 0.5948012948722582
+      }
+    },
+    {
+      "id": "mushroom-13-13-7580",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:13:13:7580",
+      "kind": "mushroom",
+      "x": 872.4635594244636,
+      "y": 868.5735686932723,
+      "z": 1.2709401935988154,
+      "tile": {
+        "x": 13,
+        "y": 13
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:mushroom-13-13-7580",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.6914863620632064,
+        "growth": 0.6914863620632064
+      }
+    },
+    {
+      "id": "mushroom-16-12-9461",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:16:12:9461",
+      "kind": "mushroom",
+      "x": 1047.537479279455,
+      "y": 783.8932135115315,
+      "z": 2.1570018264224577,
+      "tile": {
+        "x": 16,
+        "y": 12
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:mushroom-16-12-9461",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.572322973043733,
+        "growth": 0.572322973043733
+      }
+    },
+    {
+      "id": "mushroom-17-14-9793",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:17:14:9793",
+      "kind": "mushroom",
+      "x": 1125.9282832207177,
+      "y": 910.9965443142403,
+      "z": 2,
+      "tile": {
+        "x": 17,
+        "y": 14
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:mushroom-17-14-9793",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.9363118119738791,
+        "growth": 0.9363118119738791
+      }
+    },
+    {
+      "id": "mushroom-18-11-9466",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:18:11:9466",
+      "kind": "mushroom",
+      "x": 1172.9545473311457,
+      "y": 742.4071584954875,
+      "z": 1.8690707010144492,
+      "tile": {
+        "x": 18,
+        "y": 11
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:mushroom-18-11-9466",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.6543373117582727,
+        "growth": 0.6543373117582727
+      }
+    },
+    {
+      "id": "mushroom-18-14-9110",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:18:14:9110",
+      "kind": "mushroom",
+      "x": 1180.4688805810335,
+      "y": 947.4007333371511,
+      "z": 2.0875700727620226,
+      "tile": {
+        "x": 18,
+        "y": 14
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:mushroom-18-14-9110",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.5535997603096998,
+        "growth": 0.5535997603096998
+      }
+    },
+    {
+      "id": "mushroom-2-15-7739",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:2:15:7739",
+      "kind": "mushroom",
+      "x": 179.14699535338838,
+      "y": 988.2150928917655,
+      "z": 1.5531517388705316,
+      "tile": {
+        "x": 2,
+        "y": 15
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:mushroom-2-15-7739",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.5792567847946791,
+        "growth": 0.5792567847946791
+      }
+    },
+    {
+      "id": "mushroom-2-6-8222",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:2:6:8222",
+      "kind": "mushroom",
+      "x": 168.12604419420614,
+      "y": 409.54865031569,
+      "z": -1,
+      "tile": {
+        "x": 2,
+        "y": 6
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:mushroom-2-6-8222",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.7487392500971303,
+        "growth": 0.7487392500971303
+      }
+    },
+    {
+      "id": "mushroom-20-10-8959",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:20:10:8959",
+      "kind": "mushroom",
+      "x": 1329.6899290364445,
+      "y": 681.4705375455019,
+      "z": 0.07871049963247752,
+      "tile": {
+        "x": 20,
+        "y": 10
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:mushroom-20-10-8959",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.8644437214276856,
+        "growth": 0.8644437214276856
+      }
+    },
+    {
+      "id": "mushroom-20-11-7940",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:20:11:7940",
+      "kind": "mushroom",
+      "x": 1294.5961777694235,
+      "y": 741.5286213935373,
+      "z": 0,
+      "tile": {
+        "x": 20,
+        "y": 11
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:mushroom-20-11-7940",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.453125372867362,
+        "growth": 0.453125372867362
+      }
+    },
+    {
+      "id": "mushroom-22-10-9919",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:22:10:9919",
+      "kind": "mushroom",
+      "x": 1445.9572527851624,
+      "y": 654.4497203547623,
+      "z": -1,
+      "tile": {
+        "x": 22,
+        "y": 10
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:mushroom-22-10-9919",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.9444233202246073,
+        "growth": 0.9444233202246073
+      }
+    },
+    {
+      "id": "mushroom-23-9-9653",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:23:9:9653",
+      "kind": "mushroom",
+      "x": 1505.30798832447,
+      "y": 601.663502820447,
+      "z": -1,
+      "tile": {
+        "x": 23,
+        "y": 9
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:mushroom-23-9-9653",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.8742736294689295,
+        "growth": 0.8742736294689295
+      }
+    },
+    {
+      "id": "mushroom-25-8-8558",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:25:8:8558",
+      "kind": "mushroom",
+      "x": 1632.1090231085077,
+      "y": 536.4650806361775,
+      "z": -1,
+      "tile": {
+        "x": 25,
+        "y": 8
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:mushroom-25-8-8558",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.8581731084403985,
+        "growth": 0.8581731084403985
+      }
+    },
+    {
+      "id": "mushroom-27-11-7771",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:27:11:7771",
+      "kind": "mushroom",
+      "x": 1741.9518682199418,
+      "y": 736.5544586993555,
+      "z": -0.8891124224255502,
+      "tile": {
+        "x": 27,
+        "y": 11
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:mushroom-27-11-7771",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.6375276272388938,
+        "growth": 0.6375276272388938
+      }
+    },
+    {
+      "id": "mushroom-27-12-8520",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:27:12:8520",
+      "kind": "mushroom",
+      "x": 1739.8350763512392,
+      "y": 782.5748248012026,
+      "z": -0.5873452944930981,
+      "tile": {
+        "x": 27,
+        "y": 12
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:mushroom-27-12-8520",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.6013816447349689,
+        "growth": 0.6013816447349689
+      }
+    },
+    {
+      "id": "mushroom-27-15-8021",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:27:15:8021",
+      "kind": "mushroom",
+      "x": 1741.7848378472834,
+      "y": 996.7173077928082,
+      "z": 0.12356985696109694,
+      "tile": {
+        "x": 27,
+        "y": 15
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:mushroom-27-15-8021",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.91415458732847,
+        "growth": 0.91415458732847
+      }
+    },
+    {
+      "id": "mushroom-28-2-9690",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:28:2:9690",
+      "kind": "mushroom",
+      "x": 1804.8190165713474,
+      "y": 144.13376354324953,
+      "z": 2,
+      "tile": {
+        "x": 28,
+        "y": 2
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:mushroom-28-2-9690",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.6532036825672732,
+        "growth": 0.6532036825672732
+      }
+    },
+    {
+      "id": "mushroom-28-4-7463",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:28:4:7463",
+      "kind": "mushroom",
+      "x": 1805.9234957509868,
+      "y": 303.23985453483647,
+      "z": -0.52056810599765,
+      "tile": {
+        "x": 28,
+        "y": 4
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:mushroom-28-4-7463",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.6294247253051551,
+        "growth": 0.6294247253051551
+      }
+    },
+    {
+      "id": "mushroom-28-7-9751",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:28:7:9751",
+      "kind": "mushroom",
+      "x": 1824.892672190874,
+      "y": 462.86511588174506,
+      "z": -1,
+      "tile": {
+        "x": 28,
+        "y": 7
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:mushroom-28-7-9751",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.5898399026342295,
+        "growth": 0.5898399026342295
+      }
+    },
+    {
+      "id": "mushroom-3-13-7413",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:3:13:7413",
+      "kind": "mushroom",
+      "x": 219.71668088336398,
+      "y": 867.3611127718168,
+      "z": 0.9404529651919775,
+      "tile": {
+        "x": 3,
+        "y": 13
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:mushroom-3-13-7413",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.7837546215820487,
+        "growth": 0.7837546215820487
+      }
+    },
+    {
+      "id": "mushroom-3-5-7451",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:3:5:7451",
+      "kind": "mushroom",
+      "x": 209.62822801732185,
+      "y": 367.46156503560525,
+      "z": -0.6533813731175302,
+      "tile": {
+        "x": 3,
+        "y": 5
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:mushroom-3-5-7451",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.4775330102717348,
+        "growth": 0.4775330102717348
+      }
+    },
+    {
+      "id": "mushroom-9-0-9733",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:9:0:9733",
+      "kind": "mushroom",
+      "x": 588.06379613889,
+      "y": 34.99568532536637,
+      "z": 1,
+      "tile": {
+        "x": 9,
+        "y": 0
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:mushroom-9-0-9733",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.9064766876531012,
+        "growth": 0.9064766876531012
+      }
+    },
+    {
+      "id": "mushroom-9-1-7853",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:9:1:7853",
+      "kind": "mushroom",
+      "x": 592.89131808406,
+      "y": 114.20706335968502,
+      "z": 0.21551463500492152,
+      "tile": {
+        "x": 9,
+        "y": 1
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:mushroom-9-1-7853",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.6538351798322599,
+        "growth": 0.6538351798322599
+      }
+    },
+    {
+      "id": "reeds-14-15-8519",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:reeds:14:15:8519",
+      "kind": "reeds",
+      "x": 913.3814965357122,
+      "y": 1010.6970069785735,
+      "z": 2.2151342410080703,
+      "tile": {
+        "x": 14,
+        "y": 15
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:reeds-14-15-8519",
+      "resources": [
+        {
+          "kind": "fiber",
+          "amount": 3,
+          "maxAmount": 3
+        }
+      ],
+      "lifecycle": {
+        "stage": "living",
+        "decay": 0,
+        "growth": 0.72
+      }
+    },
+    {
+      "id": "ruin-6-9-9111",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:ruin:6:9:9111",
+      "kind": "ruin",
+      "x": 420.54133930788873,
+      "y": 620.1862361507178,
+      "z": -0.5709584266857612,
+      "tile": {
+        "x": 6,
+        "y": 9
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:ruin-6-9-9111",
+      "resources": [
+        {
+          "kind": "stone",
+          "amount": 4,
+          "maxAmount": 6
+        }
+      ],
+      "lifecycle": {
+        "family": "mineral",
+        "stage": "ancient-ruin",
+        "species": "weathered-viaduct-stone",
+        "ageYears": 127590,
+        "health": 0.45304328864501864,
+        "decay": 0.6359961759941644,
+        "growth": 0
+      }
+    },
+    {
+      "id": "ruin-8-1-9881",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:ruin:8:1:9881",
+      "kind": "ruin",
+      "x": 554.9232755829495,
+      "y": 85.71673620461411,
+      "z": 0.7724234734197102,
+      "tile": {
+        "x": 8,
+        "y": 1
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:ruin-8-1-9881",
+      "resources": [
+        {
+          "kind": "stone",
+          "amount": 4,
+          "maxAmount": 6
+        }
+      ],
+      "lifecycle": {
+        "family": "mineral",
+        "stage": "ancient-ruin",
+        "species": "weathered-viaduct-stone",
+        "ageYears": 48855,
+        "health": 0.48,
+        "decay": 0.5986042068569465,
+        "growth": 0
+      }
+    },
+    {
+      "id": "stump-0-3-6606",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:stump:0:3:6606",
+      "kind": "stump",
+      "x": 14.86712221223561,
+      "y": 229.79894054071022,
+      "z": -0.49550728553079615,
+      "tile": {
+        "x": 0,
+        "y": 3
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:stump-0-3-6606",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.4690082300149389,
+        "growth": 0
+      }
+    },
+    {
+      "id": "stump-0-7-6991",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:stump:0:7:6991",
+      "kind": "stump",
+      "x": 41.21645282483111,
+      "y": 471.1888573769082,
+      "z": -1,
+      "tile": {
+        "x": 0,
+        "y": 7
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:stump-0-7-6991",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.08422329232195003,
+        "growth": 0
+      }
+    },
+    {
+      "id": "stump-10-0-6715",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:stump:10:0:6715",
+      "kind": "stump",
+      "x": 673.437021298743,
+      "y": 15.984552041139581,
+      "z": 1.522453457792861,
+      "tile": {
+        "x": 10,
+        "y": 0
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:stump-10-0-6715",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 2,
+          "maxAmount": 4
+        },
+        {
+          "kind": "spores",
+          "amount": 1,
+          "maxAmount": 2
+        }
+      ],
+      "lifecycle": {
+        "stage": "decaying",
+        "decay": 0.9223667383013215,
+        "growth": 0
+      }
+    },
+    {
+      "id": "stump-10-9-6750",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:stump:10:9:6750",
+      "kind": "stump",
+      "x": 684.3605750065019,
+      "y": 598.0028625226586,
+      "z": -1,
+      "tile": {
+        "x": 10,
+        "y": 9
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:stump-10-9-6750",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.4565896909815701,
+        "growth": 0
+      }
+    },
+    {
+      "id": "stump-11-4-6321",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:stump:11:4:6321",
+      "kind": "stump",
+      "x": 738.2139601951031,
+      "y": 272.18642929185796,
+      "z": 0,
+      "tile": {
+        "x": 11,
+        "y": 4
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:stump-11-4-6321",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 2,
+          "maxAmount": 4
+        },
+        {
+          "kind": "spores",
+          "amount": 1,
+          "maxAmount": 2
+        }
+      ],
+      "lifecycle": {
+        "stage": "decaying",
+        "decay": 0.9132580081730285,
+        "growth": 0
+      }
+    },
+    {
+      "id": "stump-16-12-6832",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:stump:16:12:6832",
+      "kind": "stump",
+      "x": 1039.92916389568,
+      "y": 806.8615635744812,
+      "z": 2.456081018883423,
+      "tile": {
+        "x": 16,
+        "y": 12
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:stump-16-12-6832",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.24142402858506518,
+        "growth": 0
+      }
+    },
+    {
+      "id": "stump-2-8-6775",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:stump:2:8:6775",
+      "kind": "stump",
+      "x": 153.06635052042697,
+      "y": 544.7103112270102,
+      "z": -0.5110986129220338,
+      "tile": {
+        "x": 2,
+        "y": 8
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:stump-2-8-6775",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        },
+        {
+          "kind": "spores",
+          "amount": 1,
+          "maxAmount": 2
+        }
+      ],
+      "lifecycle": {
+        "stage": "decaying",
+        "decay": 0.6899395179212884,
+        "growth": 0
+      }
+    },
+    {
+      "id": "stump-3-12-6777",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:stump:3:12:6777",
+      "kind": "stump",
+      "x": 221.3608765452916,
+      "y": 815.3883979880876,
+      "z": 1.4007550215405813,
+      "tile": {
+        "x": 3,
+        "y": 12
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:stump-3-12-6777",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.020196164497220004,
+        "growth": 0
+      }
+    },
+    {
+      "id": "stump-3-5-6560",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:stump:3:5:6560",
+      "kind": "stump",
+      "x": 214.1971845937793,
+      "y": 367.4298155200644,
+      "z": -0.5633712749863321,
+      "tile": {
+        "x": 3,
+        "y": 5
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:stump-3-5-6560",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.42252784371900554,
+        "growth": 0
+      }
+    },
+    {
+      "id": "stump-5-16-9254",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:stump:5:16:9254",
+      "kind": "stump",
+      "x": 353.5595588544662,
+      "y": 1039.5319590577883,
+      "z": -0.5243681071010344,
+      "tile": {
+        "x": 5,
+        "y": 16
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:stump-5-16-9254",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 2,
+          "maxAmount": 4
+        },
+        {
+          "kind": "spores",
+          "amount": 1,
+          "maxAmount": 2
+        }
+      ],
+      "lifecycle": {
+        "stage": "decaying",
+        "decay": 0.8972847196034353,
+        "growth": 0
+      }
+    },
+    {
+      "id": "tree-10-10-9537",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:tree:10:10:9537",
+      "kind": "tree",
+      "x": 669.7631707043208,
+      "y": 651.7355275059248,
+      "z": -1,
+      "tile": {
+        "x": 10,
+        "y": 10
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:tree-10-10-9537",
+      "resources": [
+        {
+          "kind": "wood",
+          "amount": 4,
+          "maxAmount": 9
+        }
+      ],
+      "lifecycle": {
+        "stage": "mature",
+        "species": "shadebark",
+        "ageYears": 40,
+        "health": 0.9294266712813057,
+        "decay": 0.14184646118344757,
+        "growth": 0.72
+      }
+    },
+    {
+      "id": "tree-2-10-7976",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:tree:2:10:7976",
+      "kind": "tree",
+      "x": 164.8619815694685,
+      "y": 658.8343845193726,
+      "z": -0.7057127418848017,
+      "tile": {
+        "x": 2,
+        "y": 10
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:tree-2-10-7976",
+      "resources": [
+        {
+          "kind": "wood",
+          "amount": 5,
+          "maxAmount": 9
+        }
+      ],
+      "lifecycle": {
+        "stage": "mature",
+        "species": "ironleaf",
+        "ageYears": 50,
+        "health": 0.8982077822750606,
+        "decay": 0.222849047879199,
+        "growth": 0.72
+      }
+    },
+    {
+      "id": "tree-2-5-6567",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:tree:2:5:6567",
+      "kind": "tree",
+      "x": 141.69590057423707,
+      "y": 367.01133338800895,
+      "z": -1,
+      "tile": {
+        "x": 2,
+        "y": 5
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:tree-2-5-6567",
+      "resources": [
+        {
+          "kind": "wood",
+          "amount": 8,
+          "maxAmount": 9
+        },
+        {
+          "kind": "seed",
+          "amount": 1,
+          "maxAmount": 1
+        }
+      ],
+      "lifecycle": {
+        "stage": "mature",
+        "species": "greenwood",
+        "ageYears": 47,
+        "health": 0.8878877596016058,
+        "decay": 0.09302864823270882,
+        "growth": 0.72
+      }
+    },
+    {
+      "id": "tree-22-11-6552",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:tree:22:11:6552",
+      "kind": "tree",
+      "x": 1430.4782147051576,
+      "y": 745.081697289674,
+      "z": -1,
+      "tile": {
+        "x": 22,
+        "y": 11
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:tree-22-11-6552",
+      "resources": [
+        {
+          "kind": "wood",
+          "amount": 8,
+          "maxAmount": 9
+        },
+        {
+          "kind": "seed",
+          "amount": 1,
+          "maxAmount": 1
+        }
+      ],
+      "lifecycle": {
+        "stage": "mature",
+        "species": "paleoak",
+        "ageYears": 50,
+        "health": 0.9353884691314119,
+        "decay": 0.16270520431467272,
+        "growth": 0.72
+      }
+    },
+    {
+      "id": "tree-26-6-6968",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:tree:26:6:6968",
+      "kind": "tree",
+      "x": 1715.8279369257361,
+      "y": 433.08771090428525,
+      "z": -1,
+      "tile": {
+        "x": 26,
+        "y": 6
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resourceNodeId": "terrain-detail:tree-26-6-6968",
+      "resources": [
+        {
+          "kind": "wood",
+          "amount": 10,
+          "maxAmount": 14
+        },
+        {
+          "kind": "seed",
+          "amount": 1,
+          "maxAmount": 1
+        }
+      ],
+      "lifecycle": {
+        "stage": "ancient",
+        "species": "shadebark",
+        "ageYears": 130,
+        "health": 0.6158155462424847,
+        "decay": 0.49970700067792734,
+        "growth": 1
+      }
+    },
+    {
+      "id": "river-reedbed-fallen-log-10-15-7431",
+      "stableKey": "duskfell-terrain-v1:7341:river-reedbed:wet-edge:fallen-log:10:15:7431",
+      "kind": "fallen-log",
+      "x": 667.6573307551763,
+      "y": 995.3017562158643,
+      "z": -0.4321457930496302,
+      "tile": {
+        "x": 10,
+        "y": 15
+      },
+      "source": "composition-kit",
+      "kitId": "river-reedbed",
+      "kitKind": "river-reedbed",
+      "kitRole": "wet-edge",
+      "resourceNodeId": "terrain-detail:river-reedbed-fallen-log-10-15-7431",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.5566107781037247,
+        "growth": 0
+      }
+    },
+    {
+      "id": "river-reedbed-fallen-log-11-13-8170",
+      "stableKey": "duskfell-terrain-v1:7341:river-reedbed:wet-edge:fallen-log:11:13:8170",
+      "kind": "fallen-log",
+      "x": 729.1507138379362,
+      "y": 875.1782741906443,
+      "z": -1,
+      "tile": {
+        "x": 11,
+        "y": 13
+      },
+      "source": "composition-kit",
+      "kitId": "river-reedbed",
+      "kitKind": "river-reedbed",
+      "kitRole": "wet-edge",
+      "resourceNodeId": "terrain-detail:river-reedbed-fallen-log-11-13-8170",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        },
+        {
+          "kind": "spores",
+          "amount": 1,
+          "maxAmount": 2
+        }
+      ],
+      "lifecycle": {
+        "stage": "decaying",
+        "decay": 0.663900192748732,
+        "growth": 0
+      }
+    },
+    {
+      "id": "river-reedbed-fallen-log-12-14-7135",
+      "stableKey": "duskfell-terrain-v1:7341:river-reedbed:wet-edge:fallen-log:12:14:7135",
+      "kind": "fallen-log",
+      "x": 806.6398728815279,
+      "y": 947.1875946232648,
+      "z": -0.27538535657191304,
+      "tile": {
+        "x": 12,
+        "y": 14
+      },
+      "source": "composition-kit",
+      "kitId": "river-reedbed",
+      "kitKind": "river-reedbed",
+      "kitRole": "wet-edge",
+      "resourceNodeId": "terrain-detail:river-reedbed-fallen-log-12-14-7135",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 2,
+          "maxAmount": 4
+        },
+        {
+          "kind": "spores",
+          "amount": 1,
+          "maxAmount": 2
+        }
+      ],
+      "lifecycle": {
+        "stage": "decaying",
+        "decay": 0.8239455241300039,
+        "growth": 0
+      }
+    },
+    {
+      "id": "river-reedbed-fallen-log-7-15-8994",
+      "stableKey": "duskfell-terrain-v1:7341:river-reedbed:wet-edge:fallen-log:7:15:8994",
+      "kind": "fallen-log",
+      "x": 484.91732278461507,
+      "y": 989.5679956955016,
+      "z": 0.6896637165453068,
+      "tile": {
+        "x": 7,
+        "y": 15
+      },
+      "source": "composition-kit",
+      "kitId": "river-reedbed",
+      "kitKind": "river-reedbed",
+      "kitRole": "wet-edge",
+      "resourceNodeId": "terrain-detail:river-reedbed-fallen-log-7-15-8994",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        },
+        {
+          "kind": "spores",
+          "amount": 1,
+          "maxAmount": 2
+        }
+      ],
+      "lifecycle": {
+        "stage": "decaying",
+        "decay": 0.6412928781102628,
+        "growth": 0
+      }
+    },
+    {
+      "id": "river-reedbed-mushroom-10-14-8591",
+      "stableKey": "duskfell-terrain-v1:7341:river-reedbed:wet-edge:mushroom:10:14:8591",
+      "kind": "mushroom",
+      "x": 690.7035863109268,
+      "y": 923.7710403003383,
+      "z": -0.9098497948219668,
+      "tile": {
+        "x": 10,
+        "y": 14
+      },
+      "source": "composition-kit",
+      "kitId": "river-reedbed",
+      "kitKind": "river-reedbed",
+      "kitRole": "wet-edge",
+      "resourceNodeId": "terrain-detail:river-reedbed-mushroom-10-14-8591",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.5887381916140993,
+        "growth": 0.5887381916140993
+      }
+    },
+    {
+      "id": "river-reedbed-mushroom-10-15-8421",
+      "stableKey": "duskfell-terrain-v1:7341:river-reedbed:wet-edge:mushroom:10:15:8421",
+      "kind": "mushroom",
+      "x": 654.9213350494674,
+      "y": 982.5655860926596,
+      "z": -0.23314586014792926,
+      "tile": {
+        "x": 10,
+        "y": 15
+      },
+      "source": "composition-kit",
+      "kitId": "river-reedbed",
+      "kitKind": "river-reedbed",
+      "kitRole": "wet-edge",
+      "resourceNodeId": "terrain-detail:river-reedbed-mushroom-10-15-8421",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.5192686683077525,
+        "growth": 0.5192686683077525
+      }
+    },
+    {
+      "id": "river-reedbed-mushroom-11-12-9513",
+      "stableKey": "duskfell-terrain-v1:7341:river-reedbed:wet-edge:mushroom:11:12:9513",
+      "kind": "mushroom",
+      "x": 746.8374606682261,
+      "y": 787.9047062225791,
+      "z": -1,
+      "tile": {
+        "x": 11,
+        "y": 12
+      },
+      "source": "composition-kit",
+      "kitId": "river-reedbed",
+      "kitKind": "river-reedbed",
+      "kitRole": "wet-edge",
+      "resourceNodeId": "terrain-detail:river-reedbed-mushroom-11-12-9513",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.46766868861570693,
+        "growth": 0.46766868861570693
+      }
+    },
+    {
+      "id": "river-reedbed-mushroom-9-15-9879",
+      "stableKey": "duskfell-terrain-v1:7341:river-reedbed:wet-edge:mushroom:9:15:9879",
+      "kind": "mushroom",
+      "x": 616.6223404379894,
+      "y": 1008.2658920564377,
+      "z": 0,
+      "tile": {
+        "x": 9,
+        "y": 15
+      },
+      "source": "composition-kit",
+      "kitId": "river-reedbed",
+      "kitKind": "river-reedbed",
+      "kitRole": "wet-edge",
+      "resourceNodeId": "terrain-detail:river-reedbed-mushroom-9-15-9879",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.9956494045084459,
+        "growth": 0.9956494045084459
+      }
+    },
+    {
+      "id": "river-reedbed-ruin-6-14-9846",
+      "stableKey": "duskfell-terrain-v1:7341:river-reedbed:wet-edge:ruin:6:14:9846",
+      "kind": "ruin",
+      "x": 417.145139136581,
+      "y": 936.7897160979709,
+      "z": -0.1520337597289871,
+      "tile": {
+        "x": 6,
+        "y": 14
+      },
+      "source": "composition-kit",
+      "kitId": "river-reedbed",
+      "kitKind": "river-reedbed",
+      "kitRole": "wet-edge",
+      "resourceNodeId": "terrain-detail:river-reedbed-ruin-6-14-9846",
+      "resources": [
+        {
+          "kind": "stone",
+          "amount": 4,
+          "maxAmount": 6
+        }
+      ],
+      "lifecycle": {
+        "family": "mineral",
+        "stage": "ancient-ruin",
+        "species": "weathered-viaduct-stone",
+        "ageYears": 142087,
+        "health": 0.4728531589801548,
+        "decay": 0.6129614430463317,
+        "growth": 0
+      }
+    },
+    {
+      "id": "river-reedbed-stump-10-14-6946",
+      "stableKey": "duskfell-terrain-v1:7341:river-reedbed:wet-edge:stump:10:14:6946",
+      "kind": "stump",
+      "x": 686.8853306185094,
+      "y": 943.6605290973886,
+      "z": -0.8008559086795121,
+      "tile": {
+        "x": 10,
+        "y": 14
+      },
+      "source": "composition-kit",
+      "kitId": "river-reedbed",
+      "kitKind": "river-reedbed",
+      "kitRole": "wet-edge",
+      "resourceNodeId": "terrain-detail:river-reedbed-stump-10-14-6946",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.05490881694827898,
+        "growth": 0
+      }
+    },
+    {
+      "id": "river-reedbed-stump-11-15-6558",
+      "stableKey": "duskfell-terrain-v1:7341:river-reedbed:wet-edge:stump:11:15:6558",
+      "kind": "stump",
+      "x": 740.0628270873947,
+      "y": 1004.8563915616405,
+      "z": -1,
+      "tile": {
+        "x": 11,
+        "y": 15
+      },
+      "source": "composition-kit",
+      "kitId": "river-reedbed",
+      "kitKind": "river-reedbed",
+      "kitRole": "wet-edge",
+      "resourceNodeId": "terrain-detail:river-reedbed-stump-11-15-6558",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "deadwood",
+        "decay": 0.014550051655282725,
+        "growth": 0
+      }
+    },
+    {
+      "id": "sunken-courtyard-kit-foundation-16-6-7010",
+      "stableKey": "duskfell-terrain-v1:7341:sunken-courtyard-kit:broken-floor:foundation:16:6:7010",
+      "kind": "foundation",
+      "x": 1054.72,
+      "y": 418.56,
+      "z": 0.54,
+      "tile": {
+        "x": 16,
+        "y": 6
+      },
+      "source": "composition-kit",
+      "kitId": "sunken-courtyard-kit",
+      "kitKind": "sunken-courtyard",
+      "kitRole": "broken-floor",
+      "resourceNodeId": "terrain-detail:sunken-courtyard-kit-foundation-16-6-7010",
+      "resources": [
+        {
+          "kind": "stone",
+          "amount": 1,
+          "maxAmount": 5
+        }
+      ],
+      "lifecycle": {
+        "family": "mineral",
+        "stage": "sunken-foundation",
+        "species": "weathered-courtyard-stone",
+        "ageYears": 98178,
+        "health": 0.5364738226426936,
+        "decay": 0.5942643299452646,
+        "growth": 0
+      }
+    },
+    {
+      "id": "sunken-courtyard-kit-foundation-20-6-1181",
+      "stableKey": "duskfell-terrain-v1:7341:sunken-courtyard-kit:broken-floor:foundation:20:6:1181",
+      "kind": "foundation",
+      "x": 1313.28,
+      "y": 419.84000000000003,
+      "z": -1,
+      "tile": {
+        "x": 20,
+        "y": 6
+      },
+      "source": "composition-kit",
+      "kitId": "sunken-courtyard-kit",
+      "kitKind": "sunken-courtyard",
+      "kitRole": "broken-floor",
+      "resourceNodeId": "terrain-detail:sunken-courtyard-kit-foundation-20-6-1181",
+      "resources": [
+        {
+          "kind": "stone",
+          "amount": 1,
+          "maxAmount": 5
+        }
+      ],
+      "lifecycle": {
+        "family": "mineral",
+        "stage": "sunken-foundation",
+        "species": "weathered-courtyard-stone",
+        "ageYears": 127365,
+        "health": 0.54,
+        "decay": 0.5771371775369946,
+        "growth": 0
+      }
+    },
+    {
+      "id": "sunken-courtyard-kit-boulder-15-1-7043",
+      "stableKey": "duskfell-terrain-v1:7341:sunken-courtyard-kit:courtyard-rubble:boulder:15:1:7043",
+      "kind": "boulder",
+      "x": 984.6794291813019,
+      "y": 90.84435421346788,
+      "z": 1,
+      "tile": {
+        "x": 15,
+        "y": 1
+      },
+      "source": "composition-kit",
+      "kitId": "sunken-courtyard-kit",
+      "kitKind": "sunken-courtyard",
+      "kitRole": "courtyard-rubble",
+      "resourceNodeId": "terrain-detail:sunken-courtyard-kit-boulder-15-1-7043",
+      "resources": [
+        {
+          "kind": "ore",
+          "amount": 4,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "mineral",
+        "decay": 0,
+        "growth": 0
+      }
+    },
+    {
+      "id": "sunken-courtyard-kit-stump-14-4-9117",
+      "stableKey": "duskfell-terrain-v1:7341:sunken-courtyard-kit:courtyard-rubble:stump:14:4:9117",
+      "kind": "stump",
+      "x": 908.5408777334683,
+      "y": 285.99356183482183,
+      "z": 1.5313505963309086,
+      "tile": {
+        "x": 14,
+        "y": 4
+      },
+      "source": "composition-kit",
+      "kitId": "sunken-courtyard-kit",
+      "kitKind": "sunken-courtyard",
+      "kitRole": "courtyard-rubble",
+      "resourceNodeId": "terrain-detail:sunken-courtyard-kit-stump-14-4-9117",
+      "resources": [
+        {
+          "kind": "deadwood",
+          "amount": 3,
+          "maxAmount": 4
+        },
+        {
+          "kind": "spores",
+          "amount": 1,
+          "maxAmount": 2
+        }
+      ],
+      "lifecycle": {
+        "stage": "decaying",
+        "decay": 0.6236043555251333,
+        "growth": 0
+      }
+    },
+    {
+      "id": "sunken-courtyard-kit-stairs-18-6-1236",
+      "stableKey": "duskfell-terrain-v1:7341:sunken-courtyard-kit:stairs:stairs:18:6:1236",
+      "kind": "stairs",
+      "x": 1184,
+      "y": 423.68,
+      "z": -0.5,
+      "tile": {
+        "x": 18,
+        "y": 6
+      },
+      "source": "composition-kit",
+      "kitId": "sunken-courtyard-kit",
+      "kitKind": "sunken-courtyard",
+      "kitRole": "stairs",
+      "resourceNodeId": "terrain-detail:sunken-courtyard-kit-stairs-18-6-1236",
+      "resources": [
+        {
+          "kind": "stone",
+          "amount": 2,
+          "maxAmount": 5
+        }
+      ],
+      "lifecycle": {
+        "family": "mineral",
+        "stage": "eroded-stairs",
+        "species": "weathered-courtyard-stone",
+        "ageYears": 94930,
+        "health": 0.54,
+        "decay": 0.45976800049649735,
+        "growth": 0
+      }
+    },
+    {
+      "id": "sunken-courtyard-kit-foundation-17-4-7117",
+      "stableKey": "duskfell-terrain-v1:7341:sunken-courtyard-kit:sunken-floor:foundation:17:4:7117",
+      "kind": "foundation",
+      "x": 1114.88,
+      "y": 285.44,
+      "z": 0.8932000000000001,
+      "tile": {
+        "x": 17,
+        "y": 4
+      },
+      "source": "composition-kit",
+      "kitId": "sunken-courtyard-kit",
+      "kitKind": "sunken-courtyard",
+      "kitRole": "sunken-floor",
+      "resourceNodeId": "terrain-detail:sunken-courtyard-kit-foundation-17-4-7117",
+      "resources": [
+        {
+          "kind": "stone",
+          "amount": 1,
+          "maxAmount": 5
+        }
+      ],
+      "lifecycle": {
+        "family": "mineral",
+        "stage": "sunken-foundation",
+        "species": "weathered-courtyard-stone",
+        "ageYears": 85341,
+        "health": 0.473514033264833,
+        "decay": 0.6749820086348295,
+        "growth": 0
+      }
+    },
+    {
+      "id": "sunken-courtyard-kit-foundation-19-4-121",
+      "stableKey": "duskfell-terrain-v1:7341:sunken-courtyard-kit:sunken-floor:foundation:19:4:121",
+      "kind": "foundation",
+      "x": 1253.12,
+      "y": 288,
+      "z": -1,
+      "tile": {
+        "x": 19,
+        "y": 4
+      },
+      "source": "composition-kit",
+      "kitId": "sunken-courtyard-kit",
+      "kitKind": "sunken-courtyard",
+      "kitRole": "sunken-floor",
+      "resourceNodeId": "terrain-detail:sunken-courtyard-kit-foundation-19-4-121",
+      "resources": [
+        {
+          "kind": "stone",
+          "amount": 1,
+          "maxAmount": 5
+        }
+      ],
+      "lifecycle": {
+        "family": "mineral",
+        "stage": "sunken-foundation",
+        "species": "weathered-courtyard-stone",
+        "ageYears": 70546,
+        "health": 0.34728959172109364,
+        "decay": 0.8368082157421877,
+        "growth": 0
+      }
+    },
+    {
+      "id": "sunken-courtyard-kit-wall-21-4-5638",
+      "stableKey": "duskfell-terrain-v1:7341:sunken-courtyard-kit:wall-east:wall:21:4:5638",
+      "kind": "wall",
+      "x": 1388.8,
+      "y": 288,
+      "z": -1,
+      "tile": {
+        "x": 21,
+        "y": 4
+      },
+      "source": "composition-kit",
+      "kitId": "sunken-courtyard-kit",
+      "kitKind": "sunken-courtyard",
+      "kitRole": "wall-east",
+      "resourceNodeId": "terrain-detail:sunken-courtyard-kit-wall-21-4-5638",
+      "resources": [
+        {
+          "kind": "stone",
+          "amount": 3,
+          "maxAmount": 8
+        }
+      ],
+      "lifecycle": {
+        "family": "mineral",
+        "stage": "broken-wall",
+        "species": "weathered-courtyard-stone",
+        "ageYears": 123035,
+        "health": 0.48829017640480077,
+        "decay": 0.6560382353784605,
+        "growth": 0
+      }
+    },
+    {
+      "id": "sunken-courtyard-kit-wall-16-2-3061",
+      "stableKey": "duskfell-terrain-v1:7341:sunken-courtyard-kit:wall-north:wall:16:2:3061",
+      "kind": "wall",
+      "x": 1056,
+      "y": 145.92000000000002,
+      "z": 1.7800000000000002,
+      "tile": {
+        "x": 16,
+        "y": 2
+      },
+      "source": "composition-kit",
+      "kitId": "sunken-courtyard-kit",
+      "kitKind": "sunken-courtyard",
+      "kitRole": "wall-north",
+      "resourceNodeId": "terrain-detail:sunken-courtyard-kit-wall-16-2-3061",
+      "resources": [
+        {
+          "kind": "stone",
+          "amount": 3,
+          "maxAmount": 8
+        }
+      ],
+      "lifecycle": {
+        "family": "mineral",
+        "stage": "broken-wall",
+        "species": "weathered-courtyard-stone",
+        "ageYears": 145169,
+        "health": 0.362803478803859,
+        "decay": 0.8169186169181295,
+        "growth": 0
+      }
+    },
+    {
+      "id": "sunken-courtyard-kit-wall-18-2-7267",
+      "stableKey": "duskfell-terrain-v1:7341:sunken-courtyard-kit:wall-north:wall:18:2:7267",
+      "kind": "wall",
+      "x": 1184,
+      "y": 147.2,
+      "z": 1.3499999999999999,
+      "tile": {
+        "x": 18,
+        "y": 2
+      },
+      "source": "composition-kit",
+      "kitId": "sunken-courtyard-kit",
+      "kitKind": "sunken-courtyard",
+      "kitRole": "wall-north",
+      "resourceNodeId": "terrain-detail:sunken-courtyard-kit-wall-18-2-7267",
+      "resources": [
+        {
+          "kind": "stone",
+          "amount": 3,
+          "maxAmount": 8
+        }
+      ],
+      "lifecycle": {
+        "family": "mineral",
+        "stage": "broken-wall",
+        "species": "weathered-courtyard-stone",
+        "ageYears": 111495,
+        "health": 0.4138407160888986,
+        "decay": 0.7514862614244889,
+        "growth": 0
+      }
+    },
+    {
+      "id": "sunken-courtyard-kit-wall-20-2-6731",
+      "stableKey": "duskfell-terrain-v1:7341:sunken-courtyard-kit:wall-north:wall:20:2:6731",
+      "kind": "wall",
+      "x": 1312,
+      "y": 148.48,
+      "z": 0.5,
+      "tile": {
+        "x": 20,
+        "y": 2
+      },
+      "source": "composition-kit",
+      "kitId": "sunken-courtyard-kit",
+      "kitKind": "sunken-courtyard",
+      "kitRole": "wall-north",
+      "resourceNodeId": "terrain-detail:sunken-courtyard-kit-wall-20-2-6731",
+      "resources": [
+        {
+          "kind": "stone",
+          "amount": 3,
+          "maxAmount": 8
+        }
+      ],
+      "lifecycle": {
+        "family": "mineral",
+        "stage": "broken-wall",
+        "species": "weathered-courtyard-stone",
+        "ageYears": 70320,
+        "health": 0.5201239710863037,
+        "decay": 0.6152256780944825,
+        "growth": 0
+      }
+    },
+    {
+      "id": "sunken-courtyard-kit-wall-15-4-5219",
+      "stableKey": "duskfell-terrain-v1:7341:sunken-courtyard-kit:wall-west:wall:15:4:5219",
+      "kind": "wall",
+      "x": 979.2,
+      "y": 289.28,
+      "z": 1.48,
+      "tile": {
+        "x": 15,
+        "y": 4
+      },
+      "source": "composition-kit",
+      "kitId": "sunken-courtyard-kit",
+      "kitKind": "sunken-courtyard",
+      "kitRole": "wall-west",
+      "resourceNodeId": "terrain-detail:sunken-courtyard-kit-wall-15-4-5219",
+      "resources": [
+        {
+          "kind": "stone",
+          "amount": 3,
+          "maxAmount": 8
+        }
+      ],
+      "lifecycle": {
+        "family": "mineral",
+        "stage": "broken-wall",
+        "species": "weathered-courtyard-stone",
+        "ageYears": 71081,
+        "health": 0.522041376485499,
+        "decay": 0.6127674660442322,
+        "growth": 0
+      }
+    }
+  ],
+  "decayConsumers": [
+    {
+      "id": "old-grove-ring-mushroom-10-4-8800",
+      "stableKey": "duskfell-terrain-v1:7341:old-grove-ring:canopy:mushroom:10:4:8800",
+      "kind": "mushroom",
+      "x": 674.9073172623728,
+      "y": 293.0712989389783,
+      "z": -0.45457316777542545,
+      "tile": {
+        "x": 10,
+        "y": 4
+      },
+      "source": "composition-kit",
+      "kitId": "old-grove-ring",
+      "kitKind": "old-grove",
+      "kitRole": "canopy",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.8880140923867035,
+        "growth": 0.8880140923867035
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "old-grove-ring-mushroom-10-8-7802",
+      "stableKey": "duskfell-terrain-v1:7341:old-grove-ring:canopy:mushroom:10:8:7802",
+      "kind": "mushroom",
+      "x": 667.3737398184495,
+      "y": 557.401845625183,
+      "z": -1,
+      "tile": {
+        "x": 10,
+        "y": 8
+      },
+      "source": "composition-kit",
+      "kitId": "old-grove-ring",
+      "kitKind": "old-grove",
+      "kitRole": "canopy",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.7945880064378931,
+        "growth": 0.7945880064378931
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "old-grove-ring-mushroom-4-6-8213",
+      "stableKey": "duskfell-terrain-v1:7341:old-grove-ring:canopy:mushroom:4:6:8213",
+      "kind": "mushroom",
+      "x": 275.7657624740726,
+      "y": 411.4099463404459,
+      "z": -0.17656989979206947,
+      "tile": {
+        "x": 4,
+        "y": 6
+      },
+      "source": "composition-kit",
+      "kitId": "old-grove-ring",
+      "kitKind": "old-grove",
+      "kitRole": "canopy",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.7387579880745052,
+        "growth": 0.7387579880745052
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "old-grove-ring-mushroom-8-4-9195",
+      "stableKey": "duskfell-terrain-v1:7341:old-grove-ring:canopy:mushroom:8:4:9195",
+      "kind": "mushroom",
+      "x": 533.2547580550925,
+      "y": 295.28283723523907,
+      "z": -0.33210559461081995,
+      "tile": {
+        "x": 8,
+        "y": 4
+      },
+      "source": "composition-kit",
+      "kitId": "old-grove-ring",
+      "kitKind": "old-grove",
+      "kitRole": "canopy",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.7124280301999366,
+        "growth": 0.7124280301999366
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "old-grove-ring-mushroom-8-5-8197",
+      "stableKey": "duskfell-terrain-v1:7341:old-grove-ring:canopy:mushroom:8:5:8197",
+      "kind": "mushroom",
+      "x": 551.1650096671574,
+      "y": 336.23323185076777,
+      "z": -0.7103790954059291,
+      "tile": {
+        "x": 8,
+        "y": 5
+      },
+      "source": "composition-kit",
+      "kitId": "old-grove-ring",
+      "kitKind": "old-grove",
+      "kitRole": "canopy",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.9838177477088332,
+        "growth": 0.9838177477088332
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "old-grove-ring-mushroom-8-6-9538",
+      "stableKey": "duskfell-terrain-v1:7341:old-grove-ring:canopy:mushroom:8:6:9538",
+      "kind": "mushroom",
+      "x": 561.3588205520992,
+      "y": 431.1945827567192,
+      "z": -1,
+      "tile": {
+        "x": 8,
+        "y": 6
+      },
+      "source": "composition-kit",
+      "kitId": "old-grove-ring",
+      "kitKind": "old-grove",
+      "kitRole": "canopy",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.8341130904583525,
+        "growth": 0.8341130904583525
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "old-grove-ring-mushroom-9-2-8223",
+      "stableKey": "duskfell-terrain-v1:7341:old-grove-ring:canopy:mushroom:9:2:8223",
+      "kind": "mushroom",
+      "x": 588.2939355375185,
+      "y": 141.88344436700535,
+      "z": -0.21692881823445875,
+      "tile": {
+        "x": 9,
+        "y": 2
+      },
+      "source": "composition-kit",
+      "kitId": "old-grove-ring",
+      "kitKind": "old-grove",
+      "kitRole": "canopy",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.5766558969455435,
+        "growth": 0.5766558969455435
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "old-grove-ring-mushroom-9-4-8042",
+      "stableKey": "duskfell-terrain-v1:7341:old-grove-ring:canopy:mushroom:9:4:8042",
+      "kind": "mushroom",
+      "x": 596.7201115915739,
+      "y": 279.45994688312055,
+      "z": -1,
+      "tile": {
+        "x": 9,
+        "y": 4
+      },
+      "source": "composition-kit",
+      "kitId": "old-grove-ring",
+      "kitKind": "old-grove",
+      "kitRole": "canopy",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.7052402712067682,
+        "growth": 0.7052402712067682
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "old-grove-ring-mushroom-5-8-9547",
+      "stableKey": "duskfell-terrain-v1:7341:old-grove-ring:understory:mushroom:5:8:9547",
+      "kind": "mushroom",
+      "x": 370.662282771641,
+      "y": 544.6339447452114,
+      "z": 0,
+      "tile": {
+        "x": 5,
+        "y": 8
+      },
+      "source": "composition-kit",
+      "kitId": "old-grove-ring",
+      "kitKind": "old-grove",
+      "kitRole": "understory",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.8438839064081861,
+        "growth": 0.8438839064081861
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "old-grove-ring-mushroom-6-8-8843",
+      "stableKey": "duskfell-terrain-v1:7341:old-grove-ring:understory:mushroom:6:8:8843",
+      "kind": "mushroom",
+      "x": 403.375143291395,
+      "y": 528.6352362549294,
+      "z": -0.3027366139280462,
+      "tile": {
+        "x": 6,
+        "y": 8
+      },
+      "source": "composition-kit",
+      "kitId": "old-grove-ring",
+      "kitKind": "old-grove",
+      "kitRole": "understory",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.9583170269868144,
+        "growth": 0.9583170269868144
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "mushroom-0-10-8946",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:0:10:8946",
+      "kind": "mushroom",
+      "x": 37.50981300959126,
+      "y": 659.4816999930799,
+      "z": -0.8215930361695841,
+      "tile": {
+        "x": 0,
+        "y": 10
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.5896693924999958,
+        "growth": 0.5896693924999958
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "mushroom-0-12-9945",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:0:12:9945",
+      "kind": "mushroom",
+      "x": 41.69992934929671,
+      "y": 806.3844055524432,
+      "z": 0.6515613960827611,
+      "tile": {
+        "x": 0,
+        "y": 12
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.5768139739117618,
+        "growth": 0.5768139739117618
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "mushroom-1-13-9725",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:1:13:9725",
+      "kind": "mushroom",
+      "x": 103.90899923985567,
+      "y": 854.4563760210705,
+      "z": 1.1320792411605702,
+      "tile": {
+        "x": 1,
+        "y": 13
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.6608850803717238,
+        "growth": 0.6608850803717238
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "mushroom-1-6-8987",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:1:6:8987",
+      "kind": "mushroom",
+      "x": 88.3653823214875,
+      "y": 425.5722731564874,
+      "z": -1,
+      "tile": {
+        "x": 1,
+        "y": 6
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.7431692707336437,
+        "growth": 0.7431692707336437
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "mushroom-11-4-7021",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:11:4:7021",
+      "kind": "mushroom",
+      "x": 719.6434052953784,
+      "y": 294.5751820245793,
+      "z": 0,
+      "tile": {
+        "x": 11,
+        "y": 4
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.9082207837161191,
+        "growth": 0.9082207837161191
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "mushroom-12-2-9531",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:12:2:9531",
+      "kind": "mushroom",
+      "x": 799.1666405628172,
+      "y": 156.42699566281098,
+      "z": 0.28515166935141406,
+      "tile": {
+        "x": 12,
+        "y": 2
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.5666578289975082,
+        "growth": 0.5666578289975082
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "mushroom-12-3-9093",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:12:3:9093",
+      "kind": "mushroom",
+      "x": 819.1548728558316,
+      "y": 220.22229419143457,
+      "z": -0.3524677419586696,
+      "tile": {
+        "x": 12,
+        "y": 3
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.5948012948722582,
+        "growth": 0.5948012948722582
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "mushroom-13-13-7580",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:13:13:7580",
+      "kind": "mushroom",
+      "x": 872.4635594244636,
+      "y": 868.5735686932723,
+      "z": 1.2709401935988154,
+      "tile": {
+        "x": 13,
+        "y": 13
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.6914863620632064,
+        "growth": 0.6914863620632064
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "mushroom-16-12-9461",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:16:12:9461",
+      "kind": "mushroom",
+      "x": 1047.537479279455,
+      "y": 783.8932135115315,
+      "z": 2.1570018264224577,
+      "tile": {
+        "x": 16,
+        "y": 12
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.572322973043733,
+        "growth": 0.572322973043733
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "mushroom-17-14-9793",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:17:14:9793",
+      "kind": "mushroom",
+      "x": 1125.9282832207177,
+      "y": 910.9965443142403,
+      "z": 2,
+      "tile": {
+        "x": 17,
+        "y": 14
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.9363118119738791,
+        "growth": 0.9363118119738791
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "mushroom-18-11-9466",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:18:11:9466",
+      "kind": "mushroom",
+      "x": 1172.9545473311457,
+      "y": 742.4071584954875,
+      "z": 1.8690707010144492,
+      "tile": {
+        "x": 18,
+        "y": 11
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.6543373117582727,
+        "growth": 0.6543373117582727
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "mushroom-18-14-9110",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:18:14:9110",
+      "kind": "mushroom",
+      "x": 1180.4688805810335,
+      "y": 947.4007333371511,
+      "z": 2.0875700727620226,
+      "tile": {
+        "x": 18,
+        "y": 14
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.5535997603096998,
+        "growth": 0.5535997603096998
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "mushroom-2-15-7739",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:2:15:7739",
+      "kind": "mushroom",
+      "x": 179.14699535338838,
+      "y": 988.2150928917655,
+      "z": 1.5531517388705316,
+      "tile": {
+        "x": 2,
+        "y": 15
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.5792567847946791,
+        "growth": 0.5792567847946791
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "mushroom-2-6-8222",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:2:6:8222",
+      "kind": "mushroom",
+      "x": 168.12604419420614,
+      "y": 409.54865031569,
+      "z": -1,
+      "tile": {
+        "x": 2,
+        "y": 6
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.7487392500971303,
+        "growth": 0.7487392500971303
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "mushroom-20-10-8959",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:20:10:8959",
+      "kind": "mushroom",
+      "x": 1329.6899290364445,
+      "y": 681.4705375455019,
+      "z": 0.07871049963247752,
+      "tile": {
+        "x": 20,
+        "y": 10
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.8644437214276856,
+        "growth": 0.8644437214276856
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "mushroom-20-11-7940",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:20:11:7940",
+      "kind": "mushroom",
+      "x": 1294.5961777694235,
+      "y": 741.5286213935373,
+      "z": 0,
+      "tile": {
+        "x": 20,
+        "y": 11
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.453125372867362,
+        "growth": 0.453125372867362
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "mushroom-22-10-9919",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:22:10:9919",
+      "kind": "mushroom",
+      "x": 1445.9572527851624,
+      "y": 654.4497203547623,
+      "z": -1,
+      "tile": {
+        "x": 22,
+        "y": 10
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.9444233202246073,
+        "growth": 0.9444233202246073
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "mushroom-23-9-9653",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:23:9:9653",
+      "kind": "mushroom",
+      "x": 1505.30798832447,
+      "y": 601.663502820447,
+      "z": -1,
+      "tile": {
+        "x": 23,
+        "y": 9
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.8742736294689295,
+        "growth": 0.8742736294689295
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "mushroom-25-8-8558",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:25:8:8558",
+      "kind": "mushroom",
+      "x": 1632.1090231085077,
+      "y": 536.4650806361775,
+      "z": -1,
+      "tile": {
+        "x": 25,
+        "y": 8
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.8581731084403985,
+        "growth": 0.8581731084403985
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "mushroom-27-11-7771",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:27:11:7771",
+      "kind": "mushroom",
+      "x": 1741.9518682199418,
+      "y": 736.5544586993555,
+      "z": -0.8891124224255502,
+      "tile": {
+        "x": 27,
+        "y": 11
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.6375276272388938,
+        "growth": 0.6375276272388938
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "mushroom-27-12-8520",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:27:12:8520",
+      "kind": "mushroom",
+      "x": 1739.8350763512392,
+      "y": 782.5748248012026,
+      "z": -0.5873452944930981,
+      "tile": {
+        "x": 27,
+        "y": 12
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.6013816447349689,
+        "growth": 0.6013816447349689
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "mushroom-27-15-8021",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:27:15:8021",
+      "kind": "mushroom",
+      "x": 1741.7848378472834,
+      "y": 996.7173077928082,
+      "z": 0.12356985696109694,
+      "tile": {
+        "x": 27,
+        "y": 15
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.91415458732847,
+        "growth": 0.91415458732847
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "mushroom-28-2-9690",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:28:2:9690",
+      "kind": "mushroom",
+      "x": 1804.8190165713474,
+      "y": 144.13376354324953,
+      "z": 2,
+      "tile": {
+        "x": 28,
+        "y": 2
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.6532036825672732,
+        "growth": 0.6532036825672732
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "mushroom-28-4-7463",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:28:4:7463",
+      "kind": "mushroom",
+      "x": 1805.9234957509868,
+      "y": 303.23985453483647,
+      "z": -0.52056810599765,
+      "tile": {
+        "x": 28,
+        "y": 4
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.6294247253051551,
+        "growth": 0.6294247253051551
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "mushroom-28-7-9751",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:28:7:9751",
+      "kind": "mushroom",
+      "x": 1824.892672190874,
+      "y": 462.86511588174506,
+      "z": -1,
+      "tile": {
+        "x": 28,
+        "y": 7
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.5898399026342295,
+        "growth": 0.5898399026342295
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "mushroom-3-13-7413",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:3:13:7413",
+      "kind": "mushroom",
+      "x": 219.71668088336398,
+      "y": 867.3611127718168,
+      "z": 0.9404529651919775,
+      "tile": {
+        "x": 3,
+        "y": 13
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.7837546215820487,
+        "growth": 0.7837546215820487
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "mushroom-3-5-7451",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:3:5:7451",
+      "kind": "mushroom",
+      "x": 209.62822801732185,
+      "y": 367.46156503560525,
+      "z": -0.6533813731175302,
+      "tile": {
+        "x": 3,
+        "y": 5
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.4775330102717348,
+        "growth": 0.4775330102717348
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "mushroom-9-0-9733",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:9:0:9733",
+      "kind": "mushroom",
+      "x": 588.06379613889,
+      "y": 34.99568532536637,
+      "z": 1,
+      "tile": {
+        "x": 9,
+        "y": 0
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.9064766876531012,
+        "growth": 0.9064766876531012
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "mushroom-9-1-7853",
+      "stableKey": "duskfell-terrain-v1:7341:procedural:none:mushroom:9:1:7853",
+      "kind": "mushroom",
+      "x": 592.89131808406,
+      "y": 114.20706335968502,
+      "z": 0.21551463500492152,
+      "tile": {
+        "x": 9,
+        "y": 1
+      },
+      "source": "procedural-terrain",
+      "kitId": null,
+      "kitKind": null,
+      "kitRole": "none",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.6538351798322599,
+        "growth": 0.6538351798322599
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "river-reedbed-mushroom-10-14-8591",
+      "stableKey": "duskfell-terrain-v1:7341:river-reedbed:wet-edge:mushroom:10:14:8591",
+      "kind": "mushroom",
+      "x": 690.7035863109268,
+      "y": 923.7710403003383,
+      "z": -0.9098497948219668,
+      "tile": {
+        "x": 10,
+        "y": 14
+      },
+      "source": "composition-kit",
+      "kitId": "river-reedbed",
+      "kitKind": "river-reedbed",
+      "kitRole": "wet-edge",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.5887381916140993,
+        "growth": 0.5887381916140993
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "river-reedbed-mushroom-10-15-8421",
+      "stableKey": "duskfell-terrain-v1:7341:river-reedbed:wet-edge:mushroom:10:15:8421",
+      "kind": "mushroom",
+      "x": 654.9213350494674,
+      "y": 982.5655860926596,
+      "z": -0.23314586014792926,
+      "tile": {
+        "x": 10,
+        "y": 15
+      },
+      "source": "composition-kit",
+      "kitId": "river-reedbed",
+      "kitKind": "river-reedbed",
+      "kitRole": "wet-edge",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.5192686683077525,
+        "growth": 0.5192686683077525
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "river-reedbed-mushroom-11-12-9513",
+      "stableKey": "duskfell-terrain-v1:7341:river-reedbed:wet-edge:mushroom:11:12:9513",
+      "kind": "mushroom",
+      "x": 746.8374606682261,
+      "y": 787.9047062225791,
+      "z": -1,
+      "tile": {
+        "x": 11,
+        "y": 12
+      },
+      "source": "composition-kit",
+      "kitId": "river-reedbed",
+      "kitKind": "river-reedbed",
+      "kitRole": "wet-edge",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 2,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.46766868861570693,
+        "growth": 0.46766868861570693
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "id": "river-reedbed-mushroom-9-15-9879",
+      "stableKey": "duskfell-terrain-v1:7341:river-reedbed:wet-edge:mushroom:9:15:9879",
+      "kind": "mushroom",
+      "x": 616.6223404379894,
+      "y": 1008.2658920564377,
+      "z": 0,
+      "tile": {
+        "x": 9,
+        "y": 15
+      },
+      "source": "composition-kit",
+      "kitId": "river-reedbed",
+      "kitKind": "river-reedbed",
+      "kitRole": "wet-edge",
+      "resources": [
+        {
+          "kind": "mycelium",
+          "amount": 3,
+          "maxAmount": 4
+        }
+      ],
+      "lifecycle": {
+        "stage": "fruiting",
+        "decay": 0.9956494045084459,
+        "growth": 0.9956494045084459
+      },
+      "consumes": [
+        {
+          "kind": "deadwood",
+          "amount": 1
+        }
+      ]
+    }
+  ]
+}

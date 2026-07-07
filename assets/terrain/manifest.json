@@ -12,12 +12,12 @@
   "tileSheet": {
     "id": "terrain-placeholder",
     "image": "terrain-placeholder.png",
-    "sha256": "4e3885cf0483dfa41a5f1541b6a3ba617e54658f9415ba489484cf0abd4a83b6",
+    "sha256": "626ed01be8a95130c21531b249873f25fd88a6a3665185251c63787f5e50af41",
     "cellWidth": 64,
     "cellHeight": 64,
     "columns": 6,
-    "rows": 3,
-    "frameCount": 18
+    "rows": 12,
+    "frameCount": 72
   },
   "tiles": [
     {
@@ -199,17 +199,790 @@
         "walkable": true,
         "role": "surface-edge"
       }
+    },
+    {
+      "id": "grass-transition-north",
+      "material": "grass",
+      "kind": "transition",
+      "frame": 18,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "edge",
+        "edge": "north"
+      }
+    },
+    {
+      "id": "field-transition-north",
+      "material": "field",
+      "kind": "transition",
+      "frame": 19,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "edge",
+        "edge": "north"
+      }
+    },
+    {
+      "id": "dirt-transition-north",
+      "material": "dirt",
+      "kind": "transition",
+      "frame": 20,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "edge",
+        "edge": "north"
+      }
+    },
+    {
+      "id": "stone-transition-north",
+      "material": "stone",
+      "kind": "transition",
+      "frame": 21,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "edge",
+        "edge": "north"
+      }
+    },
+    {
+      "id": "water-transition-north",
+      "material": "water",
+      "kind": "transition",
+      "frame": 22,
+      "surface": {
+        "walkable": false,
+        "role": "shoreline"
+      },
+      "mask": {
+        "type": "edge",
+        "edge": "north"
+      }
+    },
+    {
+      "id": "settlement-transition-north",
+      "material": "settlement",
+      "kind": "transition",
+      "frame": 23,
+      "surface": {
+        "walkable": true,
+        "role": "surface-edge"
+      },
+      "mask": {
+        "type": "edge",
+        "edge": "north"
+      }
+    },
+    {
+      "id": "grass-transition-east",
+      "material": "grass",
+      "kind": "transition",
+      "frame": 24,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "edge",
+        "edge": "east"
+      }
+    },
+    {
+      "id": "field-transition-east",
+      "material": "field",
+      "kind": "transition",
+      "frame": 25,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "edge",
+        "edge": "east"
+      }
+    },
+    {
+      "id": "dirt-transition-east",
+      "material": "dirt",
+      "kind": "transition",
+      "frame": 26,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "edge",
+        "edge": "east"
+      }
+    },
+    {
+      "id": "stone-transition-east",
+      "material": "stone",
+      "kind": "transition",
+      "frame": 27,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "edge",
+        "edge": "east"
+      }
+    },
+    {
+      "id": "water-transition-east",
+      "material": "water",
+      "kind": "transition",
+      "frame": 28,
+      "surface": {
+        "walkable": false,
+        "role": "shoreline"
+      },
+      "mask": {
+        "type": "edge",
+        "edge": "east"
+      }
+    },
+    {
+      "id": "settlement-transition-east",
+      "material": "settlement",
+      "kind": "transition",
+      "frame": 29,
+      "surface": {
+        "walkable": true,
+        "role": "surface-edge"
+      },
+      "mask": {
+        "type": "edge",
+        "edge": "east"
+      }
+    },
+    {
+      "id": "grass-transition-south",
+      "material": "grass",
+      "kind": "transition",
+      "frame": 30,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "edge",
+        "edge": "south"
+      }
+    },
+    {
+      "id": "field-transition-south",
+      "material": "field",
+      "kind": "transition",
+      "frame": 31,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "edge",
+        "edge": "south"
+      }
+    },
+    {
+      "id": "dirt-transition-south",
+      "material": "dirt",
+      "kind": "transition",
+      "frame": 32,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "edge",
+        "edge": "south"
+      }
+    },
+    {
+      "id": "stone-transition-south",
+      "material": "stone",
+      "kind": "transition",
+      "frame": 33,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "edge",
+        "edge": "south"
+      }
+    },
+    {
+      "id": "water-transition-south",
+      "material": "water",
+      "kind": "transition",
+      "frame": 34,
+      "surface": {
+        "walkable": false,
+        "role": "shoreline"
+      },
+      "mask": {
+        "type": "edge",
+        "edge": "south"
+      }
+    },
+    {
+      "id": "settlement-transition-south",
+      "material": "settlement",
+      "kind": "transition",
+      "frame": 35,
+      "surface": {
+        "walkable": true,
+        "role": "surface-edge"
+      },
+      "mask": {
+        "type": "edge",
+        "edge": "south"
+      }
+    },
+    {
+      "id": "grass-transition-west",
+      "material": "grass",
+      "kind": "transition",
+      "frame": 36,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "edge",
+        "edge": "west"
+      }
+    },
+    {
+      "id": "field-transition-west",
+      "material": "field",
+      "kind": "transition",
+      "frame": 37,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "edge",
+        "edge": "west"
+      }
+    },
+    {
+      "id": "dirt-transition-west",
+      "material": "dirt",
+      "kind": "transition",
+      "frame": 38,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "edge",
+        "edge": "west"
+      }
+    },
+    {
+      "id": "stone-transition-west",
+      "material": "stone",
+      "kind": "transition",
+      "frame": 39,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "edge",
+        "edge": "west"
+      }
+    },
+    {
+      "id": "water-transition-west",
+      "material": "water",
+      "kind": "transition",
+      "frame": 40,
+      "surface": {
+        "walkable": false,
+        "role": "shoreline"
+      },
+      "mask": {
+        "type": "edge",
+        "edge": "west"
+      }
+    },
+    {
+      "id": "settlement-transition-west",
+      "material": "settlement",
+      "kind": "transition",
+      "frame": 41,
+      "surface": {
+        "walkable": true,
+        "role": "surface-edge"
+      },
+      "mask": {
+        "type": "edge",
+        "edge": "west"
+      }
+    },
+    {
+      "id": "grass-transition-northEast",
+      "material": "grass",
+      "kind": "transition",
+      "frame": 42,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "corner",
+        "corner": "northEast"
+      }
+    },
+    {
+      "id": "field-transition-northEast",
+      "material": "field",
+      "kind": "transition",
+      "frame": 43,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "corner",
+        "corner": "northEast"
+      }
+    },
+    {
+      "id": "dirt-transition-northEast",
+      "material": "dirt",
+      "kind": "transition",
+      "frame": 44,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "corner",
+        "corner": "northEast"
+      }
+    },
+    {
+      "id": "stone-transition-northEast",
+      "material": "stone",
+      "kind": "transition",
+      "frame": 45,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "corner",
+        "corner": "northEast"
+      }
+    },
+    {
+      "id": "water-transition-northEast",
+      "material": "water",
+      "kind": "transition",
+      "frame": 46,
+      "surface": {
+        "walkable": false,
+        "role": "shoreline"
+      },
+      "mask": {
+        "type": "corner",
+        "corner": "northEast"
+      }
+    },
+    {
+      "id": "settlement-transition-northEast",
+      "material": "settlement",
+      "kind": "transition",
+      "frame": 47,
+      "surface": {
+        "walkable": true,
+        "role": "surface-edge"
+      },
+      "mask": {
+        "type": "corner",
+        "corner": "northEast"
+      }
+    },
+    {
+      "id": "grass-transition-southEast",
+      "material": "grass",
+      "kind": "transition",
+      "frame": 48,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "corner",
+        "corner": "southEast"
+      }
+    },
+    {
+      "id": "field-transition-southEast",
+      "material": "field",
+      "kind": "transition",
+      "frame": 49,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "corner",
+        "corner": "southEast"
+      }
+    },
+    {
+      "id": "dirt-transition-southEast",
+      "material": "dirt",
+      "kind": "transition",
+      "frame": 50,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "corner",
+        "corner": "southEast"
+      }
+    },
+    {
+      "id": "stone-transition-southEast",
+      "material": "stone",
+      "kind": "transition",
+      "frame": 51,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "corner",
+        "corner": "southEast"
+      }
+    },
+    {
+      "id": "water-transition-southEast",
+      "material": "water",
+      "kind": "transition",
+      "frame": 52,
+      "surface": {
+        "walkable": false,
+        "role": "shoreline"
+      },
+      "mask": {
+        "type": "corner",
+        "corner": "southEast"
+      }
+    },
+    {
+      "id": "settlement-transition-southEast",
+      "material": "settlement",
+      "kind": "transition",
+      "frame": 53,
+      "surface": {
+        "walkable": true,
+        "role": "surface-edge"
+      },
+      "mask": {
+        "type": "corner",
+        "corner": "southEast"
+      }
+    },
+    {
+      "id": "grass-transition-southWest",
+      "material": "grass",
+      "kind": "transition",
+      "frame": 54,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "corner",
+        "corner": "southWest"
+      }
+    },
+    {
+      "id": "field-transition-southWest",
+      "material": "field",
+      "kind": "transition",
+      "frame": 55,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "corner",
+        "corner": "southWest"
+      }
+    },
+    {
+      "id": "dirt-transition-southWest",
+      "material": "dirt",
+      "kind": "transition",
+      "frame": 56,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "corner",
+        "corner": "southWest"
+      }
+    },
+    {
+      "id": "stone-transition-southWest",
+      "material": "stone",
+      "kind": "transition",
+      "frame": 57,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "corner",
+        "corner": "southWest"
+      }
+    },
+    {
+      "id": "water-transition-southWest",
+      "material": "water",
+      "kind": "transition",
+      "frame": 58,
+      "surface": {
+        "walkable": false,
+        "role": "shoreline"
+      },
+      "mask": {
+        "type": "corner",
+        "corner": "southWest"
+      }
+    },
+    {
+      "id": "settlement-transition-southWest",
+      "material": "settlement",
+      "kind": "transition",
+      "frame": 59,
+      "surface": {
+        "walkable": true,
+        "role": "surface-edge"
+      },
+      "mask": {
+        "type": "corner",
+        "corner": "southWest"
+      }
+    },
+    {
+      "id": "grass-transition-northWest",
+      "material": "grass",
+      "kind": "transition",
+      "frame": 60,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "corner",
+        "corner": "northWest"
+      }
+    },
+    {
+      "id": "field-transition-northWest",
+      "material": "field",
+      "kind": "transition",
+      "frame": 61,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "corner",
+        "corner": "northWest"
+      }
+    },
+    {
+      "id": "dirt-transition-northWest",
+      "material": "dirt",
+      "kind": "transition",
+      "frame": 62,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "corner",
+        "corner": "northWest"
+      }
+    },
+    {
+      "id": "stone-transition-northWest",
+      "material": "stone",
+      "kind": "transition",
+      "frame": 63,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "mask": {
+        "type": "corner",
+        "corner": "northWest"
+      }
+    },
+    {
+      "id": "water-transition-northWest",
+      "material": "water",
+      "kind": "transition",
+      "frame": 64,
+      "surface": {
+        "walkable": false,
+        "role": "shoreline"
+      },
+      "mask": {
+        "type": "corner",
+        "corner": "northWest"
+      }
+    },
+    {
+      "id": "settlement-transition-northWest",
+      "material": "settlement",
+      "kind": "transition",
+      "frame": 65,
+      "surface": {
+        "walkable": true,
+        "role": "surface-edge"
+      },
+      "mask": {
+        "type": "corner",
+        "corner": "northWest"
+      }
+    },
+    {
+      "id": "dirt-to-grass-pair-transition",
+      "material": "grass",
+      "kind": "pair-transition",
+      "frame": 66,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "pair": {
+        "from": "dirt",
+        "to": "grass"
+      }
+    },
+    {
+      "id": "stone-to-dirt-pair-transition",
+      "material": "dirt",
+      "kind": "pair-transition",
+      "frame": 67,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "pair": {
+        "from": "stone",
+        "to": "dirt"
+      }
+    },
+    {
+      "id": "water-to-dirt-pair-transition",
+      "material": "dirt",
+      "kind": "pair-transition",
+      "frame": 68,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "pair": {
+        "from": "water",
+        "to": "dirt"
+      }
+    },
+    {
+      "id": "water-to-grass-pair-transition",
+      "material": "grass",
+      "kind": "pair-transition",
+      "frame": 69,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "pair": {
+        "from": "water",
+        "to": "grass"
+      }
+    },
+    {
+      "id": "dirt-to-settlement-pair-transition",
+      "material": "settlement",
+      "kind": "pair-transition",
+      "frame": 70,
+      "surface": {
+        "walkable": true,
+        "role": "surface-edge"
+      },
+      "pair": {
+        "from": "dirt",
+        "to": "settlement"
+      }
+    },
+    {
+      "id": "settlement-to-grass-pair-transition",
+      "material": "grass",
+      "kind": "pair-transition",
+      "frame": 71,
+      "surface": {
+        "walkable": true,
+        "role": "edge"
+      },
+      "pair": {
+        "from": "settlement",
+        "to": "grass"
+      }
     }
   ],
   "provenance": {
     "cleanRoom": true,
-    "source": "repo-local deterministic terrain placeholder generator",
-    "createdAt": "2026-07-06",
-    "license": "project-original-placeholder",
+    "source": "AI-assisted clean-room source texture sheet normalized by scripts/normalize-generated-terrain-atlas.py",
+    "createdAt": "2026-07-07",
+    "license": "project-original-ai-assisted-review",
     "reviewer": "codex",
-    "prompt": "original plan-oblique 1:1 diamond terrain placeholder atlas"
+    "prompt": "original clean-room military-plan-oblique fantasy MMO terrain texture source sheet with lush grass, trampled field grass, dirt path, rocky ground, shallow water, worn stone plaza, slopes, and edge transition variants",
+    "negativePrompt": "no copied commercial game assets, no Ultima Online source art, no logos, no watermark, no photorealistic satellite texture, no muddy blur",
+    "method": "ai-assisted-source-plus-deterministic-local-normalization",
+    "tool": "OpenAI built-in image generation plus Pillow local image processing",
+    "toolVersion": "Pillow 2026-07-07 runtime",
+    "sourceHash": "03b60bc967089a05ef8fcb558827bf5b3ed08317bb9d35f7c53af639bb4f2b6c",
+    "termsSnapshot": "OpenAI service terms reviewed 2026-07-07 for source concept; local deterministic terrain generation adds no external source",
+    "model": "built-in image generation",
+    "modelVersion": "2026-07-07",
+    "seed": "unavailable-built-in-generation",
+    "toolReview": {
+      "status": "approved-internal",
+      "reviewedAt": "2026-07-07",
+      "reviewer": "codex",
+      "sourceUrl": "https://openai.com/policies/service-terms",
+      "risk": "internal PoC terrain sheet from clean-room prompt; human art review still required before production approval"
+    },
+    "sourceImageHash": "e436147914586e1377e45a2d0614f99e9da010f6e38497b72a13a129b6b89f1e"
   },
   "approval": {
-    "state": "placeholder"
+    "state": "review"
   }
 }

@@ -159,7 +159,7 @@ The checked-in intake contract lives at `assets/sprites/manifest.json`:
 
 Run `npm run test:sprites` to test the sprite verifier itself, `npm run test:terrain` to test the terrain atlas verifier, and `npm run assets:verify` to check the live sprite and terrain manifests.
 
-The PoC includes deterministic generated placeholders at `assets/sprites/player-placeholder.png`, `assets/sprites/props-placeholder.png`, and `assets/terrain/terrain-placeholder.png`. Regenerate them with `npm run assets:generate-placeholders`; the generators update the matching manifest SHA-256 fields after writing PNG bytes. The browser loads art through the manifests and falls back to canvas-drawn placeholders if runtime normalization or image loading fails. Replace placeholders with reviewed production art through the same manifest contracts rather than bypassing the intake path.
+The PoC includes deterministic generated placeholders at `assets/sprites/player-placeholder.png`, `assets/sprites/props-placeholder.png`, and `assets/terrain/terrain-placeholder.png`. Regenerate them with `npm run assets:generate-placeholders`; the generators update the matching manifest SHA-256 fields after writing PNG bytes. The terrain atlas now starts from the generated clean-room source sheet at `assets/terrain/terrain-generated-source.png`, then `scripts/normalize-generated-terrain-atlas.py` crops and normalizes those generated sprite textures into the runtime 72-frame atlas. The browser loads art through the manifests and falls back to canvas-drawn placeholders if runtime normalization or image loading fails. Replace placeholders with reviewed production art through the same manifest contracts rather than bypassing the intake path.
 
 ## Terrain Art Brief
 

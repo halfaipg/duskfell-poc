@@ -11,6 +11,8 @@ test("selects a normalized sprite sheet for runtime drawing", () => {
     imageSha256: "9f33cc048f54aba6aa71ff1034820836dc3ae28e15016394bfb15a8b3799b556",
     cellWidth: 128,
     cellHeight: 128,
+    columns: 3,
+    rows: 1,
     anchor: { kind: "foot", x: 64, y: 112 },
     render: {
       layer: "actor",
@@ -38,6 +40,8 @@ test("selects a manifest-backed prop sheet for world objects", () => {
     imageSha256: "e98cb00d374d276500cd5e578e1e910e0da6395ada6826f3134a0eb11a344af9",
     cellWidth: 128,
     cellHeight: 128,
+    columns: 5,
+    rows: 1,
     anchor: { kind: "foot", x: 64, y: 104 },
     render: {
       layer: "prop",
@@ -54,6 +58,30 @@ test("selects a manifest-backed prop sheet for world objects", () => {
     },
     startFrame: 0,
     frameCount: 5,
+  });
+});
+
+test("selects a manifest-backed item icon sheet for inventory UI", () => {
+  const sheet = selectSpriteSheet(validManifest(), "duskfell-items", "neutral");
+
+  assert.deepEqual(sheet, {
+    imagePath: "duskfell-items.png",
+    imageSha256: "961d9dbeb697138b85220547c5d6c80883ef7bad989a01b7076c704e3369d906",
+    cellWidth: 64,
+    cellHeight: 64,
+    columns: 4,
+    rows: 1,
+    anchor: { kind: "foot", x: 32, y: 48 },
+    render: {
+      layer: "ui",
+      sort: "fixed",
+      zBias: 0,
+      shadow: {
+        kind: "none",
+      },
+    },
+    startFrame: 0,
+    frameCount: 4,
   });
 });
 
@@ -192,6 +220,38 @@ function validManifest() {
             name: "neutral",
             startFrame: 0,
             frameCount: 5,
+          },
+        ],
+      },
+      {
+        id: "duskfell-items",
+        image: "duskfell-items.png",
+        imageSha256: "961d9dbeb697138b85220547c5d6c80883ef7bad989a01b7076c704e3369d906",
+        frameGrid: {
+          cellWidth: 64,
+          cellHeight: 64,
+          columns: 4,
+          rows: 1,
+          frameCount: 4,
+        },
+        anchor: {
+          kind: "foot",
+          x: 32,
+          y: 48,
+        },
+        render: {
+          layer: "ui",
+          sort: "fixed",
+          zBias: 0,
+          shadow: {
+            kind: "none",
+          },
+        },
+        directions: [
+          {
+            name: "neutral",
+            startFrame: 0,
+            frameCount: 4,
           },
         ],
       },

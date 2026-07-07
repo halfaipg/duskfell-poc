@@ -145,6 +145,65 @@ canvas {
   line-height: 1.4;
 }
 
+.inventory-list {
+  min-height: 46px;
+  display: grid;
+  gap: 8px;
+  color: #3f4645;
+  line-height: 1.35;
+}
+
+.deed-list {
+  display: grid;
+  gap: 8px;
+  color: #3f4645;
+  line-height: 1.35;
+}
+
+.inventory-empty {
+  color: #66706f;
+}
+
+.inventory-stack,
+.deed-row {
+  min-height: 44px;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 5px 7px;
+  background: #fffaf0;
+  border: 1px solid #d3c8b3;
+}
+
+.inventory-icon,
+.deed-icon {
+  width: 36px;
+  height: 36px;
+  image-rendering: pixelated;
+}
+
+.inventory-label,
+.deed-label {
+  min-width: 0;
+  font-weight: 700;
+  color: #2b3130;
+}
+
+.inventory-count {
+  min-width: 28px;
+  padding: 2px 7px;
+  color: #fffdf7;
+  background: #2f7565;
+  text-align: center;
+  font-weight: 800;
+}
+
+.inventory-capacity {
+  color: #66706f;
+  font-size: 0.82rem;
+}
+
 .name-row {
   display: grid;
   gap: 6px;

@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import zlib from "node:zlib";
 
@@ -7,52 +7,54 @@ import { updateTerrainAtlasHash } from "./lib/asset-hashes.js";
 const outputPath = path.resolve("assets", "terrain", "terrain-placeholder.png");
 const manifestPath = path.resolve("assets", "terrain", "manifest.json");
 const cell = 64;
+const edgeMasks = ["north", "east", "south", "west"];
+const cornerMasks = ["northEast", "southEast", "southWest", "northWest"];
 const materials = [
   {
     name: "grass",
-    base: [78, 112, 70, 255],
-    light: [132, 154, 92, 255],
-    dark: [40, 70, 47, 255],
-    accent: [161, 157, 91, 255],
+    base: [65, 96, 55, 255],
+    light: [119, 141, 78, 255],
+    dark: [30, 55, 37, 255],
+    accent: [147, 147, 82, 255],
   },
   {
     name: "field",
-    base: [178, 151, 88, 255],
-    light: [216, 190, 116, 255],
-    dark: [112, 86, 55, 255],
-    accent: [91, 118, 68, 255],
+    base: [91, 108, 63, 255],
+    light: [140, 150, 91, 255],
+    dark: [50, 63, 43, 255],
+    accent: [111, 126, 69, 255],
   },
   {
     name: "dirt",
-    base: [119, 82, 60, 255],
-    light: [159, 116, 82, 255],
-    dark: [64, 48, 39, 255],
-    accent: [168, 137, 92, 255],
+    base: [101, 70, 52, 255],
+    light: [150, 105, 72, 255],
+    dark: [53, 39, 34, 255],
+    accent: [151, 121, 80, 255],
   },
   {
     name: "stone",
-    base: [106, 112, 108, 255],
-    light: [151, 152, 142, 255],
-    dark: [57, 65, 64, 255],
-    accent: [92, 101, 100, 255],
+    base: [91, 99, 96, 255],
+    light: [135, 137, 128, 255],
+    dark: [42, 50, 49, 255],
+    accent: [75, 86, 84, 255],
   },
   {
     name: "water",
-    base: [49, 121, 144, 255],
-    light: [111, 179, 188, 255],
-    dark: [26, 72, 96, 255],
-    accent: [202, 232, 218, 255],
+    base: [42, 91, 112, 255],
+    light: [104, 165, 174, 255],
+    dark: [21, 58, 78, 255],
+    accent: [190, 224, 211, 255],
   },
   {
     name: "settlement",
-    base: [186, 174, 144, 255],
-    light: [223, 211, 177, 255],
-    dark: [112, 103, 84, 255],
-    accent: [78, 72, 65, 255],
+    base: [167, 154, 122, 255],
+    light: [207, 192, 150, 255],
+    dark: [97, 88, 70, 255],
+    accent: [67, 61, 55, 255],
   },
 ];
 const width = cell * materials.length;
-const rows = 3;
+const rows = 11;
 const height = cell * rows;
 const pixels = Buffer.alloc(width * height * 4);
 
@@ -60,15 +62,32 @@ for (const [index, material] of materials.entries()) {
   drawTile(index, 0, material, "flat-base");
   drawTile(index, 1, material, "slope-texture");
   drawTile(index, 2, material, "transition");
+  for (const [edgeIndex, edge] of edgeMasks.entries()) {
+    drawTile(index, 3 + edgeIndex, material, "transition");
+    drawDirectionalTransition(index, 3 + edgeIndex, material, { type: "edge", edge });
+  }
+  for (const [cornerIndex, corner] of cornerMasks.entries()) {
+    drawTile(index, 7 + cornerIndex, material, "transition");
+    drawDirectionalTransition(index, 7 + cornerIndex, material, { type: "corner", corner });
+  }
 }
 
 await writeFile(outputPath, encodePng(width, height, pixels));
+await updateTerrainManifestShape();
 const imageSha256 = await updateTerrainAtlasHash({
   manifestPath,
   imagePath: outputPath,
 });
 console.log(`wrote ${outputPath}`);
 console.log(`updated ${manifestPath} tileSheet.sha256=${imageSha256}`);
+
+async function updateTerrainManifestShape() {
+  const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+  manifest.tileSheet.rows = rows;
+  manifest.tileSheet.frameCount = rows * materials.length;
+  manifest.tiles = terrainTiles();
+  await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+}
 
 function drawTile(index, row, material, kind) {
   const ox = index * cell;
@@ -78,63 +97,276 @@ function drawTile(index, row, material, kind) {
   const base = kind === "slope-texture" ? shade(material.base, 0.93) : material.base;
   const light = kind === "transition" ? shade(material.light, 1.06) : material.light;
   const dark = kind === "transition" ? shade(material.dark, 0.78) : material.dark;
-  const top = shade(light, material.name === "water" ? 1.04 : 1);
-  const left = shade(base, material.name === "water" ? 0.92 : 0.86);
-  const bottom = shade(dark, material.name === "water" ? 0.9 : 0.82);
 
-  fillDiamond(cx, cy, 31, 31, bottom);
-  fillDiamond(cx, cy - 1, 29, 29, mix(base, light, 0.15));
-  fillTriangle(
-    [
-      [cx, cy - 30],
-      [cx + 29, cy],
-      [cx, cy + 29],
-    ],
-    top,
-  );
-  fillTriangle(
-    [
-      [cx, cy - 30],
-      [cx, cy + 29],
-      [cx - 29, cy],
-    ],
-    left,
-  );
-  fillTriangle(
-    [
-      [cx - 29, cy],
-      [cx, cy + 29],
-      [cx + 29, cy],
-    ],
-    shade(bottom, material.name === "water" ? 1.02 : 0.96),
-  );
+  fillRect(ox, oy, cell, cell, [0, 0, 0, 0]);
+  fillDiamond(cx, cy, 31, 31, base);
+  if (kind === "slope-texture") {
+    drawSlopeFacetBase(cx, cy, material);
+  } else if (kind === "transition") {
+    fillTriangle(
+      [
+        [cx - 31, cy + 4],
+        [cx, cy + 31],
+        [cx + 31, cy + 4],
+      ],
+      [...mix(base, light, 0.22).slice(0, 3), 38],
+    );
+  }
 
   drawBaseGrain(cx, cy, index, row, material, kind);
   drawMaterialDetails(cx, cy, index, row, material, kind);
   drawFacetWear(cx, cy, index, row, material, kind);
+  if (kind === "slope-texture") drawSlopeRunnels(cx, cy, index, row, material);
+  if (kind === "transition") drawTransitionEdge(cx, cy, index, row, material);
+  drawCornerVariation(ox, oy, material, index, row);
+  clearOutsideDiamond(cx, cy, 31, 31);
+  strokeDiamond(cx, cy, 30, 30, [...shade(dark, 0.72).slice(0, 3), 38]);
+}
 
-  if (kind === "slope-texture") {
-    drawSlopeRunnels(cx, cy, index, row, material);
-  } else if (kind === "transition") {
-    drawTransitionEdge(cx, cy, index, row, material);
+function drawSlopeFacetBase(cx, cy, material) {
+  const top = shade(material.light, material.name === "water" ? 1.08 : 1.04);
+  const left = shade(material.base, material.name === "water" ? 0.94 : 0.9);
+  const bottom = shade(material.dark, material.name === "water" ? 0.86 : 0.78);
+  fillTriangle(
+    [
+      [cx, cy - 30],
+      [cx + 29, cy],
+      [cx, cy + 29],
+    ],
+    [...top.slice(0, 3), 36],
+  );
+  fillTriangle(
+    [
+      [cx, cy - 30],
+      [cx, cy + 29],
+      [cx - 29, cy],
+    ],
+    [...left.slice(0, 3), 24],
+  );
+  fillTriangle(
+    [
+      [cx - 29, cy],
+      [cx, cy + 29],
+      [cx + 29, cy],
+    ],
+    [...bottom.slice(0, 3), 44],
+  );
+}
+
+function drawSoftMottle(cx, cy, index, row, material, kind) {
+  for (let n = 0; n < 120; n += 1) {
+    const seed = hash(index * 97 + row * 193, n + 17);
+    const x = cx + ((seed & 127) / 127 - 0.5) * 72;
+    const y = cy + (((seed >>> 7) & 127) / 127 - 0.5) * 72;
+    const tone = (seed >>> 14) & 3;
+    const source = tone === 0 ? material.light : tone === 1 ? material.dark : material.accent;
+    const alpha = kind === "slope-texture" ? 18 : 14;
+    const rx = 1 + ((seed >>> 18) % 4);
+    const ry = 1 + ((seed >>> 22) % 3);
+    fillEllipse(x, y, rx, ry, [...source.slice(0, 3), alpha]);
+  }
+
+  for (let n = 0; n < 30; n += 1) {
+    const seed = hash(index * 211 + row * 43, n + 401);
+    const x = cx + ((seed & 63) / 63 - 0.5) * 56;
+    const y = cy + (((seed >>> 6) & 63) / 63 - 0.5) * 48;
+    if (!insideDiamond(x, y, cx, cy, 29, 29)) continue;
+    const source = (seed & 1) === 0 ? material.dark : material.light;
+    fillEllipse(x, y, 3 + ((seed >>> 12) % 6), 1 + ((seed >>> 16) % 3), [...source.slice(0, 3), 18]);
+  }
+}
+
+function drawSoftMaterialDetails(cx, cy, index, row, material, kind) {
+  if (material.name === "water") {
+    for (let n = 0; n < 10; n += 1) {
+      const [x, y, seed] = seededPoint(cx, cy, index, row, n, 28);
+      fillEllipse(x, y, 7 + (seed % 8), 1.3, [203, 233, 224, kind === "transition" ? 42 : 32]);
+    }
+    return;
+  }
+
+  if (material.name === "stone") {
+    for (let n = 0; n < 14; n += 1) {
+      const [x, y, seed] = seededPoint(cx, cy, index, row, n, 27);
+      const rock = (seed & 1) === 0 ? material.dark : material.light;
+      fillEllipse(x, y, 2 + (seed % 5), 1 + ((seed >>> 4) % 3), [...rock.slice(0, 3), 38]);
+    }
+    return;
+  }
+
+  if (material.name === "dirt") {
+    for (let n = 0; n < 18; n += 1) {
+      const [x, y, seed] = seededPoint(cx, cy, index, row, n, 30);
+      const soil = (seed & 1) === 0 ? material.dark : material.light;
+      fillEllipse(x, y, 2 + (seed % 4), 1 + ((seed >>> 4) % 2), [...soil.slice(0, 3), 28]);
+    }
+    return;
+  }
+
+  if (material.name === "settlement") {
+    for (let n = 0; n < 16; n += 1) {
+      const [x, y, seed] = seededPoint(cx, cy, index, row, n, 29);
+      const stone = (seed & 1) === 0 ? material.dark : material.light;
+      fillEllipse(x, y, 4 + (seed % 5), 1 + ((seed >>> 5) % 2), [...stone.slice(0, 3), 30]);
+    }
+    return;
   }
 
   for (let n = 0; n < 22; n += 1) {
-    const seed = hash(index + row * 11, n);
-    const localX = cx + ((seed & 31) - 15);
-    const localY = cy + (((seed >>> 5) & 31) - 15);
-    if (!insideDiamond(localX, localY, cx, cy, 28, 28)) continue;
-    if (material.name === "water") {
-      fillEllipse(localX, localY, 4 + (seed % 5), 1, [218, 243, 239, 58]);
-    } else if (material.name === "stone") {
-      fillEllipse(localX, localY, 2 + (seed % 3), 1 + (seed % 2), [45, 50, 50, 86]);
-    } else {
-      drawSprig(localX, localY, seed % 3 === 0 ? material.accent : dark);
+    const [x, y, seed] = seededPoint(cx, cy, index, row, n, 31);
+    const leaf = (seed & 3) === 0 ? material.accent : material.dark;
+    fillEllipse(x, y, 1 + (seed % 3), 1 + ((seed >>> 3) % 2), [...leaf.slice(0, 3), 32]);
+  }
+}
+
+function drawSoftTransition(cx, cy, index, row, material) {
+  const dust = material.name === "water" ? [188, 202, 178, 58] : [...material.light.slice(0, 3), 34];
+  for (let n = 0; n < 18; n += 1) {
+    const seed = hash(index * 53 + row * 97, n + 211);
+    const x = cx + ((seed & 63) / 63 - 0.5) * 58;
+    const y = cy + 10 + (((seed >>> 6) & 31) / 31) * 20;
+    fillEllipse(x, y, 4 + (seed % 5), 1.5, dust);
+  }
+}
+
+function drawDirectionalTransition(index, row, material, mask) {
+  const ox = index * cell;
+  const oy = row * cell;
+  const accent =
+    material.name === "water"
+      ? [213, 220, 177, 118]
+      : [...shade(material.light, 1.1).slice(0, 3), 82];
+  const shadow = [...shade(material.dark, 0.58).slice(0, 3), 92];
+  const useShadow =
+    mask.edge === "south" ||
+    mask.edge === "west" ||
+    mask.corner === "southEast" ||
+    mask.corner === "southWest";
+  const color = useShadow ? shadow : accent;
+
+  for (let localY = 0; localY < cell; localY += 1) {
+    for (let localX = 0; localX < cell; localX += 1) {
+      const alpha = transitionMaskWeight(localX, localY, mask);
+      if (alpha <= 0) continue;
+      setPixel(ox + localX, oy + localY, [...color.slice(0, 3), Math.round(color[3] * alpha)]);
     }
   }
 
+  const cx = ox + cell / 2;
+  const cy = oy + cell / 2;
+  for (let n = 0; n < 12; n += 1) {
+    const seed = hash(index * 157 + row * 71, n + 911);
+    const [x, y] = transitionAccentPoint(cx, cy, mask, seed);
+    fillEllipse(x, y, 3 + (seed % 5), 1.3, [...color.slice(0, 3), 70]);
+  }
   clearOutsideDiamond(cx, cy, 31, 31);
-  strokeDiamond(cx, cy, 31, 31, [31, 40, 38, 64]);
+  strokeDiamond(cx, cy, 30, 30, [...shade(material.dark, 0.56).slice(0, 3), 42]);
+}
+
+function transitionMaskWeight(x, y, mask) {
+  const u = x / (cell - 1);
+  const v = y / (cell - 1);
+  const depth = 0.42;
+  const feather = 0.12;
+  if (mask.edge === "north") return falloff(v, depth, feather);
+  if (mask.edge === "east") return falloff(1 - u, depth, feather);
+  if (mask.edge === "south") return falloff(1 - v, depth, feather);
+  if (mask.edge === "west") return falloff(u, depth, feather);
+  if (mask.corner === "northEast") return Math.min(falloff(v, depth, feather), falloff(1 - u, depth, feather));
+  if (mask.corner === "southEast") return Math.min(falloff(1 - v, depth, feather), falloff(1 - u, depth, feather));
+  if (mask.corner === "southWest") return Math.min(falloff(1 - v, depth, feather), falloff(u, depth, feather));
+  if (mask.corner === "northWest") return Math.min(falloff(v, depth, feather), falloff(u, depth, feather));
+  return 0;
+}
+
+function falloff(distance, depth, feather) {
+  if (distance <= depth - feather) return 0.42;
+  if (distance >= depth) return 0;
+  return ((depth - distance) / feather) * 0.42;
+}
+
+function transitionAccentPoint(cx, cy, mask, seed) {
+  const jitter = (value, range) => ((value & 63) / 63 - 0.5) * range;
+  if (mask.edge === "north") return [cx + jitter(seed, 48), cy - 21 + jitter(seed >>> 6, 9)];
+  if (mask.edge === "east") return [cx + 21 + jitter(seed, 9), cy + jitter(seed >>> 6, 48)];
+  if (mask.edge === "south") return [cx + jitter(seed, 48), cy + 21 + jitter(seed >>> 6, 9)];
+  if (mask.edge === "west") return [cx - 21 + jitter(seed, 9), cy + jitter(seed >>> 6, 48)];
+  if (mask.corner === "northEast") return [cx + 19 + jitter(seed, 15), cy - 19 + jitter(seed >>> 6, 15)];
+  if (mask.corner === "southEast") return [cx + 19 + jitter(seed, 15), cy + 19 + jitter(seed >>> 6, 15)];
+  if (mask.corner === "southWest") return [cx - 19 + jitter(seed, 15), cy + 19 + jitter(seed >>> 6, 15)];
+  return [cx - 19 + jitter(seed, 15), cy - 19 + jitter(seed >>> 6, 15)];
+}
+
+function terrainTiles() {
+  return [
+    ...materials.map((material, index) => tileEntry(material.name, "flat-base", index, surfaceRole(material.name, "flat"))),
+    ...materials.map((material, index) => tileEntry(material.name, "slope-texture", 6 + index, surfaceRole(material.name, "slope"))),
+    ...materials.map((material, index) => tileEntry(material.name, "transition", 12 + index, surfaceRole(material.name, "transition"))),
+    ...edgeMasks.flatMap((edge, edgeIndex) =>
+      materials.map((material, materialIndex) =>
+        tileEntry(
+          material.name,
+          "transition",
+          18 + edgeIndex * materials.length + materialIndex,
+          surfaceRole(material.name, "transition"),
+          { type: "edge", edge },
+        ),
+      ),
+    ),
+    ...cornerMasks.flatMap((corner, cornerIndex) =>
+      materials.map((material, materialIndex) =>
+        tileEntry(
+          material.name,
+          "transition",
+          42 + cornerIndex * materials.length + materialIndex,
+          surfaceRole(material.name, "transition"),
+          { type: "corner", corner },
+        ),
+      ),
+    ),
+  ];
+}
+
+function tileEntry(material, kind, frame, role, mask = null) {
+  const entry = {
+    id: `${material}-${tileIdPart(kind, mask)}`,
+    material,
+    kind,
+    frame,
+    surface: {
+      walkable: material !== "water",
+      role,
+    },
+  };
+  if (mask) entry.mask = mask;
+  return entry;
+}
+
+function tileIdPart(kind, mask) {
+  if (!mask) {
+    return {
+      "flat-base": "flat-placeholder",
+      "slope-texture": "slope-placeholder",
+      transition: "transition-placeholder",
+    }[kind];
+  }
+  return mask.type === "edge" ? `transition-${mask.edge}` : `transition-${mask.corner}`;
+}
+
+function surfaceRole(material, variant) {
+  if (material === "water") {
+    if (variant === "flat") return "liquid";
+    if (variant === "slope") return "liquid-slope";
+    return "shoreline";
+  }
+  if (material === "settlement") {
+    if (variant === "flat") return "surface";
+    if (variant === "slope") return "surface-slope";
+    return "surface-edge";
+  }
+  if (variant === "slope") return "slope";
+  if (variant === "transition") return "edge";
+  return "ground";
 }
 
 function drawBaseGrain(cx, cy, index, row, material, kind) {
@@ -169,23 +401,29 @@ function drawMaterialDetails(cx, cy, index, row, material, kind) {
     }
     line(cx - 27, cy + 12, cx + 26, cy - 8, [82, 67, 45, 88]);
   } else if (material.name === "dirt") {
-    for (let n = 0; n < 9; n += 1) {
-      const [x, y, seed] = seededPoint(cx, cy, index, row, n, 21);
-      if (!insideDiamond(x, y, cx, cy, 27, 27)) continue;
-      fillEllipse(x, y, 1 + (seed % 3), 1, [64, 49, 42, 80]);
-    }
-    line(cx - 22, cy + 10, cx + 18, cy + 23, [44, 34, 30, 82]);
-    line(cx - 21, cy + 6, cx + 17, cy + 19, [153, 118, 82, 48]);
-  } else if (material.name === "stone") {
+    drawCobbleField(cx, cy, material, [68, 43, 33, 122], [166, 111, 76, 78]);
     for (let n = 0; n < 5; n += 1) {
+      const [x, y, seed] = seededPoint(cx, cy, index, row, n, 22);
+      if (!insideDiamond(x, y, cx, cy, 27, 27)) continue;
+      fillEllipse(x, y, 1 + (seed % 3), 1, [45, 34, 30, 90]);
+    }
+  } else if (material.name === "stone") {
+    for (let n = 0; n < 15; n += 1) {
       const [x, y, seed] = seededPoint(cx, cy, index, row, n, 18);
       if (!insideDiamond(x, y, cx, cy, 26, 26)) continue;
-      const length = 5 + (seed % 7);
-      line(x - length / 2, y - 1, x + length / 2, y + 2, [40, 45, 45, 88]);
-      line(x - length / 2, y - 2, x + length / 2, y + 1, [210, 205, 186, 42]);
+      const length = 4 + (seed % 10);
+      const angle = ((seed >>> 8) % 5 - 2) * 0.24;
+      line(
+        x - Math.cos(angle) * length,
+        y - Math.sin(angle) * length * 0.5,
+        x + Math.cos(angle) * length,
+        y + Math.sin(angle) * length * 0.5,
+        [38, 44, 44, 84],
+      );
+      if ((seed & 3) === 0) fillEllipse(x + 1, y - 1, 2 + (seed % 3), 1, [177, 175, 158, 38]);
     }
-    line(cx - 24, cy - 7, cx + 24, cy + 17, [37, 43, 43, 70]);
-    line(cx - 6, cy - 25, cx + 14, cy + 26, [37, 43, 43, 56]);
+    fillEllipse(cx - 9, cy + 8, 12, 4, [43, 49, 48, 44]);
+    fillEllipse(cx + 12, cy - 7, 9, 3, [150, 150, 139, 34]);
   } else if (material.name === "water") {
     for (let offset = -18; offset <= 18; offset += 9) {
       line(cx - 19, cy + offset, cx + 21, cy + offset - 7, [220, 246, 237, 62]);
@@ -193,13 +431,33 @@ function drawMaterialDetails(cx, cy, index, row, material, kind) {
     }
     fillEllipse(cx - 8, cy + 16, 14, 2, [213, 235, 220, 64]);
   } else if (material.name === "settlement") {
-    for (let offset = -24; offset <= 24; offset += 12) {
-      line(cx - 27, cy + offset - 14, cx + 27, cy + offset + 13, [73, 66, 60, 64]);
-      line(cx + offset - 14, cy - 27, cx + offset + 13, cy + 27, [73, 66, 60, 54]);
+    drawPaverGrid(cx, cy, [78, 66, 51, 116], [235, 220, 171, 68], 10);
+    fillEllipse(cx, cy + 12, 18, 2, [65, 55, 45, 42]);
+    line(cx - 23, cy - 3, cx + 20, cy + 18, [61, 53, 45, 86]);
+    line(cx - 16, cy + 19, cx + 17, cy - 8, [236, 222, 178, 52]);
+  }
+}
+
+function drawPaverGrid(cx, cy, dark, light, spacing) {
+  for (let offset = -32; offset <= 32; offset += spacing) {
+    lineClippedToDiamond(cx - 31, cy + offset - 15, cx + 31, cy + offset + 16, cx, cy, dark);
+    lineClippedToDiamond(cx - 31, cy + offset - 17, cx + 31, cy + offset + 14, cx, cy, light);
+    lineClippedToDiamond(cx + offset - 15, cy - 31, cx + offset + 16, cy + 31, cx, cy, dark);
+    lineClippedToDiamond(cx + offset - 17, cy - 31, cx + offset + 14, cy + 31, cx, cy, light);
+  }
+}
+
+function drawCobbleField(cx, cy, material, dark, light) {
+  for (let yy = -23; yy <= 24; yy += 8) {
+    const stagger = Math.abs(Math.floor(yy / 8)) % 2 === 0 ? 0 : 5;
+    for (let xx = -25; xx <= 25; xx += 10) {
+      const x = cx + xx + stagger;
+      const y = cy + yy + ((hash(xx + 99, yy + 17) & 3) - 1);
+      if (!insideDiamond(x, y, cx, cy, 28, 28)) continue;
+      fillEllipse(x, y, 4 + ((xx + yy) & 1), 2.4, shade(material.base, 1.05));
+      fillEllipse(x - 1, y - 1, 2.4, 0.9, light);
+      line(x - 5, y + 2, x + 4, y + 1, dark);
     }
-    fillEllipse(cx, cy + 12, 18, 2, [70, 61, 54, 36]);
-    line(cx - 23, cy - 3, cx + 20, cy + 18, [68, 62, 56, 70]);
-    line(cx - 16, cy + 19, cx + 17, cy - 8, [238, 225, 189, 38]);
   }
 }
 
@@ -320,6 +578,26 @@ function fillDiamond(cx, cy, rx, ry, rgba) {
   }
 }
 
+function fillRect(x, y, rectWidth, rectHeight, rgba) {
+  for (let py = y; py < y + rectHeight; py += 1) {
+    for (let px = x; px < x + rectWidth; px += 1) {
+      setPixel(px, py, rgba);
+    }
+  }
+}
+
+function drawCornerVariation(ox, oy, material, index, row) {
+  for (let n = 0; n < 26; n += 1) {
+    const seed = hash(index * 149 + row * 211, n + 509);
+    const corner = (seed >>> 17) & 3;
+    const px = ox + (corner & 1 ? 44 : 5) + ((seed & 7) - 3);
+    const py = oy + (corner & 2 ? 44 : 5) + (((seed >>> 4) & 7) - 3);
+    const color = ((seed >>> 9) & 1) === 0 ? shade(material.dark, 1.04) : shade(material.light, 0.94);
+    setPixel(px, py, [...color.slice(0, 3), 28]);
+    if ((seed & 3) === 0) setPixel(px + 1, py, [...color.slice(0, 3), 20]);
+  }
+}
+
 function strokeDiamond(cx, cy, rx, ry, rgba) {
   for (let py = Math.floor(cy - ry); py <= Math.ceil(cy + ry); py += 1) {
     for (let px = Math.floor(cx - rx); px <= Math.ceil(cx + rx); px += 1) {
@@ -365,6 +643,16 @@ function line(x0, y0, x1, y1, rgba) {
   for (let step = 0; step <= steps; step += 1) {
     const t = steps === 0 ? 0 : step / steps;
     setPixel(Math.round(x0 + (x1 - x0) * t), Math.round(y0 + (y1 - y0) * t), rgba);
+  }
+}
+
+function lineClippedToDiamond(x0, y0, x1, y1, cx, cy, rgba) {
+  const steps = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
+  for (let step = 0; step <= steps; step += 1) {
+    const t = steps === 0 ? 0 : step / steps;
+    const x = Math.round(x0 + (x1 - x0) * t);
+    const y = Math.round(y0 + (y1 - y0) * t);
+    if (insideDiamond(x, y, cx, cy, 29, 29)) setPixel(x, y, rgba);
   }
 }
 

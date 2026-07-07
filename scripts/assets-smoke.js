@@ -26,8 +26,13 @@ try {
   server = await startServer();
   const manifestResponse = await fetch(`${httpUrl}/assets/sprites/manifest.json`);
   const manifest = await manifestResponse.json();
-  const playerSheet = manifest.sheets.find((sheet) => sheet.id === "player-placeholder");
-  const propSheet = manifest.sheets.find((sheet) => sheet.id === "props-placeholder");
+  const playerSheet = preferredSheet(manifest, "duskfell-wayfarer", "player-placeholder");
+  const actorVariants = ["duskfell-ranger", "duskfell-warden", "duskfell-brigand"].map((id) =>
+    preferredSheet(manifest, id, id),
+  );
+  const propSheet = preferredSheet(manifest, "duskfell-props", "props-placeholder");
+  const itemSheet = preferredSheet(manifest, "duskfell-items", "duskfell-items");
+  const detailSheet = preferredSheet(manifest, "duskfell-details", "duskfell-details");
   const imageResponse = await fetch(`${httpUrl}/assets/sprites/${playerSheet.image}`);
   const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
   const imageDimensions = readPngDimensions(imageBuffer);
@@ -40,6 +45,18 @@ try {
   const propImageSha256 = sha256Hex(propImageBuffer);
   const expectedPropWidth = propSheet.frameGrid.columns * propSheet.frameGrid.cellWidth;
   const expectedPropHeight = propSheet.frameGrid.rows * propSheet.frameGrid.cellHeight;
+  const itemImageResponse = await fetch(`${httpUrl}/assets/sprites/${itemSheet.image}`);
+  const itemImageBuffer = Buffer.from(await itemImageResponse.arrayBuffer());
+  const itemImageDimensions = readPngDimensions(itemImageBuffer);
+  const itemImageSha256 = sha256Hex(itemImageBuffer);
+  const expectedItemWidth = itemSheet.frameGrid.columns * itemSheet.frameGrid.cellWidth;
+  const expectedItemHeight = itemSheet.frameGrid.rows * itemSheet.frameGrid.cellHeight;
+  const detailImageResponse = await fetch(`${httpUrl}/assets/sprites/${detailSheet.image}`);
+  const detailImageBuffer = Buffer.from(await detailImageResponse.arrayBuffer());
+  const detailImageDimensions = readPngDimensions(detailImageBuffer);
+  const detailImageSha256 = sha256Hex(detailImageBuffer);
+  const expectedDetailWidth = detailSheet.frameGrid.columns * detailSheet.frameGrid.cellWidth;
+  const expectedDetailHeight = detailSheet.frameGrid.rows * detailSheet.frameGrid.cellHeight;
   const terrainManifestResponse = await fetch(`${httpUrl}/assets/terrain/manifest.json`);
   const terrainManifest = await terrainManifestResponse.json();
   const terrainImageResponse = await fetch(`${httpUrl}/assets/terrain/${terrainManifest.tileSheet.image}`);
@@ -48,6 +65,8 @@ try {
   const terrainImageSha256 = sha256Hex(terrainImageBuffer);
   const expectedTerrainWidth = terrainManifest.tileSheet.columns * terrainManifest.tileSheet.cellWidth;
   const expectedTerrainHeight = terrainManifest.tileSheet.rows * terrainManifest.tileSheet.cellHeight;
+  const terrainAuthorityResponse = await fetch(`${httpUrl}/assets/terrain/detail-authority.json`);
+  const terrainAuthority = await terrainAuthorityResponse.json();
 
   result = {
     port,
@@ -66,6 +85,12 @@ try {
       render: playerSheet.render,
       approvalState: playerSheet.approval.state,
     },
+    actorVariants: actorVariants.map((sheet) => ({
+      id: sheet.id,
+      image: sheet.image,
+      imageSha256: sheet.imageSha256,
+      approvalState: sheet.approval.state,
+    })),
     imageDimensions,
     propSheet: {
       id: propSheet.id,
@@ -80,14 +105,49 @@ try {
       approvalState: propSheet.approval.state,
     },
     propImageDimensions,
+    itemSheet: {
+      id: itemSheet.id,
+      image: itemSheet.image,
+      cellWidth: itemSheet.frameGrid.cellWidth,
+      cellHeight: itemSheet.frameGrid.cellHeight,
+      columns: itemSheet.frameGrid.columns,
+      rows: itemSheet.frameGrid.rows,
+      imageSha256: itemSheet.imageSha256,
+      actualImageSha256: itemImageSha256,
+      render: itemSheet.render,
+      approvalState: itemSheet.approval.state,
+    },
+    itemImageDimensions,
+    detailSheet: {
+      id: detailSheet.id,
+      image: detailSheet.image,
+      cellWidth: detailSheet.frameGrid.cellWidth,
+      cellHeight: detailSheet.frameGrid.cellHeight,
+      columns: detailSheet.frameGrid.columns,
+      rows: detailSheet.frameGrid.rows,
+      imageSha256: detailSheet.imageSha256,
+      actualImageSha256: detailImageSha256,
+      render: detailSheet.render,
+      approvalState: detailSheet.approval.state,
+    },
+    detailImageDimensions,
     terrain: {
       manifestStatus: terrainManifestResponse.status,
       imageStatus: terrainImageResponse.status,
+      authorityStatus: terrainAuthorityResponse.status,
       schemaVersion: terrainManifest.schemaVersion,
       tileSheet: terrainManifest.tileSheet,
       imageDimensions: terrainImageDimensions,
       actualImageSha256: terrainImageSha256,
       tileCount: terrainManifest.tiles.length,
+      authority: {
+        schemaVersion: terrainAuthority.schemaVersion,
+        projection: terrainAuthority.projection,
+        profile: terrainAuthority.profile,
+        blockerCount: terrainAuthority.blockers?.length,
+        resourceNodeCount: terrainAuthority.resourceNodes?.length,
+        decayConsumerCount: terrainAuthority.decayConsumers?.length,
+      },
     },
     elapsedMs: round(performance.now() - startedAt),
     ok:
@@ -104,7 +164,9 @@ try {
       Number.isInteger(playerSheet.render?.zBias) &&
       playerSheet.render?.shadow?.kind === "ellipse" &&
       Number.isFinite(playerSheet.render?.shadow?.opacity) &&
-      playerSheet.approval.state === "placeholder" &&
+      ["placeholder", "review"].includes(playerSheet.approval.state) &&
+      actorVariants.length === 3 &&
+      actorVariants.every((sheet) => sheet?.approval?.state === "review") &&
       playerSheet.imageSha256 === imageSha256 &&
       imageDimensions.width === expectedWidth &&
       imageDimensions.height === expectedHeight &&
@@ -112,10 +174,24 @@ try {
       propSheet.render?.layer === "prop" &&
       propSheet.render?.sort === "footprint-y" &&
       propSheet.render?.shadow?.kind === "ellipse" &&
-      propSheet.approval.state === "placeholder" &&
+      ["placeholder", "review"].includes(propSheet.approval.state) &&
       propSheet.imageSha256 === propImageSha256 &&
       propImageDimensions.width === expectedPropWidth &&
       propImageDimensions.height === expectedPropHeight &&
+      itemImageResponse.ok &&
+      itemSheet.render?.layer === "ui" &&
+      itemSheet.render?.sort === "fixed" &&
+      itemSheet.approval.state === "review" &&
+      itemSheet.imageSha256 === itemImageSha256 &&
+      itemImageDimensions.width === expectedItemWidth &&
+      itemImageDimensions.height === expectedItemHeight &&
+      detailImageResponse.ok &&
+      detailSheet.render?.layer === "terrain" &&
+      detailSheet.render?.sort === "footprint-y" &&
+      detailSheet.approval.state === "review" &&
+      detailSheet.imageSha256 === detailImageSha256 &&
+      detailImageDimensions.width === expectedDetailWidth &&
+      detailImageDimensions.height === expectedDetailHeight &&
       terrainManifestResponse.ok &&
       terrainImageResponse.ok &&
       terrainManifest.schemaVersion === "duskfell-terrain-atlas-v1" &&
@@ -125,7 +201,14 @@ try {
       terrainManifest.tileSheet.sha256 === terrainImageSha256 &&
       terrainImageDimensions.width === expectedTerrainWidth &&
       terrainImageDimensions.height === expectedTerrainHeight &&
-      terrainManifest.tiles.some((tile) => tile.material === "water" && tile.surface?.walkable === false),
+      terrainManifest.tiles.some((tile) => tile.material === "water" && tile.surface?.walkable === false) &&
+      terrainAuthorityResponse.ok &&
+      terrainAuthority.schemaVersion === "duskfell-terrain-detail-authority-v1" &&
+      terrainAuthority.projection === "military-plan-oblique" &&
+      terrainAuthority.profile === "duskfell-terrain-v1" &&
+      terrainAuthority.blockers?.length > 0 &&
+      terrainAuthority.resourceNodes?.length > 0 &&
+      terrainAuthority.decayConsumers?.length > 0,
   };
 } finally {
   if (server) {
@@ -207,6 +290,13 @@ function parseArgs(rawArgs) {
     if (inlineValue == null) index += 1;
   }
   return parsed;
+}
+
+function preferredSheet(manifest, preferredId, fallbackId) {
+  return (
+    manifest.sheets.find((sheet) => sheet.id === preferredId) ??
+    manifest.sheets.find((sheet) => sheet.id === fallbackId)
+  );
 }
 
 function sleep(ms) {

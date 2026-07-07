@@ -2,10 +2,23 @@ const MAX_PLAYERS = 512;
 const MAX_OBJECTS = 4096;
 const MAX_INVENTORY_SLOTS = 32;
 const MAX_RESOURCE_COUNT = 999;
+const MAX_LIFECYCLE_AGE_YEARS = 1_000_000;
 const MAX_TEXT = 128;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const COLOR_RE = /^#[0-9a-f]{6}$/i;
-const OBJECT_KINDS = new Set(["registrar", "forge", "grove", "ore", "shrine"]);
+const OBJECT_KINDS = new Set([
+  "registrar",
+  "forge",
+  "grove",
+  "ore",
+  "shrine",
+  "saplingTree",
+  "deadwood",
+  "myceliumPatch",
+  "fieldCoil",
+  "ruin",
+]);
+const RESOURCE_KINDS = new Set(["wood", "ore", "stone", "charge", "deadwood", "fiber", "mycelium", "spores", "seed"]);
 const TERRAIN_PROFILE = "duskfell-terrain-v1";
 const TERRAIN_MATERIALS = new Set(["grass", "field", "dirt", "stone", "water", "settlement"]);
 
@@ -160,6 +173,13 @@ function normalizeResources(resources, prefix) {
   return {
     wood: normalizeBoundedResource(resources.wood, `${prefix}.wood`),
     ore: normalizeBoundedResource(resources.ore, `${prefix}.ore`),
+    stone: normalizeOptionalBoundedResource(resources.stone, `${prefix}.stone`),
+    charge: normalizeOptionalBoundedResource(resources.charge, `${prefix}.charge`),
+    deadwood: normalizeOptionalBoundedResource(resources.deadwood, `${prefix}.deadwood`),
+    fiber: normalizeOptionalBoundedResource(resources.fiber, `${prefix}.fiber`),
+    mycelium: normalizeOptionalBoundedResource(resources.mycelium, `${prefix}.mycelium`),
+    spores: normalizeOptionalBoundedResource(resources.spores, `${prefix}.spores`),
+    seed: normalizeOptionalBoundedResource(resources.seed, `${prefix}.seed`),
   };
 }
 
@@ -212,6 +232,47 @@ function normalizeObject(object, prefix) {
     x: normalizeFiniteNumber(object.x, `${prefix}.x`),
     y: normalizeFiniteNumber(object.y, `${prefix}.y`),
     radius: normalizePositiveNumber(object.radius, `${prefix}.radius`),
+    resources: normalizeArray(object.resources ?? [], `${prefix}.resources`, 8).map((resource, index) =>
+      normalizeObjectResource(resource, `${prefix}.resources[${index}]`),
+    ),
+    lifecycle:
+      object.lifecycle == null
+        ? null
+        : normalizeObjectLifecycle(object.lifecycle, `${prefix}.lifecycle`),
+  };
+}
+
+function normalizeObjectResource(resource, prefix) {
+  if (!isObject(resource)) {
+    throw new Error(`${prefix} must be an object`);
+  }
+  if (!RESOURCE_KINDS.has(resource.kind)) {
+    throw new Error(`${prefix}.kind is not supported`);
+  }
+  const amount = normalizeBoundedResource(resource.amount, `${prefix}.amount`);
+  const maxAmount = normalizeBoundedResource(resource.maxAmount, `${prefix}.maxAmount`);
+  if (amount > maxAmount) {
+    throw new Error(`${prefix}.amount must be <= maxAmount`);
+  }
+  return {
+    kind: resource.kind,
+    amount,
+    maxAmount,
+  };
+}
+
+function normalizeObjectLifecycle(lifecycle, prefix) {
+  if (!isObject(lifecycle)) {
+    throw new Error(`${prefix} must be an object`);
+  }
+  return {
+    family: normalizeText(lifecycle.family, `${prefix}.family`),
+    stage: normalizeText(lifecycle.stage, `${prefix}.stage`),
+    species: lifecycle.species == null ? null : normalizeText(lifecycle.species, `${prefix}.species`),
+    ageYears: lifecycle.ageYears == null ? null : normalizeBoundedAgeYears(lifecycle.ageYears, `${prefix}.ageYears`),
+    health: normalizeUnitNumber(lifecycle.health, `${prefix}.health`),
+    growth: normalizeUnitNumber(lifecycle.growth, `${prefix}.growth`),
+    decay: normalizeUnitNumber(lifecycle.decay, `${prefix}.decay`),
   };
 }
 
@@ -317,6 +378,22 @@ function normalizeBoundedResource(value, field) {
   const normalized = normalizeNonNegativeInteger(value, field);
   if (normalized <= MAX_RESOURCE_COUNT) return normalized;
   throw new Error(`${field} exceeds maximum resource count`);
+}
+
+function normalizeBoundedAgeYears(value, field) {
+  const normalized = normalizeNonNegativeInteger(value, field);
+  if (normalized <= MAX_LIFECYCLE_AGE_YEARS) return normalized;
+  throw new Error(`${field} exceeds maximum lifecycle age`);
+}
+
+function normalizeOptionalBoundedResource(value, field) {
+  if (value == null) return 0;
+  return normalizeBoundedResource(value, field);
+}
+
+function normalizeUnitNumber(value, field) {
+  if (typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 1) return value;
+  throw new Error(`${field} must be a unit number`);
 }
 
 function isObject(value) {

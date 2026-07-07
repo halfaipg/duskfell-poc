@@ -28,6 +28,8 @@ export function selectSpriteSheet(manifest, sheetId, directionName) {
     imageSha256,
     cellWidth: frameGrid.cellWidth,
     cellHeight: frameGrid.cellHeight,
+    columns: frameGrid.columns,
+    rows: frameGrid.rows,
     anchor,
     render,
     startFrame: direction.startFrame,
@@ -131,8 +133,16 @@ function normalizeRender(render, frameGrid) {
     layer: render.layer,
     sort: render.sort,
     zBias: render.zBias,
+    ...(render.scale == null ? {} : { scale: normalizeRenderScale(render.scale) }),
     shadow: normalizeShadow(render.shadow, frameGrid),
   };
+}
+
+function normalizeRenderScale(value) {
+  if (typeof value !== "number" || value < 0.25 || value > 2) {
+    throw new Error("sprite sheet render scale must be a number in [0.25, 2]");
+  }
+  return value;
 }
 
 function normalizeShadow(shadow, frameGrid) {

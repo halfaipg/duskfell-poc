@@ -97,6 +97,13 @@ pub struct PlayerSnapshot {
 pub struct ResourceSnapshot {
     pub wood: u32,
     pub ore: u32,
+    pub stone: u32,
+    pub charge: u32,
+    pub deadwood: u32,
+    pub fiber: u32,
+    pub mycelium: u32,
+    pub spores: u32,
+    pub seed: u32,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -104,6 +111,13 @@ pub struct ResourceSnapshot {
 pub enum ResourceKind {
     Wood,
     Ore,
+    Stone,
+    Charge,
+    Deadwood,
+    Fiber,
+    Mycelium,
+    Spores,
+    Seed,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -130,6 +144,31 @@ pub struct ObjectSnapshot {
     pub x: f32,
     pub y: f32,
     pub radius: f32,
+    pub resources: Vec<ObjectResourceSnapshot>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub lifecycle: Option<ObjectLifecycleSnapshot>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ObjectResourceSnapshot {
+    pub kind: ResourceKind,
+    pub amount: u32,
+    pub max_amount: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ObjectLifecycleSnapshot {
+    pub family: String,
+    pub stage: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub species: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub age_years: Option<u32>,
+    pub health: f32,
+    pub growth: f32,
+    pub decay: f32,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -140,6 +179,11 @@ pub enum ObjectKind {
     Grove,
     Ore,
     Shrine,
+    SaplingTree,
+    Deadwood,
+    MyceliumPatch,
+    FieldCoil,
+    Ruin,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

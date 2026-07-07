@@ -6,16 +6,18 @@ import { updateSpriteImageHash } from "./lib/asset-hashes.js";
 
 const manifestPath = path.resolve("assets", "sprites", "manifest.json");
 const cell = 128;
-let width = cell * 3;
-let height = cell;
+let width = cell * 4;
+let height = cell * 4;
 let pixels = Buffer.alloc(width * height * 4);
 
 const playerOutputPath = path.resolve("assets", "sprites", "player-placeholder.png");
 const propsOutputPath = path.resolve("assets", "sprites", "props-placeholder.png");
 
-for (let frame = 0; frame < 3; frame += 1) {
-  drawPlayerFrame(frame);
-}
+["south", "east", "north", "west"].forEach((direction, row) => {
+  for (let frame = 0; frame < 4; frame += 1) {
+    drawPlayerFrame(direction, row, frame);
+  }
+});
 
 await writeFile(playerOutputPath, encodePng(width, height, pixels));
 const playerSha256 = await updateSpriteImageHash({
@@ -42,53 +44,111 @@ const propsSha256 = await updateSpriteImageHash({
 console.log(`wrote ${propsOutputPath}`);
 console.log(`updated ${manifestPath} props-placeholder imageSha256=${propsSha256}`);
 
-function drawPlayerFrame(frame) {
+function drawPlayerFrame(direction, row, frame) {
   const ox = frame * cell;
-  const step = frame === 1 ? -5 : frame === 2 ? 5 : 0;
+  const oy = row * cell;
+  const step = frame === 1 ? -5 : frame === 3 ? 5 : 0;
+  const bob = frame === 0 ? 0 : frame === 2 ? -2 : 1;
   const anchorX = ox + 64;
-  const anchorY = 112;
+  const anchorY = oy + 112;
+  const isEast = direction === "east";
+  const isWest = direction === "west";
+  const isNorth = direction === "north";
+  const side = isWest ? -1 : 1;
 
   fillEllipse(anchorX, anchorY - 1, 30, 10, [9, 13, 15, 92]);
   fillDiamond(anchorX, anchorY - 6, 22, 10, [31, 56, 53, 205]);
   strokeDiamond(anchorX, anchorY - 6, 22, 10, [8, 14, 15, 230]);
 
-  fillRect(anchorX - 17 + step, 81, 9, 27, [30, 37, 43, 255]);
-  fillRect(anchorX + 8 - step, 81, 9, 27, [30, 37, 43, 255]);
-  fillRect(anchorX - 21 + step, 105, 17, 7, [18, 24, 28, 255]);
-  fillRect(anchorX + 4 - step, 105, 17, 7, [18, 24, 28, 255]);
-
-  fillTriangle([[anchorX - 25, 49], [anchorX - 20, 106], [anchorX + 2, 91]], [22, 34, 39, 235]);
-  fillTriangle([[anchorX + 25, 49], [anchorX + 20, 106], [anchorX - 2, 91]], [18, 29, 35, 230]);
-  fillEllipse(anchorX, 65, 22, 30, [70, 72, 66, 255]);
-  fillRect(anchorX - 15, 52, 30, 34, [88, 92, 82, 255]);
-  for (let chain = -9; chain <= 9; chain += 6) {
-    fillRect(anchorX + chain, 56, 2, 25, [185, 183, 157, 150]);
+  if (isEast || isWest) {
+    fillRect(anchorX - 8 + step * 0.4, oy + 81, 8, 27, [30, 37, 43, 255]);
+    fillRect(anchorX + 5 - step * 0.4, oy + 81, 8, 27, [24, 30, 35, 255]);
+    fillRect(anchorX - 13 + step, oy + 105, 17, 7, [18, 24, 28, 255]);
+    fillRect(anchorX + 1 - step, oy + 105, 17, 7, [18, 24, 28, 255]);
+    fillTriangle(
+      [
+        [anchorX - 18 * side, oy + 49 + bob],
+        [anchorX - 15 * side, oy + 106],
+        [anchorX + 7 * side, oy + 91],
+      ],
+      [22, 34, 39, 235],
+    );
+    fillTriangle(
+      [
+        [anchorX + 22 * side, oy + 50 + bob],
+        [anchorX + 18 * side, oy + 104],
+        [anchorX - 2 * side, oy + 91],
+      ],
+      [18, 29, 35, 230],
+    );
+    fillEllipse(anchorX + 1 * side, oy + 65 + bob, 17, 30, [70, 72, 66, 255]);
+    fillRect(anchorX - 10, oy + 52 + bob, 22, 34, [88, 92, 82, 255]);
+  } else {
+    fillRect(anchorX - 17 + step, oy + 81, 9, 27, [30, 37, 43, 255]);
+    fillRect(anchorX + 8 - step, oy + 81, 9, 27, [30, 37, 43, 255]);
+    fillRect(anchorX - 21 + step, oy + 105, 17, 7, [18, 24, 28, 255]);
+    fillRect(anchorX + 4 - step, oy + 105, 17, 7, [18, 24, 28, 255]);
+    fillTriangle([[anchorX - 25, oy + 49 + bob], [anchorX - 20, oy + 106], [anchorX + 2, oy + 91]], [22, 34, 39, 235]);
+    fillTriangle([[anchorX + 25, oy + 49 + bob], [anchorX + 20, oy + 106], [anchorX - 2, oy + 91]], [18, 29, 35, 230]);
+    fillEllipse(anchorX, oy + 65 + bob, 22, 30, [70, 72, 66, 255]);
+    fillRect(anchorX - 15, oy + 52 + bob, 30, 34, [88, 92, 82, 255]);
   }
-  fillTriangle([[anchorX - 17, 82], [anchorX, 108], [anchorX + 17, 82]], [42, 52, 50, 255]);
-  fillRect(anchorX - 12, 70, 24, 8, [54, 59, 54, 210]);
-  fillRect(anchorX - 4, 73, 8, 25, [132, 84, 55, 255]);
-  fillRect(anchorX - 8, 73, 16, 4, [204, 153, 83, 255]);
 
-  fillEllipse(anchorX - 1, 39, 14, 16, [174, 134, 94, 255]);
-  fillRect(anchorX - 12, 28, 24, 8, [101, 110, 106, 255]);
-  fillRect(anchorX - 17, 35, 34, 5, [64, 72, 72, 255]);
-  fillTriangle([[anchorX - 17, 36], [anchorX, 18], [anchorX + 17, 36]], [104, 112, 108, 255]);
-  line(anchorX, 30, anchorX, 50, [223, 206, 143, 235]);
-  fillEllipse(anchorX - 6, 38, 3, 3, [239, 230, 190, 255]);
-  fillEllipse(anchorX + 6, 38, 3, 3, [239, 230, 190, 255]);
-  line(anchorX - 7, 49, anchorX + 8, 52, [21, 61, 63, 195]);
+  for (let chain = -9; chain <= 9; chain += 6) {
+    fillRect(anchorX + chain, oy + 56 + bob, 2, 25, [185, 183, 157, 150]);
+  }
+  fillTriangle([[anchorX - 17, oy + 82 + bob], [anchorX, oy + 108], [anchorX + 17, oy + 82 + bob]], [42, 52, 50, 255]);
+  fillRect(anchorX - 12, oy + 70 + bob, 24, 8, [54, 59, 54, 210]);
+  fillRect(anchorX - 4, oy + 73 + bob, 8, 25, [132, 84, 55, 255]);
+  fillRect(anchorX - 8, oy + 73 + bob, 16, 4, [204, 153, 83, 255]);
 
-  fillRect(anchorX - 35 - step, 58, 19, 7, [45, 95, 87, 255]);
-  fillRect(anchorX + 16 + step, 58, 19, 7, [45, 95, 87, 255]);
-  fillRect(anchorX - 42 - step, 62, 11, 9, [92, 57, 50, 255]);
-  fillRect(anchorX + 31 + step, 62, 11, 9, [92, 57, 50, 255]);
-  fillEllipse(anchorX - 35 - step, 74, 12, 17, [47, 58, 64, 255]);
-  strokeEllipse(anchorX - 35 - step, 74, 12, 17, [193, 163, 94, 220]);
-  line(anchorX + 34 + step, 58, anchorX + 49 + step, 31, [151, 143, 116, 245]);
-  line(anchorX + 49 + step, 31, anchorX + 54 + step, 44, [219, 205, 155, 225]);
+  if (isNorth) {
+    fillEllipse(anchorX, oy + 39 + bob, 14, 16, [77, 74, 65, 255]);
+    fillRect(anchorX - 13, oy + 28 + bob, 26, 8, [101, 110, 106, 255]);
+    fillRect(anchorX - 18, oy + 35 + bob, 36, 5, [64, 72, 72, 255]);
+    fillTriangle([[anchorX - 17, oy + 36 + bob], [anchorX, oy + 18 + bob], [anchorX + 17, oy + 36 + bob]], [104, 112, 108, 255]);
+    line(anchorX - 8, oy + 47 + bob, anchorX + 8, oy + 47 + bob, [31, 41, 42, 180]);
+  } else if (isEast || isWest) {
+    fillEllipse(anchorX + 2 * side, oy + 39 + bob, 12, 16, [174, 134, 94, 255]);
+    fillRect(anchorX - 11, oy + 28 + bob, 23, 8, [101, 110, 106, 255]);
+    fillRect(anchorX - 15, oy + 35 + bob, 31, 5, [64, 72, 72, 255]);
+    fillTriangle([[anchorX - 14, oy + 36 + bob], [anchorX, oy + 18 + bob], [anchorX + 14, oy + 36 + bob]], [104, 112, 108, 255]);
+    line(anchorX + 4 * side, oy + 30 + bob, anchorX + 8 * side, oy + 50 + bob, [223, 206, 143, 235]);
+    fillEllipse(anchorX + 7 * side, oy + 38 + bob, 3, 3, [239, 230, 190, 255]);
+    line(anchorX + 4 * side, oy + 50 + bob, anchorX + 12 * side, oy + 50 + bob, [21, 61, 63, 195]);
+  } else {
+    fillEllipse(anchorX - 1, oy + 39 + bob, 14, 16, [174, 134, 94, 255]);
+    fillRect(anchorX - 12, oy + 28 + bob, 24, 8, [101, 110, 106, 255]);
+    fillRect(anchorX - 17, oy + 35 + bob, 34, 5, [64, 72, 72, 255]);
+    fillTriangle([[anchorX - 17, oy + 36 + bob], [anchorX, oy + 18 + bob], [anchorX + 17, oy + 36 + bob]], [104, 112, 108, 255]);
+    line(anchorX, oy + 30 + bob, anchorX, oy + 50 + bob, [223, 206, 143, 235]);
+    fillEllipse(anchorX - 6, oy + 38 + bob, 3, 3, [239, 230, 190, 255]);
+    fillEllipse(anchorX + 6, oy + 38 + bob, 3, 3, [239, 230, 190, 255]);
+    line(anchorX - 7, oy + 49 + bob, anchorX + 8, oy + 52 + bob, [21, 61, 63, 195]);
+  }
 
-  strokeEllipse(anchorX, 59, 25, 39, [9, 15, 17, 230]);
-  strokeRect(ox + 24, 17, 80, 96, [11, 16, 18, 82]);
+  if (isEast || isWest) {
+    fillRect(anchorX - 32 * side - step * side, oy + 58 + bob, 28 * side, 7, [45, 95, 87, 255]);
+    fillRect(anchorX + 13 * side + step * side, oy + 58 + bob, 26 * side, 7, [45, 95, 87, 255]);
+    fillEllipse(anchorX - 24 * side - step * side, oy + 74 + bob, 11, 17, [47, 58, 64, 255]);
+    strokeEllipse(anchorX - 24 * side - step * side, oy + 74 + bob, 11, 17, [193, 163, 94, 220]);
+    line(anchorX + 30 * side + step * side, oy + 60 + bob, anchorX + 48 * side + step * side, oy + 31 + bob, [151, 143, 116, 245]);
+    line(anchorX + 48 * side + step * side, oy + 31 + bob, anchorX + 54 * side + step * side, oy + 44 + bob, [219, 205, 155, 225]);
+  } else {
+    const shieldSide = isNorth ? 1 : -1;
+    const spearSide = -shieldSide;
+    fillRect(anchorX - 35 * shieldSide - step * shieldSide, oy + 58 + bob, 19 * shieldSide, 7, [45, 95, 87, 255]);
+    fillRect(anchorX + 16 * spearSide + step * spearSide, oy + 58 + bob, 19 * spearSide, 7, [45, 95, 87, 255]);
+    fillRect(anchorX - 42 * shieldSide - step * shieldSide, oy + 62 + bob, 11 * shieldSide, 9, [92, 57, 50, 255]);
+    fillRect(anchorX + 31 * spearSide + step * spearSide, oy + 62 + bob, 11 * spearSide, 9, [92, 57, 50, 255]);
+    fillEllipse(anchorX - 35 * shieldSide - step * shieldSide, oy + 74 + bob, 12, 17, [47, 58, 64, 255]);
+    strokeEllipse(anchorX - 35 * shieldSide - step * shieldSide, oy + 74 + bob, 12, 17, [193, 163, 94, 220]);
+    line(anchorX + 34 * spearSide + step * spearSide, oy + 58 + bob, anchorX + 49 * spearSide + step * spearSide, oy + 31 + bob, [151, 143, 116, 245]);
+    line(anchorX + 49 * spearSide + step * spearSide, oy + 31 + bob, anchorX + 54 * spearSide + step * spearSide, oy + 44 + bob, [219, 205, 155, 225]);
+  }
+
+  strokeEllipse(anchorX, oy + 59 + bob, isEast || isWest ? 19 : 25, 39, [9, 15, 17, 230]);
+  strokeRect(ox + 24, oy + 17, 80, 96, [11, 16, 18, 58]);
 }
 
 function drawPropFrame(frame, kind) {
@@ -156,8 +216,12 @@ function drawPropFrame(frame, kind) {
 }
 
 function fillRect(x, y, w, h, rgba) {
-  for (let py = y; py < y + h; py += 1) {
-    for (let px = x; px < x + w; px += 1) {
+  const x0 = Math.round(w < 0 ? x + w : x);
+  const y0 = Math.round(h < 0 ? y + h : y);
+  const x1 = Math.round(w < 0 ? x : x + w);
+  const y1 = Math.round(h < 0 ? y : y + h);
+  for (let py = y0; py < y1; py += 1) {
+    for (let px = x0; px < x1; px += 1) {
       setPixel(px, py, rgba);
     }
   }

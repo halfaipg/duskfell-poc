@@ -11,15 +11,346 @@
   },
   "sheets": [
     {
-      "id": "player-placeholder",
-      "image": "player-placeholder.png",
-      "imageSha256": "e514c2d4b88da82862998420f4866bb40e6e1034818d696963bdcc10a0ef1d85",
+      "id": "duskfell-wayfarer",
+      "image": "duskfell-wayfarer.png",
+      "imageSha256": "d03a77e9478559129ab4170584e7f979b06e219adf0995f8fb4c2c2600c67c54",
       "frameGrid": {
         "cellWidth": 128,
         "cellHeight": 128,
-        "columns": 3,
-        "rows": 1,
-        "frameCount": 3
+        "columns": 8,
+        "rows": 4,
+        "frameCount": 32
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 116
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1,
+        "heightTiles": 1
+      },
+      "render": {
+        "layer": "actor",
+        "sort": "footprint-y",
+        "zBias": 0,
+        "scale": 0.78,
+        "shadow": {
+          "kind": "ellipse",
+          "x": 64,
+          "y": 119,
+          "width": 44,
+          "height": 12,
+          "opacity": 0.3
+        }
+      },
+      "directions": [
+        {
+          "name": "south",
+          "startFrame": 0,
+          "frameCount": 8
+        },
+        {
+          "name": "east",
+          "startFrame": 8,
+          "frameCount": 8
+        },
+        {
+          "name": "north",
+          "startFrame": 16,
+          "frameCount": 8
+        },
+        {
+          "name": "west",
+          "startFrame": 24,
+          "frameCount": 8
+        }
+      ],
+      "provenance": {
+        "cleanRoom": true,
+        "source": "attached generated concept sheet normalized from assets/sprites/duskfell-wayfarer-source.png",
+        "createdAt": "2026-07-07",
+        "license": "project-original-ai-assisted-review",
+        "reviewer": "codex",
+        "prompt": "original clean-room military-plan-oblique dark fantasy adventurer with visible alternating boots, short split cloak, shield, spear, and four diagonal eight-frame walk cycles",
+        "negativePrompt": "no duplicate leg poses, no hidden feet, not front-facing cardinal sheet, not side-profile-only sheet, not 2:1 dimetric, not copied commercial game style",
+        "method": "ai-generated",
+        "tool": "OpenAI built-in image generation plus local chroma-key sprite-sheet normalization",
+        "toolVersion": "built-in image generation 2026-07-07",
+        "sourceHash": "a39a1273ea7f50003112f464c95b7b340c8ed6f318f4bb7645be3b616b9969b8",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-07 for internal PoC asset review",
+        "model": "built-in image generation",
+        "modelVersion": "2026-07-07",
+        "seed": "unavailable-built-in-generation",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-07",
+          "reviewer": "codex",
+          "sourceUrl": "https://openai.com/policies/service-terms",
+          "risk": "internal PoC sheet from clean-room prompt; human art review still required before production approval"
+        }
+      },
+      "approval": {
+        "state": "review"
+      }
+    },
+    {
+      "id": "duskfell-ranger",
+      "image": "duskfell-ranger.png",
+      "imageSha256": "ecef19f99194a9877d6c2d1eb9edd08ed4762e478ad49bc0a463ca82d9ccee2e",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frameCount": 32
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 116
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1,
+        "heightTiles": 1
+      },
+      "render": {
+        "layer": "actor",
+        "sort": "footprint-y",
+        "zBias": 0,
+        "scale": 0.78,
+        "shadow": {
+          "kind": "ellipse",
+          "x": 64,
+          "y": 119,
+          "width": 44,
+          "height": 12,
+          "opacity": 0.3
+        }
+      },
+      "directions": [
+        {
+          "name": "south",
+          "startFrame": 0,
+          "frameCount": 8
+        },
+        {
+          "name": "east",
+          "startFrame": 8,
+          "frameCount": 8
+        },
+        {
+          "name": "north",
+          "startFrame": 16,
+          "frameCount": 8
+        },
+        {
+          "name": "west",
+          "startFrame": 24,
+          "frameCount": 8
+        }
+      ],
+      "provenance": {
+        "cleanRoom": true,
+        "source": "local silhouette and equipment variant derived from normalized eight-frame assets/sprites/duskfell-wayfarer.png",
+        "createdAt": "2026-07-07",
+        "license": "project-original-ai-assisted-review",
+        "reviewer": "codex",
+        "prompt": "original clean-room military-plan-oblique dark fantasy ranger variant with green hood, quiver, longbow silhouette, lighter boots, and four diagonal eight-frame walk cycles",
+        "negativePrompt": "no duplicate leg poses, no hidden feet, not front-facing cardinal sheet, not side-profile-only sheet, not 2:1 dimetric, not copied commercial game style",
+        "method": "deterministic-local",
+        "tool": "Pillow local image processing",
+        "sourceHash": "d03a77e9478559129ab4170584e7f979b06e219adf0995f8fb4c2c2600c67c54",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-07",
+          "reviewer": "codex",
+          "risk": "internal PoC character variation; human art review still required before production approval",
+          "sourceUrl": "https://openai.com/policies/service-terms"
+        },
+        "toolVersion": "Pillow 2026-07-07 runtime",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-07 for source sheet; local deterministic recolor adds no external source"
+      },
+      "approval": {
+        "state": "review"
+      }
+    },
+    {
+      "id": "duskfell-warden",
+      "image": "duskfell-warden.png",
+      "imageSha256": "c1eb8a4db7c149908279b811f9e6ee697700b8697228b3ec25a6313f6820e565",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frameCount": 32
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 116
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1,
+        "heightTiles": 1
+      },
+      "render": {
+        "layer": "actor",
+        "sort": "footprint-y",
+        "zBias": 0,
+        "scale": 0.78,
+        "shadow": {
+          "kind": "ellipse",
+          "x": 64,
+          "y": 119,
+          "width": 44,
+          "height": 12,
+          "opacity": 0.3
+        }
+      },
+      "directions": [
+        {
+          "name": "south",
+          "startFrame": 0,
+          "frameCount": 8
+        },
+        {
+          "name": "east",
+          "startFrame": 8,
+          "frameCount": 8
+        },
+        {
+          "name": "north",
+          "startFrame": 16,
+          "frameCount": 8
+        },
+        {
+          "name": "west",
+          "startFrame": 24,
+          "frameCount": 8
+        }
+      ],
+      "provenance": {
+        "cleanRoom": true,
+        "source": "local silhouette and equipment variant derived from normalized eight-frame assets/sprites/duskfell-wayfarer.png",
+        "createdAt": "2026-07-07",
+        "license": "project-original-ai-assisted-review",
+        "reviewer": "codex",
+        "prompt": "original clean-room military-plan-oblique dark fantasy warden variant with heavier plate, large tower shield, helmet crest, bulkier shoulders, and four diagonal eight-frame walk cycles",
+        "negativePrompt": "no duplicate leg poses, no hidden feet, not front-facing cardinal sheet, not side-profile-only sheet, not 2:1 dimetric, not copied commercial game style",
+        "method": "deterministic-local",
+        "tool": "Pillow local image processing",
+        "sourceHash": "d03a77e9478559129ab4170584e7f979b06e219adf0995f8fb4c2c2600c67c54",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-07",
+          "reviewer": "codex",
+          "risk": "internal PoC character variation; human art review still required before production approval",
+          "sourceUrl": "https://openai.com/policies/service-terms"
+        },
+        "toolVersion": "Pillow 2026-07-07 runtime",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-07 for source sheet; local deterministic recolor adds no external source"
+      },
+      "approval": {
+        "state": "review"
+      }
+    },
+    {
+      "id": "duskfell-brigand",
+      "image": "duskfell-brigand.png",
+      "imageSha256": "6af2d1c89bdf9e20503ac686f2a45fe001759fe749a0e14fb2194e8b7fdc916f",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frameCount": 32
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 116
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1,
+        "heightTiles": 1
+      },
+      "render": {
+        "layer": "actor",
+        "sort": "footprint-y",
+        "zBias": 0,
+        "scale": 0.78,
+        "shadow": {
+          "kind": "ellipse",
+          "x": 64,
+          "y": 119,
+          "width": 44,
+          "height": 12,
+          "opacity": 0.3
+        }
+      },
+      "directions": [
+        {
+          "name": "south",
+          "startFrame": 0,
+          "frameCount": 8
+        },
+        {
+          "name": "east",
+          "startFrame": 8,
+          "frameCount": 8
+        },
+        {
+          "name": "north",
+          "startFrame": 16,
+          "frameCount": 8
+        },
+        {
+          "name": "west",
+          "startFrame": 24,
+          "frameCount": 8
+        }
+      ],
+      "provenance": {
+        "cleanRoom": true,
+        "source": "local silhouette and equipment variant derived from normalized eight-frame assets/sprites/duskfell-wayfarer.png",
+        "createdAt": "2026-07-07",
+        "license": "project-original-ai-assisted-review",
+        "reviewer": "codex",
+        "prompt": "original clean-room military-plan-oblique dark fantasy brigand variant with dark hood, red scarf, knife silhouette, ragged cloak, and four diagonal eight-frame walk cycles",
+        "negativePrompt": "no duplicate leg poses, no hidden feet, not front-facing cardinal sheet, not side-profile-only sheet, not 2:1 dimetric, not copied commercial game style",
+        "method": "deterministic-local",
+        "tool": "Pillow local image processing",
+        "sourceHash": "d03a77e9478559129ab4170584e7f979b06e219adf0995f8fb4c2c2600c67c54",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-07",
+          "reviewer": "codex",
+          "risk": "internal PoC character variation; human art review still required before production approval",
+          "sourceUrl": "https://openai.com/policies/service-terms"
+        },
+        "toolVersion": "Pillow 2026-07-07 runtime",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-07 for source sheet; local deterministic recolor adds no external source"
+      },
+      "approval": {
+        "state": "review"
+      }
+    },
+    {
+      "id": "player-placeholder",
+      "image": "player-placeholder.png",
+      "imageSha256": "a3e6183a70af0d1fa32bfd8e5b489abfd0265a6c21295d878a6b2bb372cd0b28",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 4,
+        "rows": 4,
+        "frameCount": 16
       },
       "anchor": {
         "kind": "foot",
@@ -48,7 +379,22 @@
         {
           "name": "south",
           "startFrame": 0,
-          "frameCount": 3
+          "frameCount": 4
+        },
+        {
+          "name": "east",
+          "startFrame": 4,
+          "frameCount": 4
+        },
+        {
+          "name": "north",
+          "startFrame": 8,
+          "frameCount": 4
+        },
+        {
+          "name": "west",
+          "startFrame": 12,
+          "frameCount": 4
         }
       ],
       "provenance": {
@@ -57,10 +403,214 @@
         "createdAt": "2026-07-06",
         "license": "project-original-placeholder",
         "reviewer": "codex",
-        "prompt": "original plan-oblique sandbox adventurer placeholder"
+        "prompt": "original plan-oblique dark fantasy adventurer placeholder with four-direction walk cycle"
       },
       "approval": {
         "state": "placeholder"
+      }
+    },
+    {
+      "id": "duskfell-props",
+      "image": "duskfell-props.png",
+      "imageSha256": "8e87e4edc1c0ac997ae051daee76fe49fabf8ca5ac6ff29ee12d98cf3316d3d5",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 5,
+        "rows": 1,
+        "frameCount": 5
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 104
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1.5,
+        "heightTiles": 1.5
+      },
+      "render": {
+        "layer": "prop",
+        "sort": "footprint-y",
+        "zBias": -8,
+        "shadow": {
+          "kind": "ellipse",
+          "x": 64,
+          "y": 116,
+          "width": 58,
+          "height": 16,
+          "opacity": 0.24
+        },
+        "scale": 0.86
+      },
+      "directions": [
+        {
+          "name": "neutral",
+          "startFrame": 0,
+          "frameCount": 5
+        }
+      ],
+      "provenance": {
+        "cleanRoom": true,
+        "source": "generated concept sheet normalized from assets/sprites/duskfell-props-source.png",
+        "createdAt": "2026-07-07",
+        "license": "project-original-ai-assisted-review",
+        "reviewer": "codex",
+        "prompt": "original clean-room military-plan-oblique dark fantasy prop sheet with title office forge grove ore vein and shrine",
+        "negativePrompt": "no text, no logos, no watermark, not copied commercial game assets, not 2:1 isometric",
+        "method": "ai-generated",
+        "tool": "OpenAI built-in image generation plus local sprite-sheet normalization",
+        "toolVersion": "built-in image generation 2026-07-07",
+        "sourceHash": "95d3f64559df4620a8655f916767bf052f3653cf67a7499f7e12d8d79ec83fd9",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-07 for internal PoC asset review",
+        "model": "built-in image generation",
+        "modelVersion": "2026-07-07",
+        "seed": "unavailable-built-in-generation",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-07",
+          "reviewer": "codex",
+          "sourceUrl": "https://openai.com/policies/service-terms",
+          "risk": "internal PoC prop sheet from clean-room prompt; human art review still required before production approval"
+        }
+      },
+      "approval": {
+        "state": "review"
+      }
+    },
+    {
+      "id": "duskfell-items",
+      "image": "duskfell-items.png",
+      "imageSha256": "961d9dbeb697138b85220547c5d6c80883ef7bad989a01b7076c704e3369d906",
+      "frameGrid": {
+        "cellWidth": 64,
+        "cellHeight": 64,
+        "columns": 4,
+        "rows": 1,
+        "frameCount": 4
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 32,
+        "y": 48
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 0.5,
+        "heightTiles": 0.5
+      },
+      "render": {
+        "layer": "ui",
+        "sort": "fixed",
+        "zBias": 0,
+        "shadow": {
+          "kind": "none"
+        }
+      },
+      "directions": [
+        {
+          "name": "neutral",
+          "startFrame": 0,
+          "frameCount": 4
+        }
+      ],
+      "provenance": {
+        "cleanRoom": true,
+        "source": "generated concept sheet normalized from assets/sprites/duskfell-items-source.png",
+        "createdAt": "2026-07-07",
+        "license": "project-original-ai-assisted-review",
+        "reviewer": "codex",
+        "prompt": "original clean-room dark fantasy inventory icon sheet with wood ore trail kit and deed scroll",
+        "negativePrompt": "no text, no numbers, no logos, no watermark, not copied commercial game assets",
+        "method": "ai-generated",
+        "tool": "OpenAI built-in image generation plus local chroma-key normalization",
+        "toolVersion": "built-in image generation 2026-07-07",
+        "sourceHash": "b60d3e475f54d81b2cb0c8a79687f879dc32900dd5bcec63d787aea2b33c055b",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-07 for internal PoC asset review",
+        "model": "built-in image generation",
+        "modelVersion": "2026-07-07",
+        "seed": "unavailable-built-in-generation",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-07",
+          "reviewer": "codex",
+          "sourceUrl": "https://openai.com/policies/service-terms",
+          "risk": "internal PoC item icon sheet from clean-room prompt; human art review still required before production approval"
+        }
+      },
+      "approval": {
+        "state": "review"
+      }
+    },
+    {
+      "id": "duskfell-details",
+      "image": "duskfell-details.png",
+      "imageSha256": "cf9343f76231a6401f6e83f12e78f1686b995705bdaef47350a2e2f4d93e0aeb",
+      "frameGrid": {
+        "cellWidth": 64,
+        "cellHeight": 64,
+        "columns": 23,
+        "rows": 1,
+        "frameCount": 23
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 32,
+        "y": 54
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 0.75,
+        "heightTiles": 0.75
+      },
+      "render": {
+        "layer": "terrain",
+        "sort": "footprint-y",
+        "zBias": -4,
+        "scale": 0.72,
+        "shadow": {
+          "kind": "ellipse",
+          "x": 32,
+          "y": 56,
+          "width": 30,
+          "height": 8,
+          "opacity": 0.18
+        }
+      },
+      "directions": [
+        {
+          "name": "neutral",
+          "startFrame": 0,
+          "frameCount": 23
+        }
+      ],
+      "provenance": {
+        "cleanRoom": true,
+        "source": "generated concept sheet normalized from assets/sprites/duskfell-details-source.png",
+        "createdAt": "2026-07-07",
+        "license": "project-original-ai-assisted-review",
+        "reviewer": "codex",
+        "prompt": "original clean-room military-plan-oblique dark fantasy terrain detail sheet with rock cluster, pebbles, grass tuft, wildflowers, scrub bush, fallen log, stump, mushrooms, and locally authored four sapling tree variants, four mature tree variants, four ancient tree variants, boulder, reeds, and ruined-stone static frames",
+        "negativePrompt": "no text, no logos, no watermark, no copied commercial game assets, not 2:1 isometric",
+        "method": "ai-generated",
+        "tool": "OpenAI built-in image generation plus local chroma-key sprite-sheet normalization",
+        "toolVersion": "built-in image generation 2026-07-07",
+        "sourceHash": "c44ee431df78abd44d06e2a01353d26c951c54e79989cdfed37bfeefb5d343fc",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-07 for internal PoC asset review",
+        "model": "built-in image generation",
+        "modelVersion": "2026-07-07",
+        "seed": "unavailable-built-in-generation",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-07",
+          "reviewer": "codex",
+          "sourceUrl": "https://openai.com/policies/service-terms",
+          "risk": "internal PoC detail sheet from clean-room prompt; human art review still required before production approval"
+        }
+      },
+      "approval": {
+        "state": "review"
       }
     },
     {

@@ -26,8 +26,8 @@ const startedAt = performance.now();
 
 try {
   server = await startServer();
-  const cardinal = await runMovement({ right: true });
-  const diagonal = await runMovement({ right: true, down: true });
+  const cardinal = await runMovement({ up: true });
+  const diagonal = await runMovement({ up: true, right: true });
   const ratio = diagonal.distance / cardinal.distance;
 
   result = {
@@ -44,8 +44,10 @@ try {
       diagonal.distance > 120 &&
       ratio >= 0.9 &&
       ratio <= 1.1 &&
+      Math.abs(cardinal.dx) < 1 &&
+      cardinal.dy < 0 &&
       diagonal.dx > 0 &&
-      diagonal.dy > 0,
+      diagonal.dy < 0,
   };
 } finally {
   if (server) {

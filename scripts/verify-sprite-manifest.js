@@ -282,6 +282,12 @@ function validateRender(render, frameGrid, prefix, errors) {
   if (!Number.isInteger(render.zBias) || Math.abs(render.zBias) > 1000) {
     errors.push(`${prefix}.render.zBias must be an integer between -1000 and 1000`);
   }
+  if (
+    render.scale !== undefined &&
+    (typeof render.scale !== "number" || render.scale < 0.25 || render.scale > 2)
+  ) {
+    errors.push(`${prefix}.render.scale must be a number in [0.25, 2] when present`);
+  }
 
   validateShadow(render.shadow, frameGrid, `${prefix}.render.shadow`, errors);
 }

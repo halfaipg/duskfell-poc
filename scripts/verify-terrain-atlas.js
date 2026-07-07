@@ -11,6 +11,8 @@ import { readPngDimensions } from "./verify-sprite-manifest.js";
 const DEFAULT_MANIFEST = "assets/terrain/manifest.json";
 const TERRAIN_SCHEMA_VERSION = "duskfell-terrain-atlas-v1";
 const ALLOWED_APPROVAL_STATES = new Set(["placeholder", "review", "approved", "rejected"]);
+const EDGE_MASKS = ["north", "east", "south", "west"];
+const CORNER_MASKS = ["northEast", "southEast", "southWest", "northWest"];
 const DISALLOWED_CLEAN_ROOM_PROMPT_TERMS =
   /\b(ultima|uo|britain|moongate|broadsword|ea)\b/i;
 const DISALLOWED_PROJECTION_PROMPT_TERMS =
@@ -105,6 +107,8 @@ function validateTileCoverage(tiles, errors, warnings) {
   const seenBaseMaterials = new Set();
   const seenSlopeMaterials = new Set();
   const seenTransitionMaterials = new Set();
+  const seenTransitionMasks = new Set();
+  const seenPairTransitions = new Set();
   const seenIds = new Set();
   for (const [index, tile] of tiles.entries()) {
     const prefix = `tiles[${index}]`;
@@ -125,6 +129,14 @@ function validateTileCoverage(tiles, errors, warnings) {
       seenSlopeMaterials.add(tile.material);
     } else if (tile.kind === "transition" && Object.hasOwn(TERRAIN_MATERIALS, tile.material)) {
       seenTransitionMaterials.add(tile.material);
+      if (isObject(tile.mask)) {
+        seenTransitionMasks.add(maskCoverageKey(tile.material, tile.mask));
+      }
+    } else if (tile.kind === "pair-transition") {
+      validatePairTransition(tile, prefix, errors);
+      if (isObject(tile.pair)) {
+        seenPairTransitions.add(`${tile.pair.from}->${tile.pair.to}`);
+      }
     }
   }
 
@@ -138,7 +150,39 @@ function validateTileCoverage(tiles, errors, warnings) {
     if (!seenTransitionMaterials.has(material)) {
       errors.push(`missing transition terrain tile for ${material}`);
     }
+    for (const edge of EDGE_MASKS) {
+      if (!seenTransitionMasks.has(`${material}:edge:${edge}`)) {
+        errors.push(`missing ${edge} transition terrain tile for ${material}`);
+      }
+    }
+    for (const corner of CORNER_MASKS) {
+      if (!seenTransitionMasks.has(`${material}:corner:${corner}`)) {
+        errors.push(`missing ${corner} transition terrain tile for ${material}`);
+      }
+    }
   }
+}
+
+function validatePairTransition(tile, prefix, errors) {
+  if (!isObject(tile.pair)) {
+    errors.push(`${prefix}.pair must be an object for pair-transition terrain tiles`);
+    return;
+  }
+  if (!Object.hasOwn(TERRAIN_MATERIALS, tile.pair.from)) {
+    errors.push(`${prefix}.pair.from is unsupported`);
+  }
+  if (!Object.hasOwn(TERRAIN_MATERIALS, tile.pair.to)) {
+    errors.push(`${prefix}.pair.to is unsupported`);
+  }
+  if (tile.pair.to !== tile.material) {
+    errors.push(`${prefix}.material must match pair.to`);
+  }
+}
+
+function maskCoverageKey(material, mask) {
+  if (mask.type === "edge") return `${material}:edge:${mask.edge}`;
+  if (mask.type === "corner") return `${material}:corner:${mask.corner}`;
+  return `${material}:unknown`;
 }
 
 function validateProvenance(provenance, approval, errors) {

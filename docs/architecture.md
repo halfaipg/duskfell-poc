@@ -33,7 +33,7 @@ The PoC is intentionally small but shaped around the production constraints:
 - `scripts/account-session-rate-limit-smoke.js` verifies `ACCOUNT_SESSION_RATE_LIMIT_*` throttles authenticated JWT ticket issuance per account subject independently of the client-IP limiter.
 - `scripts/account-settlement-smoke.js` verifies an accepted JWT subject reaches the player snapshot, ownership journal events, settlement receipt, and `/admin/ownership` after a deed claim.
 - `scripts/admin-auth-smoke.js` verifies token-protected admin/debug endpoints in an isolated server process.
-- `scripts/runtime-manifest-smoke.js` verifies `/admin/runtime` is protected and matches the checked sprite and terrain manifests.
+- `scripts/runtime-manifest-smoke.js` verifies `/admin/runtime` is protected and matches the checked sprite, terrain, and terrain-detail authority manifests.
 - `scripts/runtime-asset-integrity-smoke.js` verifies corrupted asset bytes, over-budget asset images, and over-budget asset manifests fail server startup before the shard listens.
 - `scripts/admin-events-limit-smoke.js` verifies admin event responses are capped and can be read through a bounded `after=<sequence>` cursor over the retained journal window.
 - `scripts/admin-snapshot-size-smoke.js` verifies the full debug/admin snapshot response is capped and surfaced in metrics.
@@ -66,7 +66,7 @@ The PoC is intentionally small but shaped around the production constraints:
 - `scripts/ws-payload-metrics-smoke.js` verifies observed WebSocket payload sizes match `/metrics` last/max message and snapshot byte gauges.
 - `scripts/ws-reject-limit-smoke.js` verifies repeatedly rejected text messages close the WebSocket at the configured per-connection budget.
 - `server/src/content.rs` validates versioned original world content loaded from `server/data/world.json` and produces an admin-visible content manifest.
-- The server loads checked sprite and terrain manifest metadata at startup, caps manifest JSON with `MAX_RUNTIME_MANIFEST_BYTES`, verifies referenced PNG bytes against their SHA-256 pins before binding, caps each checked image with `MAX_RUNTIME_ASSET_BYTES`, and exposes schema, projection, image pins, verification state, byte caps, approval state, byte sizes, and manifest fingerprints through `/admin/runtime` for deploy audit.
+- The server loads checked sprite, terrain, and generated terrain-detail authority manifest metadata at startup, caps manifest JSON with `MAX_RUNTIME_MANIFEST_BYTES`, verifies referenced PNG bytes against their SHA-256 pins before binding, caps each checked image with `MAX_RUNTIME_ASSET_BYTES`, and exposes schema, projection, image pins, verification state, byte caps, approval state, byte sizes, terrain authority blocker/resource/decay counts, and manifest fingerprints through `/admin/runtime` for deploy audit. The simulation consumes the checked terrain-authority blocker entries as AABB movement blockers; terrain-detail resources and decay consumers remain metadata until promoted into durable server-owned nodes.
 - `server/src/journal.rs` records append-only gameplay and ownership-affecting events for inspection and later durable persistence.
 - `server/src/persistence.rs` appends journal events to JSONL, can call `sync_data()` after flush when `DURABLE_SYNC_WRITES=true`, enforces configured durable-file and per-line byte ceilings before replay, and replays the retained recent window into the admin-visible journal on boot while preserving sequence continuity from the full durable file and surfacing non-increasing sequence anomalies.
 - `server/src/settlement.rs` uses a JSONL settlement outbox so queued ownership jobs, including optional JWT account subjects, are recorded before entering the async worker and replayed on boot if still unconfirmed. Worker handoff is non-blocking after the durable append; full or closed in-process queues are counted and surfaced through readiness, metrics, and admin summary instead of stalling the sim tick. It shares the same optional synced-write mode and per-line replay cap as the journal. Confirmed receipts seed an in-memory ownership index for admin reconciliation.
@@ -99,9 +99,15 @@ The intended Base-chain brand direction is Duskfell with `$DUSK` reserved as the
 
 1. Player presses interact near an original grove or ore object.
 2. The sim validates position against the server-owned object index.
-3. The sim increments the player's bounded inventory stack; the client never submits resource or inventory deltas.
-4. Snapshots expose both the inventory stack list and a derived wood/ore summary.
-5. The server appends a `resourceGathered` event to the journal so gameplay-affecting gathers are audit-visible.
+3. The sim checks the target object's finite resource node, decrements its remaining amount, and restores the node if the player's bounded inventory cannot accept the item. The first generated ecology-detail objects now form a small lifecycle vignette: sapling, mature tree, ancient tree, fresh log, decaying and hollow stumps, mycelium blooms, ancient stone ruins, and crude field coils all use this same path as authored landmarks.
+4. Snapshots expose the resulting inventory stack list, derived player resource summary, and object resource/lifecycle state, including lifecycle family, stage, species, age, health, growth, and decay where applicable.
+5. Harvesting living tree wood can create nearby deadwood fallout by incrementing a non-full deadwood node, so tree cutting starts feeding the decay loop instead of only filling player inventory.
+6. Players carrying organic resources can feed nearby non-full mycelium nodes. The server currently accepts deadwood, fiber, seeds, or spores, consumes the chosen stack, grows the mycelium node, emits `resourceFed`, and then emits the resulting `resourceNodeChanged` state.
+7. Nearby deadwood can also decay into a hungry mycelium node on the authoritative tick, emitting the same `resourceNodeChanged` state for both the consumed deadwood and grown bloom.
+8. Charged field coils can discharge into nearby hungry mycelium on the authoritative tick, spending finite charge and emitting `resourceNodeChanged` state for the coil and the bloom.
+9. Mineral nodes can also expose geologic lifecycle state. Ancient ruins use the same resource snapshot path as trees and mycelium, but with stone, extreme age, low health, and high decay so structures can exist as ruins of prior civilizations without becoming decorative-only props.
+10. Resource nodes regenerate slowly on the authoritative tick, so grove, ore, mycelium, and charge nodes can move through depleted/regrowing/fruiting/sparking-style states without client-local invention.
+11. The server appends `resourceGathered`, `resourceFed`, and `resourceNodeChanged` events to the journal. On restart, it streams the full journal under the durable line cap and restores the latest resource-node amount for each known node before ticking.
 
 ## Crafting Flow
 
@@ -112,7 +118,7 @@ The intended Base-chain brand direction is Duskfell with `$DUSK` reserved as the
 5. Snapshots expose the resulting inventory list and the derived resource summary.
 6. The server appends an `itemCrafted` event to the journal so gameplay-affecting item creation is audit-visible.
 
-These loops are deliberately small, but they establish the production invariant for future economy and containers: inventory is server-authoritative gameplay state, not client-local UI state.
+These loops are deliberately small, but they establish the production invariant for future economy and containers: inventory and gatherable world resources are server-authoritative gameplay state, not client-local UI state.
 
 Settlement replay is idempotent by job ID. Duplicate `JobQueued` or `JobConfirmed` outbox records are tolerated during replay, late queued records for already-confirmed jobs are ignored, and the admin ownership index is rebuilt from all unique confirmed receipts while the recent confirmed receipt window remains bounded.
 
@@ -155,7 +161,7 @@ The WebSocket protocol is JSON text only. Binary frames are treated as unsupport
 
 Each WebSocket also tracks rejected text messages. `WS_MAX_TEXT_BYTES`, `WS_MESSAGE_BURST`, `WS_MESSAGE_REFILL_PER_SECOND`, and `WS_MAX_INPUT_SEQUENCE_STEP` control per-socket text-frame, message-rate, and input-sequence limits; `CLIENT_REJECT_LIMIT` closes a connection after repeated malformed JSON, stale or jumping input sequence, oversized, rate-limited, or invalid rename messages so bad clients do not linger until idle timeout.
 
-Movement is server-authoritative intent processing. Clients submit direction booleans, not positions; the sim computes velocity, clamps map bounds, checks the validated terrain profile for walkable material and maximum height step, and normalizes diagonal input so combined horizontal/vertical movement does not exceed the cardinal speed budget.
+Movement is server-authoritative intent processing. Clients submit direction booleans, not positions; the sim computes velocity, clamps map bounds, checks the validated terrain profile for walkable material and maximum height step, checks server-owned object and terrain-detail authority blockers, and normalizes diagonal input so combined horizontal/vertical movement does not exceed the cardinal speed budget.
 
 `SNAPSHOT_INTERVAL_MS` controls per-client snapshot cadence independently of the 20 Hz authoritative sim tick. Production can tune this per shard or client tier to control bandwidth and serialization cost without changing simulation correctness.
 

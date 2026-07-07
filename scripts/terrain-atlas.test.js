@@ -9,13 +9,13 @@ import { verifyTerrainAtlas } from "./verify-terrain-atlas.js";
 
 test("accepts a complete clean-room terrain atlas", async () => {
   const dir = await makeTempDir();
-  await writeFile(path.join(dir, "terrain.png"), makePngHeader(384, 192));
+  await writeFile(path.join(dir, "terrain.png"), makePngHeader(384, 704));
   const manifestPath = path.join(dir, "manifest.json");
   await writeFile(manifestPath, JSON.stringify(validAtlas(), null, 2));
 
   const result = await verifyTerrainAtlas(manifestPath);
   assert.equal(result.ok, true, result.errors.join("\n"));
-  assert.equal(result.tileCount, 18);
+  assert.equal(result.tileCount, 66);
   assert.deepEqual(result.warnings, []);
 });
 
@@ -35,7 +35,7 @@ test("rejects projection drift and mismatched atlas dimensions", async () => {
 
 test("rejects missing or mismatched terrain image hashes", async () => {
   const dir = await makeTempDir();
-  await writeFile(path.join(dir, "terrain.png"), makePngHeader(384, 192));
+  await writeFile(path.join(dir, "terrain.png"), makePngHeader(384, 704));
   const manifestPath = path.join(dir, "manifest.json");
   const manifest = validAtlas();
   manifest.tileSheet.sha256 = "0".repeat(64);
@@ -56,7 +56,7 @@ test("rejects missing or mismatched terrain image hashes", async () => {
 
 test("rejects UO-derived prompt text and incomplete production provenance", async () => {
   const dir = await makeTempDir();
-  await writeFile(path.join(dir, "terrain.png"), makePngHeader(384, 192));
+  await writeFile(path.join(dir, "terrain.png"), makePngHeader(384, 704));
   const manifestPath = path.join(dir, "manifest.json");
   const manifest = validAtlas();
   manifest.provenance.prompt = "terrain like Ultima Online";
@@ -72,7 +72,7 @@ test("rejects UO-derived prompt text and incomplete production provenance", asyn
 
 test("rejects missing material coverage and walkable water", async () => {
   const dir = await makeTempDir();
-  await writeFile(path.join(dir, "terrain.png"), makePngHeader(384, 192));
+  await writeFile(path.join(dir, "terrain.png"), makePngHeader(384, 704));
   const manifestPath = path.join(dir, "manifest.json");
   const manifest = validAtlas();
   manifest.tiles = manifest.tiles.filter((tile) => tile.material !== "field");
@@ -87,6 +87,8 @@ test("rejects missing material coverage and walkable water", async () => {
 
 function validAtlas() {
   const materials = ["grass", "field", "dirt", "stone", "water", "settlement"];
+  const edges = ["north", "east", "south", "west"];
+  const corners = ["northEast", "southEast", "southWest", "northWest"];
   return {
     schemaVersion: "duskfell-terrain-atlas-v1",
     projection: {
@@ -101,12 +103,12 @@ function validAtlas() {
     tileSheet: {
       id: "terrain-test",
       image: "terrain.png",
-      sha256: sha256Hex(makePngHeader(384, 192)),
+      sha256: sha256Hex(makePngHeader(384, 704)),
       cellWidth: 64,
       cellHeight: 64,
       columns: 6,
-      rows: 3,
-      frameCount: 18,
+      rows: 11,
+      frameCount: 66,
     },
     tiles: [
       ...materials.map((material, index) => ({
@@ -139,6 +141,38 @@ function validAtlas() {
           role: material === "water" ? "shoreline" : "edge",
         },
       })),
+      ...edges.flatMap((edge, edgeIndex) =>
+        materials.map((material, index) => ({
+          id: `${material}-transition-${edge}`,
+          material,
+          kind: "transition",
+          frame: 18 + edgeIndex * materials.length + index,
+          mask: {
+            type: "edge",
+            edge,
+          },
+          surface: {
+            walkable: material !== "water",
+            role: material === "water" ? "shoreline" : "edge",
+          },
+        })),
+      ),
+      ...corners.flatMap((corner, cornerIndex) =>
+        materials.map((material, index) => ({
+          id: `${material}-transition-${corner}`,
+          material,
+          kind: "transition",
+          frame: 42 + cornerIndex * materials.length + index,
+          mask: {
+            type: "corner",
+            corner,
+          },
+          surface: {
+            walkable: material !== "water",
+            role: material === "water" ? "shoreline" : "edge",
+          },
+        })),
+      ),
     ],
     provenance: {
       cleanRoom: true,

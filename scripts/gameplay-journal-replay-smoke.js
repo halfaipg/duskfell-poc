@@ -12,6 +12,22 @@ const journalPath = path.join(runtimeDir, `${runId}-journal.jsonl`);
 const outboxPath = path.join(runtimeDir, `${runId}-settlement-outbox.jsonl`);
 const httpUrl = `http://127.0.0.1:${port}`;
 const wsUrl = `ws://127.0.0.1:${port}/ws`;
+const RESOURCE_NODE_IDS = [
+  "north-grove",
+  "east-ore",
+  "old-shrine",
+  "young-grove-sapling",
+  "mossheart-grove-tree",
+  "ancient-ironleaf-tree",
+  "fallen-grove-log",
+  "decaying-grove-stump",
+  "hollow-grove-stump",
+  "shrine-mycelium-bloom",
+  "veilcap-runner",
+  "stormroot-field-coil",
+  "field-coil",
+  "ancient-viaduct-ruin",
+];
 
 if (!Number.isInteger(port) || port <= 0) {
   throw new Error("--port must be a positive integer");
@@ -33,15 +49,18 @@ try {
     "24000",
   ]);
   const beforeRestart = await waitForGameplayEvents(crafting.playerId);
+  const beforeRestartNodes = resourceNodeSummary(await fetchJson("/api/snapshot"));
   await stopServer(server);
   server = null;
 
   server = await startServer();
-  const [afterRestartSummary, replayedEvents] = await Promise.all([
+  const [afterRestartSummary, replayedEvents, afterRestartSnapshot] = await Promise.all([
     fetchJson("/admin/summary"),
     fetchJson("/admin/events?limit=50"),
+    fetchJson("/api/snapshot"),
   ]);
   const afterRestart = findGameplayEvents(replayedEvents, crafting.playerId);
+  const afterRestartNodes = resourceNodeSummary(afterRestartSnapshot);
 
   result = {
     port,
@@ -53,6 +72,8 @@ try {
     afterRestartJournalReplayedTotalEvents: afterRestartSummary.journalReplayedTotalEvents,
     afterRestartJournalLastSequence: afterRestartSummary.journalLastSequence,
     afterRestartSequences: eventSequences(afterRestart),
+    beforeRestartNodes,
+    afterRestartNodes,
     elapsedMs: round(performance.now() - startedAt),
     ok: Boolean(
       crafting.identityMatched &&
@@ -60,7 +81,8 @@ try {
         hasAllGameplayEvents(beforeRestart) &&
         hasAllGameplayEvents(afterRestart) &&
         eventsAreOrdered(afterRestart) &&
-        afterRestartSummary.journalReplayedTotalEvents >= 3 &&
+        resourceNodesMatch(beforeRestartNodes, afterRestartNodes) &&
+        afterRestartSummary.journalReplayedTotalEvents >= 5 &&
         afterRestartSummary.journalLastSequence >= afterRestart.craft.sequence,
     ),
   };
@@ -225,6 +247,33 @@ function eventSequences(found) {
     ore: found.ore?.sequence ?? null,
     craft: found.craft?.sequence ?? null,
   };
+}
+
+function resourceNodeSummary(snapshot) {
+  const summary = {};
+  for (const id of RESOURCE_NODE_IDS) {
+    const object = snapshot.objects.find((candidate) => candidate.id === id);
+    const resource = object?.resources?.[0];
+    summary[id] = resource
+      ? {
+          kind: resource.kind,
+          amount: resource.amount,
+          maxAmount: resource.maxAmount,
+          stage: object.lifecycle?.stage ?? null,
+        }
+      : null;
+  }
+  return summary;
+}
+
+function resourceNodesMatch(before, after) {
+  for (const id of RESOURCE_NODE_IDS) {
+    if (!before[id] || !after[id]) return false;
+    if (before[id].kind !== after[id].kind) return false;
+    if (before[id].amount !== after[id].amount) return false;
+    if (before[id].maxAmount !== after[id].maxAmount) return false;
+  }
+  return true;
 }
 
 function parseLastJson(output) {

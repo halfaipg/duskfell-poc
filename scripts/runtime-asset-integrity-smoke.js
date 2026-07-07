@@ -35,7 +35,7 @@ try {
     extraEnv: {
       MAX_RUNTIME_MANIFEST_BYTES: "1024",
     },
-    expectedPatterns: [/MAX_RUNTIME_MANIFEST_BYTES/, /manifest\.json/],
+    expectedPatterns: [/MAX_RUNTIME_MANIFEST_BYTES/, /manifest\.json|detail-authority\.json/],
   });
   const oversized = await runScenario({
     name: "oversized-asset",
@@ -43,7 +43,7 @@ try {
     extraEnv: {
       MAX_RUNTIME_ASSET_BYTES: "3000",
     },
-    expectedPatterns: [/MAX_RUNTIME_ASSET_BYTES/, /placeholder\.png/],
+    expectedPatterns: [/MAX_RUNTIME_ASSET_BYTES/, /\.png/],
   });
 
   result = {

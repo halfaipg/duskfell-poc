@@ -73,14 +73,27 @@ try {
       runtime.assets?.terrain?.projection?.tileAspectRatio === 1 &&
       runtime.assets?.terrain?.projection?.axisAngleDegrees === 45 &&
       runtime.assets?.terrain?.projection?.heightAxis === "screen-y",
+    terrainAuthority:
+      runtime.assets?.terrainAuthority?.schemaVersion === expected.terrainAuthority.schemaVersion &&
+      runtime.assets?.terrainAuthority?.kind === "terrain-authority" &&
+      runtime.assets?.terrainAuthority?.projection === "military-plan-oblique" &&
+      runtime.assets?.terrainAuthority?.profile === expected.terrainAuthority.profile &&
+      runtime.assets?.terrainAuthority?.seed === expected.terrainAuthority.seed &&
+      runtime.assets?.terrainAuthority?.unitsPerTile === expected.terrainAuthority.unitsPerTile &&
+      runtime.assets?.terrainAuthority?.blockerCount === expected.terrainAuthority.blockerCount &&
+      runtime.assets?.terrainAuthority?.resourceNodeCount === expected.terrainAuthority.resourceNodeCount &&
+      runtime.assets?.terrainAuthority?.decayConsumerCount === expected.terrainAuthority.decayConsumerCount &&
+      runtime.assets?.terrainAuthority?.maxManifestBytes === expected.maxManifestBytes,
     imagePins:
       imagePinsMatch(runtime.assets?.sprites?.images, expected.sprites.images) &&
       imagePinsMatch(runtime.assets?.terrain?.images, expected.terrain.images),
     manifestFingerprints:
       /^fnv1a64:[0-9a-f]{16}$/.test(runtime.assets?.sprites?.manifestFingerprint ?? "") &&
       /^fnv1a64:[0-9a-f]{16}$/.test(runtime.assets?.terrain?.manifestFingerprint ?? "") &&
+      /^fnv1a64:[0-9a-f]{16}$/.test(runtime.assets?.terrainAuthority?.manifestFingerprint ?? "") &&
       runtime.assets?.sprites?.manifestBytes > 0 &&
-      runtime.assets?.terrain?.manifestBytes > 0,
+      runtime.assets?.terrain?.manifestBytes > 0 &&
+      runtime.assets?.terrainAuthority?.manifestBytes > 0,
   };
 
   result = {
@@ -94,6 +107,7 @@ try {
       assets: {
         sprites: summarizeAssetManifest(runtime.assets?.sprites),
         terrain: summarizeAssetManifest(runtime.assets?.terrain),
+        terrainAuthority: summarizeTerrainAuthority(runtime.assets?.terrainAuthority),
       },
     },
     elapsedMs: round(performance.now() - startedAt),
@@ -114,6 +128,7 @@ if (!result?.ok) {
 async function expectedManifestState() {
   const spriteManifest = JSON.parse(await readFile("assets/sprites/manifest.json", "utf8"));
   const terrainManifest = JSON.parse(await readFile("assets/terrain/manifest.json", "utf8"));
+  const terrainAuthority = JSON.parse(await readFile("assets/terrain/detail-authority.json", "utf8"));
   return {
     maxManifestBytes: 256 * 1024,
     maxImageBytes: 2 * 1024 * 1024,
@@ -143,6 +158,15 @@ async function expectedManifestState() {
         },
       ],
     },
+    terrainAuthority: {
+      schemaVersion: terrainAuthority.schemaVersion,
+      profile: terrainAuthority.profile,
+      seed: terrainAuthority.seed,
+      unitsPerTile: terrainAuthority.unitsPerTile,
+      blockerCount: terrainAuthority.blockers.length,
+      resourceNodeCount: terrainAuthority.resourceNodes.length,
+      decayConsumerCount: terrainAuthority.decayConsumers.length,
+    },
   };
 }
 
@@ -171,6 +195,22 @@ function summarizeAssetManifest(manifest) {
     projection: manifest?.projection,
     entryCount: manifest?.entryCount,
     images: manifest?.images,
+  };
+}
+
+function summarizeTerrainAuthority(manifest) {
+  return {
+    schemaVersion: manifest?.schemaVersion,
+    manifestFingerprint: manifest?.manifestFingerprint,
+    manifestBytes: manifest?.manifestBytes,
+    maxManifestBytes: manifest?.maxManifestBytes,
+    projection: manifest?.projection,
+    profile: manifest?.profile,
+    seed: manifest?.seed,
+    unitsPerTile: manifest?.unitsPerTile,
+    blockerCount: manifest?.blockerCount,
+    resourceNodeCount: manifest?.resourceNodeCount,
+    decayConsumerCount: manifest?.decayConsumerCount,
   };
 }
 

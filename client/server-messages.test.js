@@ -16,7 +16,17 @@ test("parses a valid welcome message with normalized snapshot", () => {
   assert.equal(message.playerId, PLAYER_ID);
   assert.equal(message.snapshot.players[0].id, PLAYER_ID);
   assert.equal(message.snapshot.players[0].accountSubject, "acct:wallet:0xabc123");
-  assert.deepEqual(message.snapshot.players[0].resources, { wood: 2, ore: 1 });
+  assert.deepEqual(message.snapshot.players[0].resources, {
+    wood: 2,
+    ore: 1,
+    stone: 0,
+    charge: 0,
+    deadwood: 0,
+    fiber: 0,
+    mycelium: 0,
+    spores: 0,
+    seed: 0,
+  });
   assert.deepEqual(message.snapshot.map.terrain, validTerrain());
   assert.deepEqual(message.snapshot.players[0].inventory, {
     capacitySlots: 8,
@@ -40,6 +50,40 @@ test("parses a valid snapshot message", () => {
   assert.equal(message.tick, 42);
   assert.equal(message.objects[0].kind, "registrar");
   assert.equal(message.objects[1].kind, "forge");
+  assert.deepEqual(message.objects[2].resources, [{ kind: "wood", amount: 8, maxAmount: 12 }]);
+  assert.deepEqual(message.objects[2].lifecycle, {
+    family: "tree",
+    stage: "mature",
+    species: "ashbark",
+    ageYears: 84,
+    health: 0.77,
+    growth: 0.67,
+    decay: 0.15,
+  });
+  assert.equal(message.objects[3].kind, "myceliumPatch");
+  assert.deepEqual(message.objects[3].resources, [{ kind: "mycelium", amount: 3, maxAmount: 4 }]);
+  assert.equal(message.objects[4].kind, "fieldCoil");
+  assert.deepEqual(message.objects[4].resources, [{ kind: "charge", amount: 3, maxAmount: 5 }]);
+  assert.deepEqual(message.objects[4].lifecycle, {
+    family: "machine",
+    stage: "sparking",
+    species: null,
+    ageYears: 12,
+    health: 0.49,
+    growth: 0.6,
+    decay: 0.08,
+  });
+  assert.equal(message.objects[5].kind, "ruin");
+  assert.deepEqual(message.objects[5].resources, [{ kind: "stone", amount: 2, maxAmount: 12 }]);
+  assert.deepEqual(message.objects[5].lifecycle, {
+    family: "mineral",
+    stage: "ancient-ruin",
+    species: "sunken-viaduct-stone",
+    ageYears: 128000,
+    health: 0.24,
+    growth: 0.17,
+    decay: 0.6,
+  });
 });
 
 test("rejects malformed JSON and unsupported message types", () => {
@@ -115,6 +159,30 @@ test("rejects unsupported object kinds", () => {
   assert.throws(
     () => parseServerMessage(JSON.stringify({ type: "snapshot", ...snapshot })),
     /objects\[0\]\.kind is not supported/,
+  );
+});
+
+test("rejects invalid object lifecycle resource shape", () => {
+  const snapshot = validSnapshot();
+  snapshot.objects[2].resources[0].kind = "moonPearl";
+
+  assert.throws(
+    () => parseServerMessage(JSON.stringify({ type: "snapshot", ...snapshot })),
+    /objects\[2\]\.resources\[0\]\.kind is not supported/,
+  );
+
+  snapshot.objects[2] = validGroveObject();
+  snapshot.objects[2].resources[0].amount = 13;
+  assert.throws(
+    () => parseServerMessage(JSON.stringify({ type: "snapshot", ...snapshot })),
+    /objects\[2\]\.resources\[0\]\.amount must be <= maxAmount/,
+  );
+
+  snapshot.objects[2] = validGroveObject();
+  snapshot.objects[2].lifecycle.growth = 1.2;
+  assert.throws(
+    () => parseServerMessage(JSON.stringify({ type: "snapshot", ...snapshot })),
+    /objects\[2\]\.lifecycle\.growth must be a unit number/,
   );
 });
 
@@ -210,6 +278,60 @@ function validSnapshot() {
         y: 700,
         radius: 56,
       },
+      validGroveObject(),
+      {
+        id: "shrine-mycelium-bloom",
+        kind: "myceliumPatch",
+        label: "Mycelium Bloom",
+        x: 1018,
+        y: 342,
+        radius: 30,
+        resources: [{ kind: "mycelium", amount: 3, maxAmount: 4 }],
+        lifecycle: {
+          family: "mycelium",
+          stage: "fruiting",
+          species: "veilcap",
+          ageYears: 1,
+          health: 0.85,
+          growth: 0.75,
+          decay: 0.74,
+        },
+      },
+      {
+        id: "field-coil",
+        kind: "fieldCoil",
+        label: "Field Coil",
+        x: 1205,
+        y: 540,
+        radius: 34,
+        resources: [{ kind: "charge", amount: 3, maxAmount: 5 }],
+        lifecycle: {
+          family: "machine",
+          stage: "sparking",
+          ageYears: 12,
+          health: 0.49,
+          growth: 0.6,
+          decay: 0.08,
+        },
+      },
+      {
+        id: "ancient-viaduct-ruin",
+        kind: "ruin",
+        label: "Ancient Viaduct Ruin",
+        x: 690,
+        y: 372,
+        radius: 42,
+        resources: [{ kind: "stone", amount: 2, maxAmount: 12 }],
+        lifecycle: {
+          family: "mineral",
+          stage: "ancient-ruin",
+          species: "sunken-viaduct-stone",
+          ageYears: 128000,
+          health: 0.24,
+          growth: 0.17,
+          decay: 0.6,
+        },
+      },
     ],
     settlement: {
       chainEnabled: false,
@@ -256,6 +378,27 @@ function validPlayer() {
         { itemId: "wood", label: "Wood", quantity: 2 },
         { itemId: "ore", label: "Ore", quantity: 1 },
       ],
+    },
+  };
+}
+
+function validGroveObject() {
+  return {
+    id: "north-grove",
+    kind: "grove",
+    label: "Ashen Grove",
+    x: 430,
+    y: 315,
+    radius: 88,
+    resources: [{ kind: "wood", amount: 8, maxAmount: 12 }],
+    lifecycle: {
+      family: "tree",
+      stage: "mature",
+      species: "ashbark",
+      ageYears: 84,
+      health: 0.77,
+      growth: 0.67,
+      decay: 0.15,
     },
   };
 }

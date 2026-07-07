@@ -54,6 +54,32 @@ pub enum JournalEventKind {
         amount: u32,
         total: u32,
     },
+    ResourceNodeChanged {
+        #[serde(rename = "objectId")]
+        object_id: String,
+        resource: ResourceKind,
+        amount: u32,
+        #[serde(rename = "maxAmount")]
+        max_amount: u32,
+    },
+    ResourceFed {
+        #[serde(rename = "playerId")]
+        player_id: PlayerId,
+        #[serde(rename = "objectId")]
+        object_id: String,
+        #[serde(rename = "inputResource")]
+        input_resource: ResourceKind,
+        #[serde(rename = "inputAmount")]
+        input_amount: u32,
+        #[serde(rename = "inputTotal")]
+        input_total: u32,
+        #[serde(rename = "outputResource")]
+        output_resource: ResourceKind,
+        #[serde(rename = "outputAmount")]
+        output_amount: u32,
+        #[serde(rename = "outputTotal")]
+        output_total: u32,
+    },
     ItemCrafted {
         #[serde(rename = "playerId")]
         player_id: PlayerId,

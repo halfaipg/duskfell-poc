@@ -2,7 +2,9 @@ import { PROJECTION } from "./projection.js";
 import { TERRAIN_MATERIALS } from "./terrain.js";
 
 const MANIFEST_SCHEMA_VERSION = "duskfell-terrain-atlas-v1";
-const ALLOWED_TILE_KINDS = new Set(["flat-base", "slope-texture", "transition", "decal"]);
+const ALLOWED_TILE_KINDS = new Set(["flat-base", "slope-texture", "transition", "pair-transition", "decal"]);
+const EDGE_MASKS = new Set(["north", "east", "south", "west"]);
+const CORNER_MASKS = new Set(["northEast", "southEast", "southWest", "northWest"]);
 
 export function normalizeTerrainAtlas(manifest) {
   if (!isObject(manifest)) {
@@ -20,6 +22,9 @@ export function normalizeTerrainAtlas(manifest) {
   const byMaterial = new Map();
   const slopeByMaterial = new Map();
   const transitionByMaterial = new Map();
+  const transitionByMaterialAndMask = new Map();
+  const pairTransitionByPair = new Map();
+  const pairTransitionByPairAndMask = new Map();
   const normalizedTiles = [];
   for (const tile of manifest.tiles) {
     const normalized = normalizeTile(tile, manifest.tileSheet);
@@ -28,7 +33,17 @@ export function normalizeTerrainAtlas(manifest) {
     } else if (normalized.kind === "slope-texture") {
       slopeByMaterial.set(normalized.material, normalized);
     } else if (normalized.kind === "transition") {
-      transitionByMaterial.set(normalized.material, normalized);
+      if (normalized.mask) {
+        transitionByMaterialAndMask.set(transitionMaskKey(normalized.material, normalized.mask), normalized);
+      } else if (!transitionByMaterial.has(normalized.material)) {
+        transitionByMaterial.set(normalized.material, normalized);
+      }
+    } else if (normalized.kind === "pair-transition") {
+      if (normalized.mask) {
+        pairTransitionByPairAndMask.set(transitionPairMaskKey(normalized.pair.from, normalized.pair.to, normalized.mask), normalized);
+      } else {
+        pairTransitionByPair.set(transitionPairKey(normalized.pair.from, normalized.pair.to), normalized);
+      }
     }
     normalizedTiles.push(normalized);
   }
@@ -42,6 +57,18 @@ export function normalizeTerrainAtlas(manifest) {
     }
     if (!transitionByMaterial.has(material)) {
       throw new Error(`terrain atlas missing transition tile for material ${material}`);
+    }
+    for (const edge of EDGE_MASKS) {
+      const mask = { type: "edge", edge };
+      if (!transitionByMaterialAndMask.has(transitionMaskKey(material, mask))) {
+        throw new Error(`terrain atlas missing ${edge} transition tile for material ${material}`);
+      }
+    }
+    for (const corner of CORNER_MASKS) {
+      const mask = { type: "corner", corner };
+      if (!transitionByMaterialAndMask.has(transitionMaskKey(material, mask))) {
+        throw new Error(`terrain atlas missing ${corner} transition tile for material ${material}`);
+      }
     }
   }
 
@@ -60,7 +87,26 @@ export function normalizeTerrainAtlas(manifest) {
     byMaterial,
     slopeByMaterial,
     transitionByMaterial,
+    transitionByMaterialAndMask,
+    pairTransitionByPair,
+    pairTransitionByPairAndMask,
   };
+}
+
+export function transitionMaskKey(material, mask) {
+  if (mask?.type === "edge") return `${material}:edge:${mask.edge}`;
+  if (mask?.type === "corner") return `${material}:corner:${mask.corner}`;
+  return `${material}:generic`;
+}
+
+export function transitionPairKey(from, to) {
+  return `${from}->${to}`;
+}
+
+export function transitionPairMaskKey(from, to, mask) {
+  if (mask?.type === "edge") return `${transitionPairKey(from, to)}:edge:${mask.edge}`;
+  if (mask?.type === "corner") return `${transitionPairKey(from, to)}:corner:${mask.corner}`;
+  return `${transitionPairKey(from, to)}:generic`;
 }
 
 function validateProjection(projection) {
@@ -128,17 +174,81 @@ function normalizeTile(tile, sheet) {
   if (tile.material === "water" && tile.surface.walkable !== false) {
     throw new Error("terrain atlas water surface must not be walkable");
   }
+  const pair = normalizeTransitionPair(tile);
+  const mask = normalizeTransitionMask(tile);
 
   return {
     id: tile.id,
     material: tile.material,
     kind: tile.kind,
     frame: tile.frame,
+    pair,
+    mask,
     surface: {
       walkable: tile.surface.walkable,
       role: isNonEmptyString(tile.surface.role) ? tile.surface.role : "ground",
     },
   };
+}
+
+function normalizeTransitionPair(tile) {
+  if (tile.pair == null) {
+    if (tile.kind === "pair-transition") {
+      throw new Error(`terrain atlas pair-transition tile for ${tile.material} must declare pair`);
+    }
+    return null;
+  }
+  if (tile.kind !== "pair-transition") {
+    throw new Error(`terrain atlas tile pair for ${tile.material} is only supported on pair-transition tiles`);
+  }
+  if (!isObject(tile.pair)) {
+    throw new Error(`terrain atlas pair-transition pair for ${tile.material} must be an object`);
+  }
+  if (!Object.hasOwn(TERRAIN_MATERIALS, tile.pair.from)) {
+    throw new Error(`terrain atlas pair-transition from material ${JSON.stringify(tile.pair.from)} is unsupported`);
+  }
+  if (!Object.hasOwn(TERRAIN_MATERIALS, tile.pair.to)) {
+    throw new Error(`terrain atlas pair-transition to material ${JSON.stringify(tile.pair.to)} is unsupported`);
+  }
+  if (tile.pair.to !== tile.material) {
+    throw new Error(`terrain atlas pair-transition material must match pair.to for ${tile.material}`);
+  }
+  if (tile.pair.from === tile.pair.to) {
+    throw new Error(`terrain atlas pair-transition for ${tile.material} must use different materials`);
+  }
+  return {
+    from: tile.pair.from,
+    to: tile.pair.to,
+  };
+}
+
+function normalizeTransitionMask(tile) {
+  if (tile.mask == null) return null;
+  if (tile.kind !== "transition" && tile.kind !== "pair-transition") {
+    throw new Error(`terrain atlas tile mask for ${tile.material} is only supported on transition tiles`);
+  }
+  if (!isObject(tile.mask)) {
+    throw new Error(`terrain atlas transition mask for ${tile.material} must be an object`);
+  }
+  if (tile.mask.type === "edge") {
+    if (!EDGE_MASKS.has(tile.mask.edge)) {
+      throw new Error(`terrain atlas transition edge for ${tile.material} is unsupported`);
+    }
+    return {
+      type: "edge",
+      edge: tile.mask.edge,
+    };
+  }
+  if (tile.mask.type === "corner") {
+    if (!CORNER_MASKS.has(tile.mask.corner)) {
+      throw new Error(`terrain atlas transition corner for ${tile.material} is unsupported`);
+    }
+    return {
+      type: "corner",
+      corner: tile.mask.corner,
+    };
+  }
+  throw new Error(`terrain atlas transition mask type for ${tile.material} is unsupported`);
 }
 
 function isObject(value) {
