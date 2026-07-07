@@ -12,7 +12,7 @@
   "tileSheet": {
     "id": "terrain-placeholder",
     "image": "terrain-placeholder.png",
-    "sha256": "4699da64e6b162e0d299bca43b54af5d3049ca13b43a2f7b488619fd6dbf90b1",
+    "sha256": "4e3885cf0483dfa41a5f1541b6a3ba617e54658f9415ba489484cf0abd4a83b6",
     "cellWidth": 64,
     "cellHeight": 64,
     "columns": 6,

@@ -13,7 +13,7 @@
     {
       "id": "player-placeholder",
       "image": "player-placeholder.png",
-      "imageSha256": "95e0caa76622d76a7330146556b320f5b405af2ef30eef9cd9a191ea43d23308",
+      "imageSha256": "e514c2d4b88da82862998420f4866bb40e6e1034818d696963bdcc10a0ef1d85",
       "frameGrid": {
         "cellWidth": 128,
         "cellHeight": 128,

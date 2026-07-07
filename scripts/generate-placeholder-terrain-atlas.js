@@ -10,45 +10,45 @@ const cell = 64;
 const materials = [
   {
     name: "grass",
-    base: [93, 132, 83, 255],
-    light: [147, 171, 106, 255],
-    dark: [48, 87, 59, 255],
-    accent: [185, 178, 111, 255],
+    base: [78, 112, 70, 255],
+    light: [132, 154, 92, 255],
+    dark: [40, 70, 47, 255],
+    accent: [161, 157, 91, 255],
   },
   {
     name: "field",
-    base: [190, 166, 101, 255],
-    light: [228, 204, 137, 255],
-    dark: [128, 105, 72, 255],
-    accent: [104, 132, 74, 255],
+    base: [178, 151, 88, 255],
+    light: [216, 190, 116, 255],
+    dark: [112, 86, 55, 255],
+    accent: [91, 118, 68, 255],
   },
   {
     name: "dirt",
-    base: [139, 101, 76, 255],
-    light: [181, 137, 101, 255],
-    dark: [86, 65, 53, 255],
-    accent: [190, 166, 117, 255],
+    base: [119, 82, 60, 255],
+    light: [159, 116, 82, 255],
+    dark: [64, 48, 39, 255],
+    accent: [168, 137, 92, 255],
   },
   {
     name: "stone",
-    base: [124, 126, 122, 255],
-    light: [175, 172, 159, 255],
-    dark: [71, 78, 78, 255],
-    accent: [103, 112, 114, 255],
+    base: [106, 112, 108, 255],
+    light: [151, 152, 142, 255],
+    dark: [57, 65, 64, 255],
+    accent: [92, 101, 100, 255],
   },
   {
     name: "water",
-    base: [61, 134, 156, 255],
-    light: [131, 196, 201, 255],
-    dark: [28, 83, 111, 255],
-    accent: [218, 240, 226, 255],
+    base: [49, 121, 144, 255],
+    light: [111, 179, 188, 255],
+    dark: [26, 72, 96, 255],
+    accent: [202, 232, 218, 255],
   },
   {
     name: "settlement",
-    base: [194, 181, 151, 255],
-    light: [232, 220, 190, 255],
-    dark: [128, 119, 101, 255],
-    accent: [93, 86, 78, 255],
+    base: [186, 174, 144, 255],
+    light: [223, 211, 177, 255],
+    dark: [112, 103, 84, 255],
+    accent: [78, 72, 65, 255],
   },
 ];
 const width = cell * materials.length;
@@ -158,17 +158,24 @@ function drawMaterialDetails(cx, cy, index, row, material, kind) {
       if (!insideDiamond(x, y, cx, cy, 28, 28)) continue;
       drawSprig(x, y, seed % 4 === 0 ? material.accent : shade(material.dark, 1.1));
     }
+    for (let n = 0; n < 5; n += 1) {
+      const [x, y, seed] = seededPoint(cx, cy, index, row, n + 33, 22);
+      fillEllipse(x, y, 3 + (seed % 3), 1.5, [34, 59, 41, 62]);
+    }
   } else if (material.name === "field") {
     for (let offset = -24; offset <= 24; offset += 8) {
       line(cx - 25, cy + offset - 8, cx + 25, cy + offset + 11, [105, 86, 58, 72]);
       line(cx - 23, cy + offset - 10, cx + 25, cy + offset + 9, [232, 213, 150, 58]);
     }
+    line(cx - 27, cy + 12, cx + 26, cy - 8, [82, 67, 45, 88]);
   } else if (material.name === "dirt") {
     for (let n = 0; n < 9; n += 1) {
       const [x, y, seed] = seededPoint(cx, cy, index, row, n, 21);
       if (!insideDiamond(x, y, cx, cy, 27, 27)) continue;
       fillEllipse(x, y, 1 + (seed % 3), 1, [64, 49, 42, 80]);
     }
+    line(cx - 22, cy + 10, cx + 18, cy + 23, [44, 34, 30, 82]);
+    line(cx - 21, cy + 6, cx + 17, cy + 19, [153, 118, 82, 48]);
   } else if (material.name === "stone") {
     for (let n = 0; n < 5; n += 1) {
       const [x, y, seed] = seededPoint(cx, cy, index, row, n, 18);
@@ -177,17 +184,22 @@ function drawMaterialDetails(cx, cy, index, row, material, kind) {
       line(x - length / 2, y - 1, x + length / 2, y + 2, [40, 45, 45, 88]);
       line(x - length / 2, y - 2, x + length / 2, y + 1, [210, 205, 186, 42]);
     }
+    line(cx - 24, cy - 7, cx + 24, cy + 17, [37, 43, 43, 70]);
+    line(cx - 6, cy - 25, cx + 14, cy + 26, [37, 43, 43, 56]);
   } else if (material.name === "water") {
     for (let offset = -18; offset <= 18; offset += 9) {
       line(cx - 19, cy + offset, cx + 21, cy + offset - 7, [220, 246, 237, 62]);
       line(cx - 15, cy + offset + 4, cx + 17, cy + offset - 1, [23, 77, 109, 42]);
     }
+    fillEllipse(cx - 8, cy + 16, 14, 2, [213, 235, 220, 64]);
   } else if (material.name === "settlement") {
     for (let offset = -24; offset <= 24; offset += 12) {
       line(cx - 27, cy + offset - 14, cx + 27, cy + offset + 13, [73, 66, 60, 64]);
       line(cx + offset - 14, cy - 27, cx + offset + 13, cy + 27, [73, 66, 60, 54]);
     }
     fillEllipse(cx, cy + 12, 18, 2, [70, 61, 54, 36]);
+    line(cx - 23, cy - 3, cx + 20, cy + 18, [68, 62, 56, 70]);
+    line(cx - 16, cy + 19, cx + 17, cy - 8, [238, 225, 189, 38]);
   }
 }
 

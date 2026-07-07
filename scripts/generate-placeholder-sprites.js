@@ -57,19 +57,23 @@ function drawPlayerFrame(frame) {
   fillRect(anchorX - 21 + step, 105, 17, 7, [18, 24, 28, 255]);
   fillRect(anchorX + 4 - step, 105, 17, 7, [18, 24, 28, 255]);
 
-  fillTriangle([[anchorX - 25, 49], [anchorX - 20, 106], [anchorX + 2, 91]], [21, 36, 43, 235]);
-  fillTriangle([[anchorX + 25, 49], [anchorX + 20, 106], [anchorX - 2, 91]], [18, 31, 38, 230]);
-  fillEllipse(anchorX, 65, 22, 30, [47, 83, 85, 255]);
-  fillRect(anchorX - 15, 52, 30, 34, [55, 102, 98, 255]);
-  fillTriangle([[anchorX - 17, 82], [anchorX, 108], [anchorX + 17, 82]], [31, 58, 61, 255]);
-  fillRect(anchorX - 12, 70, 24, 8, [31, 54, 56, 210]);
+  fillTriangle([[anchorX - 25, 49], [anchorX - 20, 106], [anchorX + 2, 91]], [22, 34, 39, 235]);
+  fillTriangle([[anchorX + 25, 49], [anchorX + 20, 106], [anchorX - 2, 91]], [18, 29, 35, 230]);
+  fillEllipse(anchorX, 65, 22, 30, [70, 72, 66, 255]);
+  fillRect(anchorX - 15, 52, 30, 34, [88, 92, 82, 255]);
+  for (let chain = -9; chain <= 9; chain += 6) {
+    fillRect(anchorX + chain, 56, 2, 25, [185, 183, 157, 150]);
+  }
+  fillTriangle([[anchorX - 17, 82], [anchorX, 108], [anchorX + 17, 82]], [42, 52, 50, 255]);
+  fillRect(anchorX - 12, 70, 24, 8, [54, 59, 54, 210]);
   fillRect(anchorX - 4, 73, 8, 25, [132, 84, 55, 255]);
   fillRect(anchorX - 8, 73, 16, 4, [204, 153, 83, 255]);
 
-  fillEllipse(anchorX - 1, 39, 14, 16, [100, 143, 127, 255]);
-  fillRect(anchorX - 12, 28, 24, 8, [24, 30, 36, 255]);
-  fillRect(anchorX - 17, 35, 34, 5, [13, 19, 24, 255]);
-  fillTriangle([[anchorX - 17, 36], [anchorX, 18], [anchorX + 17, 36]], [24, 30, 36, 255]);
+  fillEllipse(anchorX - 1, 39, 14, 16, [174, 134, 94, 255]);
+  fillRect(anchorX - 12, 28, 24, 8, [101, 110, 106, 255]);
+  fillRect(anchorX - 17, 35, 34, 5, [64, 72, 72, 255]);
+  fillTriangle([[anchorX - 17, 36], [anchorX, 18], [anchorX + 17, 36]], [104, 112, 108, 255]);
+  line(anchorX, 30, anchorX, 50, [223, 206, 143, 235]);
   fillEllipse(anchorX - 6, 38, 3, 3, [239, 230, 190, 255]);
   fillEllipse(anchorX + 6, 38, 3, 3, [239, 230, 190, 255]);
   line(anchorX - 7, 49, anchorX + 8, 52, [21, 61, 63, 195]);
@@ -78,6 +82,8 @@ function drawPlayerFrame(frame) {
   fillRect(anchorX + 16 + step, 58, 19, 7, [45, 95, 87, 255]);
   fillRect(anchorX - 42 - step, 62, 11, 9, [92, 57, 50, 255]);
   fillRect(anchorX + 31 + step, 62, 11, 9, [92, 57, 50, 255]);
+  fillEllipse(anchorX - 35 - step, 74, 12, 17, [47, 58, 64, 255]);
+  strokeEllipse(anchorX - 35 - step, 74, 12, 17, [193, 163, 94, 220]);
   line(anchorX + 34 + step, 58, anchorX + 49 + step, 31, [151, 143, 116, 245]);
   line(anchorX + 49 + step, 31, anchorX + 54 + step, 44, [219, 205, 155, 225]);
 
