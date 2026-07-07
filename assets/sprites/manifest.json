@@ -13,7 +13,7 @@
     {
       "id": "player-placeholder",
       "image": "player-placeholder.png",
-      "imageSha256": "9f33cc048f54aba6aa71ff1034820836dc3ae28e15016394bfb15a8b3799b556",
+      "imageSha256": "95e0caa76622d76a7330146556b320f5b405af2ef30eef9cd9a191ea43d23308",
       "frameGrid": {
         "cellWidth": 128,
         "cellHeight": 128,
@@ -66,7 +66,7 @@
     {
       "id": "props-placeholder",
       "image": "props-placeholder.png",
-      "imageSha256": "e98cb00d374d276500cd5e578e1e910e0da6395ada6826f3134a0eb11a344af9",
+      "imageSha256": "158779cd3cf7a23eff4f25ba9a66a10a05c30db31a0a6356c420235a236bc2c6",
       "frameGrid": {
         "cellWidth": 128,
         "cellHeight": 128,

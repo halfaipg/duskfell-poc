@@ -589,16 +589,71 @@ function drawPlayers(players, origin) {
       continue;
     }
 
-    ctx.beginPath();
-    ctx.arc(point.x, point.y + 14, isMe ? 19 : 16, 0, Math.PI * 2);
-    ctx.fillStyle = player.color;
-    ctx.fill();
-    ctx.strokeStyle = isMe ? "#fffdf7" : "#1f2524";
-    ctx.lineWidth = isMe ? 5 : 3;
-    ctx.stroke();
+    drawFallbackPlayer(point, player.color, isMe);
 
     drawPlayerLabels(player, point);
   }
+}
+
+function drawFallbackPlayer(point, color, isMe) {
+  ctx.beginPath();
+  ctx.ellipse(point.x, point.y + 28, 21, 7, 0, 0, Math.PI * 2);
+  ctx.fillStyle = "rgba(11, 15, 17, 0.28)";
+  ctx.fill();
+
+  ctx.fillStyle = "#202a30";
+  ctx.fillRect(point.x - 11, point.y + 21, 7, 25);
+  ctx.fillRect(point.x + 4, point.y + 21, 7, 25);
+  ctx.fillStyle = "#151b1f";
+  ctx.fillRect(point.x - 16, point.y + 44, 13, 6);
+  ctx.fillRect(point.x + 3, point.y + 44, 13, 6);
+
+  ctx.fillStyle = "#1d3038";
+  ctx.beginPath();
+  ctx.moveTo(point.x - 20, point.y - 12);
+  ctx.lineTo(point.x - 14, point.y + 43);
+  ctx.lineTo(point.x, point.y + 35);
+  ctx.lineTo(point.x + 14, point.y + 43);
+  ctx.lineTo(point.x + 20, point.y - 12);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = color;
+  ctx.fillRect(point.x - 13, point.y - 7, 26, 33);
+  ctx.fillStyle = "#c49353";
+  ctx.fillRect(point.x - 7, point.y + 15, 14, 4);
+  ctx.fillStyle = "#7a5038";
+  ctx.fillRect(point.x - 3, point.y + 17, 6, 20);
+
+  ctx.fillStyle = "#5e907f";
+  ctx.beginPath();
+  ctx.ellipse(point.x, point.y - 22, 13, 15, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#151b20";
+  ctx.fillRect(point.x - 14, point.y - 34, 28, 8);
+  ctx.beginPath();
+  ctx.moveTo(point.x - 17, point.y - 30);
+  ctx.lineTo(point.x, point.y - 48);
+  ctx.lineTo(point.x + 17, point.y - 30);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = "#f0e5bd";
+  ctx.beginPath();
+  ctx.arc(point.x - 5, point.y - 23, 2.5, 0, Math.PI * 2);
+  ctx.arc(point.x + 5, point.y - 23, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = "#d7c693";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(point.x + 22, point.y - 8);
+  ctx.lineTo(point.x + 37, point.y - 33);
+  ctx.lineTo(point.x + 42, point.y - 21);
+  ctx.stroke();
+
+  ctx.strokeStyle = isMe ? "#fffdf7" : "#141a1d";
+  ctx.lineWidth = isMe ? 3 : 2;
+  ctx.strokeRect(point.x - 22, point.y - 48, 64, 99);
 }
 
 function drawPlayerSprite(player, point, isMe) {
@@ -688,6 +743,7 @@ function drawPlayerLabels(player, point) {
 async function loadSpriteAssets() {
   try {
     const response = await fetch("/assets/sprites/manifest.json", {
+      cache: "no-store",
       headers: { accept: "application/json" },
     });
     if (!response.ok) return;
@@ -717,7 +773,8 @@ async function loadSpriteAssets() {
       startFrame: propSheet.startFrame,
       frameCount: propSheet.frameCount,
     };
-  } catch {
+  } catch (error) {
+    console.warn("Sprite assets disabled", error);
     sprites.player = null;
     sprites.props = null;
   }
@@ -726,6 +783,7 @@ async function loadSpriteAssets() {
 async function loadTerrainAssets() {
   try {
     const response = await fetch("/assets/terrain/manifest.json", {
+      cache: "no-store",
       headers: { accept: "application/json" },
     });
     if (!response.ok) return;
@@ -742,6 +800,7 @@ async function loadTerrainAssets() {
 
 async function loadVerifiedPngImage(src, expectedSha256) {
   const response = await fetch(src, {
+    cache: "no-store",
     headers: { accept: "image/png" },
   });
   if (!response.ok) {

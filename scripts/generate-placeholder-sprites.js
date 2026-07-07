@@ -44,35 +44,45 @@ console.log(`updated ${manifestPath} props-placeholder imageSha256=${propsSha256
 
 function drawPlayerFrame(frame) {
   const ox = frame * cell;
-  const step = frame === 1 ? -4 : frame === 2 ? 4 : 0;
+  const step = frame === 1 ? -5 : frame === 2 ? 5 : 0;
   const anchorX = ox + 64;
   const anchorY = 112;
 
-  fillEllipse(anchorX, anchorY - 2, 29, 10, [18, 22, 24, 64]);
-  fillDiamond(anchorX, anchorY - 4, 22, 10, [43, 82, 78, 168]);
-  strokeDiamond(anchorX, anchorY - 4, 22, 10, [16, 24, 24, 190]);
+  fillEllipse(anchorX, anchorY - 1, 30, 10, [9, 13, 15, 92]);
+  fillDiamond(anchorX, anchorY - 6, 22, 10, [31, 56, 53, 205]);
+  strokeDiamond(anchorX, anchorY - 6, 22, 10, [8, 14, 15, 230]);
 
-  fillRect(ox + 54 + step, 76, 7, 28, [37, 49, 58, 255]);
-  fillRect(ox + 67 - step, 76, 7, 28, [37, 49, 58, 255]);
-  fillRect(ox + 50 + step, 102, 13, 8, [29, 36, 39, 255]);
-  fillRect(ox + 66 - step, 102, 13, 8, [29, 36, 39, 255]);
+  fillRect(anchorX - 17 + step, 81, 9, 27, [30, 37, 43, 255]);
+  fillRect(anchorX + 8 - step, 81, 9, 27, [30, 37, 43, 255]);
+  fillRect(anchorX - 21 + step, 105, 17, 7, [18, 24, 28, 255]);
+  fillRect(anchorX + 4 - step, 105, 17, 7, [18, 24, 28, 255]);
 
-  fillEllipse(anchorX, 64, 24, 30, [72, 116, 111, 255]);
-  fillEllipse(anchorX - 2, 54, 17, 22, [94, 145, 137, 255]);
-  fillEllipse(anchorX - 7, 45, 4, 4, [234, 226, 195, 255]);
-  fillEllipse(anchorX + 6, 45, 4, 4, [234, 226, 195, 255]);
-  fillRect(anchorX - 14, 29, 28, 11, [38, 45, 51, 255]);
-  fillRect(anchorX - 18, 38, 36, 5, [28, 34, 38, 255]);
-  line(anchorX - 11, 57, anchorX + 12, 61, [35, 81, 78, 170]);
-  line(anchorX - 8, 69, anchorX + 10, 73, [42, 71, 70, 150]);
+  fillTriangle([[anchorX - 25, 49], [anchorX - 20, 106], [anchorX + 2, 91]], [21, 36, 43, 235]);
+  fillTriangle([[anchorX + 25, 49], [anchorX + 20, 106], [anchorX - 2, 91]], [18, 31, 38, 230]);
+  fillEllipse(anchorX, 65, 22, 30, [47, 83, 85, 255]);
+  fillRect(anchorX - 15, 52, 30, 34, [55, 102, 98, 255]);
+  fillTriangle([[anchorX - 17, 82], [anchorX, 108], [anchorX + 17, 82]], [31, 58, 61, 255]);
+  fillRect(anchorX - 12, 70, 24, 8, [31, 54, 56, 210]);
+  fillRect(anchorX - 4, 73, 8, 25, [132, 84, 55, 255]);
+  fillRect(anchorX - 8, 73, 16, 4, [204, 153, 83, 255]);
 
-  fillRect(ox + 37 - step, 60, 15, 7, [48, 95, 88, 255]);
-  fillRect(ox + 76 + step, 60, 15, 7, [48, 95, 88, 255]);
-  fillRect(ox + 31 - step, 64, 10, 8, [82, 52, 47, 255]);
-  fillRect(ox + 87 + step, 64, 10, 8, [82, 52, 47, 255]);
+  fillEllipse(anchorX - 1, 39, 14, 16, [100, 143, 127, 255]);
+  fillRect(anchorX - 12, 28, 24, 8, [24, 30, 36, 255]);
+  fillRect(anchorX - 17, 35, 34, 5, [13, 19, 24, 255]);
+  fillTriangle([[anchorX - 17, 36], [anchorX, 18], [anchorX + 17, 36]], [24, 30, 36, 255]);
+  fillEllipse(anchorX - 6, 38, 3, 3, [239, 230, 190, 255]);
+  fillEllipse(anchorX + 6, 38, 3, 3, [239, 230, 190, 255]);
+  line(anchorX - 7, 49, anchorX + 8, 52, [21, 61, 63, 195]);
 
-  strokeEllipse(anchorX, 58, 25, 35, [18, 24, 26, 210]);
-  strokeRect(ox + 32, 24, 64, 88, [18, 24, 26, 78]);
+  fillRect(anchorX - 35 - step, 58, 19, 7, [45, 95, 87, 255]);
+  fillRect(anchorX + 16 + step, 58, 19, 7, [45, 95, 87, 255]);
+  fillRect(anchorX - 42 - step, 62, 11, 9, [92, 57, 50, 255]);
+  fillRect(anchorX + 31 + step, 62, 11, 9, [92, 57, 50, 255]);
+  line(anchorX + 34 + step, 58, anchorX + 49 + step, 31, [151, 143, 116, 245]);
+  line(anchorX + 49 + step, 31, anchorX + 54 + step, 44, [219, 205, 155, 225]);
+
+  strokeEllipse(anchorX, 59, 25, 39, [9, 15, 17, 230]);
+  strokeRect(ox + 24, 17, 80, 96, [11, 16, 18, 82]);
 }
 
 function drawPropFrame(frame, kind) {
@@ -82,47 +92,60 @@ function drawPropFrame(frame, kind) {
   fillEllipse(anchorX, anchorY + 10, 33, 11, [18, 22, 24, 54]);
 
   if (kind === "registrar") {
-    fillDiamond(anchorX, anchorY + 2, 36, 15, [158, 143, 110, 170]);
-    fillRect(ox + 38, 58, 52, 39, [221, 213, 190, 255]);
-    fillRect(ox + 33, 47, 62, 13, [132, 62, 52, 255]);
-    fillTriangle([[ox + 31, 47], [anchorX, 28], [ox + 97, 47]], [177, 82, 62, 255]);
-    fillRect(ox + 57, 73, 14, 24, [49, 105, 93, 255]);
-    fillRect(ox + 43, 64, 10, 10, [82, 125, 134, 255]);
-    fillRect(ox + 77, 64, 10, 10, [82, 125, 134, 255]);
-    strokeRect(ox + 38, 58, 52, 39, [54, 48, 42, 150]);
-    strokeTriangle([[ox + 31, 47], [anchorX, 28], [ox + 97, 47]], [54, 38, 35, 145]);
+    fillDiamond(anchorX, anchorY + 2, 41, 17, [118, 104, 82, 190]);
+    fillRect(ox + 35, 57, 58, 41, [218, 208, 181, 255]);
+    fillRect(ox + 33, 51, 62, 9, [73, 90, 84, 255]);
+    fillRect(ox + 30, 45, 68, 10, [112, 45, 40, 255]);
+    fillTriangle([[ox + 28, 45], [anchorX, 24], [ox + 100, 45]], [157, 66, 50, 255]);
+    fillTriangle([[ox + 35, 45], [anchorX, 31], [ox + 93, 45]], [193, 91, 62, 255]);
+    fillRect(ox + 56, 71, 16, 27, [41, 93, 81, 255]);
+    fillRect(ox + 42, 64, 10, 11, [74, 118, 126, 255]);
+    fillRect(ox + 78, 64, 10, 11, [74, 118, 126, 255]);
+    fillRect(ox + 45, 85, 38, 4, [133, 84, 54, 255]);
+    strokeRect(ox + 35, 57, 58, 41, [48, 43, 37, 170]);
+    strokeTriangle([[ox + 28, 45], [anchorX, 24], [ox + 100, 45]], [43, 30, 29, 170]);
   } else if (kind === "forge") {
-    fillDiamond(anchorX, anchorY + 4, 32, 13, [73, 68, 60, 190]);
-    fillRect(ox + 38, 69, 52, 25, [71, 75, 78, 255]);
-    fillRect(ox + 43, 61, 42, 13, [48, 52, 55, 255]);
-    fillRect(ox + 50, 72, 28, 10, [217, 130, 66, 255]);
-    fillRect(ox + 55, 73, 18, 7, [245, 188, 91, 230]);
-    strokeRect(ox + 38, 69, 52, 25, [24, 28, 30, 200]);
-    line(ox + 37, 61, ox + 91, 61, [191, 191, 176, 120]);
+    fillDiamond(anchorX, anchorY + 5, 39, 15, [50, 48, 42, 220]);
+    fillRect(ox + 35, 68, 58, 27, [62, 67, 68, 255]);
+    fillRect(ox + 40, 59, 48, 13, [37, 41, 43, 255]);
+    fillRect(ox + 47, 71, 35, 12, [188, 91, 54, 255]);
+    fillRect(ox + 54, 72, 22, 8, [247, 178, 79, 240]);
+    fillRect(ox + 78, 38, 10, 25, [49, 51, 51, 255]);
+    fillRect(ox + 75, 34, 16, 6, [33, 36, 37, 255]);
+    fillEllipse(ox + 83, 29, 9, 5, [35, 40, 43, 86]);
+    fillEllipse(ox + 86, 23, 7, 4, [35, 40, 43, 56]);
+    strokeRect(ox + 35, 68, 58, 27, [18, 22, 23, 220]);
+    line(ox + 35, 59, ox + 94, 59, [187, 181, 157, 130]);
   } else if (kind === "grove") {
-    fillRect(anchorX - 6, 69, 12, 33, [93, 64, 42, 255]);
-    fillEllipse(anchorX - 17, 57, 21, 24, [64, 111, 63, 255]);
-    fillEllipse(anchorX + 14, 55, 24, 27, [78, 130, 72, 255]);
-    fillEllipse(anchorX, 39, 28, 25, [96, 145, 83, 255]);
-    fillEllipse(anchorX - 12, 42, 12, 11, [139, 166, 103, 170]);
-    strokeEllipse(anchorX, 52, 36, 32, [30, 55, 37, 150]);
+    fillRect(anchorX - 7, 66, 14, 36, [84, 55, 37, 255]);
+    fillRect(anchorX - 13, 77, 26, 5, [63, 42, 32, 220]);
+    fillEllipse(anchorX - 21, 55, 23, 25, [44, 86, 58, 255]);
+    fillEllipse(anchorX + 17, 55, 26, 28, [55, 105, 65, 255]);
+    fillEllipse(anchorX, 36, 31, 27, [83, 133, 78, 255]);
+    fillEllipse(anchorX - 13, 40, 14, 12, [142, 166, 100, 180]);
+    fillEllipse(anchorX + 10, 31, 10, 9, [122, 154, 88, 160]);
+    strokeEllipse(anchorX, 50, 39, 34, [22, 45, 33, 170]);
   } else if (kind === "ore") {
-    fillDiamond(anchorX, 93, 34, 18, [76, 80, 82, 220]);
-    fillTriangle([[ox + 36, 92], [ox + 53, 61], [ox + 65, 97]], [96, 100, 103, 255]);
-    fillTriangle([[ox + 56, 95], [ox + 73, 53], [ox + 92, 93]], [128, 130, 126, 255]);
-    fillTriangle([[ox + 69, 94], [ox + 91, 66], [ox + 98, 101]], [86, 91, 93, 255]);
-    line(ox + 57, 72, ox + 67, 91, [190, 178, 126, 170]);
-    line(ox + 76, 64, ox + 84, 88, [205, 194, 142, 160]);
-    strokeDiamond(anchorX, 89, 38, 26, [39, 43, 43, 145]);
+    fillDiamond(anchorX, 93, 38, 19, [57, 61, 63, 230]);
+    fillTriangle([[ox + 32, 93], [ox + 51, 58], [ox + 66, 99]], [82, 87, 91, 255]);
+    fillTriangle([[ox + 54, 96], [ox + 73, 49], [ox + 94, 94]], [121, 124, 119, 255]);
+    fillTriangle([[ox + 68, 95], [ox + 94, 63], [ox + 101, 102]], [74, 80, 82, 255]);
+    fillTriangle([[ox + 44, 98], [ox + 60, 75], [ox + 78, 102]], [59, 64, 67, 255]);
+    line(ox + 56, 70, ox + 68, 92, [211, 185, 103, 190]);
+    line(ox + 75, 61, ox + 85, 89, [222, 202, 130, 170]);
+    line(ox + 88, 72, ox + 94, 92, [184, 151, 88, 160]);
+    strokeDiamond(anchorX, 89, 40, 27, [30, 34, 35, 170]);
   } else if (kind === "shrine") {
-    fillEllipse(anchorX, 91, 30, 13, [78, 78, 73, 160]);
-    fillRect(ox + 46, 63, 36, 32, [180, 180, 169, 255]);
-    fillRect(ox + 50, 56, 28, 9, [132, 134, 130, 255]);
-    fillEllipse(anchorX, 69, 12, 15, [218, 220, 208, 255]);
-    fillEllipse(anchorX, 69, 7, 9, [96, 101, 98, 230]);
-    fillRect(anchorX - 3, 79, 6, 14, [125, 127, 121, 255]);
-    strokeEllipse(anchorX, 69, 14, 17, [59, 63, 63, 150]);
-    strokeRect(ox + 46, 63, 36, 32, [65, 66, 61, 125]);
+    fillEllipse(anchorX, 91, 33, 14, [66, 66, 61, 180]);
+    fillRect(ox + 43, 64, 42, 32, [166, 167, 154, 255]);
+    fillRect(ox + 48, 56, 32, 10, [115, 119, 115, 255]);
+    fillEllipse(anchorX, 68, 14, 17, [217, 218, 201, 255]);
+    fillEllipse(anchorX, 68, 8, 10, [82, 88, 86, 240]);
+    fillRect(anchorX - 4, 79, 8, 16, [111, 114, 107, 255]);
+    fillRect(ox + 40, 94, 48, 5, [99, 101, 94, 255]);
+    line(anchorX - 19, 58, anchorX + 19, 98, [237, 232, 197, 70]);
+    strokeEllipse(anchorX, 68, 16, 19, [48, 53, 53, 170]);
+    strokeRect(ox + 43, 64, 42, 32, [55, 56, 52, 145]);
   }
 }
 
