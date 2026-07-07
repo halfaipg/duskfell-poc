@@ -3,12 +3,14 @@ use std::time::Instant;
 pub const DEFAULT_MAX_CLIENT_TEXT_BYTES: usize = 4096;
 pub const DEFAULT_MESSAGE_BURST: u32 = 20;
 pub const DEFAULT_MESSAGE_REFILL_PER_SECOND: u32 = 30;
+pub const DEFAULT_MAX_INPUT_SEQUENCE_STEP: u64 = 120;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ClientIngressConfig {
     pub max_text_bytes: usize,
     pub message_burst: u32,
     pub message_refill_per_second: u32,
+    pub max_input_sequence_step: u64,
 }
 
 impl Default for ClientIngressConfig {
@@ -17,16 +19,30 @@ impl Default for ClientIngressConfig {
             max_text_bytes: DEFAULT_MAX_CLIENT_TEXT_BYTES,
             message_burst: DEFAULT_MESSAGE_BURST,
             message_refill_per_second: DEFAULT_MESSAGE_REFILL_PER_SECOND,
+            max_input_sequence_step: DEFAULT_MAX_INPUT_SEQUENCE_STEP,
         }
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum IngressRejectReason {
-    MessageTooLarge { bytes: usize, max: usize },
+    MessageTooLarge {
+        bytes: usize,
+        max: usize,
+    },
     RateLimited,
-    StaleInputSequence { seq: u64, last: u64 },
-    UnsupportedBinaryFrame { bytes: usize },
+    StaleInputSequence {
+        seq: u64,
+        last: u64,
+    },
+    InputSequenceJump {
+        seq: u64,
+        last: Option<u64>,
+        max_step: u64,
+    },
+    UnsupportedBinaryFrame {
+        bytes: usize,
+    },
 }
 
 impl IngressRejectReason {
@@ -39,6 +55,16 @@ impl IngressRejectReason {
             Self::StaleInputSequence { seq, last } => {
                 format!("stale-input-sequence seq={seq} last={last}")
             }
+            Self::InputSequenceJump {
+                seq,
+                last,
+                max_step,
+            } => match last {
+                Some(last) => {
+                    format!("input-sequence-jump seq={seq} last={last} max-step={max_step}")
+                }
+                None => format!("input-sequence-jump seq={seq} max-step={max_step}"),
+            },
             Self::UnsupportedBinaryFrame { bytes } => {
                 format!("unsupported-binary-frame bytes={bytes}")
             }
@@ -86,6 +112,19 @@ impl ClientIngress {
             if seq <= last {
                 return Err(IngressRejectReason::StaleInputSequence { seq, last });
             }
+            if seq - last > self.config.max_input_sequence_step {
+                return Err(IngressRejectReason::InputSequenceJump {
+                    seq,
+                    last: Some(last),
+                    max_step: self.config.max_input_sequence_step,
+                });
+            }
+        } else if seq > self.config.max_input_sequence_step {
+            return Err(IngressRejectReason::InputSequenceJump {
+                seq,
+                last: None,
+                max_step: self.config.max_input_sequence_step,
+            });
         }
 
         self.last_input_seq = Some(seq);
@@ -145,6 +184,7 @@ mod tests {
             max_text_bytes: DEFAULT_MAX_CLIENT_TEXT_BYTES,
             message_burst: 3,
             message_refill_per_second: DEFAULT_MESSAGE_REFILL_PER_SECOND,
+            max_input_sequence_step: DEFAULT_MAX_INPUT_SEQUENCE_STEP,
         };
         let mut ingress = ClientIngress::new(config);
         for _ in 0..3 {
@@ -165,5 +205,33 @@ mod tests {
             ingress.reject_binary_frame(3),
             IngressRejectReason::UnsupportedBinaryFrame { bytes: 3 }
         );
+    }
+
+    #[test]
+    fn rejects_input_sequence_jumps() {
+        let config = ClientIngressConfig {
+            max_input_sequence_step: 3,
+            ..ClientIngressConfig::default()
+        };
+        let mut ingress = ClientIngress::new(config);
+
+        assert_eq!(
+            ingress.accept_input_sequence(4),
+            Err(IngressRejectReason::InputSequenceJump {
+                seq: 4,
+                last: None,
+                max_step: 3,
+            })
+        );
+        assert!(ingress.accept_input_sequence(1).is_ok());
+        assert_eq!(
+            ingress.accept_input_sequence(5),
+            Err(IngressRejectReason::InputSequenceJump {
+                seq: 5,
+                last: Some(1),
+                max_step: 3,
+            })
+        );
+        assert!(ingress.accept_input_sequence(4).is_ok());
     }
 }

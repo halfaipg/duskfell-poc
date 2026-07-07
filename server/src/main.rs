@@ -34,7 +34,7 @@ use axum::{Json, Router};
 use content::{ContentManifest, WorldContent};
 use ingress::{
     ClientIngress, ClientIngressConfig, IngressRejectReason, DEFAULT_MAX_CLIENT_TEXT_BYTES,
-    DEFAULT_MESSAGE_BURST, DEFAULT_MESSAGE_REFILL_PER_SECOND,
+    DEFAULT_MAX_INPUT_SEQUENCE_STEP, DEFAULT_MESSAGE_BURST, DEFAULT_MESSAGE_REFILL_PER_SECOND,
 };
 use journal::{EventJournal, JournalEvent, JournalEventKind, DEFAULT_RETAINED_EVENTS};
 use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
@@ -99,6 +99,7 @@ const MIN_RUNTIME_WS_TEXT_BYTES: usize = 128;
 const MAX_RUNTIME_WS_TEXT_BYTES: usize = 65_536;
 const MAX_RUNTIME_WS_MESSAGE_BURST: u32 = 1_000;
 const MAX_RUNTIME_WS_MESSAGE_REFILL_PER_SECOND: u32 = 1_000;
+const MAX_RUNTIME_INPUT_SEQUENCE_STEP: u64 = 100_000;
 const MAX_RUNTIME_CLIENT_REJECT_LIMIT: usize = 100;
 const MAX_RUNTIME_SNAPSHOT_INTERVAL_MS: u64 = 5_000;
 const MAX_RUNTIME_INTEREST_RADIUS: f32 = 10_000.0;
@@ -1608,6 +1609,13 @@ async fn metrics(
     );
     append_metric(
         &mut metrics,
+        "sundermere_ws_max_input_sequence_step",
+        "Configured maximum accepted input sequence increment per WebSocket message.",
+        "gauge",
+        state.ingress_config.max_input_sequence_step,
+    );
+    append_metric(
+        &mut metrics,
         "sundermere_client_reject_limit",
         "Rejected client message count that closes one WebSocket connection.",
         "gauge",
@@ -1863,6 +1871,7 @@ struct AdminSummary {
     websocket_max_text_bytes: usize,
     websocket_message_burst: u32,
     websocket_message_refill_per_second: u32,
+    websocket_max_input_sequence_step: u64,
     client_reject_limit: usize,
     origin_allowlist_enabled: bool,
     origin_allowed_count: usize,
@@ -1980,6 +1989,7 @@ async fn admin_summary(
         websocket_max_text_bytes: state.ingress_config.max_text_bytes,
         websocket_message_burst: state.ingress_config.message_burst,
         websocket_message_refill_per_second: state.ingress_config.message_refill_per_second,
+        websocket_max_input_sequence_step: state.ingress_config.max_input_sequence_step,
         client_reject_limit: state.client_reject_limit,
         origin_allowlist_enabled: state.origin_allowlist.enabled(),
         origin_allowed_count: state.origin_allowlist.allowed_count(),
@@ -3451,6 +3461,12 @@ fn validate_runtime_budget_config(config: RuntimeBudgetConfig) -> anyhow::Result
         1,
         MAX_RUNTIME_WS_MESSAGE_REFILL_PER_SECOND,
     )?;
+    validate_u64_budget(
+        "WS_MAX_INPUT_SEQUENCE_STEP",
+        config.ingress_config.max_input_sequence_step,
+        1,
+        MAX_RUNTIME_INPUT_SEQUENCE_STEP,
+    )?;
     validate_usize_budget(
         "CLIENT_REJECT_LIMIT",
         config.client_reject_limit,
@@ -3928,6 +3944,10 @@ fn client_ingress_config() -> anyhow::Result<ClientIngressConfig> {
             "WS_MESSAGE_REFILL_PER_SECOND",
             DEFAULT_MESSAGE_REFILL_PER_SECOND,
         )?,
+        max_input_sequence_step: env_positive_u64(
+            "WS_MAX_INPUT_SEQUENCE_STEP",
+            DEFAULT_MAX_INPUT_SEQUENCE_STEP,
+        )?,
     })
 }
 
@@ -4218,7 +4238,7 @@ mod config_tests {
         WebSocketConfig, MAX_ACCOUNT_SUBJECT_BYTES, MAX_ALLOWED_ORIGINS, MAX_AUTH_TOKEN_BYTES,
         MAX_JWT_AUDIENCE_BYTES, MAX_JWT_ISSUER_BYTES, MAX_ORIGIN_BYTES,
     };
-    use crate::ingress::ClientIngressConfig;
+    use crate::ingress::{ClientIngressConfig, DEFAULT_MAX_INPUT_SEQUENCE_STEP};
     use crate::metrics::AppMetrics;
     use crate::session::{SessionConfig, SessionIssueRateLimitConfig};
     use crate::settlement::{self, SettlementJob};
@@ -5168,6 +5188,7 @@ mod config_tests {
                 max_text_bytes: 4096,
                 message_burst: 20,
                 message_refill_per_second: 30,
+                max_input_sequence_step: DEFAULT_MAX_INPUT_SEQUENCE_STEP,
             },
             max_snapshot_bytes: 65_536,
             max_admin_snapshot_bytes: 262_144,

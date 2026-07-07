@@ -13,6 +13,7 @@ const adminToken = `ws-ingress-config-${runId}`;
 const wsMaxTextBytes = 128;
 const wsMessageBurst = 2;
 const wsMessageRefillPerSecond = 1;
+const wsMaxInputSequenceStep = 10;
 const clientRejectLimit = 3;
 
 if (!Number.isInteger(port) || port <= 0) {
@@ -44,6 +45,7 @@ try {
     "sundermere_ws_max_text_bytes",
     "sundermere_ws_message_burst",
     "sundermere_ws_message_refill_per_second",
+    "sundermere_ws_max_input_sequence_step",
     "sundermere_client_reject_limit",
   ]);
   const oversizedEvent = events.find((event) =>
@@ -63,6 +65,7 @@ try {
       websocketMaxTextBytes: summary.websocketMaxTextBytes,
       websocketMessageBurst: summary.websocketMessageBurst,
       websocketMessageRefillPerSecond: summary.websocketMessageRefillPerSecond,
+      websocketMaxInputSequenceStep: summary.websocketMaxInputSequenceStep,
       clientRejectLimit: summary.clientRejectLimit,
     },
     metrics,
@@ -76,10 +79,12 @@ try {
       summary.websocketMaxTextBytes === wsMaxTextBytes &&
       summary.websocketMessageBurst === wsMessageBurst &&
       summary.websocketMessageRefillPerSecond === wsMessageRefillPerSecond &&
+      summary.websocketMaxInputSequenceStep === wsMaxInputSequenceStep &&
       summary.clientRejectLimit === clientRejectLimit &&
       metrics.sundermere_ws_max_text_bytes === wsMaxTextBytes &&
       metrics.sundermere_ws_message_burst === wsMessageBurst &&
       metrics.sundermere_ws_message_refill_per_second === wsMessageRefillPerSecond &&
+      metrics.sundermere_ws_max_input_sequence_step === wsMaxInputSequenceStep &&
       metrics.sundermere_client_reject_limit === clientRejectLimit &&
       metrics.sundermere_ws_messages_rejected_total >= clientRejectLimit + 1 &&
       metrics.sundermere_ws_messages_rejected_message_too_large_total === 1 &&
@@ -111,6 +116,7 @@ async function startServer() {
       WS_MAX_TEXT_BYTES: String(wsMaxTextBytes),
       WS_MESSAGE_BURST: String(wsMessageBurst),
       WS_MESSAGE_REFILL_PER_SECOND: String(wsMessageRefillPerSecond),
+      WS_MAX_INPUT_SEQUENCE_STEP: String(wsMaxInputSequenceStep),
       CLIENT_REJECT_LIMIT: String(clientRejectLimit),
       JOURNAL_PATH: path.join(runtimeDir, `${runId}-journal.jsonl`),
       SETTLEMENT_OUTBOX_PATH: path.join(runtimeDir, `${runId}-settlement-outbox.jsonl`),

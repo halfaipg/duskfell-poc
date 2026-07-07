@@ -68,6 +68,14 @@ const cases = [
     },
     expected: "MAX_SNAPSHOT_BYTES",
   },
+  {
+    name: "input-sequence-step-too-large",
+    port: basePort + 6,
+    env: {
+      WS_MAX_INPUT_SEQUENCE_STEP: "100001",
+    },
+    expected: "WS_MAX_INPUT_SEQUENCE_STEP",
+  },
 ];
 
 const startedAt = performance.now();

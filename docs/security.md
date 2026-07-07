@@ -43,7 +43,7 @@ Settlement jobs are appended to the durable outbox before the in-process worker 
 
 `scripts/admin-auth-smoke.js` starts an isolated token-protected server and verifies `/admin/summary`, `/admin/events`, `/admin/ownership`, `/admin/runtime`, and `/api/snapshot` reject missing, wrong, or oversized tokens while accepting the configured token.
 
-Metrics expose operational state, including reason-specific WebSocket ingress rejection counters for oversized text frames, per-connection rate limits, stale input sequences, and unsupported binary frames. Set `METRICS_TOKEN` before exposing `/metrics` outside localhost. `scripts/metrics-auth-smoke.js` starts an isolated token-protected server and verifies `/metrics` rejects missing, wrong, or oversized tokens while accepting `x-metrics-token`.
+Metrics expose operational state, including reason-specific WebSocket ingress rejection counters for oversized text frames, per-connection rate limits, stale or jumping input sequences, and unsupported binary frames. Set `METRICS_TOKEN` before exposing `/metrics` outside localhost. `scripts/metrics-auth-smoke.js` starts an isolated token-protected server and verifies `/metrics` rejects missing, wrong, or oversized tokens while accepting `x-metrics-token`.
 
 Set `ALLOWED_ORIGINS` before exposing the browser client from a known host. When configured, both `POST /api/session` and `/ws` upgrades require an exact matching `Origin` header. The startup parser rejects more than 16 origins, entries over 512 bytes, and entries with path/query/fragment components. This is a browser-facing guardrail against cross-site session/socket abuse; it is not a replacement for account authentication or CSRF protections on future mutating HTTP APIs. `scripts/origin-allowlist-smoke.js` verifies malformed origin config fails startup, then verifies missing and wrong origins are rejected while the configured origin is accepted.
 
@@ -97,7 +97,7 @@ Implemented ingress protections:
 - Unsupported binary WebSocket frames are rejected, recorded in the journal, and the socket is closed.
 - Each socket has a configurable token bucket for incoming messages with `WS_MESSAGE_BURST` and `WS_MESSAGE_REFILL_PER_SECOND`.
 - Client WebSocket JSON messages reject unknown fields, so protocol drift or privilege-looking extras are recorded as bad client messages instead of being silently ignored.
-- Input messages must use strictly increasing sequence numbers.
+- Input messages must use strictly increasing sequence numbers, and `WS_MAX_INPUT_SEQUENCE_STEP` bounds how far a sequence can jump within one connection. Stale and jump rejects are visible through reason-specific WebSocket rejection counters.
 - Movement is computed from client intent on the server, with map bounds clamping, diagonal speed normalization, terrain material checks, and terrain step-height checks. Water and excessive terrain-height deltas are rejected in the sim; the browser's terrain renderer is visual only.
 - Player-submitted rename messages are trimmed, capped at 20 characters, restricted to ASCII letters, digits, `-`, and `_`, and rejected without mutation when invalid.
 - Pending and active player display names are unique case-insensitively within the running shard; active names are tracked by authoritative simulation state instead of render-snapshot scans. This prevents same-shard impersonation and duplicate pending tickets but is not a substitute for durable account or character-name reservations.

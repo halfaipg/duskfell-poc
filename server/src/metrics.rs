@@ -12,6 +12,7 @@ pub struct AppMetrics {
     ws_messages_rejected_message_too_large_total: AtomicU64,
     ws_messages_rejected_rate_limited_total: AtomicU64,
     ws_messages_rejected_stale_input_sequence_total: AtomicU64,
+    ws_messages_rejected_input_sequence_jump_total: AtomicU64,
     ws_messages_rejected_unsupported_binary_total: AtomicU64,
     ws_messages_out_total: AtomicU64,
     ws_snapshots_sent_total: AtomicU64,
@@ -92,6 +93,9 @@ impl AppMetrics {
                 .fetch_add(1, Ordering::Relaxed),
             IngressRejectReason::StaleInputSequence { .. } => self
                 .ws_messages_rejected_stale_input_sequence_total
+                .fetch_add(1, Ordering::Relaxed),
+            IngressRejectReason::InputSequenceJump { .. } => self
+                .ws_messages_rejected_input_sequence_jump_total
                 .fetch_add(1, Ordering::Relaxed),
             IngressRejectReason::UnsupportedBinaryFrame { .. } => self
                 .ws_messages_rejected_unsupported_binary_total
@@ -301,6 +305,9 @@ impl AppMetrics {
         let ws_messages_rejected_stale_input_sequence_total = self
             .ws_messages_rejected_stale_input_sequence_total
             .load(Ordering::Relaxed);
+        let ws_messages_rejected_input_sequence_jump_total = self
+            .ws_messages_rejected_input_sequence_jump_total
+            .load(Ordering::Relaxed);
         let ws_messages_rejected_unsupported_binary_total = self
             .ws_messages_rejected_unsupported_binary_total
             .load(Ordering::Relaxed);
@@ -419,6 +426,13 @@ impl AppMetrics {
             "WebSocket input messages rejected because their sequence number was not newer than the previous input.",
             "counter",
             ws_messages_rejected_stale_input_sequence_total,
+        );
+        write_metric(
+            &mut output,
+            "sundermere_ws_messages_rejected_input_sequence_jump_total",
+            "WebSocket input messages rejected because their sequence number jumped beyond the configured per-message step.",
+            "counter",
+            ws_messages_rejected_input_sequence_jump_total,
         );
         write_metric(
             &mut output,
@@ -740,6 +754,11 @@ mod tests {
         metrics.ingress_message_rejected(&IngressRejectReason::RateLimited);
         metrics
             .ingress_message_rejected(&IngressRejectReason::StaleInputSequence { seq: 7, last: 8 });
+        metrics.ingress_message_rejected(&IngressRejectReason::InputSequenceJump {
+            seq: 12,
+            last: Some(8),
+            max_step: 3,
+        });
         metrics.ingress_message_rejected(&IngressRejectReason::UnsupportedBinaryFrame { bytes: 4 });
         metrics.snapshot_visibility_observed(3, 5);
         metrics.snapshot_out(512);
@@ -779,10 +798,11 @@ mod tests {
         assert!(rendered.contains("sundermere_active_connections 0"));
         assert!(rendered.contains("sundermere_ws_connections_total 1"));
         assert!(rendered.contains("sundermere_ws_messages_in_total 1"));
-        assert!(rendered.contains("sundermere_ws_messages_rejected_total 5"));
+        assert!(rendered.contains("sundermere_ws_messages_rejected_total 6"));
         assert!(rendered.contains("sundermere_ws_messages_rejected_message_too_large_total 1"));
         assert!(rendered.contains("sundermere_ws_messages_rejected_rate_limited_total 1"));
         assert!(rendered.contains("sundermere_ws_messages_rejected_stale_input_sequence_total 1"));
+        assert!(rendered.contains("sundermere_ws_messages_rejected_input_sequence_jump_total 1"));
         assert!(rendered.contains("sundermere_ws_messages_rejected_unsupported_binary_total 1"));
         assert!(rendered.contains("sundermere_ws_messages_out_total 2"));
         assert!(rendered.contains("sundermere_ws_snapshots_sent_total 1"));

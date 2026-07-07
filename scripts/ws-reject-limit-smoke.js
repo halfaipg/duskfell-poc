@@ -34,7 +34,9 @@ try {
     "sundermere_active_connections",
     "sundermere_ws_messages_rejected_total",
     "sundermere_ws_messages_rejected_stale_input_sequence_total",
+    "sundermere_ws_messages_rejected_input_sequence_jump_total",
     "sundermere_client_reject_limit",
+    "sundermere_ws_max_input_sequence_step",
   ]);
   const summary = await fetchJson("/admin/summary");
   const events = await fetchJson("/admin/events?limit=20");
@@ -43,6 +45,11 @@ try {
     (event) =>
       event.kind?.type === "clientMessageRejected" &&
       event.kind.reason === "stale-input-sequence seq=1 last=1",
+  );
+  const sequenceJumpEvents = events.filter(
+    (event) =>
+      event.kind?.type === "clientMessageRejected" &&
+      event.kind.reason === "input-sequence-jump seq=50 last=1 max-step=10",
   );
 
   result = {
@@ -53,21 +60,27 @@ try {
     summary: {
       activeConnections: summary.activeConnections,
       clientRejectLimit: summary.clientRejectLimit,
+      websocketMaxInputSequenceStep: summary.websocketMaxInputSequenceStep,
     },
     badMessageEvents: badMessages.length,
     staleInputEvents: staleInputEvents.length,
+    sequenceJumpEvents: sequenceJumpEvents.length,
     elapsedMs: round(performance.now() - startedAt),
     ok:
       session.status === 200 &&
       closeObserved &&
       metrics.sundermere_active_connections === 0 &&
-      metrics.sundermere_ws_messages_rejected_total === 2 &&
+      metrics.sundermere_ws_messages_rejected_total === 3 &&
       metrics.sundermere_ws_messages_rejected_stale_input_sequence_total === 1 &&
-      metrics.sundermere_client_reject_limit === 2 &&
+      metrics.sundermere_ws_messages_rejected_input_sequence_jump_total === 1 &&
+      metrics.sundermere_client_reject_limit === 3 &&
+      metrics.sundermere_ws_max_input_sequence_step === 10 &&
       summary.activeConnections === 0 &&
-      summary.clientRejectLimit === 2 &&
+      summary.clientRejectLimit === 3 &&
+      summary.websocketMaxInputSequenceStep === 10 &&
       badMessages.length >= 1 &&
-      staleInputEvents.length >= 1,
+      staleInputEvents.length >= 1 &&
+      sequenceJumpEvents.length >= 1,
   };
 } catch (err) {
   result = {
@@ -101,7 +114,8 @@ async function startServer() {
       JOURNAL_PATH: path.join(runtimeDir, `${runId}-journal.jsonl`),
       SETTLEMENT_OUTBOX_PATH: path.join(runtimeDir, `${runId}-settlement-outbox.jsonl`),
       REQUIRE_SESSION: "true",
-      CLIENT_REJECT_LIMIT: "2",
+      CLIENT_REJECT_LIMIT: "3",
+      WS_MAX_INPUT_SEQUENCE_STEP: "10",
       RUST_LOG: "sundermere_server=warn,tower_http=warn",
     },
     stdio: ["ignore", "pipe", "pipe"],
@@ -129,6 +143,7 @@ async function sendBadMessagesUntilClose(ws) {
       };
       ws.send(JSON.stringify(input));
       ws.send(JSON.stringify(input));
+      ws.send(JSON.stringify({ ...input, seq: 50 }));
       ws.send("{not-json");
     });
     ws.addEventListener("close", () => {

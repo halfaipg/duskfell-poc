@@ -271,7 +271,7 @@ Set `INTEREST_RADIUS` to tune how many world units around each player are includ
 Set `MAX_SNAPSHOT_BYTES` to cap serialized WebSocket welcome/snapshot payloads. The default is `65536`; payloads above the cap are rejected and the connection is closed instead of sending an unexpectedly large update.
 Set `MAX_ADMIN_SNAPSHOT_BYTES` to cap the serialized full debug/admin `/api/snapshot` response. The default is `262144`; oversized debug snapshots return `413` and increment `sundermere_admin_snapshot_payload_rejected_total`.
 Set `WS_HEARTBEAT_SECONDS` and `WS_IDLE_TIMEOUT_SECONDS` to tune WebSocket ping cadence and stale-connection eviction. Defaults are `30` and `180`; the idle timeout must be greater than the heartbeat interval.
-Set `WS_MAX_TEXT_BYTES`, `WS_MESSAGE_BURST`, and `WS_MESSAGE_REFILL_PER_SECOND` to tune per-socket text-frame size and token-bucket ingress limits. Defaults are `4096`, `20`, and `30`.
+Set `WS_MAX_TEXT_BYTES`, `WS_MESSAGE_BURST`, `WS_MESSAGE_REFILL_PER_SECOND`, and `WS_MAX_INPUT_SEQUENCE_STEP` to tune per-socket text-frame size, token-bucket ingress limits, and accepted input-sequence jumps. Defaults are `4096`, `20`, `30`, and `120`.
 Set `CLIENT_REJECT_LIMIT` to close a WebSocket after repeated rejected client messages on that connection. The default is `8`.
 Invalid boolean or numeric environment values fail startup instead of silently falling back to defaults. The server also rejects runtime budgets outside the shared deployment envelope, `MAX_CONNECTIONS_PER_IP` or `MAX_CONNECTIONS_PER_ACCOUNT` above `MAX_ACTIVE_CONNECTIONS`, rate-limit bursts above their per-minute budgets, and WebSocket idle timeouts that are not greater than the heartbeat interval. Deployment preflight checks the same capacity and payload budget invariants before boot.
 
@@ -805,7 +805,7 @@ Run the WebSocket reject-limit smoke:
 npm run smoke:ws-reject-limit
 ```
 
-The command starts an isolated strict-session server with `CLIENT_REJECT_LIMIT=2`, sends malformed text plus a syntactically valid message with an unknown field, and verifies the server closes the connection while recording rejection metrics and admin journal events.
+The command starts an isolated strict-session server with a low `CLIENT_REJECT_LIMIT`, sends stale input, an excessive input sequence jump, and malformed text, then verifies the server closes the connection while recording reason-specific rejection metrics and admin journal events.
 
 Run a small WebSocket benchmark against a running server:
 

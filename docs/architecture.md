@@ -153,7 +153,7 @@ This PoC uses WebSocket because it runs everywhere with minimal deployment frict
 
 The WebSocket protocol is JSON text only. Binary frames are treated as unsupported client traffic, recorded as rejected messages, and closed so non-protocol traffic cannot keep shard capacity alive.
 
-Each WebSocket also tracks rejected text messages. `WS_MAX_TEXT_BYTES`, `WS_MESSAGE_BURST`, and `WS_MESSAGE_REFILL_PER_SECOND` control per-socket text-frame and message-rate limits; `CLIENT_REJECT_LIMIT` closes a connection after repeated malformed JSON, stale input sequence, oversized, rate-limited, or invalid rename messages so bad clients do not linger until idle timeout.
+Each WebSocket also tracks rejected text messages. `WS_MAX_TEXT_BYTES`, `WS_MESSAGE_BURST`, `WS_MESSAGE_REFILL_PER_SECOND`, and `WS_MAX_INPUT_SEQUENCE_STEP` control per-socket text-frame, message-rate, and input-sequence limits; `CLIENT_REJECT_LIMIT` closes a connection after repeated malformed JSON, stale or jumping input sequence, oversized, rate-limited, or invalid rename messages so bad clients do not linger until idle timeout.
 
 Movement is server-authoritative intent processing. Clients submit direction booleans, not positions; the sim computes velocity, clamps map bounds, checks the validated terrain profile for walkable material and maximum height step, and normalizes diagonal input so combined horizontal/vertical movement does not exceed the cardinal speed budget.
 
