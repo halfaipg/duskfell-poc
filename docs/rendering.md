@@ -1,6 +1,8 @@
 # Rendering Direction
 
-Checked July 6, 2026. The visual target should be a clean-room military/plan-oblique 2D tile renderer, not true isometric and not the common `64x32` dimetric pixel-art style.
+Checked July 6, 2026 and live-reviewed again on July 7, 2026. The visual target should be a clean-room military/plan-oblique 2D tile renderer, not true isometric and not the common `64x32` dimetric pixel-art style.
+
+The running PoC camera is aligned with that target: the screen reads as square `64x64` diamond tiles in plan-oblique projection. The remaining visual weakness is the placeholder art direction: flat repeated terrain, weak transition/edge families, limited elevation character, and simple props/actors. The next graphics work should replace the placeholder terrain and prop atlas through the checked manifest pipeline before investing heavily in final character polish.
 
 ## Projection
 

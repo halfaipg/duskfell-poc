@@ -1,6 +1,22 @@
 # Art Pipeline
 
-Initial research snapshot from July 6, 2026. Production adoption still needs a final license/API/terms check for each tool and model. This project needs original assets only. Do not use UO-derived art, screenshots, extracted tiles, paperdolls, hue tables, maps, UI, or "style reference" prompts based on UO.
+Initial research snapshot from July 6, 2026. Refreshed July 7, 2026 against the running PoC and current GitHub topic results. Production adoption still needs a final license/API/terms check for each tool and model. This project needs original assets only. Do not use UO-derived art, screenshots, extracted tiles, paperdolls, hue tables, maps, UI, or "style reference" prompts based on UO.
+
+## July 7, 2026 Decision Update
+
+The current camera/projection contract is right for the target: the live PoC renders `64x64` square diamond tiles in `military-plan-oblique` projection, not the common squashed `64x32` dimetric look. The graphics problem is asset quality and terrain richness, not the camera math. The placeholder atlas reads flat and repetitive, with weak terrain transitions, elevation character, props, shadows, and sprite identity.
+
+Use **Agent Sprite Forge** as the first pipeline spine for the next experiment. It has the best fit from the `sprite-generator` topic for prompt-to-sheet orchestration, transparent frames, maps/props, frame extraction, previews, and metadata. Keep **SpriteBrew** as a UX/export comparison only because its AGPL-3.0 license is a product constraint. Use **Texel Studio** as a terrain/autotile R&D comparison, not as the character-animation pipeline. Treat **sprite-sheet-creator** as a promising no-vendor reference for RPG-directional character workflow, but do not rely on it until its license is clarified.
+
+The next art milestone should be a one-screen Duskfell oblique asset bake-off, not a random prettier hero sprite:
+
+1. 9 terrain families: grass, dirt, cobble, shore, shallow water, cliff edge, road, field, and dungeon floor.
+2. 12 props: barrel, crate, anvil, forge, bedroll, tree stump, dead tree, ore rock, campfire, signpost, ruined wall, and market stall.
+3. 1 paperdoll-ish humanoid base with 4 directions and 4-frame walk cycles.
+4. 2 equipment overlays, such as cloak and sword, tested on the same base.
+5. Exported transparent PNG frames, contact shadows where possible, frame metadata, and a bottom-center foot anchor per character frame.
+
+The pass succeeds only if the assets survive the existing manifest intake: `military-plan-oblique`, square cells, clean-room prompts, negative prompt guarding against dimetric/isometric drift, SHA-256 pins, provenance, tool review, frame bounds, render layer, footprint, shadow metadata, and approval state.
 
 ## GitHub Sprite Generator Topic Verdict
 
