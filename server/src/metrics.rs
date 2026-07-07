@@ -1,12 +1,18 @@
 use std::fmt::Write;
 use std::sync::atomic::{AtomicU64, Ordering};
 
+use crate::ingress::IngressRejectReason;
+
 #[derive(Debug, Default)]
 pub struct AppMetrics {
     active_connections: AtomicU64,
     ws_connections_total: AtomicU64,
     ws_messages_in_total: AtomicU64,
     ws_messages_rejected_total: AtomicU64,
+    ws_messages_rejected_message_too_large_total: AtomicU64,
+    ws_messages_rejected_rate_limited_total: AtomicU64,
+    ws_messages_rejected_stale_input_sequence_total: AtomicU64,
+    ws_messages_rejected_unsupported_binary_total: AtomicU64,
     ws_messages_out_total: AtomicU64,
     ws_snapshots_sent_total: AtomicU64,
     ws_snapshot_payload_rejected_total: AtomicU64,
@@ -73,6 +79,24 @@ impl AppMetrics {
     pub fn message_rejected(&self) {
         self.ws_messages_rejected_total
             .fetch_add(1, Ordering::Relaxed);
+    }
+
+    pub fn ingress_message_rejected(&self, reason: &IngressRejectReason) {
+        self.message_rejected();
+        match reason {
+            IngressRejectReason::MessageTooLarge { .. } => self
+                .ws_messages_rejected_message_too_large_total
+                .fetch_add(1, Ordering::Relaxed),
+            IngressRejectReason::RateLimited => self
+                .ws_messages_rejected_rate_limited_total
+                .fetch_add(1, Ordering::Relaxed),
+            IngressRejectReason::StaleInputSequence { .. } => self
+                .ws_messages_rejected_stale_input_sequence_total
+                .fetch_add(1, Ordering::Relaxed),
+            IngressRejectReason::UnsupportedBinaryFrame { .. } => self
+                .ws_messages_rejected_unsupported_binary_total
+                .fetch_add(1, Ordering::Relaxed),
+        };
     }
 
     pub fn message_out(&self, bytes: usize) {
@@ -268,6 +292,18 @@ impl AppMetrics {
         let ws_connections_total = self.ws_connections_total.load(Ordering::Relaxed);
         let ws_messages_in_total = self.ws_messages_in_total.load(Ordering::Relaxed);
         let ws_messages_rejected_total = self.ws_messages_rejected_total.load(Ordering::Relaxed);
+        let ws_messages_rejected_message_too_large_total = self
+            .ws_messages_rejected_message_too_large_total
+            .load(Ordering::Relaxed);
+        let ws_messages_rejected_rate_limited_total = self
+            .ws_messages_rejected_rate_limited_total
+            .load(Ordering::Relaxed);
+        let ws_messages_rejected_stale_input_sequence_total = self
+            .ws_messages_rejected_stale_input_sequence_total
+            .load(Ordering::Relaxed);
+        let ws_messages_rejected_unsupported_binary_total = self
+            .ws_messages_rejected_unsupported_binary_total
+            .load(Ordering::Relaxed);
         let ws_messages_out_total = self.ws_messages_out_total.load(Ordering::Relaxed);
         let ws_snapshots_sent_total = self.ws_snapshots_sent_total.load(Ordering::Relaxed);
         let ws_snapshot_payload_rejected_total = self
@@ -359,9 +395,37 @@ impl AppMetrics {
         write_metric(
             &mut output,
             "sundermere_ws_messages_rejected_total",
-            "Rejected or invalid WebSocket text messages from clients.",
+            "Rejected or invalid WebSocket client messages and frames.",
             "counter",
             ws_messages_rejected_total,
+        );
+        write_metric(
+            &mut output,
+            "sundermere_ws_messages_rejected_message_too_large_total",
+            "WebSocket client messages rejected because the text frame exceeded the configured byte cap.",
+            "counter",
+            ws_messages_rejected_message_too_large_total,
+        );
+        write_metric(
+            &mut output,
+            "sundermere_ws_messages_rejected_rate_limited_total",
+            "WebSocket client messages rejected by the per-connection token bucket.",
+            "counter",
+            ws_messages_rejected_rate_limited_total,
+        );
+        write_metric(
+            &mut output,
+            "sundermere_ws_messages_rejected_stale_input_sequence_total",
+            "WebSocket input messages rejected because their sequence number was not newer than the previous input.",
+            "counter",
+            ws_messages_rejected_stale_input_sequence_total,
+        );
+        write_metric(
+            &mut output,
+            "sundermere_ws_messages_rejected_unsupported_binary_total",
+            "WebSocket binary frames rejected because the client protocol only accepts text JSON messages.",
+            "counter",
+            ws_messages_rejected_unsupported_binary_total,
         );
         write_metric(
             &mut output,
@@ -659,6 +723,8 @@ fn update_max(metric: &AtomicU64, observed: u64) {
 
 #[cfg(test)]
 mod tests {
+    use crate::ingress::IngressRejectReason;
+
     use super::AppMetrics;
 
     #[test]
@@ -667,6 +733,14 @@ mod tests {
         metrics.connection_opened();
         metrics.message_in();
         metrics.message_rejected();
+        metrics.ingress_message_rejected(&IngressRejectReason::MessageTooLarge {
+            bytes: 513,
+            max: 512,
+        });
+        metrics.ingress_message_rejected(&IngressRejectReason::RateLimited);
+        metrics
+            .ingress_message_rejected(&IngressRejectReason::StaleInputSequence { seq: 7, last: 8 });
+        metrics.ingress_message_rejected(&IngressRejectReason::UnsupportedBinaryFrame { bytes: 4 });
         metrics.snapshot_visibility_observed(3, 5);
         metrics.snapshot_out(512);
         metrics.snapshot_payload_rejected();
@@ -705,7 +779,11 @@ mod tests {
         assert!(rendered.contains("sundermere_active_connections 0"));
         assert!(rendered.contains("sundermere_ws_connections_total 1"));
         assert!(rendered.contains("sundermere_ws_messages_in_total 1"));
-        assert!(rendered.contains("sundermere_ws_messages_rejected_total 1"));
+        assert!(rendered.contains("sundermere_ws_messages_rejected_total 5"));
+        assert!(rendered.contains("sundermere_ws_messages_rejected_message_too_large_total 1"));
+        assert!(rendered.contains("sundermere_ws_messages_rejected_rate_limited_total 1"));
+        assert!(rendered.contains("sundermere_ws_messages_rejected_stale_input_sequence_total 1"));
+        assert!(rendered.contains("sundermere_ws_messages_rejected_unsupported_binary_total 1"));
         assert!(rendered.contains("sundermere_ws_messages_out_total 2"));
         assert!(rendered.contains("sundermere_ws_snapshots_sent_total 1"));
         assert!(rendered.contains("sundermere_ws_snapshot_payload_rejected_total 1"));

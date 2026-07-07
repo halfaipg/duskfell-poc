@@ -32,6 +32,7 @@ try {
   const metrics = parseMetrics(await fetchText("/metrics"), [
     "sundermere_active_connections",
     "sundermere_ws_messages_rejected_total",
+    "sundermere_ws_messages_rejected_unsupported_binary_total",
   ]);
   const events = await fetchJson("/admin/events?limit=20");
   const binaryRejectEvent = events.find(
@@ -54,6 +55,7 @@ try {
       rawSocket.isClosed() === true &&
       metrics.sundermere_active_connections === 0 &&
       metrics.sundermere_ws_messages_rejected_total === 1 &&
+      metrics.sundermere_ws_messages_rejected_unsupported_binary_total === 1 &&
       Boolean(binaryRejectEvent),
   };
 } catch (err) {

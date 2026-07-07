@@ -38,6 +38,8 @@ try {
   ]);
   const metrics = parseMetrics(metricsText, [
     "sundermere_ws_messages_rejected_total",
+    "sundermere_ws_messages_rejected_message_too_large_total",
+    "sundermere_ws_messages_rejected_rate_limited_total",
     "sundermere_ws_messages_in_total",
     "sundermere_ws_max_text_bytes",
     "sundermere_ws_message_burst",
@@ -80,6 +82,8 @@ try {
       metrics.sundermere_ws_message_refill_per_second === wsMessageRefillPerSecond &&
       metrics.sundermere_client_reject_limit === clientRejectLimit &&
       metrics.sundermere_ws_messages_rejected_total >= clientRejectLimit + 1 &&
+      metrics.sundermere_ws_messages_rejected_message_too_large_total === 1 &&
+      metrics.sundermere_ws_messages_rejected_rate_limited_total >= clientRejectLimit &&
       metrics.sundermere_ws_messages_in_total >= wsMessageBurst &&
       Boolean(oversizedEvent) &&
       rateLimitedEvents.length >= clientRejectLimit,

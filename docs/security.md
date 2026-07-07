@@ -43,7 +43,7 @@ Settlement jobs are appended to the durable outbox before the in-process worker 
 
 `scripts/admin-auth-smoke.js` starts an isolated token-protected server and verifies `/admin/summary`, `/admin/events`, `/admin/ownership`, `/admin/runtime`, and `/api/snapshot` reject missing, wrong, or oversized tokens while accepting the configured token.
 
-Metrics expose operational state. Set `METRICS_TOKEN` before exposing `/metrics` outside localhost. `scripts/metrics-auth-smoke.js` starts an isolated token-protected server and verifies `/metrics` rejects missing, wrong, or oversized tokens while accepting `x-metrics-token`.
+Metrics expose operational state, including reason-specific WebSocket ingress rejection counters for oversized text frames, per-connection rate limits, stale input sequences, and unsupported binary frames. Set `METRICS_TOKEN` before exposing `/metrics` outside localhost. `scripts/metrics-auth-smoke.js` starts an isolated token-protected server and verifies `/metrics` rejects missing, wrong, or oversized tokens while accepting `x-metrics-token`.
 
 Set `ALLOWED_ORIGINS` before exposing the browser client from a known host. When configured, both `POST /api/session` and `/ws` upgrades require an exact matching `Origin` header. The startup parser rejects more than 16 origins, entries over 512 bytes, and entries with path/query/fragment components. This is a browser-facing guardrail against cross-site session/socket abuse; it is not a replacement for account authentication or CSRF protections on future mutating HTTP APIs. `scripts/origin-allowlist-smoke.js` verifies malformed origin config fails startup, then verifies missing and wrong origins are rejected while the configured origin is accepted.
 

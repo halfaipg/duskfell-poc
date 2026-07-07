@@ -33,11 +33,17 @@ try {
   const metrics = parseMetrics(await fetchText("/metrics"), [
     "sundermere_active_connections",
     "sundermere_ws_messages_rejected_total",
+    "sundermere_ws_messages_rejected_stale_input_sequence_total",
     "sundermere_client_reject_limit",
   ]);
   const summary = await fetchJson("/admin/summary");
   const events = await fetchJson("/admin/events?limit=20");
   const badMessages = events.filter((event) => event.kind?.type === "badClientMessage");
+  const staleInputEvents = events.filter(
+    (event) =>
+      event.kind?.type === "clientMessageRejected" &&
+      event.kind.reason === "stale-input-sequence seq=1 last=1",
+  );
 
   result = {
     port,
@@ -49,16 +55,19 @@ try {
       clientRejectLimit: summary.clientRejectLimit,
     },
     badMessageEvents: badMessages.length,
+    staleInputEvents: staleInputEvents.length,
     elapsedMs: round(performance.now() - startedAt),
     ok:
       session.status === 200 &&
       closeObserved &&
       metrics.sundermere_active_connections === 0 &&
       metrics.sundermere_ws_messages_rejected_total === 2 &&
+      metrics.sundermere_ws_messages_rejected_stale_input_sequence_total === 1 &&
       metrics.sundermere_client_reject_limit === 2 &&
       summary.activeConnections === 0 &&
       summary.clientRejectLimit === 2 &&
-      badMessages.length >= 2,
+      badMessages.length >= 1 &&
+      staleInputEvents.length >= 1,
   };
 } catch (err) {
   result = {
@@ -109,19 +118,18 @@ async function sendBadMessagesUntilClose(ws) {
     }, 5000);
 
     ws.addEventListener("open", () => {
+      const input = {
+        type: "input",
+        seq: 1,
+        up: false,
+        down: false,
+        left: false,
+        right: false,
+        interact: false,
+      };
+      ws.send(JSON.stringify(input));
+      ws.send(JSON.stringify(input));
       ws.send("{not-json");
-      ws.send(
-        JSON.stringify({
-          type: "input",
-          seq: 1,
-          up: false,
-          down: false,
-          left: false,
-          right: false,
-          interact: false,
-          admin: true,
-        }),
-      );
     });
     ws.addEventListener("close", () => {
       clearTimeout(timeout);

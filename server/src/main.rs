@@ -2495,7 +2495,7 @@ async fn handle_client_text(
 }
 
 async fn record_rejection(state: &AppState, player_id: PlayerId, reason: IngressRejectReason) {
-    state.metrics.message_rejected();
+    state.metrics.ingress_message_rejected(&reason);
     let tick = state.sim.lock().await.tick_count();
     record_journal(
         state,
