@@ -1,14 +1,16 @@
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
-import zlib from "node:zlib";
 
 import { updateSpriteImageHash } from "./lib/asset-hashes.js";
+import { encodePng } from "./placeholder-terrain-atlas/png.js";
+import { createRaster } from "./placeholder-sprites/raster.js";
 
 const manifestPath = path.resolve("assets", "sprites", "manifest.json");
 const cell = 128;
 let width = cell * 4;
 let height = cell * 4;
 let pixels = Buffer.alloc(width * height * 4);
+let raster = createRaster({ width, height, pixels });
 
 const playerOutputPath = path.resolve("assets", "sprites", "player-placeholder.png");
 const propsOutputPath = path.resolve("assets", "sprites", "props-placeholder.png");
@@ -31,6 +33,7 @@ console.log(`updated ${manifestPath} player-placeholder imageSha256=${playerSha2
 width = cell * 5;
 height = cell;
 pixels = Buffer.alloc(width * height * 4);
+raster = createRaster({ width, height, pixels });
 ["registrar", "forge", "grove", "ore", "shrine"].forEach((kind, frame) => {
   drawPropFrame(frame, kind);
 });
@@ -215,157 +218,38 @@ function drawPropFrame(frame, kind) {
   }
 }
 
-function fillRect(x, y, w, h, rgba) {
-  const x0 = Math.round(w < 0 ? x + w : x);
-  const y0 = Math.round(h < 0 ? y + h : y);
-  const x1 = Math.round(w < 0 ? x : x + w);
-  const y1 = Math.round(h < 0 ? y : y + h);
-  for (let py = y0; py < y1; py += 1) {
-    for (let px = x0; px < x1; px += 1) {
-      setPixel(px, py, rgba);
-    }
-  }
+function fillRect(...args) {
+  return raster.fillRect(...args);
 }
 
-function strokeRect(x, y, w, h, rgba) {
-  for (let px = x; px < x + w; px += 1) {
-    setPixel(px, y, rgba);
-    setPixel(px, y + h - 1, rgba);
-  }
-  for (let py = y; py < y + h; py += 1) {
-    setPixel(x, py, rgba);
-    setPixel(x + w - 1, py, rgba);
-  }
+function strokeRect(...args) {
+  return raster.strokeRect(...args);
 }
 
-function fillEllipse(cx, cy, rx, ry, rgba) {
-  for (let py = Math.floor(cy - ry); py <= Math.ceil(cy + ry); py += 1) {
-    for (let px = Math.floor(cx - rx); px <= Math.ceil(cx + rx); px += 1) {
-      const nx = (px - cx) / rx;
-      const ny = (py - cy) / ry;
-      if (nx * nx + ny * ny <= 1) setPixel(px, py, rgba);
-    }
-  }
+function fillEllipse(...args) {
+  return raster.fillEllipse(...args);
 }
 
-function strokeEllipse(cx, cy, rx, ry, rgba) {
-  for (let py = Math.floor(cy - ry); py <= Math.ceil(cy + ry); py += 1) {
-    for (let px = Math.floor(cx - rx); px <= Math.ceil(cx + rx); px += 1) {
-      const nx = (px - cx) / rx;
-      const ny = (py - cy) / ry;
-      const d = nx * nx + ny * ny;
-      if (d > 0.9 && d <= 1.08) setPixel(px, py, rgba);
-    }
-  }
+function strokeEllipse(...args) {
+  return raster.strokeEllipse(...args);
 }
 
-function fillDiamond(cx, cy, rx, ry, rgba) {
-  for (let py = Math.floor(cy - ry); py <= Math.ceil(cy + ry); py += 1) {
-    for (let px = Math.floor(cx - rx); px <= Math.ceil(cx + rx); px += 1) {
-      if (Math.abs(px - cx) / rx + Math.abs(py - cy) / ry <= 1) setPixel(px, py, rgba);
-    }
-  }
+function fillDiamond(...args) {
+  return raster.fillDiamond(...args);
 }
 
-function strokeDiamond(cx, cy, rx, ry, rgba) {
-  for (let py = Math.floor(cy - ry); py <= Math.ceil(cy + ry); py += 1) {
-    for (let px = Math.floor(cx - rx); px <= Math.ceil(cx + rx); px += 1) {
-      const d = Math.abs(px - cx) / rx + Math.abs(py - cy) / ry;
-      if (d > 0.86 && d <= 1.08) setPixel(px, py, rgba);
-    }
-  }
+function strokeDiamond(...args) {
+  return raster.strokeDiamond(...args);
 }
 
-function fillTriangle(points, rgba) {
-  const minX = Math.floor(Math.min(...points.map(([x]) => x)));
-  const maxX = Math.ceil(Math.max(...points.map(([x]) => x)));
-  const minY = Math.floor(Math.min(...points.map(([, y]) => y)));
-  const maxY = Math.ceil(Math.max(...points.map(([, y]) => y)));
-  for (let y = minY; y <= maxY; y += 1) {
-    for (let x = minX; x <= maxX; x += 1) {
-      if (pointInTriangle(x + 0.5, y + 0.5, points)) setPixel(x, y, rgba);
-    }
-  }
+function fillTriangle(...args) {
+  return raster.fillTriangle(...args);
 }
 
-function strokeTriangle(points, rgba) {
-  line(points[0][0], points[0][1], points[1][0], points[1][1], rgba);
-  line(points[1][0], points[1][1], points[2][0], points[2][1], rgba);
-  line(points[2][0], points[2][1], points[0][0], points[0][1], rgba);
+function strokeTriangle(...args) {
+  return raster.strokeTriangle(...args);
 }
 
-function pointInTriangle(x, y, points) {
-  const [a, b, c] = points;
-  const w1 =
-    (a[0] * (c[1] - a[1]) + (y - a[1]) * (c[0] - a[0]) - x * (c[1] - a[1])) /
-    ((b[1] - a[1]) * (c[0] - a[0]) - (b[0] - a[0]) * (c[1] - a[1]));
-  const w2 = (y - a[1] - w1 * (b[1] - a[1])) / (c[1] - a[1]);
-  return w1 >= 0 && w2 >= 0 && w1 + w2 <= 1;
-}
-
-function line(x0, y0, x1, y1, rgba) {
-  const steps = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0));
-  for (let step = 0; step <= steps; step += 1) {
-    const t = steps === 0 ? 0 : step / steps;
-    setPixel(Math.round(x0 + (x1 - x0) * t), Math.round(y0 + (y1 - y0) * t), rgba);
-  }
-}
-
-function setPixel(x, y, rgba) {
-  if (x < 0 || y < 0 || x >= width || y >= height) return;
-  const offset = (y * width + x) * 4;
-  const alpha = rgba[3] / 255;
-  const inverse = 1 - alpha;
-  pixels[offset] = Math.round(rgba[0] * alpha + pixels[offset] * inverse);
-  pixels[offset + 1] = Math.round(rgba[1] * alpha + pixels[offset + 1] * inverse);
-  pixels[offset + 2] = Math.round(rgba[2] * alpha + pixels[offset + 2] * inverse);
-  pixels[offset + 3] = Math.min(255, Math.round(rgba[3] + pixels[offset + 3] * inverse));
-}
-
-function encodePng(pngWidth, pngHeight, rgba) {
-  const scanlines = Buffer.alloc((pngWidth * 4 + 1) * pngHeight);
-  for (let y = 0; y < pngHeight; y += 1) {
-    const rowStart = y * (pngWidth * 4 + 1);
-    scanlines[rowStart] = 0;
-    rgba.copy(scanlines, rowStart + 1, y * pngWidth * 4, (y + 1) * pngWidth * 4);
-  }
-
-  return Buffer.concat([
-    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
-    chunk("IHDR", ihdr(pngWidth, pngHeight)),
-    chunk("IDAT", zlib.deflateSync(scanlines, { level: 9 })),
-    chunk("IEND", Buffer.alloc(0)),
-  ]);
-}
-
-function ihdr(pngWidth, pngHeight) {
-  const data = Buffer.alloc(13);
-  data.writeUInt32BE(pngWidth, 0);
-  data.writeUInt32BE(pngHeight, 4);
-  data[8] = 8;
-  data[9] = 6;
-  data[10] = 0;
-  data[11] = 0;
-  data[12] = 0;
-  return data;
-}
-
-function chunk(type, data) {
-  const typeBytes = Buffer.from(type, "ascii");
-  const length = Buffer.alloc(4);
-  length.writeUInt32BE(data.length, 0);
-  const crc = Buffer.alloc(4);
-  crc.writeUInt32BE(crc32(Buffer.concat([typeBytes, data])), 0);
-  return Buffer.concat([length, typeBytes, data, crc]);
-}
-
-function crc32(buffer) {
-  let crc = 0xffffffff;
-  for (const byte of buffer) {
-    crc ^= byte;
-    for (let bit = 0; bit < 8; bit += 1) {
-      crc = crc & 1 ? 0xedb88320 ^ (crc >>> 1) : crc >>> 1;
-    }
-  }
-  return (crc ^ 0xffffffff) >>> 0;
+function line(...args) {
+  return raster.line(...args);
 }

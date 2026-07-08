@@ -18,6 +18,243 @@ The next art milestone should be a one-screen Duskfell oblique asset bake-off, n
 
 The pass succeeds only if the assets survive the existing manifest intake: `military-plan-oblique`, square cells, clean-room prompts, negative prompt guarding against dimetric/isometric drift, SHA-256 pins, provenance, tool review, frame bounds, render layer, footprint, shadow metadata, and approval state.
 
+## July 8, 2026 Player-Made UO Asset Pack Deep Dive
+
+Research copies were cloned outside this repo at `/Users/j/Documents/New project/asset-reference-repos` so asset experiments do not pollute Duskfell source control. Local visual contact sheets were generated under `/tmp/duskfell_asset_research` for review.
+
+Important legal/art-direction conclusion: these packs are valuable research, but they are not automatically safe production art for Duskfell. Both primary packs carry CC0 metadata, but they describe themselves as Ultima Online modifications/overrides. Some contents are explicitly paintovers or replacements for classic client art, and one Fiddle-Me-This README note says a header dragon icon was purchased from a third-party marketplace. For a commercial or web3 clean-room game, treat the packs as pipeline and composition references unless counsel and an art lead explicitly approve direct use of a specific file.
+
+### Primary Asset Findings
+
+| Candidate | URL | License signal | Local inventory | Best use for Duskfell |
+| --- | --- | --- | --- | --- |
+| CorvaeOboro/ultima_online_mods | https://github.com/CorvaeOboro/ultima_online_mods | GitHub and repo LICENSE report CC0-1.0 | about 1.9 GB; 4,476 BMP, 3,277 PSD, 1,209 PNG; `ART`, `ENV`, `UI`, and tool folders | Best research source for UO-like terrain families, tree slicing, gump composition, item/icon polish, and asset-pipeline structure. Use as blueprint first, direct pixels only after review. |
+| NewYears1978/Fiddle-Me-This | https://github.com/NewYears1978/Fiddle-Me-This | GitHub and repo LICENSE report CC0-1.0 | about 15 MB; 174 PNG, 6 XML gumps, 3 GIF previews | UI/gump reference for readable larger status panels and TazUO-style external image overrides. Not useful for terrain. |
+| KitaByte/UOGumpEditor | https://github.com/KitaByte/UOGumpEditor | MIT | tool repo, not an art pack | Useful reference if Duskfell needs a gump/layout editor concept. |
+| CorexUO/GumpStudio | https://github.com/CorexUO/GumpStudio | no GitHub license signal found | tool repo, not an art pack | Reference only unless license is clarified. |
+| polserver/UOFiddler | https://github.com/polserver/UOFiddler | GitHub metadata has no SPDX license; repo description says Beerware | UO file inspection/import tool | Reference only. Do not build Duskfell around UO client file formats. |
+| CorvaeOboro/zenv_blender | https://github.com/CorvaeOboro/zenv_blender | CC0-1.0 | Blender addon/tools repo | Worth inspecting later for terrain/render workflow ideas, especially map-to-landtile generation. |
+
+### What Corvae Teaches Us
+
+The most important lesson is not "copy prettier tiles." It is that the convincing look comes from coherent asset families:
+
+- `ENV` is split by terrain family: cave dark, dirt hills, farm lands, forest grove, heartwood, mountain path, poison/paroxysmus, sand dunes, snow ridge.
+- Terrain uses both source texture scale and land-art scale. The inspected files include many `128x128` source textures and `44x44` oblique land tiles.
+- Terrain families include flat tiles, slope/embankment variants, material transitions, and roughness variation. This is why UO-style terrain feels authored instead of randomly tiled.
+- `ART_Tree` and `ENV_HeartWood/ART_S` show tree variants, autumn variants, dead/bare variants, and large trees split into sortable vertical slices.
+- Heartwood tree composites include JSON offsets for many 44px-wide slices. That maps directly to the Duskfell renderer problem: a big tree should not be one flat billboard. It should be a layered object with trunk/canopy slices, z-bias, collision footprint, resource state, and canopy occlusion/fade.
+- The tools folder includes a texture-to-oblique-land-tile converter. It rotates square textures into land-art tiles, darkens slightly, blends small noise, sharpens lightly, and applies an alpha mask. We should build a clean-room Duskfell equivalent for `64x64` military-plan-oblique tiles.
+- MassImport XML/TXT files are not useful as runtime formats for us, but the metadata pattern is useful: every art tile has a stable id, source path, category, and import role.
+
+### What Fiddle-Me-This Teaches Us
+
+Fiddle-Me-This is mostly UI/gumps:
+
+- custom XML gumps and PNG external images for TazUO-style override loading
+- larger status bars and health/mana/stamina treatments for high-resolution play
+- useful reminder that Duskfell needs readable MMO UI at modern resolutions
+
+It is not a terrain source and should not distract from the world-art pipeline.
+
+### Duskfell Pipeline Decision
+
+Build a clean-room composition kit inspired by the structure above:
+
+1. Author or generate `128x128` source textures per biome: grass, dirt, rock, cobble, sand, snow, marsh, shallow water, field, ruin floor.
+2. Normalize them into `64x64` military-plan-oblique runtime land tiles, not 64x32 isometric tiles.
+3. For each material, require a family: flat base, 4 cardinal edge transitions, 4 corner transitions, ramps/slopes, elevation lip, worn/path variant, sparse/detail variant, and decal overlays.
+4. Store terrain family metadata in our manifest: material, biome, transition mask, slope mask, elevation role, collision role, and allowed neighbors.
+5. Replace blob trees with sliceable sprite-art trees: trunk, canopy, dead limbs, stump, resource-bearing canopy, seasonal/decay overlays, and JSON slice offsets.
+6. Render large trees and ruins as layered composition objects so players can walk behind fronts, under canopy fade, and around real collision footprints.
+7. Use AI generation for breadth, but make final runtime art pass through human cleanup and the existing asset manifest provenance gates.
+
+### Direct-Use Policy
+
+- OK now: study folder structure, dimensions, metadata patterns, tree slicing, transition coverage, UI layout ideas, and tooling concepts.
+- Maybe later: use individual CC0 files only after source review confirms they are original enough and not derived from EA/UO assets, third-party marketplace assets, shard-specific assets, or classic-client paintovers.
+- Avoid: copying UO ids, maps, tile names, hue behavior, original gumps, original linework, screenshots, or exact replacement-art semantics into Duskfell.
+- Production target: original Duskfell art with the same level of disciplined composition, not the same pixels.
+
+## July 8, 2026 Paperdoll Character Direction
+
+The player character pipeline should move away from baked one-piece adventurer sheets and toward a paperdoll stack:
+
+1. Clean-room nude/base body sheets.
+2. Optional hair and body-detail overlays.
+3. Clothing layers.
+4. Armor layers.
+5. Cloak/back layers.
+6. Held weapon and shield overlays.
+7. FX/status overlays.
+8. A matching front-facing 2D player-card portrait for every player paperdoll.
+
+`client/sprite-assets.js` now exposes `selectPaperdollStack(...)` plus a fixed layer order. It validates that a base body and every overlay share the same projection, square cell size, row/column geometry, direction range, frame count, foot anchor, and render sort. This is the runtime contract needed for "naked guy sprites, then clothes and armor on top" without frame drift.
+
+`client/app.js` can now render manifest-declared player paperdolls when `assets/sprites/manifest.json` includes `paperdolls` entries. Each player stack should use this shape:
+
+```json
+{
+  "id": "duskfell-paperdoll-wayfarer",
+  "role": "player",
+  "label": "Wayfarer",
+  "baseSheetId": "duskfell-body-base",
+  "layers": [
+    { "slot": "hair", "sheetId": "duskfell-hair-ash" },
+    { "slot": "armor", "sheetId": "duskfell-riveted-jack" },
+    { "slot": "cloak", "sheetId": "duskfell-black-cloak" },
+    { "slot": "weapon", "sheetId": "duskfell-short-spear" }
+  ]
+}
+```
+
+The client prefers `duskfell-paperdoll-wayfarer`, `duskfell-paperdoll-ranger`, `duskfell-paperdoll-warden`, and `duskfell-paperdoll-brigand` when those definitions and every referenced sheet exist. If no valid paperdoll stack is present, it falls back to the current baked actor sheets, so the demo remains playable while the clean-room body/equipment sheets are still being produced.
+
+Every player paperdoll also needs a matching full-body front portrait for account/player-card UI. The default/base portrait must match the default/base paperdoll state: minimal modest underclothes, no armor, no cloak, no weapon, no class outfit. Geared portraits are generated later as loadout/equipment variants, not as the default card. The required convention is:
+
+```text
+assets/sprites/player-cards/<paperdoll-id>-front.png
+```
+
+Example: `assets/sprites/player-cards/duskfell-paperdoll-wayfarer-front.png`. This is a 2D full-body front/card view, not a frame copied from the oblique walk sheet. It should preserve the same body, face, hair, and current equipment state as the active paperdoll/loadout.
+
+The first review-only prototype is now checked into `assets/sprites`:
+
+- `duskfell-paperdoll-body-source.png`: AI-generated clean-room body source with clear eight-frame leg motion.
+- `duskfell-body-base.png`: transparent normalized base layer.
+- `duskfell-{wayfarer,ranger,warden,brigand}-{trousers,boots,jack,cloak,weapon}.png`: deterministic local equipment overlays.
+- `scripts/normalize-paperdoll-demo-sheet.py`: rebuilds the prototype sheets and manifest entries.
+
+This prototype intentionally renders larger and lankier (`render.scale: 0.9`) so players read as prominent characters on the terrain. It is not the final body direction: the current source is still too cardinal/side-view in some rows, so the next generation pass should keep the size and leg clarity but improve the military-plan-oblique facing angles.
+
+Run `npm run sprites:gait` after every body-sheet change. The current review body confirms why the in-game walk still feels weak: the analyzer reports row 2 with only `2px` of foot-spread range, below the `7px` review floor. That row needs a new pose guide or cleanup pass before we call the animation acceptable.
+
+Use img2img only with sources we can safely transform:
+
+- OK: original generated base sheets, commissioned base sheets, internally drawn pose guides, or clearly permissive assets after license/attribution review.
+- Caution: OpenGameArt/LPC-style paperdoll assets can teach the layering model, but many are attribution-heavy and stylistically orthogonal rather than Duskfell military-plan-oblique.
+- Avoid for production: UO client art, shard art, screenshots, or "found" sprites with unclear rights. Img2img on those sources may still create derivative-output risk.
+
+The preferred Duskfell generation loop is:
+
+1. Build a high-resolution pose guide, likely `192x192` or `256x256` cells, with 4 directions and at least 8 walk frames per direction.
+2. Generate a clean nude/base body from that guide with transparent background, bottom-center foot anchor, and no gear.
+3. Lock the base body silhouette and run img2img/inpaint passes for clothing and armor overlays on the same frame grid.
+4. Validate each overlay with `selectPaperdollStack(...)` before adding it to the manifest.
+5. Downsample or sharpen into the runtime target after review. The source can be HD compared with old UO, but the runtime sheet still needs stable anchors, bounded cells, and pixel-readable silhouettes.
+6. Keep each overlay provenance separate: prompt, source guide hash, generator/model, seed, cleanup tool, license/terms snapshot, and reviewer.
+7. Generate or update the matching full-body front-facing player-card portrait for every player paperdoll/loadout that can appear in UI. Base/default portraits stay minimally clothed until equipment is assigned.
+
+## July 8, 2026 Focused Sprite Generator Repo Inspection
+
+Reference repos cloned under `/Users/j/Documents/New project/asset-reference-repos` were inspected locally after the broad GitHub-topic scan:
+
+| Repo | License posture | Useful for Duskfell | Decision |
+| --- | --- | --- | --- |
+| https://github.com/aldegad/sprite-gen | Apache-2.0 | Component-row sprite workflow, accepted identity anchors, chroma-to-alpha cleanup, connected-component frame extraction, curation webview, per-state GIF/contact QA, and runtime `manifest.json.frame_layout` | Primary character-pipeline reference. This is closest to what our broken gait/body problem needs. |
+| https://github.com/0x0funky/agent-sprite-forge | MIT | Codex-oriented sprite/map workflow wrapper, transparent frame cleanup, map prop extraction, GIF previews, Godot/Unity handoff ideas | Supporting workflow glue, especially for maps/props and prototype wiring. Not as focused on paperdoll gait quality as `sprite-gen`. |
+| https://github.com/liberatedpixelcup/Universal-LPC-Spritesheet-Character-Generator | Mixed per-asset licenses with attribution/share-alike/GPL concerns | Mature paperdoll layering, body/gear taxonomy, animation row catalogs, palette recoloring, z-position metadata | Architecture reference only. Do not import LPC assets into Duskfell without explicit asset-by-asset license review. |
+| https://github.com/GAlbanese09/spritebrew | AGPL-3.0 | Strong UX benchmark: upload/slice, contour detection, keyboard animation preview, export formats, Retro Diffusion style choices, pixel editor | UX/export benchmark only. Do not embed code unless we intentionally accept AGPL obligations. |
+
+The hard call: for player characters, we should stop treating AI sprite sheets as deliverables. They are raw candidates. A Duskfell character run is not successful until it has accepted direction anchors, extracted transparent frames, runtime frame metadata, curation artifacts, and motion QA. That is the `sprite-gen` lesson and it matches the current failure: our sheet looks decent in still frames, but the row-2 gait barely changes.
+
+## July 8, 2026 Comfy Cloud Sprite Sheet Workflow Inspection
+
+The user-provided Comfy template and downloaded workflow were inspected:
+
+- Template page: https://comfy.org/workflows/templates-sprite_sheet-fe5600667e2c/
+- Local API workflow: `/Users/j/Downloads/Sprite Sheet Generator.json`
+- Audit command: `npm run sprites:comfy:audit -- /Users/j/Downloads/Sprite\ Sheet\ Generator.json`
+
+The template is useful because it turns one uploaded sprite into generated action rows and preview media. The actual graph has 387 API-format nodes, including:
+
+- 4 `GeminiImage2Node` generator nodes using `gemini-3-pro-image-preview` / Nano Banana Pro.
+- 4 actions: walk, idle/breathing, jump, and attack.
+- Prompts asking for `4-frame` pixel-art sprite sheets arranged as `2x2` grids.
+- Uniform `#00FF00` chroma-key background instructions.
+- Cropping, masking, resizing, frame save nodes, and `SaveVideo` preview outputs.
+- Custom/partner node dependencies such as `BatchImagesNode`, `ImageResizeKJv2`, `LayerUtility: ColorImage V2`, `MaskBoundingBox+`, `SimpleMath+`, and `SplitImageWithAlpha`.
+
+This is a possible Comfy Cloud R&D lane, but the current choice is to use built-in image generation for candidate art and keep Comfy optional. It is not a drop-in Duskfell runtime pipeline:
+
+- It generates a right-facing character only; Duskfell needs four military-plan-oblique directions.
+- It uses 4-frame actions; the Duskfell walk target is 8 frames per direction before gait approval.
+- It uses chroma-key frames; the client needs transparent PNG cells with stable foot anchors.
+- It generates dressed/action sprites from a single input; Duskfell needs a nude/base body first, then equipment overlays.
+- It produces preview images/videos, not a Duskfell manifest with provenance, frame metadata, render layer, shadow, footprint, and gait status.
+
+Duskfell usage decision if Comfy is revisited:
+
+1. Use this workflow as a **candidate generator backend** in Comfy Cloud, not as the final asset pipeline.
+2. Fork/adapt prompts to clean-room Duskfell requirements: nude/base paperdoll body, no gear, no commercial references, no UO references, 45-degree military/plan-oblique facing, bottom-center foot anchor, and one direction per run.
+3. Generate each direction separately if the workflow cannot reliably output all four directions in one sheet.
+4. Post-process every output locally: green-key to alpha, crop/normalize into `128x128` cells, align to the same anchor, and assemble the 4-row body sheet.
+5. Run `npm run sprites:gait`, `npm run sprites:pipeline`, and `npm run assets:verify` before any manifest promotion.
+6. Only after the nude/base body passes should we use Comfy img2img/inpaint runs for clothing, armor, cloaks, weapons, and hair overlays on the same exact frame grid.
+
+## July 8, 2026 Robust Character Generation Pipeline
+
+The immediate fix is not to keep generating dressed sprites. Duskfell should use a staged pipeline:
+
+1. **Pose guide:** Build or generate a naked/minimally clothed body sheet first. It must be 4 rows, 8 frames per row, bottom-center foot anchor, and clear stride silhouettes in every facing.
+2. **Gait gate:** Normalize the body with `scripts/normalize-paperdoll-demo-sheet.py`, then run `npm run sprites:gait`. Reject sheets with low pose difference, low foot-spread range, empty frames, or unstable baselines.
+3. **Body approval:** Only after the body walk works do we make it the default player base. Default players should not spawn with armor, cloak, weapons, trousers, or boots unless a loadout/equipment system assigns those overlays.
+4. **Equipment overlays:** Use img2img/inpaint against the approved body frames to create each equipment layer on the same exact frame grid. Never regenerate gear as a separate character sheet from scratch.
+5. **Overlay validation:** Each overlay must pass `selectPaperdollStack(...)` and manifest paperdoll validation: same cell size, rows, columns, direction ranges, foot anchor, render sort, and render scale.
+6. **Runtime loadout:** The manifest `paperdolls` entries stay body-only for default players. Inventory/equipment state should decide which overlay sheets are active.
+7. **Preview bake:** Generate contact sheets and animation previews for every direction before shipping to the browser. A still sheet can look good while the walk is bad.
+8. **Player-card portrait:** Generate a matching full-body front-facing 2D portrait for every player paperdoll. Store it at `assets/sprites/player-cards/<paperdoll-id>-front.png`. Default/base cards must be minimally clothed; do not show armor, cloaks, weapons, boots, or class outfits until those layers are actually equipped.
+9. **Pipeline audit:** Run `npm run sprites:pipeline` for the current one-shot truth report. It verifies that player paperdolls are body-only, checks player-card portraits, counts available equipment overlays, runs the gait analyzer, and reports the next blocking art action.
+
+Tooling decision after the focused clone inspection:
+
+- **aldegad/sprite-gen** is the best character-pipeline reference because it formalizes the missing steps: accepted base identity, component-row generation, alpha cleanup, frame extraction, curation, GIF/contact-sheet QA, and runtime frame manifests.
+- **Agent Sprite Forge** remains useful as the broader Codex workflow wrapper for maps, props, effects, transparent exports, and engine handoff.
+- **Universal LPC Spritesheet Generator** remains the architecture reference for paperdoll layering, not a style target. It proves that nude/base bodies plus clothing/equipment layers can scale, but its projection and license/attribution posture do not make it drop-in Duskfell art.
+- **SpriteBrew** is useful for upload/slice/animation preview/export UX, but license/product constraints keep it as a benchmark instead of embedded code.
+- **Texel Studio** is more promising for terrain/tile R&D than for four-direction character animation because its core pitch is pixel-accurate generation rather than paperdoll gait/overlay validation.
+
+The current audit result is intentionally not green: default players are correctly body-only and 20 overlay sheets exist, but `duskfell-body-base.png` still fails gait review because row 2 only has `2px` of foot-spread range against a `7px` floor. The next serious art milestone should be one approved naked Duskfell body sheet that passes the gait gate in all 4 rows. Only then should we spend img2img time on clothing and armor.
+
+## July 8, 2026 Graphics Quality Reset
+
+The graphics problem is now formalized in `docs/art-direction.md`. The practical shift is to stop promoting one-off generated images as "the look" and instead force every asset through the Duskfell visual contract:
+
+1. Keep the `military-plan-oblique` camera fixed.
+2. Build coherent terrain families from source textures, transitions, elevation lips, decals, shadows, and decay overlays.
+3. Treat generated terrain and characters as source candidates until they are normalized, anchored, hashed, and reviewed.
+4. Make the base player body walk correctly before spending more effort on armor/clothing overlays.
+5. Keep full-body player cards in sync with paperdoll body/loadout state.
+
+Run the art-direction posture report with:
+
+```sh
+npm run art:direction
+```
+
+That command does not pretend the art is finished. It reports the exact current gaps: terrain family coverage, placeholder/review-state art, paperdoll/card readiness, gait warnings, and whether anything has been incorrectly marked approved while the gates still fail.
+
+## July 8, 2026 Character Style Reset
+
+The player-card/body direction should become less realistic. The live/generated concepts should move toward a stylized carved paperdoll miniature: simplified planes, strong silhouette, muted dark-age color, crisp painted edges, and obvious layer boundaries for later equipment. Avoid realistic body studies, cinematic lighting, glossy skin, painterly portrait detail, and over-rendered cloth.
+
+Reference concept saved for review:
+
+```text
+assets/sprites/concepts/duskfell-character-style-exploration-20260708.png
+```
+
+The bottom-left quadrant is the strongest style signal so far. It is still only a front-facing concept, not a runtime walk sheet. The next character generation prompt should use that language while asking for a 4-row by 8-frame oblique walk sheet with a minimal base body and stable foot anchors.
+
+A first live card replacement pass now uses the same less-realistic direction:
+
+```text
+assets/sprites/player-cards/duskfell-player-cards-stylized-source-20260708.png
+assets/sprites/player-cards/duskfell-paperdoll-{wayfarer,ranger,warden,brigand}-front.png
+```
+
+The previous more-realistic review cards are preserved under `assets/sprites/player-cards/archive/`. This card pass is a visible improvement but not final approval: it still needs a matching oblique walk sheet in the same style before the player identity is coherent in both UI and world.
+
 ## GitHub Sprite Generator Topic Verdict
 
 The July 6, 2026 scan of https://github.com/topics/sprite-generator found 16 public repos. Do not clone or vendor the whole topic. Most entries are SVG/icon spriters, unrelated agents, stale/no-license experiments, or tools with product/legal assumptions that do not match this project.
@@ -185,7 +422,7 @@ Prompt and review guidance:
 ## Near-Term Workflow
 
 1. Define a tiny Duskfell art bible: palette, outline rules, scale, 64x64 military-projection tiles, sprite anchor points.
-2. Replace the checked placeholder terrain atlas with production-candidate grass, field, dirt, stone, shallow water, and settlement families, keeping flat-base, slope-texture, and transition entries for every canonical material.
+2. Replace the checked review terrain atlas with production-candidate grass, field, dirt, stone, shallow water, settlement, cobble, rock, ruin, and shore families, keeping flat-base, slope-texture, and transition entries for every canonical material.
 3. Trial Agent Sprite Forge on a controlled character/prop set: player idle, four-direction walk, one NPC, one creature, one tree or rock prop, and one spell FX.
 4. Use Retro Diffusion for fast pixel-art candidates and ComfyUI or InvokeAI for self-hosted repeatable batches.
 5. Test Texel Studio separately for palette-locked terrain tiles, item icons, and simple props before using it for animated characters.

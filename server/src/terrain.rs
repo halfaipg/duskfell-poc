@@ -195,11 +195,11 @@ mod tests {
         let terrain = demo_terrain();
 
         assert_eq!(
-            terrain.material_at_world(810.0, 550.0),
+            terrain.material_at_world(1216.0, 832.0),
             TerrainMaterial::Settlement
         );
-        assert!(terrain.is_walkable_at_world(810.0, 550.0));
-        assert!(terrain.allows_step(810.0, 550.0, 900.0, 550.0));
+        assert!(terrain.is_walkable_at_world(1216.0, 832.0));
+        assert!(terrain.allows_step(1216.0, 832.0, 1280.0, 800.0));
     }
 
     #[test]
@@ -207,11 +207,11 @@ mod tests {
         let terrain = demo_terrain();
         let mut rejected = false;
 
-        for y in (0..1100).step_by(32) {
-            for x in (0..1800).step_by(32) {
+        for y in (0..1664).step_by(32) {
+            for x in (0..2560).step_by(32) {
                 let from_x = x as f32;
                 let from_y = y as f32;
-                let to_x = (x + 64).min(1799) as f32;
+                let to_x = (x + 64).min(2559) as f32;
                 let to_y = y as f32;
                 if terrain.is_walkable_at_world(from_x, from_y)
                     && terrain.is_walkable_at_world(to_x, to_y)
@@ -257,15 +257,15 @@ mod tests {
                     "settlement".to_string(),
                 ],
             },
-            1800.0,
-            1100.0,
-            260.0,
+            2560.0,
+            1664.0,
+            320.0,
         )
     }
 
     fn find_material(terrain: &TerrainAuthority, material: TerrainMaterial) -> (f32, f32) {
-        for y in (0..1100).step_by(16) {
-            for x in (0..1800).step_by(16) {
+        for y in (0..1664).step_by(16) {
+            for x in (0..2560).step_by(16) {
                 let x = x as f32;
                 let y = y as f32;
                 if terrain.material_at_world(x, y) == material {

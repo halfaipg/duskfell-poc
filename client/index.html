@@ -20,8 +20,17 @@
         <canvas id="world" width="1280" height="720" aria-label="Duskfell world"></canvas>
         <div class="hud" id="hud">Loading</div>
         <aside class="panel">
-          <div class="panel-block">
+          <div class="panel-block player-card-block">
             <h2>Player</h2>
+            <div class="player-card">
+              <div class="player-card-frame">
+                <img id="playerCardPortrait" alt="" decoding="async" />
+              </div>
+              <div class="player-card-meta">
+                <strong id="playerCardName">Wayfarer</strong>
+                <span id="playerCardArchetype">Base paperdoll</span>
+              </div>
+            </div>
             <label class="name-row">
               <span>Name</span>
               <input id="nameInput" maxlength="20" placeholder="Wayfarer" />
@@ -58,6 +67,6 @@
       </footer>
     </main>
 
-    <script src="/app.js?v=duskfell-art-demo-28" type="module"></script>
+    <script src="/app.js?v=duskfell-art-demo-30" type="module"></script>
   </body>
 </html>

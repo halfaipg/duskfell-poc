@@ -133,6 +133,20 @@ pub struct InventoryItemSnapshot {
     pub item_id: String,
     pub label: String,
     pub quantity: u32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub lifecycle: Option<InventoryItemLifecycleSnapshot>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InventoryItemLifecycleSnapshot {
+    pub family: String,
+    pub stage: String,
+    #[serde(rename = "ageYears")]
+    pub age_years: u32,
+    pub health: f32,
+    pub decay: f32,
+    pub compostable: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

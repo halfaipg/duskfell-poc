@@ -51,7 +51,10 @@ Actors and props should never be visually flat-stamped onto the ground plane.
 Their foot anchors sample `terrainHeightAtWorld(...)`, which bilinearly blends
 the current tile's corner heights. That means even a small move across a sloped
 tile can lift or lower the projected sprite by a fraction of the terrain height
-scale, while sorting uses the same sampled anchor.
+scale, while sorting uses the same sampled anchor. Interior spaces can add a
+floor or stair-portal height offset to the same sample, so a player crossing an
+indoor stair connector visibly climbs or descends without a separate scene or
+screen-space animation trick.
 
 ## Renderer Stack
 
@@ -130,9 +133,24 @@ subtle resource/health/decay markers from metadata after the frame is stamped.
 Server-owned ruins render through the same detail path, with crack, moss, and
 stone resource cues layered from their mineral lifecycle so ancient structures
 can visibly erode without being baked into one static image.
+Terrain details also share a compact resource-cue model for wood, seed, fiber,
+deadwood, spores, mycelium, charge, stone, and ore. The renderer turns those
+model cues into tiny ground-hugging rings, pips, cracks, tendrils, arcs, reeds,
+and stone chips, making gatherable/living/decaying state readable without
+adding text labels or debug badges.
 Terrain-detail ruins, walls, stairs, and foundations can also carry occlusion
 metadata; the client uses that metadata to locally fade only the blocking static
 when the controlled player is tucked behind it.
+The first indoor-space contract is now terrain-owned too. Composition kits can
+emit `interiorSpaces` with world bounds, reveal padding, floor levels, and roof
+opacity metadata. They can also emit stair/portal bounds connecting floor
+levels. The renderer draws the upper shell/roof as a top-layer occluder, then
+fades it when the local player's footprint enters the space and reveals the
+sunken floor, upper-gallery outline, and active stair connector. The same
+portal metadata contributes a ramped height offset through
+`terrainHeightAtWorld(...)`, so actor feet climb the connector instead of merely
+seeing a highlighted stair decal. This matches the old-school readable-interior
+behavior without switching scenes or copying any UO building data.
 Canvas fallback drawings remain only as a resilience path when a frame or sheet
 is unavailable.
 
@@ -161,7 +179,11 @@ does not vertically bob the full sprite, so animated boots stay grounded on the
 projected terrain height. The player animation sampler keeps a short movement
 grace window across server tick gaps and scales frame cadence by measured
 movement speed, so feet do not snap to idle during tiny network pauses and
-faster movement advances through the eight-frame sheets more quickly.
+faster movement advances through the eight-frame sheets more quickly. The same
+sampler now emits an alternating footfall pulse; the renderer samples the
+terrain material under the actor and draws compact grass, dirt, stone,
+settlement, water, or crude-electric field scuffs at the footprint so walking
+reads as contact with the world rather than a sprite sliding over it.
 
 For terrain tuning, the browser exposes local-only visual overlays through the
 query string: `?terrainDebug=authority`, `biome`, `chunks`, `detail`,

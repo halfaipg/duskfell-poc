@@ -123,6 +123,7 @@ function normalizeEntry(entry, field) {
     kitId: entry.kitId ?? null,
     kitKind: entry.kitKind ?? null,
     kitRole: entry.kitRole ?? "none",
+    terrainFamily: entry.terrainFamily ?? null,
   };
   if (entry.collision) normalized.collision = entry.collision;
   if (entry.resourceNodeId) normalized.resourceNodeId = entry.resourceNodeId;

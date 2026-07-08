@@ -67,6 +67,23 @@
           "frameCount": 8
         }
       ],
+      "animation": {
+        "idleFrame": 0,
+        "walkFrames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          6,
+          5,
+          4,
+          3,
+          2
+        ]
+      },
       "provenance": {
         "cleanRoom": true,
         "source": "attached generated concept sheet normalized from assets/sprites/duskfell-wayfarer-source.png",
@@ -152,6 +169,23 @@
           "frameCount": 8
         }
       ],
+      "animation": {
+        "idleFrame": 0,
+        "walkFrames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          6,
+          5,
+          4,
+          3,
+          2
+        ]
+      },
       "provenance": {
         "cleanRoom": true,
         "source": "local silhouette and equipment variant derived from normalized eight-frame assets/sprites/duskfell-wayfarer.png",
@@ -234,6 +268,23 @@
           "frameCount": 8
         }
       ],
+      "animation": {
+        "idleFrame": 0,
+        "walkFrames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          6,
+          5,
+          4,
+          3,
+          2
+        ]
+      },
       "provenance": {
         "cleanRoom": true,
         "source": "local silhouette and equipment variant derived from normalized eight-frame assets/sprites/duskfell-wayfarer.png",
@@ -316,6 +367,23 @@
           "frameCount": 8
         }
       ],
+      "animation": {
+        "idleFrame": 0,
+        "walkFrames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          6,
+          5,
+          4,
+          3,
+          2
+        ]
+      },
       "provenance": {
         "cleanRoom": true,
         "source": "local silhouette and equipment variant derived from normalized eight-frame assets/sprites/duskfell-wayfarer.png",
@@ -665,6 +733,2078 @@
       "approval": {
         "state": "placeholder"
       }
+    },
+    {
+      "id": "duskfell-body-base",
+      "image": "duskfell-body-base.png",
+      "imageSha256": "b7c799a47a89668dd74af888cdfb40a9b9510cb71dededbbf54843bfe226de0c",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frameCount": 32
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 116
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1,
+        "heightTiles": 1
+      },
+      "render": {
+        "layer": "actor",
+        "sort": "footprint-y",
+        "zBias": 0,
+        "scale": 0.9,
+        "shadow": {
+          "kind": "ellipse",
+          "x": 64,
+          "y": 119,
+          "width": 44,
+          "height": 12,
+          "opacity": 0.3
+        }
+      },
+      "directions": [
+        {
+          "name": "south",
+          "startFrame": 0,
+          "frameCount": 8
+        },
+        {
+          "name": "east",
+          "startFrame": 8,
+          "frameCount": 8
+        },
+        {
+          "name": "north",
+          "startFrame": 16,
+          "frameCount": 8
+        },
+        {
+          "name": "west",
+          "startFrame": 24,
+          "frameCount": 8
+        }
+      ],
+      "animation": {
+        "idleFrame": 0,
+        "walkFrames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          6,
+          5,
+          4,
+          3,
+          2
+        ]
+      },
+      "provenance": {
+        "cleanRoom": true,
+        "source": "assets/sprites/duskfell-paperdoll-body-source.png plus deterministic local equipment-overlay compositor",
+        "createdAt": "2026-07-08",
+        "license": "project-original-ai-assisted-review",
+        "reviewer": "codex",
+        "prompt": "clean-room military-plan-oblique 1:1 oblique paperdoll body and equipment sprite prototype, four rows, eight walk frames, original dark medieval-fantasy character layers",
+        "negativePrompt": "no copied commercial game pixels, no extracted client art, no screenshots, no 2:1 dimetric projection, no straight-only final-production cardinal sheet",
+        "method": "ai-generated",
+        "tool": "OpenAI built-in image generation and Pillow local sprite-layer normalization",
+        "toolVersion": "built-in image generation 2026-07-08 plus Pillow local runtime",
+        "sourceHash": "c479770545cb3b388fa2bb686bd9abef685407aa742324f734a6bc04d4ad5c4a",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-08 for internal PoC asset review",
+        "model": "built-in image generation",
+        "modelVersion": "2026-07-08",
+        "seed": "unavailable-built-in-generation",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-08",
+          "reviewer": "codex",
+          "sourceUrl": "https://openai.com/policies/service-terms",
+          "risk": "internal review-only paperdoll prototype; row perspective is not final Duskfell quality and needs a replacement oblique body pass before production"
+        }
+      },
+      "approval": {
+        "state": "review"
+      }
+    },
+    {
+      "id": "duskfell-wayfarer-trousers",
+      "image": "duskfell-wayfarer-trousers.png",
+      "imageSha256": "6a0afb032483590e8fc8e3b29c90f8e35c441115279469dfeeeb2382a2389925",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frameCount": 32
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 116
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1,
+        "heightTiles": 1
+      },
+      "render": {
+        "layer": "equipment",
+        "sort": "footprint-y",
+        "zBias": 0,
+        "scale": 0.9,
+        "shadow": {
+          "kind": "none"
+        }
+      },
+      "directions": [
+        {
+          "name": "south",
+          "startFrame": 0,
+          "frameCount": 8
+        },
+        {
+          "name": "east",
+          "startFrame": 8,
+          "frameCount": 8
+        },
+        {
+          "name": "north",
+          "startFrame": 16,
+          "frameCount": 8
+        },
+        {
+          "name": "west",
+          "startFrame": 24,
+          "frameCount": 8
+        }
+      ],
+      "animation": {
+        "idleFrame": 0,
+        "walkFrames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          6,
+          5,
+          4,
+          3,
+          2
+        ]
+      },
+      "provenance": {
+        "cleanRoom": true,
+        "source": "assets/sprites/duskfell-paperdoll-body-source.png plus deterministic local equipment-overlay compositor",
+        "createdAt": "2026-07-08",
+        "license": "project-original-ai-assisted-review",
+        "reviewer": "codex",
+        "prompt": "clean-room military-plan-oblique 1:1 oblique paperdoll body and equipment sprite prototype, four rows, eight walk frames, original dark medieval-fantasy character layers",
+        "negativePrompt": "no copied commercial game pixels, no extracted client art, no screenshots, no 2:1 dimetric projection, no straight-only final-production cardinal sheet",
+        "method": "deterministic-local",
+        "tool": "OpenAI built-in image generation and Pillow local sprite-layer normalization",
+        "toolVersion": "built-in image generation 2026-07-08 plus Pillow local runtime",
+        "sourceHash": "c479770545cb3b388fa2bb686bd9abef685407aa742324f734a6bc04d4ad5c4a",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-08 for internal PoC asset review",
+        "model": "Pillow deterministic compositor",
+        "modelVersion": "local deterministic",
+        "seed": "deterministic-from-frame-bounds",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-08",
+          "reviewer": "codex",
+          "sourceUrl": "https://openai.com/policies/service-terms",
+          "risk": "internal review-only paperdoll prototype; row perspective is not final Duskfell quality and needs a replacement oblique body pass before production"
+        }
+      },
+      "approval": {
+        "state": "review"
+      }
+    },
+    {
+      "id": "duskfell-wayfarer-boots",
+      "image": "duskfell-wayfarer-boots.png",
+      "imageSha256": "0e8f0f7611d6074b6a91e65b9f108f7fcfc66c8c0393564f13378e1bd2cf7a46",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frameCount": 32
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 116
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1,
+        "heightTiles": 1
+      },
+      "render": {
+        "layer": "equipment",
+        "sort": "footprint-y",
+        "zBias": 0,
+        "scale": 0.9,
+        "shadow": {
+          "kind": "none"
+        }
+      },
+      "directions": [
+        {
+          "name": "south",
+          "startFrame": 0,
+          "frameCount": 8
+        },
+        {
+          "name": "east",
+          "startFrame": 8,
+          "frameCount": 8
+        },
+        {
+          "name": "north",
+          "startFrame": 16,
+          "frameCount": 8
+        },
+        {
+          "name": "west",
+          "startFrame": 24,
+          "frameCount": 8
+        }
+      ],
+      "animation": {
+        "idleFrame": 0,
+        "walkFrames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          6,
+          5,
+          4,
+          3,
+          2
+        ]
+      },
+      "provenance": {
+        "cleanRoom": true,
+        "source": "assets/sprites/duskfell-paperdoll-body-source.png plus deterministic local equipment-overlay compositor",
+        "createdAt": "2026-07-08",
+        "license": "project-original-ai-assisted-review",
+        "reviewer": "codex",
+        "prompt": "clean-room military-plan-oblique 1:1 oblique paperdoll body and equipment sprite prototype, four rows, eight walk frames, original dark medieval-fantasy character layers",
+        "negativePrompt": "no copied commercial game pixels, no extracted client art, no screenshots, no 2:1 dimetric projection, no straight-only final-production cardinal sheet",
+        "method": "deterministic-local",
+        "tool": "OpenAI built-in image generation and Pillow local sprite-layer normalization",
+        "toolVersion": "built-in image generation 2026-07-08 plus Pillow local runtime",
+        "sourceHash": "c479770545cb3b388fa2bb686bd9abef685407aa742324f734a6bc04d4ad5c4a",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-08 for internal PoC asset review",
+        "model": "Pillow deterministic compositor",
+        "modelVersion": "local deterministic",
+        "seed": "deterministic-from-frame-bounds",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-08",
+          "reviewer": "codex",
+          "sourceUrl": "https://openai.com/policies/service-terms",
+          "risk": "internal review-only paperdoll prototype; row perspective is not final Duskfell quality and needs a replacement oblique body pass before production"
+        }
+      },
+      "approval": {
+        "state": "review"
+      }
+    },
+    {
+      "id": "duskfell-wayfarer-jack",
+      "image": "duskfell-wayfarer-jack.png",
+      "imageSha256": "92e47f37052097d0aaa0cb2833d1e87e4b9cf20d73cda4fda169e896c5ecc2f6",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frameCount": 32
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 116
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1,
+        "heightTiles": 1
+      },
+      "render": {
+        "layer": "equipment",
+        "sort": "footprint-y",
+        "zBias": 0,
+        "scale": 0.9,
+        "shadow": {
+          "kind": "none"
+        }
+      },
+      "directions": [
+        {
+          "name": "south",
+          "startFrame": 0,
+          "frameCount": 8
+        },
+        {
+          "name": "east",
+          "startFrame": 8,
+          "frameCount": 8
+        },
+        {
+          "name": "north",
+          "startFrame": 16,
+          "frameCount": 8
+        },
+        {
+          "name": "west",
+          "startFrame": 24,
+          "frameCount": 8
+        }
+      ],
+      "animation": {
+        "idleFrame": 0,
+        "walkFrames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          6,
+          5,
+          4,
+          3,
+          2
+        ]
+      },
+      "provenance": {
+        "cleanRoom": true,
+        "source": "assets/sprites/duskfell-paperdoll-body-source.png plus deterministic local equipment-overlay compositor",
+        "createdAt": "2026-07-08",
+        "license": "project-original-ai-assisted-review",
+        "reviewer": "codex",
+        "prompt": "clean-room military-plan-oblique 1:1 oblique paperdoll body and equipment sprite prototype, four rows, eight walk frames, original dark medieval-fantasy character layers",
+        "negativePrompt": "no copied commercial game pixels, no extracted client art, no screenshots, no 2:1 dimetric projection, no straight-only final-production cardinal sheet",
+        "method": "deterministic-local",
+        "tool": "OpenAI built-in image generation and Pillow local sprite-layer normalization",
+        "toolVersion": "built-in image generation 2026-07-08 plus Pillow local runtime",
+        "sourceHash": "c479770545cb3b388fa2bb686bd9abef685407aa742324f734a6bc04d4ad5c4a",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-08 for internal PoC asset review",
+        "model": "Pillow deterministic compositor",
+        "modelVersion": "local deterministic",
+        "seed": "deterministic-from-frame-bounds",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-08",
+          "reviewer": "codex",
+          "sourceUrl": "https://openai.com/policies/service-terms",
+          "risk": "internal review-only paperdoll prototype; row perspective is not final Duskfell quality and needs a replacement oblique body pass before production"
+        }
+      },
+      "approval": {
+        "state": "review"
+      }
+    },
+    {
+      "id": "duskfell-wayfarer-cloak",
+      "image": "duskfell-wayfarer-cloak.png",
+      "imageSha256": "e39c4e35313e46522d1a5527ece16c7fb79af4d425d6cd206f63998b25712759",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frameCount": 32
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 116
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1,
+        "heightTiles": 1
+      },
+      "render": {
+        "layer": "equipment",
+        "sort": "footprint-y",
+        "zBias": 0,
+        "scale": 0.9,
+        "shadow": {
+          "kind": "none"
+        }
+      },
+      "directions": [
+        {
+          "name": "south",
+          "startFrame": 0,
+          "frameCount": 8
+        },
+        {
+          "name": "east",
+          "startFrame": 8,
+          "frameCount": 8
+        },
+        {
+          "name": "north",
+          "startFrame": 16,
+          "frameCount": 8
+        },
+        {
+          "name": "west",
+          "startFrame": 24,
+          "frameCount": 8
+        }
+      ],
+      "animation": {
+        "idleFrame": 0,
+        "walkFrames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          6,
+          5,
+          4,
+          3,
+          2
+        ]
+      },
+      "provenance": {
+        "cleanRoom": true,
+        "source": "assets/sprites/duskfell-paperdoll-body-source.png plus deterministic local equipment-overlay compositor",
+        "createdAt": "2026-07-08",
+        "license": "project-original-ai-assisted-review",
+        "reviewer": "codex",
+        "prompt": "clean-room military-plan-oblique 1:1 oblique paperdoll body and equipment sprite prototype, four rows, eight walk frames, original dark medieval-fantasy character layers",
+        "negativePrompt": "no copied commercial game pixels, no extracted client art, no screenshots, no 2:1 dimetric projection, no straight-only final-production cardinal sheet",
+        "method": "deterministic-local",
+        "tool": "OpenAI built-in image generation and Pillow local sprite-layer normalization",
+        "toolVersion": "built-in image generation 2026-07-08 plus Pillow local runtime",
+        "sourceHash": "c479770545cb3b388fa2bb686bd9abef685407aa742324f734a6bc04d4ad5c4a",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-08 for internal PoC asset review",
+        "model": "Pillow deterministic compositor",
+        "modelVersion": "local deterministic",
+        "seed": "deterministic-from-frame-bounds",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-08",
+          "reviewer": "codex",
+          "sourceUrl": "https://openai.com/policies/service-terms",
+          "risk": "internal review-only paperdoll prototype; row perspective is not final Duskfell quality and needs a replacement oblique body pass before production"
+        }
+      },
+      "approval": {
+        "state": "review"
+      }
+    },
+    {
+      "id": "duskfell-wayfarer-weapon",
+      "image": "duskfell-wayfarer-weapon.png",
+      "imageSha256": "b44f272a30202d9e5aa0397e17304d8970b45c9284aecc815c2e1538284a75b3",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frameCount": 32
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 116
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1,
+        "heightTiles": 1
+      },
+      "render": {
+        "layer": "equipment",
+        "sort": "footprint-y",
+        "zBias": 0,
+        "scale": 0.9,
+        "shadow": {
+          "kind": "none"
+        }
+      },
+      "directions": [
+        {
+          "name": "south",
+          "startFrame": 0,
+          "frameCount": 8
+        },
+        {
+          "name": "east",
+          "startFrame": 8,
+          "frameCount": 8
+        },
+        {
+          "name": "north",
+          "startFrame": 16,
+          "frameCount": 8
+        },
+        {
+          "name": "west",
+          "startFrame": 24,
+          "frameCount": 8
+        }
+      ],
+      "animation": {
+        "idleFrame": 0,
+        "walkFrames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          6,
+          5,
+          4,
+          3,
+          2
+        ]
+      },
+      "provenance": {
+        "cleanRoom": true,
+        "source": "assets/sprites/duskfell-paperdoll-body-source.png plus deterministic local equipment-overlay compositor",
+        "createdAt": "2026-07-08",
+        "license": "project-original-ai-assisted-review",
+        "reviewer": "codex",
+        "prompt": "clean-room military-plan-oblique 1:1 oblique paperdoll body and equipment sprite prototype, four rows, eight walk frames, original dark medieval-fantasy character layers",
+        "negativePrompt": "no copied commercial game pixels, no extracted client art, no screenshots, no 2:1 dimetric projection, no straight-only final-production cardinal sheet",
+        "method": "deterministic-local",
+        "tool": "OpenAI built-in image generation and Pillow local sprite-layer normalization",
+        "toolVersion": "built-in image generation 2026-07-08 plus Pillow local runtime",
+        "sourceHash": "c479770545cb3b388fa2bb686bd9abef685407aa742324f734a6bc04d4ad5c4a",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-08 for internal PoC asset review",
+        "model": "Pillow deterministic compositor",
+        "modelVersion": "local deterministic",
+        "seed": "deterministic-from-frame-bounds",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-08",
+          "reviewer": "codex",
+          "sourceUrl": "https://openai.com/policies/service-terms",
+          "risk": "internal review-only paperdoll prototype; row perspective is not final Duskfell quality and needs a replacement oblique body pass before production"
+        }
+      },
+      "approval": {
+        "state": "review"
+      }
+    },
+    {
+      "id": "duskfell-ranger-trousers",
+      "image": "duskfell-ranger-trousers.png",
+      "imageSha256": "d794b81330abaca0ecd368a66efd53545cd4376544c7f9aea72122f212c7adef",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frameCount": 32
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 116
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1,
+        "heightTiles": 1
+      },
+      "render": {
+        "layer": "equipment",
+        "sort": "footprint-y",
+        "zBias": 0,
+        "scale": 0.9,
+        "shadow": {
+          "kind": "none"
+        }
+      },
+      "directions": [
+        {
+          "name": "south",
+          "startFrame": 0,
+          "frameCount": 8
+        },
+        {
+          "name": "east",
+          "startFrame": 8,
+          "frameCount": 8
+        },
+        {
+          "name": "north",
+          "startFrame": 16,
+          "frameCount": 8
+        },
+        {
+          "name": "west",
+          "startFrame": 24,
+          "frameCount": 8
+        }
+      ],
+      "animation": {
+        "idleFrame": 0,
+        "walkFrames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          6,
+          5,
+          4,
+          3,
+          2
+        ]
+      },
+      "provenance": {
+        "cleanRoom": true,
+        "source": "assets/sprites/duskfell-paperdoll-body-source.png plus deterministic local equipment-overlay compositor",
+        "createdAt": "2026-07-08",
+        "license": "project-original-ai-assisted-review",
+        "reviewer": "codex",
+        "prompt": "clean-room military-plan-oblique 1:1 oblique paperdoll body and equipment sprite prototype, four rows, eight walk frames, original dark medieval-fantasy character layers",
+        "negativePrompt": "no copied commercial game pixels, no extracted client art, no screenshots, no 2:1 dimetric projection, no straight-only final-production cardinal sheet",
+        "method": "deterministic-local",
+        "tool": "OpenAI built-in image generation and Pillow local sprite-layer normalization",
+        "toolVersion": "built-in image generation 2026-07-08 plus Pillow local runtime",
+        "sourceHash": "c479770545cb3b388fa2bb686bd9abef685407aa742324f734a6bc04d4ad5c4a",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-08 for internal PoC asset review",
+        "model": "Pillow deterministic compositor",
+        "modelVersion": "local deterministic",
+        "seed": "deterministic-from-frame-bounds",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-08",
+          "reviewer": "codex",
+          "sourceUrl": "https://openai.com/policies/service-terms",
+          "risk": "internal review-only paperdoll prototype; row perspective is not final Duskfell quality and needs a replacement oblique body pass before production"
+        }
+      },
+      "approval": {
+        "state": "review"
+      }
+    },
+    {
+      "id": "duskfell-ranger-boots",
+      "image": "duskfell-ranger-boots.png",
+      "imageSha256": "d44068561742341b8d4b82637765b53ff3713e31af371a9de40b2951a1d9bdc5",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frameCount": 32
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 116
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1,
+        "heightTiles": 1
+      },
+      "render": {
+        "layer": "equipment",
+        "sort": "footprint-y",
+        "zBias": 0,
+        "scale": 0.9,
+        "shadow": {
+          "kind": "none"
+        }
+      },
+      "directions": [
+        {
+          "name": "south",
+          "startFrame": 0,
+          "frameCount": 8
+        },
+        {
+          "name": "east",
+          "startFrame": 8,
+          "frameCount": 8
+        },
+        {
+          "name": "north",
+          "startFrame": 16,
+          "frameCount": 8
+        },
+        {
+          "name": "west",
+          "startFrame": 24,
+          "frameCount": 8
+        }
+      ],
+      "animation": {
+        "idleFrame": 0,
+        "walkFrames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          6,
+          5,
+          4,
+          3,
+          2
+        ]
+      },
+      "provenance": {
+        "cleanRoom": true,
+        "source": "assets/sprites/duskfell-paperdoll-body-source.png plus deterministic local equipment-overlay compositor",
+        "createdAt": "2026-07-08",
+        "license": "project-original-ai-assisted-review",
+        "reviewer": "codex",
+        "prompt": "clean-room military-plan-oblique 1:1 oblique paperdoll body and equipment sprite prototype, four rows, eight walk frames, original dark medieval-fantasy character layers",
+        "negativePrompt": "no copied commercial game pixels, no extracted client art, no screenshots, no 2:1 dimetric projection, no straight-only final-production cardinal sheet",
+        "method": "deterministic-local",
+        "tool": "OpenAI built-in image generation and Pillow local sprite-layer normalization",
+        "toolVersion": "built-in image generation 2026-07-08 plus Pillow local runtime",
+        "sourceHash": "c479770545cb3b388fa2bb686bd9abef685407aa742324f734a6bc04d4ad5c4a",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-08 for internal PoC asset review",
+        "model": "Pillow deterministic compositor",
+        "modelVersion": "local deterministic",
+        "seed": "deterministic-from-frame-bounds",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-08",
+          "reviewer": "codex",
+          "sourceUrl": "https://openai.com/policies/service-terms",
+          "risk": "internal review-only paperdoll prototype; row perspective is not final Duskfell quality and needs a replacement oblique body pass before production"
+        }
+      },
+      "approval": {
+        "state": "review"
+      }
+    },
+    {
+      "id": "duskfell-ranger-jack",
+      "image": "duskfell-ranger-jack.png",
+      "imageSha256": "9ba77ce96410575cbdd5efad401e094c3cd4acc6edf19d2a57644e8df6183a3e",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frameCount": 32
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 116
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1,
+        "heightTiles": 1
+      },
+      "render": {
+        "layer": "equipment",
+        "sort": "footprint-y",
+        "zBias": 0,
+        "scale": 0.9,
+        "shadow": {
+          "kind": "none"
+        }
+      },
+      "directions": [
+        {
+          "name": "south",
+          "startFrame": 0,
+          "frameCount": 8
+        },
+        {
+          "name": "east",
+          "startFrame": 8,
+          "frameCount": 8
+        },
+        {
+          "name": "north",
+          "startFrame": 16,
+          "frameCount": 8
+        },
+        {
+          "name": "west",
+          "startFrame": 24,
+          "frameCount": 8
+        }
+      ],
+      "animation": {
+        "idleFrame": 0,
+        "walkFrames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          6,
+          5,
+          4,
+          3,
+          2
+        ]
+      },
+      "provenance": {
+        "cleanRoom": true,
+        "source": "assets/sprites/duskfell-paperdoll-body-source.png plus deterministic local equipment-overlay compositor",
+        "createdAt": "2026-07-08",
+        "license": "project-original-ai-assisted-review",
+        "reviewer": "codex",
+        "prompt": "clean-room military-plan-oblique 1:1 oblique paperdoll body and equipment sprite prototype, four rows, eight walk frames, original dark medieval-fantasy character layers",
+        "negativePrompt": "no copied commercial game pixels, no extracted client art, no screenshots, no 2:1 dimetric projection, no straight-only final-production cardinal sheet",
+        "method": "deterministic-local",
+        "tool": "OpenAI built-in image generation and Pillow local sprite-layer normalization",
+        "toolVersion": "built-in image generation 2026-07-08 plus Pillow local runtime",
+        "sourceHash": "c479770545cb3b388fa2bb686bd9abef685407aa742324f734a6bc04d4ad5c4a",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-08 for internal PoC asset review",
+        "model": "Pillow deterministic compositor",
+        "modelVersion": "local deterministic",
+        "seed": "deterministic-from-frame-bounds",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-08",
+          "reviewer": "codex",
+          "sourceUrl": "https://openai.com/policies/service-terms",
+          "risk": "internal review-only paperdoll prototype; row perspective is not final Duskfell quality and needs a replacement oblique body pass before production"
+        }
+      },
+      "approval": {
+        "state": "review"
+      }
+    },
+    {
+      "id": "duskfell-ranger-cloak",
+      "image": "duskfell-ranger-cloak.png",
+      "imageSha256": "f5e7bd28382cd8bc020781f6223eb8a39b6fc9c7785d63710ec2347c07096ff2",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frameCount": 32
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 116
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1,
+        "heightTiles": 1
+      },
+      "render": {
+        "layer": "equipment",
+        "sort": "footprint-y",
+        "zBias": 0,
+        "scale": 0.9,
+        "shadow": {
+          "kind": "none"
+        }
+      },
+      "directions": [
+        {
+          "name": "south",
+          "startFrame": 0,
+          "frameCount": 8
+        },
+        {
+          "name": "east",
+          "startFrame": 8,
+          "frameCount": 8
+        },
+        {
+          "name": "north",
+          "startFrame": 16,
+          "frameCount": 8
+        },
+        {
+          "name": "west",
+          "startFrame": 24,
+          "frameCount": 8
+        }
+      ],
+      "animation": {
+        "idleFrame": 0,
+        "walkFrames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          6,
+          5,
+          4,
+          3,
+          2
+        ]
+      },
+      "provenance": {
+        "cleanRoom": true,
+        "source": "assets/sprites/duskfell-paperdoll-body-source.png plus deterministic local equipment-overlay compositor",
+        "createdAt": "2026-07-08",
+        "license": "project-original-ai-assisted-review",
+        "reviewer": "codex",
+        "prompt": "clean-room military-plan-oblique 1:1 oblique paperdoll body and equipment sprite prototype, four rows, eight walk frames, original dark medieval-fantasy character layers",
+        "negativePrompt": "no copied commercial game pixels, no extracted client art, no screenshots, no 2:1 dimetric projection, no straight-only final-production cardinal sheet",
+        "method": "deterministic-local",
+        "tool": "OpenAI built-in image generation and Pillow local sprite-layer normalization",
+        "toolVersion": "built-in image generation 2026-07-08 plus Pillow local runtime",
+        "sourceHash": "c479770545cb3b388fa2bb686bd9abef685407aa742324f734a6bc04d4ad5c4a",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-08 for internal PoC asset review",
+        "model": "Pillow deterministic compositor",
+        "modelVersion": "local deterministic",
+        "seed": "deterministic-from-frame-bounds",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-08",
+          "reviewer": "codex",
+          "sourceUrl": "https://openai.com/policies/service-terms",
+          "risk": "internal review-only paperdoll prototype; row perspective is not final Duskfell quality and needs a replacement oblique body pass before production"
+        }
+      },
+      "approval": {
+        "state": "review"
+      }
+    },
+    {
+      "id": "duskfell-ranger-weapon",
+      "image": "duskfell-ranger-weapon.png",
+      "imageSha256": "71c195a39d1e3f1aa2772478c4babc13661cc36ec8a0ab59668d1a16bd5cf6ad",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frameCount": 32
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 116
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1,
+        "heightTiles": 1
+      },
+      "render": {
+        "layer": "equipment",
+        "sort": "footprint-y",
+        "zBias": 0,
+        "scale": 0.9,
+        "shadow": {
+          "kind": "none"
+        }
+      },
+      "directions": [
+        {
+          "name": "south",
+          "startFrame": 0,
+          "frameCount": 8
+        },
+        {
+          "name": "east",
+          "startFrame": 8,
+          "frameCount": 8
+        },
+        {
+          "name": "north",
+          "startFrame": 16,
+          "frameCount": 8
+        },
+        {
+          "name": "west",
+          "startFrame": 24,
+          "frameCount": 8
+        }
+      ],
+      "animation": {
+        "idleFrame": 0,
+        "walkFrames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          6,
+          5,
+          4,
+          3,
+          2
+        ]
+      },
+      "provenance": {
+        "cleanRoom": true,
+        "source": "assets/sprites/duskfell-paperdoll-body-source.png plus deterministic local equipment-overlay compositor",
+        "createdAt": "2026-07-08",
+        "license": "project-original-ai-assisted-review",
+        "reviewer": "codex",
+        "prompt": "clean-room military-plan-oblique 1:1 oblique paperdoll body and equipment sprite prototype, four rows, eight walk frames, original dark medieval-fantasy character layers",
+        "negativePrompt": "no copied commercial game pixels, no extracted client art, no screenshots, no 2:1 dimetric projection, no straight-only final-production cardinal sheet",
+        "method": "deterministic-local",
+        "tool": "OpenAI built-in image generation and Pillow local sprite-layer normalization",
+        "toolVersion": "built-in image generation 2026-07-08 plus Pillow local runtime",
+        "sourceHash": "c479770545cb3b388fa2bb686bd9abef685407aa742324f734a6bc04d4ad5c4a",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-08 for internal PoC asset review",
+        "model": "Pillow deterministic compositor",
+        "modelVersion": "local deterministic",
+        "seed": "deterministic-from-frame-bounds",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-08",
+          "reviewer": "codex",
+          "sourceUrl": "https://openai.com/policies/service-terms",
+          "risk": "internal review-only paperdoll prototype; row perspective is not final Duskfell quality and needs a replacement oblique body pass before production"
+        }
+      },
+      "approval": {
+        "state": "review"
+      }
+    },
+    {
+      "id": "duskfell-warden-trousers",
+      "image": "duskfell-warden-trousers.png",
+      "imageSha256": "3a8ceb6e982af2ecef4273562ef3fd5273d24e445e3ca47eb314b14ba265028c",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frameCount": 32
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 116
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1,
+        "heightTiles": 1
+      },
+      "render": {
+        "layer": "equipment",
+        "sort": "footprint-y",
+        "zBias": 0,
+        "scale": 0.9,
+        "shadow": {
+          "kind": "none"
+        }
+      },
+      "directions": [
+        {
+          "name": "south",
+          "startFrame": 0,
+          "frameCount": 8
+        },
+        {
+          "name": "east",
+          "startFrame": 8,
+          "frameCount": 8
+        },
+        {
+          "name": "north",
+          "startFrame": 16,
+          "frameCount": 8
+        },
+        {
+          "name": "west",
+          "startFrame": 24,
+          "frameCount": 8
+        }
+      ],
+      "animation": {
+        "idleFrame": 0,
+        "walkFrames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          6,
+          5,
+          4,
+          3,
+          2
+        ]
+      },
+      "provenance": {
+        "cleanRoom": true,
+        "source": "assets/sprites/duskfell-paperdoll-body-source.png plus deterministic local equipment-overlay compositor",
+        "createdAt": "2026-07-08",
+        "license": "project-original-ai-assisted-review",
+        "reviewer": "codex",
+        "prompt": "clean-room military-plan-oblique 1:1 oblique paperdoll body and equipment sprite prototype, four rows, eight walk frames, original dark medieval-fantasy character layers",
+        "negativePrompt": "no copied commercial game pixels, no extracted client art, no screenshots, no 2:1 dimetric projection, no straight-only final-production cardinal sheet",
+        "method": "deterministic-local",
+        "tool": "OpenAI built-in image generation and Pillow local sprite-layer normalization",
+        "toolVersion": "built-in image generation 2026-07-08 plus Pillow local runtime",
+        "sourceHash": "c479770545cb3b388fa2bb686bd9abef685407aa742324f734a6bc04d4ad5c4a",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-08 for internal PoC asset review",
+        "model": "Pillow deterministic compositor",
+        "modelVersion": "local deterministic",
+        "seed": "deterministic-from-frame-bounds",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-08",
+          "reviewer": "codex",
+          "sourceUrl": "https://openai.com/policies/service-terms",
+          "risk": "internal review-only paperdoll prototype; row perspective is not final Duskfell quality and needs a replacement oblique body pass before production"
+        }
+      },
+      "approval": {
+        "state": "review"
+      }
+    },
+    {
+      "id": "duskfell-warden-boots",
+      "image": "duskfell-warden-boots.png",
+      "imageSha256": "52684e25d850c5ed425849f82b24a132cf23c198822343a8a48037038bc5ac6d",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frameCount": 32
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 116
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1,
+        "heightTiles": 1
+      },
+      "render": {
+        "layer": "equipment",
+        "sort": "footprint-y",
+        "zBias": 0,
+        "scale": 0.9,
+        "shadow": {
+          "kind": "none"
+        }
+      },
+      "directions": [
+        {
+          "name": "south",
+          "startFrame": 0,
+          "frameCount": 8
+        },
+        {
+          "name": "east",
+          "startFrame": 8,
+          "frameCount": 8
+        },
+        {
+          "name": "north",
+          "startFrame": 16,
+          "frameCount": 8
+        },
+        {
+          "name": "west",
+          "startFrame": 24,
+          "frameCount": 8
+        }
+      ],
+      "animation": {
+        "idleFrame": 0,
+        "walkFrames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          6,
+          5,
+          4,
+          3,
+          2
+        ]
+      },
+      "provenance": {
+        "cleanRoom": true,
+        "source": "assets/sprites/duskfell-paperdoll-body-source.png plus deterministic local equipment-overlay compositor",
+        "createdAt": "2026-07-08",
+        "license": "project-original-ai-assisted-review",
+        "reviewer": "codex",
+        "prompt": "clean-room military-plan-oblique 1:1 oblique paperdoll body and equipment sprite prototype, four rows, eight walk frames, original dark medieval-fantasy character layers",
+        "negativePrompt": "no copied commercial game pixels, no extracted client art, no screenshots, no 2:1 dimetric projection, no straight-only final-production cardinal sheet",
+        "method": "deterministic-local",
+        "tool": "OpenAI built-in image generation and Pillow local sprite-layer normalization",
+        "toolVersion": "built-in image generation 2026-07-08 plus Pillow local runtime",
+        "sourceHash": "c479770545cb3b388fa2bb686bd9abef685407aa742324f734a6bc04d4ad5c4a",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-08 for internal PoC asset review",
+        "model": "Pillow deterministic compositor",
+        "modelVersion": "local deterministic",
+        "seed": "deterministic-from-frame-bounds",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-08",
+          "reviewer": "codex",
+          "sourceUrl": "https://openai.com/policies/service-terms",
+          "risk": "internal review-only paperdoll prototype; row perspective is not final Duskfell quality and needs a replacement oblique body pass before production"
+        }
+      },
+      "approval": {
+        "state": "review"
+      }
+    },
+    {
+      "id": "duskfell-warden-jack",
+      "image": "duskfell-warden-jack.png",
+      "imageSha256": "b58f446fdd5f092ba3a8b44e38efa8c7e60c540fcf34fb2916879e5771471195",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frameCount": 32
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 116
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1,
+        "heightTiles": 1
+      },
+      "render": {
+        "layer": "equipment",
+        "sort": "footprint-y",
+        "zBias": 0,
+        "scale": 0.9,
+        "shadow": {
+          "kind": "none"
+        }
+      },
+      "directions": [
+        {
+          "name": "south",
+          "startFrame": 0,
+          "frameCount": 8
+        },
+        {
+          "name": "east",
+          "startFrame": 8,
+          "frameCount": 8
+        },
+        {
+          "name": "north",
+          "startFrame": 16,
+          "frameCount": 8
+        },
+        {
+          "name": "west",
+          "startFrame": 24,
+          "frameCount": 8
+        }
+      ],
+      "animation": {
+        "idleFrame": 0,
+        "walkFrames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          6,
+          5,
+          4,
+          3,
+          2
+        ]
+      },
+      "provenance": {
+        "cleanRoom": true,
+        "source": "assets/sprites/duskfell-paperdoll-body-source.png plus deterministic local equipment-overlay compositor",
+        "createdAt": "2026-07-08",
+        "license": "project-original-ai-assisted-review",
+        "reviewer": "codex",
+        "prompt": "clean-room military-plan-oblique 1:1 oblique paperdoll body and equipment sprite prototype, four rows, eight walk frames, original dark medieval-fantasy character layers",
+        "negativePrompt": "no copied commercial game pixels, no extracted client art, no screenshots, no 2:1 dimetric projection, no straight-only final-production cardinal sheet",
+        "method": "deterministic-local",
+        "tool": "OpenAI built-in image generation and Pillow local sprite-layer normalization",
+        "toolVersion": "built-in image generation 2026-07-08 plus Pillow local runtime",
+        "sourceHash": "c479770545cb3b388fa2bb686bd9abef685407aa742324f734a6bc04d4ad5c4a",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-08 for internal PoC asset review",
+        "model": "Pillow deterministic compositor",
+        "modelVersion": "local deterministic",
+        "seed": "deterministic-from-frame-bounds",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-08",
+          "reviewer": "codex",
+          "sourceUrl": "https://openai.com/policies/service-terms",
+          "risk": "internal review-only paperdoll prototype; row perspective is not final Duskfell quality and needs a replacement oblique body pass before production"
+        }
+      },
+      "approval": {
+        "state": "review"
+      }
+    },
+    {
+      "id": "duskfell-warden-cloak",
+      "image": "duskfell-warden-cloak.png",
+      "imageSha256": "8c364df2a3f9d9c0642173b30007275d411e28c9b9bd74f645ca3d3acbef3cb3",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frameCount": 32
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 116
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1,
+        "heightTiles": 1
+      },
+      "render": {
+        "layer": "equipment",
+        "sort": "footprint-y",
+        "zBias": 0,
+        "scale": 0.9,
+        "shadow": {
+          "kind": "none"
+        }
+      },
+      "directions": [
+        {
+          "name": "south",
+          "startFrame": 0,
+          "frameCount": 8
+        },
+        {
+          "name": "east",
+          "startFrame": 8,
+          "frameCount": 8
+        },
+        {
+          "name": "north",
+          "startFrame": 16,
+          "frameCount": 8
+        },
+        {
+          "name": "west",
+          "startFrame": 24,
+          "frameCount": 8
+        }
+      ],
+      "animation": {
+        "idleFrame": 0,
+        "walkFrames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          6,
+          5,
+          4,
+          3,
+          2
+        ]
+      },
+      "provenance": {
+        "cleanRoom": true,
+        "source": "assets/sprites/duskfell-paperdoll-body-source.png plus deterministic local equipment-overlay compositor",
+        "createdAt": "2026-07-08",
+        "license": "project-original-ai-assisted-review",
+        "reviewer": "codex",
+        "prompt": "clean-room military-plan-oblique 1:1 oblique paperdoll body and equipment sprite prototype, four rows, eight walk frames, original dark medieval-fantasy character layers",
+        "negativePrompt": "no copied commercial game pixels, no extracted client art, no screenshots, no 2:1 dimetric projection, no straight-only final-production cardinal sheet",
+        "method": "deterministic-local",
+        "tool": "OpenAI built-in image generation and Pillow local sprite-layer normalization",
+        "toolVersion": "built-in image generation 2026-07-08 plus Pillow local runtime",
+        "sourceHash": "c479770545cb3b388fa2bb686bd9abef685407aa742324f734a6bc04d4ad5c4a",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-08 for internal PoC asset review",
+        "model": "Pillow deterministic compositor",
+        "modelVersion": "local deterministic",
+        "seed": "deterministic-from-frame-bounds",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-08",
+          "reviewer": "codex",
+          "sourceUrl": "https://openai.com/policies/service-terms",
+          "risk": "internal review-only paperdoll prototype; row perspective is not final Duskfell quality and needs a replacement oblique body pass before production"
+        }
+      },
+      "approval": {
+        "state": "review"
+      }
+    },
+    {
+      "id": "duskfell-warden-weapon",
+      "image": "duskfell-warden-weapon.png",
+      "imageSha256": "087185852381a9b7f485c7e63b1513724c38ce3bd2049adc456f5903f3728992",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frameCount": 32
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 116
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1,
+        "heightTiles": 1
+      },
+      "render": {
+        "layer": "equipment",
+        "sort": "footprint-y",
+        "zBias": 0,
+        "scale": 0.9,
+        "shadow": {
+          "kind": "none"
+        }
+      },
+      "directions": [
+        {
+          "name": "south",
+          "startFrame": 0,
+          "frameCount": 8
+        },
+        {
+          "name": "east",
+          "startFrame": 8,
+          "frameCount": 8
+        },
+        {
+          "name": "north",
+          "startFrame": 16,
+          "frameCount": 8
+        },
+        {
+          "name": "west",
+          "startFrame": 24,
+          "frameCount": 8
+        }
+      ],
+      "animation": {
+        "idleFrame": 0,
+        "walkFrames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          6,
+          5,
+          4,
+          3,
+          2
+        ]
+      },
+      "provenance": {
+        "cleanRoom": true,
+        "source": "assets/sprites/duskfell-paperdoll-body-source.png plus deterministic local equipment-overlay compositor",
+        "createdAt": "2026-07-08",
+        "license": "project-original-ai-assisted-review",
+        "reviewer": "codex",
+        "prompt": "clean-room military-plan-oblique 1:1 oblique paperdoll body and equipment sprite prototype, four rows, eight walk frames, original dark medieval-fantasy character layers",
+        "negativePrompt": "no copied commercial game pixels, no extracted client art, no screenshots, no 2:1 dimetric projection, no straight-only final-production cardinal sheet",
+        "method": "deterministic-local",
+        "tool": "OpenAI built-in image generation and Pillow local sprite-layer normalization",
+        "toolVersion": "built-in image generation 2026-07-08 plus Pillow local runtime",
+        "sourceHash": "c479770545cb3b388fa2bb686bd9abef685407aa742324f734a6bc04d4ad5c4a",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-08 for internal PoC asset review",
+        "model": "Pillow deterministic compositor",
+        "modelVersion": "local deterministic",
+        "seed": "deterministic-from-frame-bounds",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-08",
+          "reviewer": "codex",
+          "sourceUrl": "https://openai.com/policies/service-terms",
+          "risk": "internal review-only paperdoll prototype; row perspective is not final Duskfell quality and needs a replacement oblique body pass before production"
+        }
+      },
+      "approval": {
+        "state": "review"
+      }
+    },
+    {
+      "id": "duskfell-brigand-trousers",
+      "image": "duskfell-brigand-trousers.png",
+      "imageSha256": "90de97bdb83f57ce906eca080dae82367caad9b455560bcfd9810d74d4e33180",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frameCount": 32
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 116
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1,
+        "heightTiles": 1
+      },
+      "render": {
+        "layer": "equipment",
+        "sort": "footprint-y",
+        "zBias": 0,
+        "scale": 0.9,
+        "shadow": {
+          "kind": "none"
+        }
+      },
+      "directions": [
+        {
+          "name": "south",
+          "startFrame": 0,
+          "frameCount": 8
+        },
+        {
+          "name": "east",
+          "startFrame": 8,
+          "frameCount": 8
+        },
+        {
+          "name": "north",
+          "startFrame": 16,
+          "frameCount": 8
+        },
+        {
+          "name": "west",
+          "startFrame": 24,
+          "frameCount": 8
+        }
+      ],
+      "animation": {
+        "idleFrame": 0,
+        "walkFrames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          6,
+          5,
+          4,
+          3,
+          2
+        ]
+      },
+      "provenance": {
+        "cleanRoom": true,
+        "source": "assets/sprites/duskfell-paperdoll-body-source.png plus deterministic local equipment-overlay compositor",
+        "createdAt": "2026-07-08",
+        "license": "project-original-ai-assisted-review",
+        "reviewer": "codex",
+        "prompt": "clean-room military-plan-oblique 1:1 oblique paperdoll body and equipment sprite prototype, four rows, eight walk frames, original dark medieval-fantasy character layers",
+        "negativePrompt": "no copied commercial game pixels, no extracted client art, no screenshots, no 2:1 dimetric projection, no straight-only final-production cardinal sheet",
+        "method": "deterministic-local",
+        "tool": "OpenAI built-in image generation and Pillow local sprite-layer normalization",
+        "toolVersion": "built-in image generation 2026-07-08 plus Pillow local runtime",
+        "sourceHash": "c479770545cb3b388fa2bb686bd9abef685407aa742324f734a6bc04d4ad5c4a",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-08 for internal PoC asset review",
+        "model": "Pillow deterministic compositor",
+        "modelVersion": "local deterministic",
+        "seed": "deterministic-from-frame-bounds",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-08",
+          "reviewer": "codex",
+          "sourceUrl": "https://openai.com/policies/service-terms",
+          "risk": "internal review-only paperdoll prototype; row perspective is not final Duskfell quality and needs a replacement oblique body pass before production"
+        }
+      },
+      "approval": {
+        "state": "review"
+      }
+    },
+    {
+      "id": "duskfell-brigand-boots",
+      "image": "duskfell-brigand-boots.png",
+      "imageSha256": "1d59610f1f483cf51edf4c2ebe97187bd34cebda58eaffc4a8fe5b18a6ca93b5",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frameCount": 32
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 116
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1,
+        "heightTiles": 1
+      },
+      "render": {
+        "layer": "equipment",
+        "sort": "footprint-y",
+        "zBias": 0,
+        "scale": 0.9,
+        "shadow": {
+          "kind": "none"
+        }
+      },
+      "directions": [
+        {
+          "name": "south",
+          "startFrame": 0,
+          "frameCount": 8
+        },
+        {
+          "name": "east",
+          "startFrame": 8,
+          "frameCount": 8
+        },
+        {
+          "name": "north",
+          "startFrame": 16,
+          "frameCount": 8
+        },
+        {
+          "name": "west",
+          "startFrame": 24,
+          "frameCount": 8
+        }
+      ],
+      "animation": {
+        "idleFrame": 0,
+        "walkFrames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          6,
+          5,
+          4,
+          3,
+          2
+        ]
+      },
+      "provenance": {
+        "cleanRoom": true,
+        "source": "assets/sprites/duskfell-paperdoll-body-source.png plus deterministic local equipment-overlay compositor",
+        "createdAt": "2026-07-08",
+        "license": "project-original-ai-assisted-review",
+        "reviewer": "codex",
+        "prompt": "clean-room military-plan-oblique 1:1 oblique paperdoll body and equipment sprite prototype, four rows, eight walk frames, original dark medieval-fantasy character layers",
+        "negativePrompt": "no copied commercial game pixels, no extracted client art, no screenshots, no 2:1 dimetric projection, no straight-only final-production cardinal sheet",
+        "method": "deterministic-local",
+        "tool": "OpenAI built-in image generation and Pillow local sprite-layer normalization",
+        "toolVersion": "built-in image generation 2026-07-08 plus Pillow local runtime",
+        "sourceHash": "c479770545cb3b388fa2bb686bd9abef685407aa742324f734a6bc04d4ad5c4a",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-08 for internal PoC asset review",
+        "model": "Pillow deterministic compositor",
+        "modelVersion": "local deterministic",
+        "seed": "deterministic-from-frame-bounds",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-08",
+          "reviewer": "codex",
+          "sourceUrl": "https://openai.com/policies/service-terms",
+          "risk": "internal review-only paperdoll prototype; row perspective is not final Duskfell quality and needs a replacement oblique body pass before production"
+        }
+      },
+      "approval": {
+        "state": "review"
+      }
+    },
+    {
+      "id": "duskfell-brigand-jack",
+      "image": "duskfell-brigand-jack.png",
+      "imageSha256": "202ee7582fbfb473d87c0c02e6cb5b5cbbffb95ea0262f39d3f70d188b1a3a8e",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frameCount": 32
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 116
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1,
+        "heightTiles": 1
+      },
+      "render": {
+        "layer": "equipment",
+        "sort": "footprint-y",
+        "zBias": 0,
+        "scale": 0.9,
+        "shadow": {
+          "kind": "none"
+        }
+      },
+      "directions": [
+        {
+          "name": "south",
+          "startFrame": 0,
+          "frameCount": 8
+        },
+        {
+          "name": "east",
+          "startFrame": 8,
+          "frameCount": 8
+        },
+        {
+          "name": "north",
+          "startFrame": 16,
+          "frameCount": 8
+        },
+        {
+          "name": "west",
+          "startFrame": 24,
+          "frameCount": 8
+        }
+      ],
+      "animation": {
+        "idleFrame": 0,
+        "walkFrames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          6,
+          5,
+          4,
+          3,
+          2
+        ]
+      },
+      "provenance": {
+        "cleanRoom": true,
+        "source": "assets/sprites/duskfell-paperdoll-body-source.png plus deterministic local equipment-overlay compositor",
+        "createdAt": "2026-07-08",
+        "license": "project-original-ai-assisted-review",
+        "reviewer": "codex",
+        "prompt": "clean-room military-plan-oblique 1:1 oblique paperdoll body and equipment sprite prototype, four rows, eight walk frames, original dark medieval-fantasy character layers",
+        "negativePrompt": "no copied commercial game pixels, no extracted client art, no screenshots, no 2:1 dimetric projection, no straight-only final-production cardinal sheet",
+        "method": "deterministic-local",
+        "tool": "OpenAI built-in image generation and Pillow local sprite-layer normalization",
+        "toolVersion": "built-in image generation 2026-07-08 plus Pillow local runtime",
+        "sourceHash": "c479770545cb3b388fa2bb686bd9abef685407aa742324f734a6bc04d4ad5c4a",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-08 for internal PoC asset review",
+        "model": "Pillow deterministic compositor",
+        "modelVersion": "local deterministic",
+        "seed": "deterministic-from-frame-bounds",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-08",
+          "reviewer": "codex",
+          "sourceUrl": "https://openai.com/policies/service-terms",
+          "risk": "internal review-only paperdoll prototype; row perspective is not final Duskfell quality and needs a replacement oblique body pass before production"
+        }
+      },
+      "approval": {
+        "state": "review"
+      }
+    },
+    {
+      "id": "duskfell-brigand-cloak",
+      "image": "duskfell-brigand-cloak.png",
+      "imageSha256": "c19dbccd846d2463eb3972b85c6beceb578dd86eb77da722d11342d6c5df9146",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frameCount": 32
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 116
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1,
+        "heightTiles": 1
+      },
+      "render": {
+        "layer": "equipment",
+        "sort": "footprint-y",
+        "zBias": 0,
+        "scale": 0.9,
+        "shadow": {
+          "kind": "none"
+        }
+      },
+      "directions": [
+        {
+          "name": "south",
+          "startFrame": 0,
+          "frameCount": 8
+        },
+        {
+          "name": "east",
+          "startFrame": 8,
+          "frameCount": 8
+        },
+        {
+          "name": "north",
+          "startFrame": 16,
+          "frameCount": 8
+        },
+        {
+          "name": "west",
+          "startFrame": 24,
+          "frameCount": 8
+        }
+      ],
+      "animation": {
+        "idleFrame": 0,
+        "walkFrames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          6,
+          5,
+          4,
+          3,
+          2
+        ]
+      },
+      "provenance": {
+        "cleanRoom": true,
+        "source": "assets/sprites/duskfell-paperdoll-body-source.png plus deterministic local equipment-overlay compositor",
+        "createdAt": "2026-07-08",
+        "license": "project-original-ai-assisted-review",
+        "reviewer": "codex",
+        "prompt": "clean-room military-plan-oblique 1:1 oblique paperdoll body and equipment sprite prototype, four rows, eight walk frames, original dark medieval-fantasy character layers",
+        "negativePrompt": "no copied commercial game pixels, no extracted client art, no screenshots, no 2:1 dimetric projection, no straight-only final-production cardinal sheet",
+        "method": "deterministic-local",
+        "tool": "OpenAI built-in image generation and Pillow local sprite-layer normalization",
+        "toolVersion": "built-in image generation 2026-07-08 plus Pillow local runtime",
+        "sourceHash": "c479770545cb3b388fa2bb686bd9abef685407aa742324f734a6bc04d4ad5c4a",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-08 for internal PoC asset review",
+        "model": "Pillow deterministic compositor",
+        "modelVersion": "local deterministic",
+        "seed": "deterministic-from-frame-bounds",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-08",
+          "reviewer": "codex",
+          "sourceUrl": "https://openai.com/policies/service-terms",
+          "risk": "internal review-only paperdoll prototype; row perspective is not final Duskfell quality and needs a replacement oblique body pass before production"
+        }
+      },
+      "approval": {
+        "state": "review"
+      }
+    },
+    {
+      "id": "duskfell-brigand-weapon",
+      "image": "duskfell-brigand-weapon.png",
+      "imageSha256": "8bb4b89b4512c8329aadd0b71c3146bcd7afc6e4f0b2af71a8b5c8b1232b93a7",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frameCount": 32
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 116
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1,
+        "heightTiles": 1
+      },
+      "render": {
+        "layer": "equipment",
+        "sort": "footprint-y",
+        "zBias": 0,
+        "scale": 0.9,
+        "shadow": {
+          "kind": "none"
+        }
+      },
+      "directions": [
+        {
+          "name": "south",
+          "startFrame": 0,
+          "frameCount": 8
+        },
+        {
+          "name": "east",
+          "startFrame": 8,
+          "frameCount": 8
+        },
+        {
+          "name": "north",
+          "startFrame": 16,
+          "frameCount": 8
+        },
+        {
+          "name": "west",
+          "startFrame": 24,
+          "frameCount": 8
+        }
+      ],
+      "animation": {
+        "idleFrame": 0,
+        "walkFrames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          6,
+          5,
+          4,
+          3,
+          2
+        ]
+      },
+      "provenance": {
+        "cleanRoom": true,
+        "source": "assets/sprites/duskfell-paperdoll-body-source.png plus deterministic local equipment-overlay compositor",
+        "createdAt": "2026-07-08",
+        "license": "project-original-ai-assisted-review",
+        "reviewer": "codex",
+        "prompt": "clean-room military-plan-oblique 1:1 oblique paperdoll body and equipment sprite prototype, four rows, eight walk frames, original dark medieval-fantasy character layers",
+        "negativePrompt": "no copied commercial game pixels, no extracted client art, no screenshots, no 2:1 dimetric projection, no straight-only final-production cardinal sheet",
+        "method": "deterministic-local",
+        "tool": "OpenAI built-in image generation and Pillow local sprite-layer normalization",
+        "toolVersion": "built-in image generation 2026-07-08 plus Pillow local runtime",
+        "sourceHash": "c479770545cb3b388fa2bb686bd9abef685407aa742324f734a6bc04d4ad5c4a",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-08 for internal PoC asset review",
+        "model": "Pillow deterministic compositor",
+        "modelVersion": "local deterministic",
+        "seed": "deterministic-from-frame-bounds",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-08",
+          "reviewer": "codex",
+          "sourceUrl": "https://openai.com/policies/service-terms",
+          "risk": "internal review-only paperdoll prototype; row perspective is not final Duskfell quality and needs a replacement oblique body pass before production"
+        }
+      },
+      "approval": {
+        "state": "review"
+      }
+    }
+  ],
+  "paperdolls": [
+    {
+      "id": "duskfell-paperdoll-wayfarer",
+      "role": "player",
+      "label": "Wayfarer",
+      "baseSheetId": "duskfell-body-base",
+      "layers": []
+    },
+    {
+      "id": "duskfell-paperdoll-ranger",
+      "role": "player",
+      "label": "Ranger",
+      "baseSheetId": "duskfell-body-base",
+      "layers": []
+    },
+    {
+      "id": "duskfell-paperdoll-warden",
+      "role": "player",
+      "label": "Warden",
+      "baseSheetId": "duskfell-body-base",
+      "layers": []
+    },
+    {
+      "id": "duskfell-paperdoll-brigand",
+      "role": "player",
+      "label": "Brigand",
+      "baseSheetId": "duskfell-body-base",
+      "layers": []
     }
   ]
 }

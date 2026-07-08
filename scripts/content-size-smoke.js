@@ -34,7 +34,7 @@ await writeFile(
           maxElevation: 4,
           waterLevel: -1,
           maxWalkableStep: 1,
-          materials: ["grass", "field", "dirt", "stone", "water", "settlement"],
+          materials: ["grass", "field", "dirt", "stone", "water", "settlement", "cobble", "rock", "ruin", "shore"],
         },
       },
       spawn: {

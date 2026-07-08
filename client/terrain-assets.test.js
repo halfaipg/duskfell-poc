@@ -9,19 +9,19 @@ test("normalizes a complete Duskfell terrain atlas", () => {
   assert.equal(atlas.tileSheet.imagePath, "terrain-placeholder.png");
   assert.equal(atlas.tileSheet.sha256, "da7eca042b2fc1c95b99a75c04bcfa583d18bd78109d2d565f34c2eea6ff90a3");
   assert.equal(atlas.byMaterial.get("grass").frame, 0);
-  assert.equal(atlas.slopeByMaterial.get("grass").frame, 6);
-  assert.equal(atlas.transitionByMaterial.get("water").frame, 16);
+  assert.equal(atlas.slopeByMaterial.get("grass").frame, 10);
+  assert.equal(atlas.transitionByMaterial.get("water").frame, 24);
   assert.equal(
     atlas.transitionByMaterialAndMask.get(
       transitionMaskKey("water", { type: "edge", edge: "north" }),
     ).frame,
-    22,
+    34,
   );
   assert.equal(
     atlas.transitionByMaterialAndMask.get(
       transitionMaskKey("dirt", { type: "corner", corner: "southWest" }),
     ).frame,
-    56,
+    92,
   );
   assert.equal(atlas.byMaterial.get("water").surface.walkable, false);
 });
@@ -73,12 +73,12 @@ test("rejects missing or malformed terrain atlas hashes", () => {
 test("normalizes optional material-pair transition frames", () => {
   const manifest = validAtlas();
   manifest.tileSheet.rows = 12;
-  manifest.tileSheet.frameCount = 72;
+  manifest.tileSheet.frameCount = 120;
   manifest.tiles.push({
     id: "dirt-to-grass-pair-transition",
     material: "grass",
     kind: "pair-transition",
-    frame: 66,
+    frame: 110,
     pair: {
       from: "dirt",
       to: "grass",
@@ -90,18 +90,18 @@ test("normalizes optional material-pair transition frames", () => {
   });
 
   const atlas = normalizeTerrainAtlas(manifest);
-  assert.equal(atlas.pairTransitionByPair.get(transitionPairKey("dirt", "grass")).frame, 66);
+  assert.equal(atlas.pairTransitionByPair.get(transitionPairKey("dirt", "grass")).frame, 110);
 });
 
 test("rejects malformed material-pair transition frames", () => {
   const manifest = validAtlas();
   manifest.tileSheet.rows = 12;
-  manifest.tileSheet.frameCount = 72;
+  manifest.tileSheet.frameCount = 120;
   manifest.tiles.push({
     id: "bad-pair-transition",
     material: "grass",
     kind: "pair-transition",
-    frame: 66,
+    frame: 110,
     pair: {
       from: "dirt",
       to: "stone",
@@ -116,7 +116,7 @@ test("rejects malformed material-pair transition frames", () => {
 });
 
 function validAtlas() {
-  const materials = ["grass", "field", "dirt", "stone", "water", "settlement"];
+  const materials = ["grass", "field", "dirt", "stone", "water", "settlement", "cobble", "rock", "ruin", "shore"];
   return {
     schemaVersion: "duskfell-terrain-atlas-v1",
     projection: {
@@ -134,9 +134,9 @@ function validAtlas() {
       sha256: "da7eca042b2fc1c95b99a75c04bcfa583d18bd78109d2d565f34c2eea6ff90a3",
       cellWidth: 64,
       cellHeight: 64,
-      columns: 6,
+      columns: 10,
       rows: 11,
-      frameCount: 66,
+      frameCount: 110,
     },
     tiles: [
       ...materials.map((material, index) => ({
@@ -153,7 +153,7 @@ function validAtlas() {
         id: `${material}-slope-placeholder`,
         material,
         kind: "slope-texture",
-        frame: index + 6,
+        frame: index + materials.length,
         surface: {
           walkable: material !== "water",
           role: material === "water" ? "liquid-slope" : "slope",
@@ -163,7 +163,7 @@ function validAtlas() {
         id: `${material}-transition-placeholder`,
         material,
         kind: "transition",
-        frame: index + 12,
+        frame: index + materials.length * 2,
         surface: {
           walkable: material !== "water",
           role: material === "water" ? "shoreline" : "edge",
@@ -174,7 +174,7 @@ function validAtlas() {
           id: `${material}-transition-${edge}`,
           material,
           kind: "transition",
-          frame: 18 + edgeIndex * materials.length + index,
+          frame: materials.length * 3 + edgeIndex * materials.length + index,
           mask: {
             type: "edge",
             edge,
@@ -190,7 +190,7 @@ function validAtlas() {
           id: `${material}-transition-${corner}`,
           material,
           kind: "transition",
-          frame: 42 + cornerIndex * materials.length + index,
+          frame: materials.length * 7 + cornerIndex * materials.length + index,
           mask: {
             type: "corner",
             corner,

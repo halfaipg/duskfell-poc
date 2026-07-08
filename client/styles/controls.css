@@ -1,0 +1,47 @@
+.name-row {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+input {
+  width: 100%;
+  padding: 10px 11px;
+  color: var(--ink);
+  background: #fffaf0;
+  border: 1px solid #beb49f;
+}
+
+button {
+  min-height: 40px;
+  color: #fffdf7;
+  background: var(--accent-2);
+  border: 0;
+  cursor: pointer;
+}
+
+button:hover {
+  filter: brightness(1.06);
+}
+
+.metrics {
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.metrics div {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 8px;
+}
+
+dt {
+  color: var(--muted);
+}
+
+dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}

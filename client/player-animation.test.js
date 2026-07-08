@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   directionFromWorldDelta,
   projectedMovementDelta,
+  smoothPlayerRenderPosition,
   walkAnimationSample,
 } from "./player-animation.js";
 
@@ -36,12 +37,16 @@ test("walk animation samples frame progression without lifting the foot anchor",
     bodyOffsetX: 0,
     bodyOffsetY: 0,
     cycleRadians: 0,
+    footfallStrength: 0,
+    footfallSide: 0,
   });
 
   const moving = walkAnimationSample({ moving: true, elapsedMs: 270, frameCount: 8, stablePhase: 0 });
   assert.equal(moving.frameIndex, 3);
   assert.equal(moving.bodyOffsetY, 0);
   assert.ok(Math.abs(moving.bodyOffsetX) <= 0.65);
+  assert.ok(moving.footfallStrength >= 0 && moving.footfallStrength <= 1);
+  assert.ok([-1, 1].includes(moving.footfallSide));
 });
 
 test("walk animation cadence responds to speed without changing the foot anchor", () => {
@@ -54,4 +59,86 @@ test("walk animation cadence responds to speed without changing the foot anchor"
   assert.equal(slow.bodyOffsetY, 0);
   assert.equal(fast.bodyOffsetY, 0);
   assert.ok(Math.abs(fast.bodyOffsetX) <= 0.65);
+});
+
+test("walk animation can use an authored gait sequence and idle frame", () => {
+  const idle = walkAnimationSample({
+    moving: false,
+    elapsedMs: 0,
+    frameCount: 8,
+    idleFrame: 3,
+    frameSequence: [1, 2, 3, 2],
+  });
+  const first = walkAnimationSample({
+    moving: true,
+    elapsedMs: 0,
+    frameCount: 8,
+    frameSequence: [1, 2, 3, 2],
+  });
+  const next = walkAnimationSample({
+    moving: true,
+    elapsedMs: 90,
+    frameCount: 8,
+    frameSequence: [1, 2, 3, 2],
+  });
+
+  assert.equal(idle.frameIndex, 3);
+  assert.equal(first.frameIndex, 1);
+  assert.equal(next.frameIndex, 2);
+});
+
+test("walk animation exposes alternating footfall pulses for terrain feedback", () => {
+  const firstPlant = walkAnimationSample({
+    moving: true,
+    elapsedMs: 0,
+    frameCount: 8,
+    frameSequence: [1, 2, 3, 4, 5, 6, 7, 6],
+  });
+  const midStride = walkAnimationSample({
+    moving: true,
+    elapsedMs: 180,
+    frameCount: 8,
+    frameSequence: [1, 2, 3, 4, 5, 6, 7, 6],
+  });
+  const secondPlant = walkAnimationSample({
+    moving: true,
+    elapsedMs: 360,
+    frameCount: 8,
+    frameSequence: [1, 2, 3, 4, 5, 6, 7, 6],
+  });
+
+  assert.equal(firstPlant.footfallStrength, 1);
+  assert.ok(midStride.footfallStrength < 0.05);
+  assert.ok(secondPlant.footfallStrength > 0.9);
+  assert.notEqual(firstPlant.footfallSide, secondPlant.footfallSide);
+});
+
+test("render position smoothing eases between authoritative samples", () => {
+  const next = smoothPlayerRenderPosition(
+    { x: 100, y: 100 },
+    { x: 164, y: 100 },
+    16,
+    { smoothingMs: 64, snapDistance: 256 },
+  );
+
+  assert.ok(next.x > 100);
+  assert.ok(next.x < 164);
+  assert.equal(next.y, 100);
+});
+
+test("render position smoothing snaps large corrections", () => {
+  assert.deepEqual(
+    smoothPlayerRenderPosition(
+      { x: 100, y: 100 },
+      { x: 500, y: 500 },
+      16,
+      { smoothingMs: 64, snapDistance: 128 },
+    ),
+    { x: 500, y: 500 },
+  );
+});
+
+test("render position smoothing ignores invalid previous points", () => {
+  assert.deepEqual(smoothPlayerRenderPosition(null, { x: 12, y: 18 }, 16), { x: 12, y: 18 });
+  assert.deepEqual(smoothPlayerRenderPosition({ x: NaN, y: 0 }, { x: 12, y: 18 }, 16), { x: 12, y: 18 });
 });

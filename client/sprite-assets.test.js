@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { selectSpriteSheet } from "./sprite-assets.js";
+import { PAPERDOLL_LAYER_ORDER, selectPaperdollStack, selectSpriteSheet } from "./sprite-assets.js";
 
 test("selects a normalized sprite sheet for runtime drawing", () => {
   const sheet = selectSpriteSheet(validManifest(), "player-placeholder", "south");
@@ -26,6 +26,10 @@ test("selects a normalized sprite sheet for runtime drawing", () => {
         height: 12,
         opacity: 0.3,
       },
+    },
+    animation: {
+      idleFrame: 0,
+      walkFrames: [1, 2, 1],
     },
     startFrame: 0,
     frameCount: 3,
@@ -85,6 +89,64 @@ test("selects a manifest-backed item icon sheet for inventory UI", () => {
   });
 });
 
+test("selects a paperdoll body and ordered equipment overlay stack", () => {
+  const stack = selectPaperdollStack(
+    paperdollManifest(),
+    {
+      baseSheetId: "body-base",
+      layers: [
+        { slot: "weapon", sheetId: "spear-overlay" },
+        { slot: "armor", sheetId: "iron-armor-overlay" },
+        { slot: "cloak", sheetId: "wolf-cloak-overlay" },
+      ],
+    },
+    "east",
+  );
+
+  assert.equal(stack.direction, "east");
+  assert.equal(stack.baseSheetId, "body-base");
+  assert.equal(stack.cellWidth, 192);
+  assert.equal(stack.cellHeight, 192);
+  assert.deepEqual(stack.anchor, { kind: "foot", x: 96, y: 174 });
+  assert.deepEqual(
+    stack.layers.map((layer) => layer.slot),
+    ["cloak", "body", "armor", "weapon"],
+  );
+  assert.deepEqual(
+    stack.layers.map((layer) => layer.sheetId),
+    ["wolf-cloak-overlay", "body-base", "iron-armor-overlay", "spear-overlay"],
+  );
+  assert.ok(PAPERDOLL_LAYER_ORDER.indexOf("cloak") < PAPERDOLL_LAYER_ORDER.indexOf("body"));
+  assert.ok(PAPERDOLL_LAYER_ORDER.indexOf("body") < PAPERDOLL_LAYER_ORDER.indexOf("armor"));
+  assert.ok(stack.layers.every((layer) => layer.startFrame === 8 && layer.frameCount === 8));
+});
+
+test("rejects paperdoll overlays with mismatched anchors or frame geometry", () => {
+  const anchorMismatch = paperdollManifest();
+  anchorMismatch.sheets.find((sheet) => sheet.id === "iron-armor-overlay").anchor.y = 170;
+  assert.throws(
+    () =>
+      selectPaperdollStack(
+        anchorMismatch,
+        { baseSheetId: "body-base", layers: [{ slot: "armor", sheetId: "iron-armor-overlay" }] },
+        "east",
+      ),
+    /foot anchor/,
+  );
+
+  const gridMismatch = paperdollManifest();
+  gridMismatch.sheets.find((sheet) => sheet.id === "wolf-cloak-overlay").frameGrid.cellWidth = 128;
+  assert.throws(
+    () =>
+      selectPaperdollStack(
+        gridMismatch,
+        { baseSheetId: "body-base", layers: [{ slot: "cloak", sheetId: "wolf-cloak-overlay" }] },
+        "east",
+      ),
+    /frameGrid|frame grid/,
+  );
+});
+
 test("rejects projection drift before selecting a sheet", () => {
   const manifest = validManifest();
   manifest.projection.tileHeight = 32;
@@ -133,6 +195,16 @@ test("rejects unsupported render layers at runtime", () => {
   assert.throws(
     () => selectSpriteSheet(manifest, "player-placeholder", "south"),
     /render layer is not supported/,
+  );
+});
+
+test("rejects malformed actor animation metadata", () => {
+  const manifest = validManifest();
+  manifest.sheets[0].animation.walkFrames = [1, 3];
+
+  assert.throws(
+    () => selectSpriteSheet(manifest, "player-placeholder", "south"),
+    /animation\.walkFrames/,
   );
 });
 
@@ -185,6 +257,10 @@ function validManifest() {
             frameCount: 3,
           },
         ],
+        animation: {
+          idleFrame: 0,
+          walkFrames: [1, 2, 1],
+        },
       },
       {
         id: "props-placeholder",
@@ -256,5 +332,63 @@ function validManifest() {
         ],
       },
     ],
+  };
+}
+
+function paperdollManifest() {
+  const base = {
+    schemaVersion: "sundermere-sprite-manifest-v1",
+    projection: {
+      kind: "military-plan-oblique",
+      tileWidth: 64,
+      tileHeight: 64,
+      tileAspectRatio: 1,
+      axisAngleDegrees: 45,
+      heightAxis: "screen-y",
+      unitsPerTile: 64,
+    },
+    sheets: [
+      paperdollSheet("body-base", "actor", "body-base.png"),
+      paperdollSheet("iron-armor-overlay", "equipment", "iron-armor-overlay.png"),
+      paperdollSheet("wolf-cloak-overlay", "equipment", "wolf-cloak-overlay.png"),
+      paperdollSheet("spear-overlay", "equipment", "spear-overlay.png"),
+    ],
+  };
+  return base;
+}
+
+function paperdollSheet(id, layer, image) {
+  return {
+    id,
+    image,
+    imageSha256: "a".repeat(64),
+    frameGrid: {
+      cellWidth: 192,
+      cellHeight: 192,
+      columns: 8,
+      rows: 4,
+      frameCount: 32,
+    },
+    anchor: {
+      kind: "foot",
+      x: 96,
+      y: 174,
+    },
+    render: {
+      layer,
+      sort: "footprint-y",
+      zBias: 0,
+      shadow: layer === "actor" ? { kind: "ellipse", x: 96, y: 178, width: 54, height: 14, opacity: 0.28 } : { kind: "none" },
+    },
+    directions: [
+      { name: "south", startFrame: 0, frameCount: 8 },
+      { name: "east", startFrame: 8, frameCount: 8 },
+      { name: "north", startFrame: 16, frameCount: 8 },
+      { name: "west", startFrame: 24, frameCount: 8 },
+    ],
+    animation: {
+      idleFrame: 0,
+      walkFrames: [1, 2, 3, 4, 5, 6, 7, 6],
+    },
   };
 }

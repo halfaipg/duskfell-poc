@@ -1,0 +1,33 @@
+@media (max-width: 980px) {
+  .playfield {
+    grid-template-columns: 1fr;
+  }
+
+  canvas {
+    min-height: 420px;
+  }
+
+  .panel {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+
+  .panel-block {
+    border-right: 1px solid var(--panel-2);
+  }
+}
+
+@media (max-width: 720px) {
+  .app {
+    width: min(100vw - 20px, 1480px);
+  }
+
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .panel {
+    grid-template-columns: 1fr;
+  }
+}

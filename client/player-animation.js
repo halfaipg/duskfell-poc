@@ -6,6 +6,8 @@ export const PLAYER_WALK_STOP_GRACE_MS = 145;
 export const PLAYER_WALK_SWAY_PX = 0.65;
 export const PLAYER_WALK_MIN_SPEED_RATIO = 0.62;
 export const PLAYER_WALK_MAX_SPEED_RATIO = 1.45;
+export const PLAYER_RENDER_SMOOTHING_MS = 78;
+export const PLAYER_RENDER_SNAP_DISTANCE = PROJECTION.unitsPerTile * 2.5;
 
 export function projectedMovementDelta(dx, dy) {
   return {
@@ -30,31 +32,88 @@ export function directionFromWorldDelta(dx, dy, fallback = "south") {
   return screen.y > 0 ? "south" : "north";
 }
 
-export function walkAnimationSample({ moving, elapsedMs, frameCount, stablePhase = 0, speedRatio = 1 }) {
+export function walkAnimationSample({
+  moving,
+  elapsedMs,
+  frameCount,
+  stablePhase = 0,
+  speedRatio = 1,
+  idleFrame = 0,
+  frameSequence = null,
+}) {
   const safeFrameCount = Math.max(1, frameCount);
+  const idleFrameIndex = clampInteger(idleFrame, 0, safeFrameCount - 1);
   if (!moving) {
     return {
-      frameIndex: 0,
+      frameIndex: idleFrameIndex,
       bodyOffsetX: 0,
       bodyOffsetY: 0,
       cycleRadians: 0,
+      footfallStrength: 0,
+      footfallSide: 0,
     };
   }
 
   const elapsed = Math.max(0, elapsedMs);
+  const sequence = normalizeFrameSequence(frameSequence, safeFrameCount);
+  const sequenceLength = sequence.length;
   const speed = clamp(speedRatio, PLAYER_WALK_MIN_SPEED_RATIO, PLAYER_WALK_MAX_SPEED_RATIO);
   const frameMs = PLAYER_WALK_FRAME_MS / speed;
-  const frameIndex = Math.floor((elapsed / frameMs + stablePhase) % safeFrameCount);
-  const cycleRadians = (elapsed / (frameMs * safeFrameCount)) * Math.PI * 2;
+  const phaseFrames = elapsed / frameMs + stablePhase;
+  const sequenceIndex = Math.floor(phaseFrames % sequenceLength);
+  const frameIndex = sequence[sequenceIndex];
+  const cycleRadians = (phaseFrames / sequenceLength) * Math.PI * 2;
   const sway = PLAYER_WALK_SWAY_PX * clamp(0.76 + speed * 0.2, 0.72, 1);
+  const footfallWave = Math.cos(cycleRadians * 2);
+  const footfallStrength = clamp((footfallWave - 0.72) / 0.28, 0, 1);
   return {
     frameIndex,
     bodyOffsetX: Math.sin(cycleRadians) * sway,
     bodyOffsetY: 0,
     cycleRadians,
+    footfallStrength,
+    footfallSide: Math.cos(cycleRadians) >= 0 ? 1 : -1,
   };
+}
+
+function normalizeFrameSequence(sequence, frameCount) {
+  if (!Array.isArray(sequence) || sequence.length === 0) {
+    return Array.from({ length: frameCount }, (_, index) => index);
+  }
+  const normalized = sequence
+    .map((frame) => clampInteger(frame, 0, frameCount - 1))
+    .filter((frame, index, frames) => index === 0 || frame !== frames[index - 1]);
+  return normalized.length > 0 ? normalized : [0];
+}
+
+export function smoothPlayerRenderPosition(previous, target, elapsedMs, options = {}) {
+  if (!isFinitePoint(target)) return previous ?? { x: 0, y: 0 };
+  if (!isFinitePoint(previous)) return { x: target.x, y: target.y };
+
+  const snapDistance = options.snapDistance ?? PLAYER_RENDER_SNAP_DISTANCE;
+  const smoothingMs = options.smoothingMs ?? PLAYER_RENDER_SMOOTHING_MS;
+  const dx = target.x - previous.x;
+  const dy = target.y - previous.y;
+  if (Math.hypot(dx, dy) >= snapDistance || smoothingMs <= 0) {
+    return { x: target.x, y: target.y };
+  }
+
+  const elapsed = Math.max(0, elapsedMs);
+  const alpha = 1 - Math.exp(-elapsed / smoothingMs);
+  return {
+    x: previous.x + dx * clamp(alpha, 0, 1),
+    y: previous.y + dy * clamp(alpha, 0, 1),
+  };
+}
+
+function isFinitePoint(point) {
+  return point && Number.isFinite(point.x) && Number.isFinite(point.y);
 }
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
+}
+
+function clampInteger(value, min, max) {
+  return Math.max(min, Math.min(max, Number.isInteger(value) ? value : min));
 }

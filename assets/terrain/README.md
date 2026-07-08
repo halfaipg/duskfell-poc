@@ -8,6 +8,7 @@ Run:
 
 ```sh
 npm run terrain:verify
+npm run art:direction
 ```
 
 The checked-in placeholder atlas is deterministic and can be regenerated with:
