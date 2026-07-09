@@ -1,0 +1,29 @@
+{
+  "schemaVersion": "duskfell-prototype-rig-render-v1",
+  "note": "Prototype only. Demonstrates deterministic rig-to-sprite/card output and stable equipment anchors.",
+  "cell": {
+    "width": 216,
+    "height": 288,
+    "lowWidth": 72,
+    "lowHeight": 96,
+    "scale": 3
+  },
+  "directions": [
+    "south",
+    "east",
+    "north",
+    "west"
+  ],
+  "frames": 4,
+  "anchors": {
+    "leftHand": "blue debug pixel per frame",
+    "rightHand": "orange debug pixel per frame",
+    "foot": "pink debug pixel per frame"
+  },
+  "outputs": [
+    "assets/sprites/player-cards/candidates/duskfell-prototype-male-base-rig-render.png",
+    "assets/sprites/player-cards/candidates/duskfell-prototype-equipped-rig-render.png",
+    "assets/sprites/player-cards/candidates/duskfell-prototype-ghost-rig-render.png",
+    "assets/sprites/player-cards/candidates/duskfell-prototype-player-card-rig-render.png"
+  ]
+}

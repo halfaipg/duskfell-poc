@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "duskfell-poly-pizza-uo-character-v1",
+  "note": "UO-esque clothed character prototype from Quaternius Character Animated CC0 GLB.",
+  "source": "/Users/j/Documents/New project/uo-chain-sandbox-poc/var/third-party-model-candidates/poly-pizza/quaternius-character-animated.glb",
+  "outputs": [
+    "assets/sprites/player-cards/candidates/duskfell-poly-pizza-uo-character-paperdoll.png",
+    "assets/sprites/player-cards/candidates/duskfell-poly-pizza-uo-character-direction-strip.png",
+    "assets/sprites/player-cards/candidates/duskfell-poly-pizza-uo-character-card.png"
+  ]
+}

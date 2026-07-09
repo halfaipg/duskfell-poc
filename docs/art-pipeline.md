@@ -2,6 +2,19 @@
 
 Initial research snapshot from July 6, 2026. Refreshed July 7, 2026 against the running PoC and current GitHub topic results. Production adoption still needs a final license/API/terms check for each tool and model. This project needs original assets only. Do not use UO-derived art, screenshots, extracted tiles, paperdolls, hue tables, maps, UI, or "style reference" prompts based on UO.
 
+## July 9, 2026 Decision Update
+
+The graphics direction was reset around a Blender world-kit pipeline after AI
+sheet generation failed structurally and 3D-rendered characters (MPFB2 + rig +
+procedural cloth) produced the first approved player look. Character animation
+sheets now come from the 3D factory, AI generation is retained for props,
+icons, portraits, and source textures, and terrain is moving to a hybrid where
+base materials may stay AI-sourced but transitions/slopes/lighting render
+through the same 3D sun as characters. See `docs/graphics-reset-plan.md` for
+the full decision record, the terrain comparison artifact, the ground decal
+layer plan (footprints/wear), and the installed toolchain (blender-mcp, MPFB2,
+CC0 asset packs).
+
 ## July 7, 2026 Decision Update
 
 The current camera/projection contract is right for the target: the live PoC renders `64x64` square diamond tiles in `military-plan-oblique` projection, not the common squashed `64x32` dimetric look. The graphics problem is asset quality and terrain richness, not the camera math. The placeholder atlas reads flat and repetitive, with weak terrain transitions, elevation character, props, shadows, and sprite identity.

@@ -1,3 +1,8 @@
+export const SMOKE_INTERACT_DISTANCE = 62;
+const TARGET_PROGRESS_EPSILON = 1.5;
+const STALLED_FRAME_LIMIT = 8;
+const NUDGE_FRAME_COUNT = 18;
+
 export function createSteeringState() {
   return {
     targetId: null,
@@ -12,8 +17,8 @@ export function inputTowardTarget(state, me, target) {
   const dx = target.x - me.x;
   const dy = target.y - me.y;
   const distance = Math.hypot(dx, dy);
-  const interact = distance <= 58;
-  const nudge = steeringNudge(state, target.id, distance, dx, dy, interact);
+  const interact = distance <= SMOKE_INTERACT_DISTANCE;
+  const nudge = steeringNudge(state, target.id, distance, dx, dy, me, interact);
   return {
     up: dy < -8 && !interact,
     down: dy > 8 && !interact,
@@ -24,14 +29,14 @@ export function inputTowardTarget(state, me, target) {
   };
 }
 
-function steeringNudge(state, targetId, distance, dx, dy, interact) {
+function steeringNudge(state, targetId, distance, dx, dy, me, interact) {
   if (interact) return {};
   if (state.targetId !== targetId) {
     state.targetId = targetId;
     state.bestDistance = distance;
     state.stalledFrames = 0;
     state.nudgeFrames = 0;
-  } else if (distance < state.bestDistance - 2) {
+  } else if (madeProgress(state, distance)) {
     state.bestDistance = distance;
     state.stalledFrames = 0;
     state.nudgeFrames = 0;
@@ -39,8 +44,8 @@ function steeringNudge(state, targetId, distance, dx, dy, interact) {
     state.stalledFrames += 1;
   }
 
-  if (state.stalledFrames >= 8 && state.nudgeFrames === 0) {
-    state.nudgeFrames = 14;
+  if (state.stalledFrames >= STALLED_FRAME_LIMIT && state.nudgeFrames === 0) {
+    state.nudgeFrames = NUDGE_FRAME_COUNT;
     state.stalledFrames = 0;
     state.nudgeSign *= -1;
   }
@@ -51,4 +56,8 @@ function steeringNudge(state, targetId, distance, dx, dy, interact) {
     return state.nudgeSign > 0 ? { down: true, up: false } : { up: true, down: false };
   }
   return state.nudgeSign > 0 ? { right: true, left: false } : { left: true, right: false };
+}
+
+function madeProgress(state, distance) {
+  return distance < state.bestDistance - TARGET_PROGRESS_EPSILON;
 }

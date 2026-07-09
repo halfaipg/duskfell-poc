@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "duskfell-wayfarer-character-v1",
+  "note": "Dressed UO-esque wayfarer rendered in Blender from the Quaternius Farmer rig.",
+  "source": "/Users/j/Documents/New project/uo-chain-sandbox-poc/var/third-party-model-candidates/quaternius-ultimate-modular-men/Individual Characters/glTF/Adventurer.gltf",
+  "outputs": [
+    "assets/sprites/player-cards/candidates/duskfell-wayfarer-paperdoll.png",
+    "assets/sprites/player-cards/candidates/duskfell-wayfarer-south.png",
+    "assets/sprites/player-cards/candidates/duskfell-wayfarer-east.png",
+    "assets/sprites/player-cards/candidates/duskfell-wayfarer-north.png",
+    "assets/sprites/player-cards/candidates/duskfell-wayfarer-west.png"
+  ]
+}

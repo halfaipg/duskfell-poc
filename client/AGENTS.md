@@ -6,11 +6,24 @@ the authority for gameplay state.
 ## Read First
 
 - Root `AGENTS.md`.
+- `HUMANS.md` for the end-to-end runtime and rendering map.
 - `docs/rendering.md` for camera/projection rules.
 - `docs/art-direction.md` for style, anchors, terrain, paperdoll, and decay.
 - `docs/architecture.md` for client/server protocol shape.
 - `docs/security.md` before changing session, WebSocket, admin, or asset-fetch
   behavior.
+
+## Cross-Scope Links
+
+- Protocol parsing changes usually require matching changes in
+  `server/src/protocol.rs`, WebSocket snapshot code, and client message tests.
+- Runtime image or manifest loading changes usually require `assets/AGENTS.md`,
+  `scripts/AGENTS.md`, server runtime asset verification, and
+  `npm run assets:verify`.
+- Terrain/camera/player rendering changes usually require `docs/rendering.md`,
+  `docs/art-direction.md`, `assets/terrain/AGENTS.md`, and browser inspection.
+- UI changes that expose authoritative state should be checked against server
+  snapshot fields rather than invented locally.
 
 ## Rules
 

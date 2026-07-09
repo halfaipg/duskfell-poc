@@ -6,11 +6,25 @@ critical safety configuration is missing.
 ## Read First
 
 - Root `AGENTS.md`.
+- `HUMANS.md` for the end-to-end system map and change recipes.
 - `docs/architecture.md` for runtime shape.
 - `docs/security.md` for auth, clean-room, deployment, durable replay, and public
   guardrails.
 - `docs/terrain-system.md` before changing terrain authority.
 - `docs/art-pipeline.md` before changing runtime asset verification.
+
+## Cross-Scope Links
+
+- Protocol changes usually require `client/server-message-*.js`, client tests,
+  and docs updates.
+- Runtime asset verification changes usually require `assets/AGENTS.md`,
+  `scripts/AGENTS.md`, manifests, and asset verifier updates.
+- Simulation changes that expose new snapshot state usually require browser
+  rendering/UI updates and smoke coverage for the gameplay loop.
+- Deployment, auth, metrics, readiness, and admin changes usually require a
+  matching smoke script or deployment preflight assertion.
+- Settlement or chain-boundary changes usually require `contracts/AGENTS.md` and
+  an explicit note that gameplay must not block on chain settlement.
 
 ## Rules
 

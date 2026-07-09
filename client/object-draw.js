@@ -12,6 +12,10 @@ import { drawFallbackObject, objectColors } from "./object-fallback-draw.js";
 import { drawObjectLabel, drawWorldObjectExtras } from "./object-label-draw.js";
 import { drawObjectSprite } from "./object-sprite-draw.js";
 
+// Art-reset review mode: old prop/detail sprites are retired pending the
+// world-kit prop pass — draw only players until new props land.
+export const HIDE_WORLD_PROPS = true;
+
 export function createObjectDrawer({
   getContext,
   getTerrain,
@@ -48,16 +52,20 @@ export function createObjectDrawer({
     refreshRendererState();
     const terrainDetailObjectIds = terrainDetailAuthorityObjectIds(terrain?.details);
     const entities = [
-      ...(terrain?.details ?? []).map((detail) => ({
-        type: "terrain-detail",
-        sort: terrainDetailDrawer.terrainDetailSortKey(detail, origin),
-        value: detail,
-      })),
-      ...objects.map((object) => ({
-        type: "object",
-        sort: objectRenderSortKey(object, origin),
-        value: object,
-      })),
+      ...(HIDE_WORLD_PROPS
+        ? []
+        : (terrain?.details ?? []).map((detail) => ({
+            type: "terrain-detail",
+            sort: terrainDetailDrawer.terrainDetailSortKey(detail, origin),
+            value: detail,
+          }))),
+      ...(HIDE_WORLD_PROPS
+        ? []
+        : objects.map((object) => ({
+            type: "object",
+            sort: objectRenderSortKey(object, origin),
+            value: object,
+          }))),
       ...players.map((player) => ({
         type: "player",
         sort: playerDrawer.renderSortKey(player, origin),

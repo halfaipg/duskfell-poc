@@ -21,7 +21,7 @@ export function drawTerrainSideWalls(ctx, tile, corners, palette) {
       (lowerFrom.x + lowerTo.x) / 2,
       (lowerFrom.y + lowerTo.y) / 2,
     );
-    const shadowAlpha = Math.min(0.52, 0.2 + edge.drop * 0.08);
+    const shadowAlpha = Math.min(0.3, 0.12 + edge.drop * 0.05);
     gradient.addColorStop(0, tintWithAlpha(palette.dark, shadowAlpha * 0.72));
     gradient.addColorStop(1, `rgba(8, 11, 10, ${shadowAlpha})`);
 
@@ -37,8 +37,8 @@ export function drawTerrainSideWalls(ctx, tile, corners, palette) {
     ctx.beginPath();
     ctx.moveTo(from.x, from.y);
     ctx.lineTo(to.x, to.y);
-    ctx.strokeStyle = "rgba(242, 224, 166, 0.13)";
-    ctx.lineWidth = 0.9;
+    ctx.strokeStyle = "rgba(242, 224, 166, 0.06)";
+    ctx.lineWidth = 0.8;
     ctx.stroke();
   }
 }
@@ -59,8 +59,8 @@ export function drawTerrainFacetShade(ctx, tile, corners) {
     ctx.closePath();
     ctx.fillStyle =
       facet.shade >= 0
-        ? `rgba(255, 239, 184, ${Math.min(0.22, shadeAlpha)})`
-        : `rgba(12, 16, 14, ${Math.min(0.3, shadeAlpha * 1.2)})`;
+        ? `rgba(255, 239, 184, ${Math.min(0.11, shadeAlpha * 0.55)})`
+        : `rgba(12, 16, 14, ${Math.min(0.14, shadeAlpha * 0.6)})`;
     ctx.fill();
   }
 }
@@ -91,7 +91,7 @@ export function drawTerrainHeightShade(ctx, tile, corners) {
   ctx.lineTo(corners.se.x, corners.se.y);
   ctx.lineTo(corners.sw.x, corners.sw.y);
   ctx.closePath();
-  ctx.fillStyle = shade >= 0 ? `rgba(255, 238, 178, ${alpha * shade * 3})` : `rgba(13, 18, 16, ${alpha * Math.abs(shade) * 4})`;
+  ctx.fillStyle = shade >= 0 ? `rgba(255, 238, 178, ${alpha * shade * 1.6})` : `rgba(13, 18, 16, ${alpha * Math.abs(shade) * 2.2})`;
   ctx.fill();
   ctx.restore();
 }
@@ -130,8 +130,8 @@ export function drawTerrainReliefEdges(ctx, tile, corners) {
     ctx.beginPath();
     ctx.moveTo(from.x, from.y);
     ctx.lineTo(to.x, to.y);
-    ctx.strokeStyle = `rgba(244, 226, 164, ${Math.min(0.18, alpha * 0.82)})`;
-    ctx.lineWidth = 1.05;
+    ctx.strokeStyle = `rgba(244, 226, 164, ${Math.min(0.07, alpha * 0.3)})`;
+    ctx.lineWidth = 0.8;
     ctx.stroke();
   }
 }

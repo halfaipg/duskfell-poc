@@ -31,8 +31,8 @@ pub(in crate::sim) fn generated_ecology_objects() -> [GeneratedEcologyObject; 11
             id: "ancient-ironleaf-tree",
             kind: ObjectKind::SaplingTree,
             label: "Ancient Ironleaf",
-            x: 720.0,
-            y: 520.0,
+            x: 745.0,
+            y: 640.0,
             radius: 46.0,
         },
         GeneratedEcologyObject {

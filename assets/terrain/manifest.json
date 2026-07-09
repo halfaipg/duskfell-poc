@@ -12,7 +12,7 @@
   "tileSheet": {
     "id": "terrain-placeholder",
     "image": "terrain-placeholder.png",
-    "sha256": "ee13fbd01210ed83466704abc2ffa81df7e3f0f50dd341b29effc0ed40e92042",
+    "sha256": "2b4be3429740a9e0e74cb13bc2ccf808faeda4a9636c8b980791a0e754ffc0ac",
     "cellWidth": 64,
     "cellHeight": 64,
     "columns": 10,
@@ -1583,7 +1583,7 @@
   ],
   "provenance": {
     "cleanRoom": true,
-    "source": "AI-assisted clean-room source texture sheet normalized by scripts/normalize-generated-terrain-atlas.py",
+    "source": "painterly biome patches (3D bake + img2img sandwich) sliced by scratchpad build-painterly-atlas.py",
     "createdAt": "2026-07-07",
     "license": "project-original-ai-assisted-review",
     "reviewer": "codex",
@@ -1592,7 +1592,7 @@
     "method": "ai-assisted-source-plus-deterministic-local-normalization",
     "tool": "OpenAI built-in image generation plus Pillow local image processing",
     "toolVersion": "Pillow 2026-07-07 runtime",
-    "sourceHash": "5b22c744c614a6d306cefea5195c91a09ec8355cfa188212df6a20906893fc42",
+    "sourceHash": "3322365d858da3f7bd4a8ba8a0b0ac17457a8f107a0fbabce171764501c41c61",
     "termsSnapshot": "OpenAI service terms reviewed 2026-07-07 for source concept; local deterministic terrain generation adds no external source",
     "model": "built-in image generation",
     "modelVersion": "2026-07-07",
@@ -1604,7 +1604,7 @@
       "sourceUrl": "https://openai.com/policies/service-terms",
       "risk": "internal PoC terrain sheet from clean-room prompt; human art review still required before production approval"
     },
-    "sourceImageHash": "e436147914586e1377e45a2d0614f99e9da010f6e38497b72a13a129b6b89f1e"
+    "sourceImageHash": "61a91ca94d668331a94a367329776cae5d0aa69b1b1056b1e5baa71daaf7e91b"
   },
   "approval": {
     "state": "review"

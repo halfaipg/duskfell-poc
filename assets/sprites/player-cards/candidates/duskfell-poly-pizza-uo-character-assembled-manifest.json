@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "duskfell-poly-pizza-uo-character-assembled-v1",
+  "outputs": [
+    "assets/sprites/player-cards/candidates/duskfell-poly-pizza-uo-character-card.png",
+    "assets/sprites/player-cards/candidates/duskfell-poly-pizza-uo-character-direction-strip.png",
+    "assets/sprites/player-cards/candidates/duskfell-poly-pizza-uo-character-card-sprite.png",
+    "assets/sprites/player-cards/candidates/duskfell-poly-pizza-uo-character-direction-strip-sprite.png"
+  ]
+}

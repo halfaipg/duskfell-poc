@@ -1,0 +1,11 @@
+{
+  "response": {
+    "revised_prompt": "IMG2IMG transform. Use the reference only for paperdoll stance logic: a modest base body standing front-facing, arms bent and hands open so weapons or shields can be overlaid later. Create an original Duskfell player-card base paperdoll, adult, modest non-explicit, rough linen loincloth or short wrap and simple chest wrap if female variant appears. Strong old-school RPG sprite-paperdoll style, not realistic: chunky simplified anatomy, hard pixel edges, visible pixel clusters, limited earthy palette, stepped shadows, no smooth airbrushed skin, no glossy 3D. Put the character on a plain dark burgundy-to-black rectangular card backdrop. No UI buttons, no text, no watermark, no copied Ultima Online assets or exact character.",
+    "seed": 6166075486319225
+  },
+  "grid": {
+    "worker": "half5090beast1",
+    "gen_time": 13.03,
+    "model": "FLUX.2 Klein 4B FP8"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "response": {
+    "revised_prompt": "IMG2IMG transform. Use the reference only for the concept of a front-facing ghost paperdoll in a dark RPG card. Create an original Duskfell ghost player-card state: hooded shroud, ragged hem, visible bare feet fading into mist, arms bent and hands open in a weapon-ready paperdoll pose for future overlays. Strong old-school RPG sprite-paperdoll style, chunky pixel clusters, hard edges, limited grey-blue palette, stepped highlights, eerie but readable at UI scale. Dark burgundy-to-black card backdrop. No UI buttons, no text, no watermark, no copied Ultima Online assets, no photorealism.",
+    "seed": 8162133966768642
+  },
+  "grid": {
+    "worker": "half5090beast1",
+    "gen_time": 8.95,
+    "model": "FLUX.2 Klein 4B FP8"
+  }
+}

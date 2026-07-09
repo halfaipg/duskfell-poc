@@ -1,8 +1,9 @@
 export const PLAYER_RENDER_SCALE = 0.66;
 export const PLAYER_DIRECTION_NAMES = ["south", "east", "north", "west"];
 
-export const PREFERRED_PLAYER_SHEET_ID = "duskfell-wayfarer";
+export const PREFERRED_PLAYER_SHEET_ID = "duskfell-wretch";
 export const PREFERRED_PLAYER_SHEET_IDS = [
+  "duskfell-wretch",
   "duskfell-wayfarer",
   "duskfell-ranger",
   "duskfell-warden",
@@ -10,6 +11,7 @@ export const PREFERRED_PLAYER_SHEET_IDS = [
 ];
 
 export const PLAYER_ARCHETYPE_LABELS = {
+  "duskfell-wretch": "Wretch",
   "duskfell-wayfarer": "Wayfarer",
   "duskfell-ranger": "Ranger",
   "duskfell-warden": "Warden",

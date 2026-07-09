@@ -2775,6 +2775,108 @@
       "approval": {
         "state": "review"
       }
+    },
+    {
+      "id": "duskfell-wretch",
+      "image": "duskfell-wretch.png",
+      "imageSha256": "cb7cbc76abae9a3954b8b47563fe946414887eb1826d22438858d95cc9fce94f",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 8,
+        "rows": 4,
+        "frameCount": 32
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 116
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1,
+        "heightTiles": 1
+      },
+      "render": {
+        "layer": "actor",
+        "sort": "footprint-y",
+        "zBias": 0,
+        "scale": 0.9,
+        "shadow": {
+          "kind": "ellipse",
+          "x": 64,
+          "y": 119,
+          "width": 44,
+          "height": 12,
+          "opacity": 0.3
+        }
+      },
+      "directions": [
+        {
+          "name": "south",
+          "startFrame": 0,
+          "frameCount": 8
+        },
+        {
+          "name": "east",
+          "startFrame": 8,
+          "frameCount": 8
+        },
+        {
+          "name": "north",
+          "startFrame": 16,
+          "frameCount": 8
+        },
+        {
+          "name": "west",
+          "startFrame": 24,
+          "frameCount": 8
+        }
+      ],
+      "animation": {
+        "idleFrame": 0,
+        "walkFrames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          6,
+          5,
+          4,
+          3,
+          2
+        ]
+      },
+      "provenance": {
+        "cleanRoom": true,
+        "source": "Blender world-kit render of MPFB2 parametric human (CC0) with procedural tattered shorts; deterministic pose script",
+        "createdAt": "2026-07-09",
+        "license": "project-original-cc0-derived",
+        "reviewer": "claude",
+        "prompt": "n/a - deterministic 3D render, no AI image generation",
+        "negativePrompt": "n/a",
+        "method": "deterministic-local",
+        "tool": "Blender 5.1 + MPFB2 20260613",
+        "toolVersion": "Blender 5.1.2",
+        "sourceHash": "c479770545cb3b388fa2bb686bd9abef685407aa742324f734a6bc04d4ad5c4a",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-08 for internal PoC asset review",
+        "model": "n/a",
+        "modelVersion": "n/a",
+        "seed": "deterministic-pose-script",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-08",
+          "reviewer": "codex",
+          "sourceUrl": "https://openai.com/policies/service-terms",
+          "risk": "internal review-only paperdoll prototype; row perspective is not final Duskfell quality and needs a replacement oblique body pass before production"
+        }
+      },
+      "approval": {
+        "state": "review"
+      }
     }
   ],
   "paperdolls": [
@@ -2782,28 +2884,28 @@
       "id": "duskfell-paperdoll-wayfarer",
       "role": "player",
       "label": "Wayfarer",
-      "baseSheetId": "duskfell-body-base",
+      "baseSheetId": "duskfell-wretch",
       "layers": []
     },
     {
       "id": "duskfell-paperdoll-ranger",
       "role": "player",
       "label": "Ranger",
-      "baseSheetId": "duskfell-body-base",
+      "baseSheetId": "duskfell-wretch",
       "layers": []
     },
     {
       "id": "duskfell-paperdoll-warden",
       "role": "player",
       "label": "Warden",
-      "baseSheetId": "duskfell-body-base",
+      "baseSheetId": "duskfell-wretch",
       "layers": []
     },
     {
       "id": "duskfell-paperdoll-brigand",
       "role": "player",
       "label": "Brigand",
-      "baseSheetId": "duskfell-body-base",
+      "baseSheetId": "duskfell-wretch",
       "layers": []
     }
   ]

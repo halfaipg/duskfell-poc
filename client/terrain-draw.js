@@ -9,6 +9,11 @@ import {
   drawTerrainSideWalls,
   terrainUnderpaintMaterial,
 } from "./terrain-draw-surface.js";
+import {
+  drawChunkGroundPatch,
+  groundPatchVersion,
+  tileUsesGroundPatch,
+} from "./terrain-ground-patches.js";
 import { TERRAIN_MATERIALS } from "./terrain.js";
 
 export { normalizeTerrainDebugMode };
@@ -57,20 +62,29 @@ export function createTerrainDrawer({
     terrainDebugMode = getTerrainDebugMode();
   }
 
+  let lastOrigin = null;
+
   function drawMap(state, origin, now, viewport) {
     refreshRendererState();
+    lastOrigin = origin;
     const worldTerrain = terrain;
     if (!worldTerrain) return;
     const visibleBounds = terrainLayerManager.visibleWorldBounds(viewport);
     const renderGeometry = terrainLayerManager.terrainGeometryForMap(worldTerrain, origin);
+    const patchVersion = groundPatchVersion();
     for (const chunk of renderGeometry.chunks) {
       if (!terrainLayerManager.boundsIntersect(chunk.bounds, visibleBounds)) continue;
+      if (chunk.groundPatchVersion !== patchVersion) {
+        chunk.staticLayer = null;
+        chunk.groundPatchVersion = patchVersion;
+      }
       if (drawTerrainStaticChunk(chunk)) {
         for (const tileView of chunk.tiles) {
           drawTerrainDynamicTile(tileView, state.tick, now, visibleBounds);
           terrainDebugDrawer.drawTerrainDebugTile(tileView.tile, tileView.corners, terrainDebugMode);
         }
       } else {
+        drawChunkGroundPatch(ctx, chunk, origin);
         for (const tileView of chunk.tiles) {
           drawTerrainTile(tileView, state.tick, now, visibleBounds);
         }
@@ -87,18 +101,23 @@ export function createTerrainDrawer({
 
     drawTerrainSideWalls(ctx, tile, corners, palette);
 
-    ctx.beginPath();
-    ctx.moveTo(corners.nw.x, corners.nw.y);
-    ctx.lineTo(corners.ne.x, corners.ne.y);
-    ctx.lineTo(corners.se.x, corners.se.y);
-    ctx.lineTo(corners.sw.x, corners.sw.y);
-    ctx.closePath();
-    ctx.fillStyle = palette.fill;
-    ctx.fill();
-    terrainAtlasDrawer.drawTerrainUnderpaint(tile, corners);
-    terrainAtlasDrawer.drawTerrainAtlasTile(tile, corners);
-    drawTerrainFacetShade(ctx, tile, corners);
-    drawTerrainHeightShade(ctx, tile, corners);
+    const groundPatchTile = tileUsesGroundPatch(tile);
+    if (!groundPatchTile) {
+      ctx.beginPath();
+      ctx.moveTo(corners.nw.x, corners.nw.y);
+      ctx.lineTo(corners.ne.x, corners.ne.y);
+      ctx.lineTo(corners.se.x, corners.se.y);
+      ctx.lineTo(corners.sw.x, corners.sw.y);
+      ctx.closePath();
+      ctx.fillStyle = palette.fill;
+      ctx.fill();
+      terrainAtlasDrawer.drawTerrainUnderpaint(tile, corners);
+      terrainAtlasDrawer.drawTerrainAtlasTile(tile, corners);
+    }
+    if (!groundPatchTile) {
+      drawTerrainFacetShade(ctx, tile, corners);
+      drawTerrainHeightShade(ctx, tile, corners);
+    }
     drawTerrainReliefEdges(ctx, tile, corners);
 
     terrainAtlasDrawer.drawTerrainTransitions(tile, corners);
@@ -131,6 +150,7 @@ export function createTerrainDrawer({
   function drawTerrainStaticChunk(chunk) {
     return terrainLayerManager.drawTerrainStaticChunk(ctx, chunk, (layerContext, staticChunk) => {
       withRenderContext(layerContext, () => {
+        drawChunkGroundPatch(ctx, staticChunk, lastOrigin);
         for (const tileView of staticChunk.tiles) {
           drawTerrainTile(tileView, 0, 0, null, {
             drawDynamic: false,

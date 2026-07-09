@@ -1,6 +1,6 @@
 export const FALLBACK_TARGETS = {
   "north-grove": { id: "north-grove", x: 640, y: 520 },
-  "ancient-ironleaf-tree": { id: "ancient-ironleaf-tree", x: 720, y: 520 },
+  "ancient-ironleaf-tree": { id: "ancient-ironleaf-tree", x: 745, y: 640 },
   "east-ore": { id: "east-ore", x: 2705, y: 1445 },
   "field-forge": { id: "field-forge", x: 1904, y: 1184 },
 };

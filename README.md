@@ -165,6 +165,7 @@ docs/        Architecture, security, clean-room process
 Important current docs:
 
 - [Agent Instructions](AGENTS.md)
+- [Humans Guide](HUMANS.md)
 - [Development Constitution](docs/development-constitution.md)
 - [Refactor Map](docs/refactor-map.md)
 - [Architecture](docs/architecture.md)

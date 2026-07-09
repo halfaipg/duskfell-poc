@@ -1,5 +1,8 @@
 {
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "doctor:server": "node scripts/dev-server-doctor.js",
     "preflight:deployment": "node scripts/deployment-preflight.js",
@@ -12,6 +15,7 @@
     "test:terrain": "node --test scripts/terrain-atlas.test.js",
     "art:direction": "python3 scripts/art-direction-audit.py",
     "verify:supply-chain": "node scripts/supply-chain-smoke.js",
+    "test:scripts": "node --test scripts/lib/*.test.js",
     "sprites:verify": "node scripts/verify-sprite-manifest.js assets/sprites/manifest.json",
     "sprites:gait": "python3 scripts/analyze-sprite-gait.py --image assets/sprites/duskfell-body-base.png",
     "sprites:pipeline": "python3 scripts/character-pipeline-audit.py",

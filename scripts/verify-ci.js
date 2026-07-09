@@ -1,13 +1,17 @@
 import { spawn } from "node:child_process";
 import { performance } from "node:perf_hooks";
 
+const REQUIRED_NODE_MAJOR = 22;
 const startedAt = performance.now();
 const results = [];
+
+assertSupportedNode();
 
 await step("rust-fmt", () => run("cargo", ["fmt", "--all", "--", "--check"]));
 await step("rust-check", () => run("cargo", ["check", "--workspace", "--locked"]));
 await step("rust-tests", () => run("cargo", ["test", "--workspace", "--locked"]));
 await step("supply-chain-smoke", () => run("npm", ["run", "verify:supply-chain"]));
+await step("script-lib-tests", () => run("npm", ["run", "test:scripts"]));
 await step("client-tests", () => run("npm", ["run", "test:client"]));
 await step("sprite-manifest-tests", () => run("npm", ["run", "test:sprites"]));
 await step("terrain-atlas-tests", () => run("npm", ["run", "test:terrain"]));
@@ -151,4 +155,14 @@ async function run(command, args) {
 
 function round(value) {
   return Math.round(value * 100) / 100;
+}
+
+function assertSupportedNode() {
+  const major = Number.parseInt(process.versions.node.split(".")[0], 10);
+  if (!Number.isInteger(major) || major < REQUIRED_NODE_MAJOR) {
+    throw new Error(
+      `Node ${REQUIRED_NODE_MAJOR}+ is required for Duskfell CI scripts; current Node is ${process.versions.node}. ` +
+        "Use the CI-pinned Node version or run `nvm use 22` before npm run verify:ci.",
+    );
+  }
 }

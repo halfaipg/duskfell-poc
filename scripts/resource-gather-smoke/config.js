@@ -1,5 +1,5 @@
 export const FALLBACK_TARGETS = {
-  "ancient-ironleaf-tree": { id: "ancient-ironleaf-tree", x: 720, y: 520 },
+  "ancient-ironleaf-tree": { id: "ancient-ironleaf-tree", x: 745, y: 640 },
 };
 
 export function createResourceGatherContext(rawArgs) {

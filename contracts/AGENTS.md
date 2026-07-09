@@ -3,6 +3,16 @@
 Contracts are a reserved boundary for future Base/$DUSK settlement. The current
 game must remain playable without chain writes.
 
+## Read First
+
+- Root `AGENTS.md`.
+- `HUMANS.md` for the current async settlement boundary.
+- `docs/architecture.md` ownership/settlement flow.
+- `docs/security.md` before any signer, indexer, key, token, or public-mode
+  claim.
+- `server/AGENTS.md` because the game server must remain authoritative and
+  chain-independent.
+
 ## Rules
 
 - Treat contracts as settlement/audit infrastructure, not the game loop.
