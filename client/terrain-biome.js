@@ -12,14 +12,14 @@ export function biomeForTile(x, y, cols, rows, safeRadiusTiles, profile = defaul
   const centerDistance = Math.hypot(x + 0.5 - centerX, y + 0.5 - centerY);
   const settlementPressure = clamp(1 - centerDistance / Math.max(0.001, safeRadiusTiles * 0.58), 0, 1);
   const plazaPressure = clamp(1 - centerDistance / Math.max(0.001, safeRadiusTiles * 0.42), 0, 1);
-  const northSouthPathPressure =
-    centerDistance < safeRadiusTiles * 0.95
-      ? clamp(1 - Math.abs(x + 0.5 - centerX) / 0.95, 0, 1)
-      : 0;
-  const eastWestPathPressure =
-    centerDistance < safeRadiusTiles * 0.95
-      ? clamp(1 - Math.abs(y + 0.5 - centerY) / 0.9, 0, 1)
-      : 0;
+  // roads run the breadth of the map, wandering with noise so they read as
+  // worn trails rather than surveyed lines; pressure fades toward the far
+  // edges so trails peter out instead of slamming into the border
+  const nsAxis = centerX + noise2d(y * 0.09, 3, profile.seed + 601) * 3.4;
+  const ewAxis = centerY + noise2d(x * 0.09, 7, profile.seed + 653) * 3.0;
+  const roadReach = clamp(1.18 - centerDistance / (Math.min(cols, rows) * 0.62), 0, 1);
+  const northSouthPathPressure = clamp(1 - Math.abs(x + 0.5 - nsAxis) / 0.95, 0, 1) * roadReach;
+  const eastWestPathPressure = clamp(1 - Math.abs(y + 0.5 - ewAxis) / 0.9, 0, 1) * roadReach;
 
   const riverCenter =
     rows * 0.96 +
