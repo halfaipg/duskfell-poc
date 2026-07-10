@@ -16,8 +16,16 @@ const PATCHED_MATERIALS = new Set([
 const PATCH_TILES = 16;
 const PLAN_PX_PER_TILE = 128;
 const PATCH_SIZE = PATCH_TILES * PLAN_PX_PER_TILE;
-const MASK_SIZE = 192;
-const MAX_COMPOSITE_PATCHES = 24;
+// composites render with a 1-tile world-space margin so inflated clip
+// diamonds at supertile borders sample real painting instead of leaking
+// the flat underpaint (bombing is world-deterministic, so margin content
+// matches what the neighbouring supertile draws)
+const MARGIN_TILES = 1;
+const MARGIN_PX = MARGIN_TILES * PLAN_PX_PER_TILE;
+const CANVAS_TILES = PATCH_TILES + MARGIN_TILES * 2;
+const CANVAS_SIZE = CANVAS_TILES * PLAN_PX_PER_TILE;
+const MASK_SIZE = 216;
+const MAX_COMPOSITE_PATCHES = 16;
 
 const compositeCache = new Map();
 let activeGroundPatches = null;
@@ -111,7 +119,7 @@ function drawPatchGroup(ctx, patch, group, origin) {
     -planScaleX,
     planScaleY,
     origin.x + (group.superX - group.superY) * PATCH_TILES * halfW,
-    origin.y + (group.superX + group.superY) * PATCH_TILES * halfH,
+    origin.y + ((group.superX + group.superY) * PATCH_TILES - 2 * MARGIN_TILES) * halfH,
   );
   ctx.drawImage(patch, 0, 0);
   ctx.restore();
@@ -126,8 +134,8 @@ function compositePatchForTile(tile, terrain, groundPatches) {
   if (cached) return cached;
 
   const canvas = document.createElement("canvas");
-  canvas.width = PATCH_SIZE;
-  canvas.height = PATCH_SIZE;
+  canvas.width = CANVAS_SIZE;
+  canvas.height = CANVAS_SIZE;
   const composite = canvas.getContext("2d");
   if (!composite) return null;
 
@@ -138,8 +146,8 @@ function compositePatchForTile(tile, terrain, groundPatches) {
   if (!maskContext) return null;
 
   const layerCanvas = document.createElement("canvas");
-  layerCanvas.width = PATCH_SIZE;
-  layerCanvas.height = PATCH_SIZE;
+  layerCanvas.width = CANVAS_SIZE;
+  layerCanvas.height = CANVAS_SIZE;
   const layer = layerCanvas.getContext("2d");
   if (!layer) return null;
 
@@ -154,15 +162,25 @@ function compositePatchForTile(tile, terrain, groundPatches) {
   for (const [biomeIndex, biome] of activeBiomes.entries()) {
     const image = biomeImageForSupertile(groundPatches, biome);
     if (!image) continue;
-    layer.clearRect(0, 0, PATCH_SIZE, PATCH_SIZE);
+    layer.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
     layer.globalCompositeOperation = "source-over";
     drawBombedPatchImage(layer, image, superX, superY, seed + VISUAL_BIOMES.indexOf(biome) * 7919);
     writeBiomeMask(maskContext, biome, activeBiomes, superX, superY, terrain.cols, terrain.rows, seed);
     layer.globalCompositeOperation = "destination-in";
     layer.imageSmoothingEnabled = true;
-    layer.drawImage(maskCanvas, 0, 0, PATCH_SIZE, PATCH_SIZE);
+    layer.drawImage(maskCanvas, 0, 0, CANVAS_SIZE, CANVAS_SIZE);
     layer.globalCompositeOperation = "source-over";
     composite.drawImage(layerCanvas, 0, 0);
+  }
+
+  // stacked per-biome masks sum below full opacity at ecotones (1-Π(1-wᵢ)),
+  // letting the flat underpaint bleed through as solid ribbons — an opaque
+  // dominant-biome coat underneath guarantees alpha 1 everywhere
+  const dominantImage = activeBiomes.length ? biomeImageForSupertile(groundPatches, activeBiomes[0]) : null;
+  if (dominantImage) {
+    composite.globalCompositeOperation = "destination-over";
+    drawBombedPatchImage(composite, dominantImage, superX, superY, seed + VISUAL_BIOMES.indexOf(activeBiomes[0]) * 7919);
+    composite.globalCompositeOperation = "source-over";
   }
 
   drawRoadWear(composite, maskContext, maskCanvas, superX, superY, terrain);
@@ -203,11 +221,18 @@ function drawBombedPatchImage(ctx, image, superX, superY, seed) {
   // base coat guarantees full coverage under the feathered stamps;
   // parity mirroring makes it edge-continuous across supertile borders so
   // feather gaps between stamp cores never expose a hard seam
-  ctx.save();
-  ctx.translate(PATCH_SIZE / 2, PATCH_SIZE / 2);
-  ctx.scale(((superX % 2) + 2) % 2 === 0 ? 1 : -1, ((superY % 2) + 2) % 2 === 0 ? 1 : -1);
-  ctx.drawImage(image, -PATCH_SIZE / 2, -PATCH_SIZE / 2, PATCH_SIZE, PATCH_SIZE);
-  ctx.restore();
+  for (let ny = -1; ny <= 1; ny += 1) {
+    for (let nx = -1; nx <= 1; nx += 1) {
+      ctx.save();
+      ctx.translate(
+        MARGIN_PX + nx * PATCH_SIZE + PATCH_SIZE / 2,
+        MARGIN_PX + ny * PATCH_SIZE + PATCH_SIZE / 2,
+      );
+      ctx.scale((((superX + nx) % 2) + 2) % 2 === 0 ? 1 : -1, (((superY + ny) % 2) + 2) % 2 === 0 ? 1 : -1);
+      ctx.drawImage(image, -PATCH_SIZE / 2, -PATCH_SIZE / 2, PATCH_SIZE, PATCH_SIZE);
+      ctx.restore();
+    }
+  }
 
   const radiusPx = STAMP_RADIUS_TILES * PLAN_PX_PER_TILE;
   const stampSizePx = Math.ceil(radiusPx * 2);
@@ -222,11 +247,11 @@ function drawBombedPatchImage(ctx, image, superX, superY, seed) {
       const jitterY = stampHash01(gx, gy, seed + 23);
       const centerTileX = (gx + 0.5 + (jitterX - 0.5) * 0.9) * STAMP_GRID_TILES;
       const centerTileY = (gy + 0.5 + (jitterY - 0.5) * 0.9) * STAMP_GRID_TILES;
-      const centerPxX = (centerTileX - patchTileX) * PLAN_PX_PER_TILE;
-      const centerPxY = (centerTileY - patchTileY) * PLAN_PX_PER_TILE;
+      const centerPxX = (centerTileX - patchTileX) * PLAN_PX_PER_TILE + MARGIN_PX;
+      const centerPxY = (centerTileY - patchTileY) * PLAN_PX_PER_TILE + MARGIN_PX;
       if (
-        centerPxX < -radiusPx || centerPxX > PATCH_SIZE + radiusPx ||
-        centerPxY < -radiusPx || centerPxY > PATCH_SIZE + radiusPx
+        centerPxX < -radiusPx || centerPxX > CANVAS_SIZE + radiusPx ||
+        centerPxY < -radiusPx || centerPxY > CANVAS_SIZE + radiusPx
       ) continue;
 
       // dihedral-8 orientation: 90° steps + optional mirror stay
@@ -272,7 +297,7 @@ function drawBombedPatchImage(ctx, image, superX, superY, seed) {
 // mask built from tile zones darkens and desaturates the painting along the
 // route, so paths stay legible without falling back to atlas ribbons.
 function drawRoadWear(composite, maskContext, maskCanvas, superX, superY, terrain) {
-  const maskPxPerTile = MASK_SIZE / PATCH_TILES;
+  const maskPxPerTile = MASK_SIZE / CANVAS_TILES;
   const wearZoneAt = (tx, ty) => {
     const tile = terrainTileAt(terrain, superX * PATCH_TILES + tx, superY * PATCH_TILES + ty);
     const zone = tile?.composition?.zone;
@@ -282,9 +307,9 @@ function drawRoadWear(composite, maskContext, maskCanvas, superX, superY, terrai
   maskContext.save();
   maskContext.globalCompositeOperation = "source-over";
   maskContext.clearRect(0, 0, MASK_SIZE, MASK_SIZE);
-  maskContext.strokeStyle = "rgba(255,255,255,0.55)";
-  maskContext.fillStyle = "rgba(255,255,255,0.55)";
-  maskContext.lineWidth = maskPxPerTile * 1.15;
+  maskContext.strokeStyle = "rgba(255,255,255,0.5)";
+  maskContext.fillStyle = "rgba(255,255,255,0.5)";
+  maskContext.lineWidth = maskPxPerTile * 0.9;
   maskContext.lineCap = "round";
   // strokes between neighboring wear tiles keep diagonal road chains
   // continuous; isolated tiles (and plazas) still get their disc
@@ -294,8 +319,8 @@ function drawRoadWear(composite, maskContext, maskCanvas, superX, superY, terrai
       const zone = wearZoneAt(tx, ty);
       if (!zone) continue;
       hasWear = true;
-      const cx = (tx + 0.5) * maskPxPerTile;
-      const cy = (ty + 0.5) * maskPxPerTile;
+      const cx = (tx + MARGIN_TILES + 0.5) * maskPxPerTile;
+      const cy = (ty + MARGIN_TILES + 0.5) * maskPxPerTile;
       maskContext.beginPath();
       maskContext.arc(cx, cy, maskPxPerTile * (zone === "plaza" ? 0.8 : 0.6), 0, Math.PI * 2);
       maskContext.fill();
@@ -313,15 +338,14 @@ function drawRoadWear(composite, maskContext, maskCanvas, superX, superY, terrai
 
   composite.save();
   composite.imageSmoothingEnabled = true;
-  composite.globalCompositeOperation = "multiply";
   composite.globalAlpha = 1;
-  // multiply pass: packed earth is darker and warmer than the living ground
-  composite.fillStyle = "rgb(180, 160, 134)";
+  // packed earth REPLACES the grass color (multiply over dark green only
+  // ever yields near-black); a multiply pass underneath keeps grain
+  composite.globalCompositeOperation = "source-over";
+  composite.fillStyle = "rgba(107, 86, 63, 0.82)";
   applyMaskedFill(composite, maskCanvas);
-  // dusty highlight pass lifts the center back up so it reads worn, not
-  // wet — soft-light stays gentle over dark biomes where overlay glows
-  composite.globalCompositeOperation = "soft-light";
-  composite.fillStyle = "rgba(224, 204, 170, 0.5)";
+  composite.globalCompositeOperation = "multiply";
+  composite.fillStyle = "rgba(178, 156, 128, 0.5)";
   applyMaskedFill(composite, maskCanvas);
   composite.restore();
 }
@@ -330,7 +354,7 @@ function drawRoadWear(composite, maskContext, maskCanvas, superX, superY, terrai
 // rim, water body, deep center — so ponds sit IN the ground painting with
 // organic edges instead of hard atlas diamonds.
 function drawWaterBodies(composite, maskContext, maskCanvas, superX, superY, terrain) {
-  const maskPxPerTile = MASK_SIZE / PATCH_TILES;
+  const maskPxPerTile = MASK_SIZE / CANVAS_TILES;
   const isWaterAt = (tx, ty) =>
     terrainTileAt(terrain, superX * PATCH_TILES + tx, superY * PATCH_TILES + ty)?.material === "water";
   const passes = [
@@ -360,7 +384,7 @@ function drawWaterBodies(composite, maskContext, maskCanvas, superX, superY, ter
           if (!isWaterAt(tx + dx, ty + dy)) continue;
           maskContext.beginPath();
           maskContext.moveTo(cx, cy);
-          maskContext.lineTo((tx + dx + 0.5) * maskPxPerTile, (ty + dy + 0.5) * maskPxPerTile);
+          maskContext.lineTo((tx + dx + MARGIN_TILES + 0.5) * maskPxPerTile, (ty + dy + MARGIN_TILES + 0.5) * maskPxPerTile);
           maskContext.stroke();
         }
       }
@@ -380,17 +404,17 @@ let wearScratch = null;
 function applyMaskedFill(composite, maskCanvas) {
   if (!wearScratch) {
     const canvas = document.createElement("canvas");
-    canvas.width = PATCH_SIZE;
-    canvas.height = PATCH_SIZE;
+    canvas.width = CANVAS_SIZE;
+    canvas.height = CANVAS_SIZE;
     wearScratch = canvas.getContext("2d");
   }
-  wearScratch.clearRect(0, 0, PATCH_SIZE, PATCH_SIZE);
+  wearScratch.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
   wearScratch.globalCompositeOperation = "source-over";
   wearScratch.fillStyle = composite.fillStyle;
-  wearScratch.fillRect(0, 0, PATCH_SIZE, PATCH_SIZE);
+  wearScratch.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
   wearScratch.globalCompositeOperation = "destination-in";
   wearScratch.imageSmoothingEnabled = true;
-  wearScratch.drawImage(maskCanvas, 0, 0, PATCH_SIZE, PATCH_SIZE);
+  wearScratch.drawImage(maskCanvas, 0, 0, CANVAS_SIZE, CANVAS_SIZE);
   composite.drawImage(wearScratch.canvas, 0, 0);
 }
 
@@ -405,11 +429,11 @@ function writeBiomeMask(ctx, biome, activeBiomes, superX, superY, cols, rows, se
   const data = imageData.data;
   for (let y = 0; y < MASK_SIZE; y += 1) {
     for (let x = 0; x < MASK_SIZE; x += 1) {
-      const mapX = superX * PATCH_TILES + ((x + 0.5) / MASK_SIZE) * PATCH_TILES;
-      const mapY = superY * PATCH_TILES + ((y + 0.5) / MASK_SIZE) * PATCH_TILES;
+      const mapX = superX * PATCH_TILES + ((x + 0.5) / MASK_SIZE) * CANVAS_TILES - MARGIN_TILES;
+      const mapY = superY * PATCH_TILES + ((y + 0.5) / MASK_SIZE) * CANVAS_TILES - MARGIN_TILES;
       const weights = visualBiomeWeightsAt(mapX, mapY, cols, rows, seed);
       const activeTotal = activeBiomes.reduce((sum, activeBiome) => sum + weights[activeBiome], 0) || 1;
-      const weight = (weights[biome] ?? 0) / activeTotal;
+      const weight = Math.pow((weights[biome] ?? 0) / activeTotal, 0.72);
       const offset = (y * MASK_SIZE + x) * 4;
       data[offset] = 255;
       data[offset + 1] = 255;
