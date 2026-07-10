@@ -1666,7 +1666,15 @@
       "id": "biome-stream-water",
       "biome": "stream-water",
       "image": "ground-patches/biome-stream-water.webp",
-      "sha256": "3b040ecd52429fb5ff3294f94d3ce2d73cb0a375dec961ae0f8a8fbfedd025aa",
+      "sha256": "2d73185dc3bb9fac0fa596afa919ea567cef9ca432eb67dff5d8002cddbf14e3",
+      "width": 2048,
+      "height": 2048
+    },
+    {
+      "id": "biome-cliff",
+      "biome": "cliff",
+      "image": "ground-patches/biome-cliff.webp",
+      "sha256": "49931560148a8f7e22c4e3bf3a4fad86857b3d88be6dbdbb5a2ef37ee846b37f",
       "width": 2048,
       "height": 2048
     }

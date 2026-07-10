@@ -2,7 +2,7 @@ import { PROJECTION } from "./projection.js";
 import { TERRAIN_MATERIALS } from "./terrain.js";
 import { VISUAL_BIOMES } from "./terrain-visual-biomes.js";
 
-const OVERLAY_PATCHES = ["trail", "ecotone", "stream-water"];
+const OVERLAY_PATCHES = ["trail", "ecotone", "stream-water", "cliff"];
 
 const MANIFEST_SCHEMA_VERSION = "duskfell-terrain-atlas-v1";
 const ALLOWED_TILE_KINDS = new Set(["flat-base", "slope-texture", "transition", "pair-transition", "decal"]);

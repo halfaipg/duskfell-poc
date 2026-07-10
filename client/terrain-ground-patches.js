@@ -4,6 +4,7 @@ import {
   visualBiomeWeightsAt,
 } from "./terrain-visual-biomes.js";
 import { roadPressuresAt, streamCenterAt } from "./terrain-biome.js";
+import { vertexHeight } from "./terrain-height.js";
 import { projectTerrainTile } from "./terrain-geometry.js";
 import { TERRAIN_MATERIALS, terrainTileAt } from "./terrain.js";
 import { PROJECTION } from "./projection.js";
@@ -185,6 +186,7 @@ function compositePatchForTile(tile, terrain, groundPatches) {
   }
 
   drawEcotoneBand(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches);
+  drawReliefShade(composite, maskContext, maskCanvas, superX, superY, terrain);
   drawRoadWear(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches);
   drawWaterBodies(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches);
 
@@ -293,6 +295,90 @@ function drawBombedPatchImage(ctx, image, superX, superY, seed) {
       ctx.drawImage(scratch.canvas, centerPxX - stampSizePx / 2, centerPxY - stampSizePx / 2);
     }
   }
+}
+
+// Hillshade: the painted ground is geometrically displaced by elevation but
+// was flat-lit, so hills read only at their step edges. This pass samples
+// the height field per pixel and bakes lambert-style relief into the
+// composite — slopes facing away from the light darken, sun-facing slopes
+// get a gentle warm lift. Light from the northwest, matching the sprite sun.
+const RELIEF_LIGHT_X = -0.62;
+const RELIEF_LIGHT_Y = -0.62;
+const RELIEF_STRENGTH = 0.9;
+
+function drawReliefShade(composite, maskContext, maskCanvas, superX, superY, terrain) {
+  const { cols, rows, safeRadiusTiles, profile } = terrain;
+  const size = MASK_SIZE;
+  // heights sampled on a one-tile lattice and gradients bilinearly
+  // interpolated per pixel: shading follows the broad hill forms instead of
+  // aliasing on per-tile corner steps (which drew diamond-lattice chains)
+  const latticeSize = CANVAS_TILES + 3;
+  const heights = new Float32Array(latticeSize * latticeSize);
+  for (let ly = 0; ly < latticeSize; ly += 1) {
+    const mapY = superY * PATCH_TILES + ly - MARGIN_TILES - 1;
+    for (let lx = 0; lx < latticeSize; lx += 1) {
+      const mapX = superX * PATCH_TILES + lx - MARGIN_TILES - 1;
+      heights[ly * latticeSize + lx] = vertexHeight(mapX, mapY, cols, rows, safeRadiusTiles, profile);
+    }
+  }
+  const h = (lx, ly) =>
+    heights[Math.min(latticeSize - 1, Math.max(0, ly)) * latticeSize + Math.min(latticeSize - 1, Math.max(0, lx))];
+  // per-lattice-point centered gradients (in height units per tile)
+  const gxs = new Float32Array(latticeSize * latticeSize);
+  const gys = new Float32Array(latticeSize * latticeSize);
+  for (let ly = 0; ly < latticeSize; ly += 1) {
+    for (let lx = 0; lx < latticeSize; lx += 1) {
+      gxs[ly * latticeSize + lx] = (h(lx + 1, ly) - h(lx - 1, ly)) / 2;
+      gys[ly * latticeSize + lx] = (h(lx, ly + 1) - h(lx, ly - 1)) / 2;
+    }
+  }
+
+  const dark = new Float32Array(size * size);
+  const light = new Float32Array(size * size);
+  let hasRelief = false;
+  const pxPerTile = size / CANVAS_TILES;
+  for (let y = 0; y < size; y += 1) {
+    const fy = (y + 0.5) / pxPerTile + 1; // +1 for the extra lattice ring
+    const ly = Math.floor(fy);
+    const ty = fy - ly;
+    for (let x = 0; x < size; x += 1) {
+      const fx = (x + 0.5) / pxPerTile + 1;
+      const lx = Math.floor(fx);
+      const tx = fx - lx;
+      const i00 = ly * latticeSize + lx;
+      const gx =
+        (gxs[i00] * (1 - tx) + gxs[i00 + 1] * tx) * (1 - ty) +
+        (gxs[i00 + latticeSize] * (1 - tx) + gxs[i00 + latticeSize + 1] * tx) * ty;
+      const gy =
+        (gys[i00] * (1 - tx) + gys[i00 + 1] * tx) * (1 - ty) +
+        (gys[i00 + latticeSize] * (1 - tx) + gys[i00 + latticeSize + 1] * tx) * ty;
+      // signed slope-into-light: negative = facing the light
+      const facing = (gx * RELIEF_LIGHT_X + gy * RELIEF_LIGHT_Y) * RELIEF_STRENGTH;
+      const i = y * size + x;
+      if (facing > 0.03) {
+        dark[i] = Math.min(0.38, facing * 0.4);
+        hasRelief = true;
+      } else if (facing < -0.03) {
+        light[i] = Math.min(0.18, -facing * 0.22);
+        hasRelief = true;
+      }
+    }
+  }
+  if (!hasRelief) return;
+
+  writeFieldMask(maskContext, dark);
+  composite.save();
+  composite.globalCompositeOperation = "multiply";
+  composite.fillStyle = "rgb(52, 58, 54)";
+  applyMaskedFill(composite, maskCanvas);
+  composite.restore();
+
+  writeFieldMask(maskContext, light);
+  composite.save();
+  composite.globalCompositeOperation = "soft-light";
+  composite.fillStyle = "rgb(255, 244, 214)";
+  applyMaskedFill(composite, maskCanvas);
+  composite.restore();
 }
 
 // The biome border wears an enriched ecotone painting: scrub, stones and

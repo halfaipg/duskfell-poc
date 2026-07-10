@@ -7,7 +7,7 @@ export function terrainUnderpaintMaterial(tile) {
   return tile.material;
 }
 
-export function drawTerrainSideWalls(ctx, tile, corners, palette) {
+export function drawTerrainSideWalls(ctx, tile, corners, palette, cliffImage = null) {
   // water included: walls cover the screen-space gap below displaced edges
   // for every material — skipping them leaves black notches at pond steps
   if (!Array.isArray(tile.elevationEdges) || tile.elevationEdges.length === 0) return;
@@ -20,6 +20,38 @@ export function drawTerrainSideWalls(ctx, tile, corners, palette) {
     const dropPx = Math.max(2, edge.drop * PROJECTION.zPx);
     const lowerFrom = { x: from.x, y: from.y + dropPx };
     const lowerTo = { x: to.x, y: to.y + dropPx };
+
+    const wallPath = () => {
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.lineTo(lowerTo.x, lowerTo.y);
+      ctx.lineTo(lowerFrom.x, lowerFrom.y);
+      ctx.closePath();
+    };
+
+    if (cliffImage) {
+      // real rock face: the enriched cliff painting fills the wall quad;
+      // the source window hashes from tile coords so neighbouring walls
+      // don't repeat, and the depth gradient below keeps the shading
+      ctx.save();
+      wallPath();
+      ctx.clip();
+      const windowSize = 280;
+      const su = (((tile.x * 53 + tile.y * 97) % 7) / 7) * (cliffImage.width - windowSize);
+      const sv = (((tile.x * 31 + tile.y * 61) % 5) / 5) * (cliffImage.height - windowSize);
+      ctx.imageSmoothingEnabled = true;
+      const left = Math.min(from.x, to.x, lowerFrom.x, lowerTo.x);
+      const top = Math.min(from.y, to.y);
+      ctx.drawImage(
+        cliffImage,
+        su, sv, windowSize, windowSize * 0.6,
+        left - 2, top - 2,
+        Math.abs(to.x - from.x) + 4, dropPx + Math.abs(to.y - from.y) + 4,
+      );
+      ctx.restore();
+    }
+
     const gradient = ctx.createLinearGradient(
       (from.x + to.x) / 2,
       (from.y + to.y) / 2,
@@ -27,15 +59,9 @@ export function drawTerrainSideWalls(ctx, tile, corners, palette) {
       (lowerFrom.y + lowerTo.y) / 2,
     );
     const shadowAlpha = Math.min(0.22, 0.06 + edge.drop * 0.035);
-    gradient.addColorStop(0, tintWithAlpha(palette.dark, shadowAlpha * 0.72));
-    gradient.addColorStop(1, `rgba(8, 11, 10, ${shadowAlpha})`);
-
-    ctx.beginPath();
-    ctx.moveTo(from.x, from.y);
-    ctx.lineTo(to.x, to.y);
-    ctx.lineTo(lowerTo.x, lowerTo.y);
-    ctx.lineTo(lowerFrom.x, lowerFrom.y);
-    ctx.closePath();
+    gradient.addColorStop(0, tintWithAlpha(palette.dark, shadowAlpha * (cliffImage ? 0.45 : 0.72)));
+    gradient.addColorStop(1, `rgba(8, 11, 10, ${shadowAlpha * (cliffImage ? 1.5 : 1)})`);
+    wallPath();
     ctx.fillStyle = gradient;
     ctx.fill();
 

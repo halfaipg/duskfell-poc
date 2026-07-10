@@ -97,7 +97,7 @@ export function createTerrainDrawer({
     const palette = TERRAIN_MATERIALS[terrainUnderpaintMaterial(tile)];
     const groundPatchTile = tileUsesGroundPatch(tile, terrainAssets.groundPatches);
 
-    drawTerrainSideWalls(ctx, tile, corners, palette);
+    drawTerrainSideWalls(ctx, tile, corners, palette, terrainAssets.groundPatches?.get?.("cliff") ?? null);
 
     if (!groundPatchTile) {
       ctx.beginPath();
