@@ -4,7 +4,7 @@ import {
   visualBiomeWeightsAt,
 } from "./terrain-visual-biomes.js";
 import { roadPressuresAt, streamCenterAt } from "./terrain-biome.js";
-import { vertexHeight } from "./terrain-height.js";
+import { continuousVertexHeight } from "./terrain-height.js";
 import { projectTerrainTile } from "./terrain-geometry.js";
 import { TERRAIN_MATERIALS, terrainTileAt } from "./terrain.js";
 import { PROJECTION } from "./projection.js";
@@ -152,6 +152,14 @@ function compositePatchForTile(tile, terrain, groundPatches) {
   layerCanvas.height = CANVAS_SIZE;
   const layer = layerCanvas.getContext("2d");
   if (!layer) return null;
+
+  if (reliefOnlyDebug) {
+    composite.fillStyle = "rgb(132, 132, 132)";
+    composite.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+    drawReliefShade(composite, maskContext, maskCanvas, superX, superY, terrain, null);
+    compositeCache.set(key, canvas);
+    return canvas;
+  }
 
   const activeBiomes = activeVisualBiomesForPatch(
     superX,
@@ -304,7 +312,7 @@ function drawBombedPatchImage(ctx, image, superX, superY, seed) {
 // get a gentle warm lift. Light from the northwest, matching the sprite sun.
 const RELIEF_LIGHT_X = -0.62;
 const RELIEF_LIGHT_Y = -0.62;
-const RELIEF_STRENGTH = 0.9;
+const RELIEF_STRENGTH = 2.4;
 
 function drawReliefShade(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches) {
   const { cols, rows, safeRadiusTiles, profile } = terrain;
@@ -318,7 +326,7 @@ function drawReliefShade(composite, maskContext, maskCanvas, superX, superY, ter
     const mapY = superY * PATCH_TILES + ly - MARGIN_TILES - 1;
     for (let lx = 0; lx < latticeSize; lx += 1) {
       const mapX = superX * PATCH_TILES + lx - MARGIN_TILES - 1;
-      heights[ly * latticeSize + lx] = vertexHeight(mapX, mapY, cols, rows, safeRadiusTiles, profile);
+      heights[ly * latticeSize + lx] = continuousVertexHeight(mapX, mapY, cols, rows, safeRadiusTiles, profile);
     }
   }
   const h = (lx, ly) =>
@@ -367,11 +375,11 @@ function drawReliefShade(composite, maskContext, maskCanvas, superX, superY, ter
       // steep ground wears through: the eroded-hillside painting stamps
       // where the slope magnitude is high, ragged like the other overlays
       const steep = Math.hypot(gx, gy);
-      if (steep > 0.34) {
+      if (steep > 0.26) {
         const mapX = superX * PATCH_TILES + ((x + 0.5) / size) * CANVAS_TILES - MARGIN_TILES;
         const mapY = superY * PATCH_TILES + ((y + 0.5) / size) * CANVAS_TILES - MARGIN_TILES;
         const rag = wearNoise(mapX * 0.9, mapY * 0.9, 401);
-        const amount = clamp01((steep - 0.34) / 0.4 + (rag - 0.5) * 0.5) * 0.85;
+        const amount = clamp01((steep - 0.26) / 0.3 + (rag - 0.5) * 0.5) * 0.85;
         if (amount > 0.03) {
           scree[i] = amount;
           hasScree = true;
@@ -729,6 +737,10 @@ function animationFrameFor(layer, waterImage, nowMs) {
 // --virtual-time-budget; ?noWaterAnim=1 keeps captures cheap and deterministic
 const waterAnimDisabled =
   typeof globalThis.location !== "undefined" && /[?&]noWaterAnim=1/.test(globalThis.location.search ?? "");
+// ?reliefOnly=1: composite neutral gray + the relief pass instead of the
+// paintings — a same-perspective debug view for judging the raw hillshade
+const reliefOnlyDebug =
+  typeof globalThis.location !== "undefined" && /[?&]reliefOnly=1/.test(globalThis.location.search ?? "");
 
 export function drawChunkWaterAnimation(ctx, chunk, origin, terrain, groundPatches, nowMs) {
   if (waterAnimDisabled) return;

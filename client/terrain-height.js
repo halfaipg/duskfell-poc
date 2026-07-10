@@ -67,7 +67,9 @@ export function terrainHeightMetadata(heights) {
 // and the stream carves a dale — a gorge where it cuts the highland.
 // Wavelengths are long so contour steps stay 1 tile apart (walkable,
 // maxWalkableStep 1) except on the steepest highland scarps.
-export function vertexHeight(x, y, cols, rows, safeRadiusTiles, profile) {
+// continuous landform height (unrounded) — the relief shader reads this so
+// hillsides light smoothly; tiles quantize it via vertexHeight below
+export function continuousVertexHeight(x, y, cols, rows, safeRadiusTiles, profile) {
   const centerDistance = Math.hypot(x - cols / 2, y - rows / 2);
   if (centerDistance < safeRadiusTiles * 0.58) return 0;
 
@@ -87,7 +89,15 @@ export function vertexHeight(x, y, cols, rows, safeRadiusTiles, profile) {
     (centerDistance - safeRadiusTiles * 0.58) / Math.max(0.001, safeRadiusTiles * 0.55),
   );
   const height = (highland + rolling + dale) * settleBlend;
-  return clamp(Math.round(height), profile.minElevation, profile.maxElevation);
+  return clamp(height, profile.minElevation, profile.maxElevation);
+}
+
+export function vertexHeight(x, y, cols, rows, safeRadiusTiles, profile) {
+  return clamp(
+    Math.round(continuousVertexHeight(x, y, cols, rows, safeRadiusTiles, profile)),
+    profile.minElevation,
+    profile.maxElevation,
+  );
 }
 
 function smooth01(value) {
