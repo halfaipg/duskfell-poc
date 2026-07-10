@@ -17,6 +17,7 @@ import { renderHud, renderPanel } from "./ui-panels.js";
 const { canvas, screenCtx, ui } = getAppDom();
 let ctx = screenCtx;
 const params = new URLSearchParams(window.location.search);
+const DAY_TINT = params.get("dayTint");
 console.info("Duskfell client build: painted-terrain v3 (2026-07-09)");
 
 const keys = new Set();
@@ -193,6 +194,27 @@ function draw(now = 0) {
       interiorRenderer.drawInteriorRoofs(origin, localPlayerRenderPosition, now);
     }
     ctx.restore();
+
+    // ?dayTint=dawn|dusk|night: global tint over the world — the first
+    // stage of the day/night design, exposed for time-of-day demos
+    if (DAY_TINT) {
+      const tints = {
+        dawn: ["rgba(255, 196, 140, 0.28)", "rgba(150, 120, 130, 0.55)"],
+        dusk: ["rgba(255, 158, 96, 0.30)", "rgba(140, 104, 120, 0.6)"],
+        night: ["rgba(70, 90, 150, 0.2)", "rgba(56, 68, 110, 0.75)"],
+      };
+      const [glow, shadow] = tints[DAY_TINT] ?? [];
+      if (glow) {
+        ctx.save();
+        ctx.globalCompositeOperation = "multiply";
+        ctx.fillStyle = shadow;
+        ctx.fillRect(0, 0, rect.width, rect.height);
+        ctx.globalCompositeOperation = "soft-light";
+        ctx.fillStyle = glow;
+        ctx.fillRect(0, 0, rect.width, rect.height);
+        ctx.restore();
+      }
+    }
 
     drawOverlay(rect);
     updateHud();

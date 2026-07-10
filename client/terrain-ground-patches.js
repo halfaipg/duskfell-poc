@@ -310,9 +310,20 @@ function drawBombedPatchImage(ctx, image, superX, superY, seed) {
 // the height field per pixel and bakes lambert-style relief into the
 // composite — slopes facing away from the light darken, sun-facing slopes
 // get a gentle warm lift. Light from the northwest, matching the sprite sun.
-const RELIEF_LIGHT_X = -0.62;
-const RELIEF_LIGHT_Y = -0.62;
-const RELIEF_STRENGTH = 2.4;
+// sun azimuth is overridable (?sunAz=degrees, map-space) so time-of-day
+// demos can relight the terrain; default is the northwest sprite sun
+const sunAzMatch =
+  typeof globalThis.location !== "undefined"
+    ? (globalThis.location.search ?? "").match(/[?&]sunAz=(-?\d+)/)
+    : null;
+const SUN_AZ = sunAzMatch ? (Number(sunAzMatch[1]) * Math.PI) / 180 : (225 * Math.PI) / 180;
+const RELIEF_LIGHT_X = Math.cos(SUN_AZ);
+const RELIEF_LIGHT_Y = Math.sin(SUN_AZ);
+const sunStrengthMatch =
+  typeof globalThis.location !== "undefined"
+    ? (globalThis.location.search ?? "").match(/[?&]sunStrength=([\d.]+)/)
+    : null;
+const RELIEF_STRENGTH = sunStrengthMatch ? Number(sunStrengthMatch[1]) : 2.4;
 
 function drawReliefShade(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches) {
   const { cols, rows, safeRadiusTiles, profile } = terrain;
