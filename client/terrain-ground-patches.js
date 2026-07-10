@@ -186,7 +186,7 @@ function compositePatchForTile(tile, terrain, groundPatches) {
   }
 
   drawEcotoneBand(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches);
-  drawReliefShade(composite, maskContext, maskCanvas, superX, superY, terrain);
+  drawReliefShade(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches);
   drawRoadWear(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches);
   drawWaterBodies(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches);
 
@@ -306,7 +306,7 @@ const RELIEF_LIGHT_X = -0.62;
 const RELIEF_LIGHT_Y = -0.62;
 const RELIEF_STRENGTH = 0.9;
 
-function drawReliefShade(composite, maskContext, maskCanvas, superX, superY, terrain) {
+function drawReliefShade(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches) {
   const { cols, rows, safeRadiusTiles, profile } = terrain;
   const size = MASK_SIZE;
   // heights sampled on a one-tile lattice and gradients bilinearly
@@ -335,7 +335,9 @@ function drawReliefShade(composite, maskContext, maskCanvas, superX, superY, ter
 
   const dark = new Float32Array(size * size);
   const light = new Float32Array(size * size);
+  const scree = new Float32Array(size * size);
   let hasRelief = false;
+  let hasScree = false;
   const pxPerTile = size / CANVAS_TILES;
   for (let y = 0; y < size; y += 1) {
     const fy = (y + 0.5) / pxPerTile + 1; // +1 for the extra lattice ring
@@ -362,7 +364,29 @@ function drawReliefShade(composite, maskContext, maskCanvas, superX, superY, ter
         light[i] = Math.min(0.18, -facing * 0.22);
         hasRelief = true;
       }
+      // steep ground wears through: the eroded-hillside painting stamps
+      // where the slope magnitude is high, ragged like the other overlays
+      const steep = Math.hypot(gx, gy);
+      if (steep > 0.34) {
+        const mapX = superX * PATCH_TILES + ((x + 0.5) / size) * CANVAS_TILES - MARGIN_TILES;
+        const mapY = superY * PATCH_TILES + ((y + 0.5) / size) * CANVAS_TILES - MARGIN_TILES;
+        const rag = wearNoise(mapX * 0.9, mapY * 0.9, 401);
+        const amount = clamp01((steep - 0.34) / 0.4 + (rag - 0.5) * 0.5) * 0.85;
+        if (amount > 0.03) {
+          scree[i] = amount;
+          hasScree = true;
+        }
+      }
     }
+  }
+
+  const screeImage = groundPatches?.get("scree") ?? null;
+  if (hasScree && screeImage) {
+    writeFieldMask(maskContext, scree);
+    composite.save();
+    composite.imageSmoothingEnabled = true;
+    applyMaskedImage(composite, maskCanvas, screeImage, superX, superY);
+    composite.restore();
   }
   if (!hasRelief) return;
 
