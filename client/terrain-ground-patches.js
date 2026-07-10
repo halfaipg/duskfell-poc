@@ -311,8 +311,8 @@ function drawRoadWear(composite, maskContext, maskCanvas, superX, superY, terrai
   // band to bite into (fringe), the full-alpha core stays solid trail
   const NEIGHBORS = [[1, 0], [0, 1], [1, 1], [1, -1]];
   for (const pass of [
-    { alpha: 0.38, width: 1.35, disc: 0.85 },
-    { alpha: 1.0, width: 0.72, disc: 0.45 },
+    { alpha: 0.5, width: 1.05, disc: 0.68 },
+    { alpha: 1.0, width: 0.55, disc: 0.36 },
   ]) {
     maskContext.strokeStyle = `rgba(255,255,255,${pass.alpha})`;
     maskContext.fillStyle = `rgba(255,255,255,${pass.alpha})`;
@@ -431,10 +431,12 @@ function raggedizeWearMask(maskContext, superX, superY) {
       const wtx = superX * PATCH_TILES + x / maskPxPerTile - MARGIN_TILES;
       const wty = superY * PATCH_TILES + y / maskPxPerTile - MARGIN_TILES;
       const noise =
-        wearNoise(wtx * 1.9, wty * 1.9, 31) * 0.65 +
-        wearNoise(wtx * 4.7, wty * 4.7, 67) * 0.35;
-      const threshold = 0.44 + (noise - 0.5) * 0.46;
-      const shaped = Math.min(1, Math.max(0, (alpha - threshold) / 0.2));
+        wearNoise(wtx * 1.6, wty * 1.6, 31) * 0.7 +
+        wearNoise(wtx * 4.2, wty * 4.2, 67) * 0.3;
+      // wide soft knee: dirt THINS into grass over a broad band, with only
+      // a gentle wobble on the falloff distance — subtle, neat transition
+      const threshold = 0.33 + (noise - 0.5) * 0.2;
+      const shaped = Math.min(1, Math.max(0, (alpha - threshold) / 0.5));
       data[offset + 3] = Math.round(shaped * 255);
     }
   }
