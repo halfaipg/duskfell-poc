@@ -626,13 +626,27 @@ export function drawChunkWaterAnimation(ctx, chunk, origin, terrain, groundPatch
   const waterImage = groundPatches.get("stream-water") ?? null;
   if (!waterImage) return;
   const groups = new Map();
+  let rowY = null;
+  let rowCenter = 0;
   for (const tileView of chunk.tiles) {
-    if (tileView.tile.material !== "water") continue;
-    const superX = Math.floor(tileView.tile.x / PATCH_TILES);
-    const superY = Math.floor(tileView.tile.y / PATCH_TILES);
+    const tile = tileView.tile;
+    // the painted channel bleeds past strict water tiles (ragged edges,
+    // feather, shore band) — clip by distance to the centerline, not by
+    // material, or the bank wedges stay frozen while the body animates
+    let inChannel = tile.material === "water" || tile.material === "shore";
+    if (!inChannel && PATCHED_MATERIALS.has(tile.material)) {
+      if (rowY !== tile.y) {
+        rowY = tile.y;
+        rowCenter = streamCenterAt(tile.y, terrain.cols, terrain.rows, terrain.profile);
+      }
+      inChannel = Math.abs(tile.x + 0.5 - rowCenter) < STREAM_HALF_WIDTH_TILES + 1.2;
+    }
+    if (!inChannel) continue;
+    const superX = Math.floor(tile.x / PATCH_TILES);
+    const superY = Math.floor(tile.y / PATCH_TILES);
     const key = `${superX}:${superY}`;
     if (!groups.has(key)) groups.set(key, { superX, superY, tiles: [] });
-    groups.get(key).tiles.push(tileView.tile);
+    groups.get(key).tiles.push(tile);
   }
   if (!groups.size) return;
 
