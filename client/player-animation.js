@@ -8,6 +8,13 @@ export const PLAYER_WALK_MIN_SPEED_RATIO = 0.62;
 export const PLAYER_WALK_MAX_SPEED_RATIO = 1.45;
 export const PLAYER_RENDER_SMOOTHING_MS = 78;
 export const PLAYER_RENDER_SNAP_DISTANCE = PROJECTION.unitsPerTile * 2.5;
+// idle fidget: after a quiet delay, the fidget clip plays once per period,
+// staggered per player so a crowd never fidgets in unison
+export const PLAYER_FIDGET_DELAY_MS = 3800;
+export const PLAYER_FIDGET_PERIOD_MS = 9200;
+export const PLAYER_FIDGET_FRAME_MS = 150;
+// direction changes crossfade briefly instead of hard-snapping the sprite
+export const PLAYER_TURN_FADE_MS = 110;
 
 export function projectedMovementDelta(dx, dy) {
   return {
@@ -40,12 +47,14 @@ export function walkAnimationSample({
   speedRatio = 1,
   idleFrame = 0,
   frameSequence = null,
+  idleElapsedMs = null,
+  fidgetFrames = null,
 }) {
   const safeFrameCount = Math.max(1, frameCount);
   const idleFrameIndex = clampInteger(idleFrame, 0, safeFrameCount - 1);
   if (!moving) {
     return {
-      frameIndex: idleFrameIndex,
+      frameIndex: idleFidgetFrame(idleElapsedMs, fidgetFrames, stablePhase, safeFrameCount) ?? idleFrameIndex,
       bodyOffsetX: 0,
       bodyOffsetY: 0,
       cycleRadians: 0,
@@ -74,6 +83,17 @@ export function walkAnimationSample({
     footfallStrength,
     footfallSide: Math.cos(cycleRadians) >= 0 ? 1 : -1,
   };
+}
+
+function idleFidgetFrame(idleElapsedMs, fidgetFrames, stablePhase, frameCount) {
+  if (!Array.isArray(fidgetFrames) || fidgetFrames.length === 0) return null;
+  if (!Number.isFinite(idleElapsedMs) || idleElapsedMs < PLAYER_FIDGET_DELAY_MS) return null;
+  const stagger = (stablePhase * 11700) % PLAYER_FIDGET_PERIOD_MS;
+  const phase = (idleElapsedMs - PLAYER_FIDGET_DELAY_MS + stagger) % PLAYER_FIDGET_PERIOD_MS;
+  const clipMs = fidgetFrames.length * PLAYER_FIDGET_FRAME_MS;
+  if (phase >= clipMs) return null;
+  const index = Math.min(fidgetFrames.length - 1, Math.floor(phase / PLAYER_FIDGET_FRAME_MS));
+  return clampInteger(fidgetFrames[index], 0, frameCount - 1);
 }
 
 function normalizeFrameSequence(sequence, frameCount) {

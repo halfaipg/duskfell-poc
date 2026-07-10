@@ -151,6 +151,10 @@ export function createPlayerRenderState() {
         const direction = moved
           ? directionFromWorldDelta(dx, dy, previous.direction)
           : previous.direction;
+        if (direction !== previous.direction) {
+          previous.previousDirection = previous.direction;
+          previous.directionChangedMs = now;
+        }
         previous.x = player.x;
         previous.y = player.y;
         previous.tick = tick;

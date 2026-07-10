@@ -2779,13 +2779,13 @@
     {
       "id": "duskfell-wretch",
       "image": "duskfell-wretch.png",
-      "imageSha256": "ef25cc07e91ad48a2f13c5a289b965c33ebd243e3e7171bd874a169b90f7b356",
+      "imageSha256": "f7e90d2092c2d6065e802609388a4cbf6224e7cf3b89dee9362e89772939687b",
       "frameGrid": {
         "cellWidth": 128,
         "cellHeight": 128,
-        "columns": 8,
+        "columns": 16,
         "rows": 4,
-        "frameCount": 32
+        "frameCount": 64
       },
       "anchor": {
         "kind": "foot",
@@ -2815,22 +2815,22 @@
         {
           "name": "south",
           "startFrame": 0,
-          "frameCount": 8
+          "frameCount": 16
         },
         {
           "name": "east",
-          "startFrame": 8,
-          "frameCount": 8
+          "startFrame": 16,
+          "frameCount": 16
         },
         {
           "name": "north",
-          "startFrame": 16,
-          "frameCount": 8
+          "startFrame": 32,
+          "frameCount": 16
         },
         {
           "name": "west",
-          "startFrame": 24,
-          "frameCount": 8
+          "startFrame": 48,
+          "frameCount": 16
         }
       ],
       "animation": {
@@ -2843,6 +2843,16 @@
           5,
           6,
           7
+        ],
+        "fidgetFrames": [
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
         ]
       },
       "provenance": {
