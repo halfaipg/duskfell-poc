@@ -13,9 +13,8 @@ export function drawTerrainSideWalls(ctx, tile, corners, palette) {
   if (!Array.isArray(tile.elevationEdges) || tile.elevationEdges.length === 0) return;
 
   for (const edge of tile.elevationEdges) {
-    // the ground painting drapes across step gaps (drawPatchGroup), so
-    // walls are pure shading now — only real cliffs get one; scattered
-    // single-tile steps read better from the painting's own shadows
+    // Only real cliffs get a wall; scattered single-tile steps read better
+    // from the top painting and the material undercoat beneath it.
     if (edge.drop < 2) continue;
     const [from, to] = edgePoints(corners, edge.edge);
     const dropPx = Math.max(2, edge.drop * PROJECTION.zPx);
@@ -37,8 +36,6 @@ export function drawTerrainSideWalls(ctx, tile, corners, palette) {
     ctx.lineTo(lowerTo.x, lowerTo.y);
     ctx.lineTo(lowerFrom.x, lowerFrom.y);
     ctx.closePath();
-    // the ground painting drapes into this gap (see drawPatchGroup); the
-    // gradient just shades the step face
     ctx.fillStyle = gradient;
     ctx.fill();
 

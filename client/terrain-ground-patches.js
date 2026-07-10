@@ -4,9 +4,8 @@ import {
   visualBiomeWeightsAt,
 } from "./terrain-visual-biomes.js";
 import { projectTerrainTile } from "./terrain-geometry.js";
-import { terrainTileAt } from "./terrain.js";
+import { TERRAIN_MATERIALS, terrainTileAt } from "./terrain.js";
 import { PROJECTION } from "./projection.js";
-import { edgePoints } from "./terrain-draw-geometry.js";
 
 const PATCHED_MATERIALS = new Set([
   "grass", "field", "dirt", "stone", "rock", "ruin", "shore", "settlement", "cobble",
@@ -42,6 +41,10 @@ export function materialHasGroundPatch(material, groundPatches) {
 
 export function drawChunkGroundPatch(ctx, chunk, origin, terrain, groundPatches) {
   if (!origin || !terrain || !useGroundPatches(groundPatches)) return false;
+  // Static chunk canvases and height-displaced clip diamonds can leave tiny
+  // uncovered wedges at their shared boundaries. Paint a material-colored
+  // safety coat first so those subpixel gaps never expose the black canvas.
+  drawPatchUnderpaint(ctx, chunk);
   // group by supertile so each patch draws once through ONE global
   // plan→screen transform: every tile samples the same continuous
   // projection, so slopes never crease the painting with per-triangle
@@ -66,6 +69,22 @@ export function drawChunkGroundPatch(ctx, chunk, origin, terrain, groundPatches)
   return drewPatch;
 }
 
+function drawPatchUnderpaint(ctx, chunk) {
+  for (const tileView of chunk.tiles) {
+    if (!PATCHED_MATERIALS.has(tileView.tile.material)) continue;
+    const { nw, ne, se, sw } = tileView.corners;
+    const palette = TERRAIN_MATERIALS[tileView.tile.material] ?? TERRAIN_MATERIALS.grass;
+    ctx.beginPath();
+    ctx.moveTo(nw.x, nw.y);
+    ctx.lineTo(ne.x, ne.y);
+    ctx.lineTo(se.x, se.y);
+    ctx.lineTo(sw.x, sw.y);
+    ctx.closePath();
+    ctx.fillStyle = palette.fill;
+    ctx.fill();
+  }
+}
+
 function drawPatchGroup(ctx, patch, group, origin) {
   const { halfW, halfH } = PROJECTION;
   const planScaleX = halfW / PLAN_PX_PER_TILE;
@@ -83,22 +102,6 @@ function drawPatchGroup(ctx, patch, group, origin) {
     ctx.lineTo(corners.se.x, corners.se.y + INFLATE);
     ctx.lineTo(corners.sw.x - INFLATE, corners.sw.y);
     ctx.closePath();
-    // neighbor heights step at elevation edges, leaving screen-space gaps
-    // below this tile's displaced edge — include those wall quads so the
-    // painting drapes down the step face (side-wall shading tints it after)
-    if (Array.isArray(tile.elevationEdges)) {
-      for (const edge of tile.elevationEdges) {
-        const [from, to] = edgePoints(corners, edge.edge);
-        const dropPx = Math.max(2, edge.drop * PROJECTION.zPx) + 0.75;
-        // extend both directions: the gap sits below south/east edges but
-        // above north/west edges — overdraw is continuous painting anyway
-        ctx.moveTo(from.x, from.y - dropPx);
-        ctx.lineTo(to.x, to.y - dropPx);
-        ctx.lineTo(to.x, to.y + dropPx);
-        ctx.lineTo(from.x, from.y + dropPx);
-        ctx.closePath();
-      }
-    }
   }
   ctx.clip();
   ctx.imageSmoothingEnabled = true;
@@ -416,4 +419,3 @@ function writeBiomeMask(ctx, biome, activeBiomes, superX, superY, cols, rows, se
   }
   ctx.putImageData(imageData, 0, 0);
 }
-

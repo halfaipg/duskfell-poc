@@ -92,10 +92,10 @@ export function createTerrainDrawer({
     const { tile, corners, bounds } = tileView;
     if (visibleBounds && !terrainLayerManager.boundsIntersect(bounds, visibleBounds)) return;
     const palette = TERRAIN_MATERIALS[terrainUnderpaintMaterial(tile)];
+    const groundPatchTile = tileUsesGroundPatch(tile, terrainAssets.groundPatches);
 
     drawTerrainSideWalls(ctx, tile, corners, palette);
 
-    const groundPatchTile = tileUsesGroundPatch(tile, terrainAssets.groundPatches);
     if (!groundPatchTile) {
       ctx.beginPath();
       ctx.moveTo(corners.nw.x, corners.nw.y);

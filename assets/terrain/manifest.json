@@ -1586,7 +1586,7 @@
       "id": "biome-meadow",
       "biome": "meadow",
       "image": "ground-patches/biome-meadow.webp",
-      "sha256": "23b8365fb66513e6bcbe200e829c2b9e94aff79cbba28502e5d7f7562648aa16",
+      "sha256": "ff33cbb8e874990756d2692644fbbc7a14dc8613a83d4ba5d62ac4897521e63f",
       "width": 2048,
       "height": 2048
     },
@@ -1594,7 +1594,7 @@
       "id": "biome-heath",
       "biome": "heath",
       "image": "ground-patches/biome-heath.webp",
-      "sha256": "5cf47cdc659b17522195449cbcf93bd6a628032dd9c798aa69f80b2940d6d1ed",
+      "sha256": "7b2e7a463d3f71ed1405f004232ddbc2a16ec93da5c63264123697664231489e",
       "width": 2048,
       "height": 2048
     },
@@ -1618,7 +1618,7 @@
       "id": "biome-fen",
       "biome": "fen",
       "image": "ground-patches/biome-fen.webp",
-      "sha256": "77e4b3006aea7ec312e61dfc535a3958dc59847354b8afd5ee9e5e654e675f4e",
+      "sha256": "700bb55756e230b7058d4c722972ef6b4a1d3abf351dd4280e176ec9d04040a4",
       "width": 2048,
       "height": 2048
     },
@@ -1626,7 +1626,7 @@
       "id": "biome-moor",
       "biome": "moor",
       "image": "ground-patches/biome-moor.webp",
-      "sha256": "4e007bbad7ca7c3729925d621fb68f3eca0b543b2fcda7872be72f33446e4aaf",
+      "sha256": "feb6174f5de0b450432b12aa5ff553aa046d06dbc55c02e6863ca88ced1bde86",
       "width": 2048,
       "height": 2048
     },
