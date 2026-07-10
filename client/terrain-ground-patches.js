@@ -5,6 +5,8 @@ import {
 } from "./terrain-visual-biomes.js";
 import { projectTerrainTile } from "./terrain-geometry.js";
 import { terrainTileAt } from "./terrain.js";
+import { PROJECTION } from "./projection.js";
+import { edgePoints } from "./terrain-draw-geometry.js";
 
 const PATCHED_MATERIALS = new Set([
   "grass", "field", "dirt", "stone", "rock", "ruin", "shore", "settlement", "cobble",
@@ -13,7 +15,7 @@ const PATCH_TILES = 16;
 const PLAN_PX_PER_TILE = 128;
 const PATCH_SIZE = PATCH_TILES * PLAN_PX_PER_TILE;
 const MASK_SIZE = 192;
-const MAX_COMPOSITE_PATCHES = 12;
+const MAX_COMPOSITE_PATCHES = 24;
 
 const compositeCache = new Map();
 let activeGroundPatches = null;
@@ -27,11 +29,11 @@ function useGroundPatches(groundPatches) {
 }
 
 export function tileUsesGroundPatch(tile, groundPatches) {
+  // only true water (material) defers to the atlas for its shimmer; every
+  // land material is painted — roads/plazas get the trampled-earth wear
+  // overlay, and dry water-zone creeks stay painted rather than falling
+  // back to pale atlas transition strokes
   if (!tile || !PATCHED_MATERIALS.has(tile.material)) return false;
-  // water defers to the atlas (shimmer decals); everything else is painted —
-  // roads and plazas are marked by the trampled-earth wear overlay instead
-  // of falling back to repeating atlas frames
-  if (tile.composition?.zone === "water") return false;
   return useGroundPatches(groundPatches);
 }
 
@@ -41,15 +43,70 @@ export function materialHasGroundPatch(material, groundPatches) {
 
 export function drawChunkGroundPatch(ctx, chunk, origin, terrain, groundPatches) {
   if (!origin || !terrain || !useGroundPatches(groundPatches)) return false;
-  let drewPatch = false;
+  // group by supertile so each patch draws once through ONE global
+  // plan→screen transform: every tile samples the same continuous
+  // projection, so slopes never crease the painting with per-triangle
+  // shear seams — elevation reads from side walls and displaced clip
+  // diamonds instead
+  const groups = new Map();
   for (const tileView of chunk.tiles) {
     if (!tileUsesGroundPatch(tileView.tile, groundPatches)) continue;
-    const patch = compositePatchForTile(tileView.tile, terrain, groundPatches);
+    const superX = Math.floor(tileView.tile.x / PATCH_TILES);
+    const superY = Math.floor(tileView.tile.y / PATCH_TILES);
+    const key = `${superX}:${superY}`;
+    if (!groups.has(key)) groups.set(key, { superX, superY, tiles: [] });
+    groups.get(key).tiles.push(tileView.tile);
+  }
+  let drewPatch = false;
+  for (const group of groups.values()) {
+    const patch = compositePatchForTile(group.tiles[0], terrain, groundPatches);
     if (!patch) continue;
-    drawPatchTile(ctx, patch, tileView.tile, projectTerrainTile(tileView.tile, origin));
+    drawPatchGroup(ctx, patch, group, origin);
     drewPatch = true;
   }
   return drewPatch;
+}
+
+function drawPatchGroup(ctx, patch, group, origin) {
+  const { halfW, halfH } = PROJECTION;
+  const planScaleX = halfW / PLAN_PX_PER_TILE;
+  const planScaleY = halfH / PLAN_PX_PER_TILE;
+  ctx.save();
+  ctx.beginPath();
+  for (const tile of group.tiles) {
+    const corners = projectTerrainTile(tile, origin);
+    ctx.moveTo(corners.nw.x, corners.nw.y);
+    ctx.lineTo(corners.ne.x, corners.ne.y);
+    ctx.lineTo(corners.se.x, corners.se.y);
+    ctx.lineTo(corners.sw.x, corners.sw.y);
+    ctx.closePath();
+    // neighbor heights step at elevation edges, leaving screen-space gaps
+    // below this tile's displaced edge — include those wall quads so the
+    // painting drapes down the step face (side-wall shading tints it after)
+    if (Array.isArray(tile.elevationEdges)) {
+      for (const edge of tile.elevationEdges) {
+        const [from, to] = edgePoints(corners, edge.edge);
+        const dropPx = Math.max(2, edge.drop * PROJECTION.zPx) + 0.75;
+        ctx.moveTo(from.x, from.y - 0.5);
+        ctx.lineTo(to.x, to.y - 0.5);
+        ctx.lineTo(to.x, to.y + dropPx);
+        ctx.lineTo(from.x, from.y + dropPx);
+        ctx.closePath();
+      }
+    }
+  }
+  ctx.clip();
+  ctx.imageSmoothingEnabled = true;
+  ctx.transform(
+    planScaleX,
+    planScaleY,
+    -planScaleX,
+    planScaleY,
+    origin.x + (group.superX - group.superY) * PATCH_TILES * halfW,
+    origin.y + (group.superX + group.superY) * PATCH_TILES * halfH,
+  );
+  ctx.drawImage(patch, 0, 0);
+  ctx.restore();
 }
 
 function compositePatchForTile(tile, terrain, groundPatches) {
@@ -252,9 +309,10 @@ function drawRoadWear(composite, maskContext, maskCanvas, superX, superY, terrai
   // multiply pass: packed earth is darker and warmer than the living ground
   composite.fillStyle = "rgb(180, 160, 134)";
   applyMaskedFill(composite, maskCanvas);
-  // dusty highlight pass lifts the center back up so it reads worn, not wet
-  composite.globalCompositeOperation = "overlay";
-  composite.fillStyle = "rgba(224, 204, 170, 0.45)";
+  // dusty highlight pass lifts the center back up so it reads worn, not
+  // wet — soft-light stays gentle over dark biomes where overlay glows
+  composite.globalCompositeOperation = "soft-light";
+  composite.fillStyle = "rgba(224, 204, 170, 0.5)";
   applyMaskedFill(composite, maskCanvas);
   composite.restore();
 }
@@ -304,87 +362,3 @@ function writeBiomeMask(ctx, biome, activeBiomes, superX, superY, cols, rows, se
   ctx.putImageData(imageData, 0, 0);
 }
 
-function drawPatchTile(ctx, patch, tile, corners) {
-  const superX = Math.floor(tile.x / PATCH_TILES);
-  const superY = Math.floor(tile.y / PATCH_TILES);
-  const u0 = (tile.x - superX * PATCH_TILES) * PLAN_PX_PER_TILE;
-  const v0 = (tile.y - superY * PATCH_TILES) * PLAN_PX_PER_TILE;
-  const u1 = u0 + PLAN_PX_PER_TILE;
-  const v1 = v0 + PLAN_PX_PER_TILE;
-
-  drawTexturedTriangle(ctx, patch, [
-    { source: { x: u0, y: v0 }, target: corners.nw },
-    { source: { x: u1, y: v0 }, target: corners.ne },
-    { source: { x: u1, y: v1 }, target: corners.se },
-  ]);
-  drawTexturedTriangle(ctx, patch, [
-    { source: { x: u0, y: v0 }, target: corners.nw },
-    { source: { x: u1, y: v1 }, target: corners.se },
-    { source: { x: u0, y: v1 }, target: corners.sw },
-  ]);
-}
-
-function drawTexturedTriangle(ctx, image, points) {
-  const [first, second, third] = points;
-  const transform = affineTransform(first, second, third);
-  if (!transform) return;
-  const clipPoints = expandedTriangle(points.map((point) => point.target), 1.25);
-
-  ctx.save();
-  ctx.beginPath();
-  ctx.moveTo(clipPoints[0].x, clipPoints[0].y);
-  ctx.lineTo(clipPoints[1].x, clipPoints[1].y);
-  ctx.lineTo(clipPoints[2].x, clipPoints[2].y);
-  ctx.closePath();
-  ctx.clip();
-  ctx.imageSmoothingEnabled = true;
-  ctx.transform(transform.a, transform.b, transform.c, transform.d, transform.e, transform.f);
-  ctx.drawImage(image, 0, 0);
-  ctx.restore();
-}
-
-function expandedTriangle(points, pixels) {
-  const center = {
-    x: points.reduce((sum, point) => sum + point.x, 0) / points.length,
-    y: points.reduce((sum, point) => sum + point.y, 0) / points.length,
-  };
-  return points.map((point) => {
-    const dx = point.x - center.x;
-    const dy = point.y - center.y;
-    const length = Math.hypot(dx, dy) || 1;
-    return {
-      x: point.x + (dx / length) * pixels,
-      y: point.y + (dy / length) * pixels,
-    };
-  });
-}
-
-function affineTransform(first, second, third) {
-  const x1 = first.source.x;
-  const y1 = first.source.y;
-  const x2 = second.source.x;
-  const y2 = second.source.y;
-  const x3 = third.source.x;
-  const y3 = third.source.y;
-  const determinant = x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2);
-  if (Math.abs(determinant) < 0.000001) return null;
-
-  const tx1 = first.target.x;
-  const ty1 = first.target.y;
-  const tx2 = second.target.x;
-  const ty2 = second.target.y;
-  const tx3 = third.target.x;
-  const ty3 = third.target.y;
-  return {
-    a: (tx1 * (y2 - y3) + tx2 * (y3 - y1) + tx3 * (y1 - y2)) / determinant,
-    b: (ty1 * (y2 - y3) + ty2 * (y3 - y1) + ty3 * (y1 - y2)) / determinant,
-    c: (tx1 * (x3 - x2) + tx2 * (x1 - x3) + tx3 * (x2 - x1)) / determinant,
-    d: (ty1 * (x3 - x2) + ty2 * (x1 - x3) + ty3 * (x2 - x1)) / determinant,
-    e:
-      (tx1 * (x2 * y3 - x3 * y2) + tx2 * (x3 * y1 - x1 * y3) + tx3 * (x1 * y2 - x2 * y1)) /
-      determinant,
-    f:
-      (ty1 * (x2 * y3 - x3 * y2) + ty2 * (x3 * y1 - x1 * y3) + ty3 * (x1 * y2 - x2 * y1)) /
-      determinant,
-  };
-}

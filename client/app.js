@@ -1,4 +1,4 @@
-import { defaultOrigin } from "./projection.js";
+import { PROJECTION, defaultOrigin } from "./projection.js";
 import { createCanvasFrame, drawLoading } from "./app-frame.js";
 import { createRuntimeAssets } from "./app-assets.js";
 import { createTerrainCache } from "./terrain-cache.js";
@@ -34,6 +34,20 @@ const camera = {
   scale: 1,
 };
 const terrainDebugMode = normalizeTerrainDebugMode(params.get("terrainDebug"));
+// review-only camera overrides: ?viewTile=x,y pins the camera to a world
+// tile, ?viewScale=0.5 zooms the whole scene — for art screenshots/tours
+const viewOverride = (() => {
+  const raw = params.get("viewTile");
+  if (!raw) return null;
+  const [x, y] = raw.split(",").map(Number);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+  const units = PROJECTION.unitsPerTile;
+  return { x: (x + 0.5) * units, y: (y + 0.5) * units };
+})();
+const viewScaleOverride = (() => {
+  const raw = Number(params.get("viewScale"));
+  return Number.isFinite(raw) && raw > 0.05 && raw <= 4 ? raw : 1;
+})();
 const terrainDrawer = createTerrainDrawer({
   getContext: () => ctx,
   getCanvas: () => canvas,
@@ -146,17 +160,22 @@ function draw(now = 0) {
     playerRenderState.updateRenderOffsets(players, snapshot.map, playerId);
     playerRenderState.updateVisualPositions(players, now);
     localPlayerRenderPosition = me ? playerRenderState.renderPosition(me) : null;
-    const cameraFocus = me ? { ...me, ...playerRenderState.renderPosition(me) } : me;
+    const cameraFocus = viewOverride ?? (me ? { ...me, ...playerRenderState.renderPosition(me) } : me);
     const nextCamera = computeCamera({
       viewport: rect,
       map: snapshot.map,
       focus: cameraFocus,
       origin,
     });
-    camera.scale = nextCamera.scale;
+    camera.scale = nextCamera.scale * viewScaleOverride;
     camera.x = nextCamera.x;
     camera.y = nextCamera.y;
 
+    // reset the buffer each frame: stale paint (e.g. the parchment loading
+    // screen) must never show through coverage gaps at elevation steps —
+    // a dark base makes any residual gap read as crevice shadow
+    ctx.fillStyle = "#161d18";
+    ctx.fillRect(0, 0, rect.width, rect.height);
     ctx.save();
     ctx.scale(camera.scale, camera.scale);
     ctx.translate(-camera.x, -camera.y);
@@ -169,7 +188,9 @@ function draw(now = 0) {
       ecologyRenderer.drawEcologyFeedLinks(objects, origin, now);
     }
     objectDrawer.drawSceneEntities(players, objects, origin, now);
-    interiorRenderer.drawInteriorRoofs(origin, localPlayerRenderPosition, now);
+    if (!HIDE_WORLD_PROPS) {
+      interiorRenderer.drawInteriorRoofs(origin, localPlayerRenderPosition, now);
+    }
     ctx.restore();
 
     drawOverlay(rect);

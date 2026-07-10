@@ -11,6 +11,9 @@ export function drawTerrainSideWalls(ctx, tile, corners, palette) {
   if (!Array.isArray(tile.elevationEdges) || tile.elevationEdges.length === 0 || tile.material === "water") return;
 
   for (const edge of tile.elevationEdges) {
+    // walls are structural: they fill the screen-space gap between
+    // height-displaced tile diamonds. Small steps stay, but nearly
+    // transparent so rolling ground doesn't read as a lattice.
     const [from, to] = edgePoints(corners, edge.edge);
     const dropPx = Math.max(2, edge.drop * PROJECTION.zPx);
     const lowerFrom = { x: from.x, y: from.y + dropPx };
@@ -21,7 +24,9 @@ export function drawTerrainSideWalls(ctx, tile, corners, palette) {
       (lowerFrom.x + lowerTo.x) / 2,
       (lowerFrom.y + lowerTo.y) / 2,
     );
-    const shadowAlpha = Math.min(0.3, 0.12 + edge.drop * 0.05);
+    const shadowAlpha = edge.drop < 1.2
+      ? 0.05 + edge.drop * 0.04
+      : Math.min(0.3, 0.12 + edge.drop * 0.05);
     gradient.addColorStop(0, tintWithAlpha(palette.dark, shadowAlpha * 0.72));
     gradient.addColorStop(1, `rgba(8, 11, 10, ${shadowAlpha})`);
 
@@ -31,6 +36,8 @@ export function drawTerrainSideWalls(ctx, tile, corners, palette) {
     ctx.lineTo(lowerTo.x, lowerTo.y);
     ctx.lineTo(lowerFrom.x, lowerFrom.y);
     ctx.closePath();
+    // the ground painting drapes into this gap (see drawPatchGroup); the
+    // gradient just shades the step face
     ctx.fillStyle = gradient;
     ctx.fill();
 

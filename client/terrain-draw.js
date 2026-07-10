@@ -117,7 +117,10 @@ export function createTerrainDrawer({
     }
 
     terrainAtlasDrawer.drawTerrainTransitions(tile, corners);
-    if (drawDynamic) {
+    // painted ground carries its own detail; procedural decals (masonry
+    // joints, cracks, tufts) were tuned for flat atlas tiles and read as a
+    // lattice on top of the paintings
+    if (drawDynamic && !groundPatchTile) {
       drawTerrainDecals(ctx, tile, corners, tick, now);
     }
 

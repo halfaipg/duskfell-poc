@@ -1,7 +1,9 @@
 import { PROJECTION } from "./projection.js";
 import { projectTerrainTile } from "./terrain.js";
 
-const TERRAIN_STATIC_CHUNK_PADDING = 14;
+// padding must cover height-displaced diamonds and their wall quads
+// (max drop * zPx + patch overlap), or chunk layers crop them into gaps
+const TERRAIN_STATIC_CHUNK_PADDING = 64;
 const MAX_TERRAIN_STATIC_CHUNK_PIXELS = 1_200_000;
 
 export function createTerrainLayerManager({
