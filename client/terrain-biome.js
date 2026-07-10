@@ -7,16 +7,36 @@ export function materialForTile(x, y, cols, rows, safeRadiusTiles, profile = def
 }
 
 // centerline of the stream (in tile x) at a given tile y — exported so
-// composition kits (reedbeds, fords) can anchor on the actual channel
+// composition kits (reedbeds, fords) and the water painter can anchor on
+// the actual channel. Accepts fractional y so paint can sample smoothly.
+// Kept gentle (one broad bend, small detail) so the near-horizontal runs
+// that produced staircase elbows never appear, and based east of the
+// north-south road axis so channel and road stop coinciding.
 export function streamCenterAt(y, cols, rows, profile = defaultTerrainProfile()) {
   const streamT = (y + 0.5) / rows;
   return (
     cols *
-      (0.62 +
-        0.11 * Math.sin(streamT * Math.PI * 1.9 + 0.4) +
-        0.05 * Math.sin(streamT * Math.PI * 4.1)) +
-    noise2d(y * 0.07, 9, profile.seed + 401) * 1.6
+      (0.66 +
+        0.09 * Math.sin(streamT * Math.PI * 1.9 + 0.4) +
+        0.02 * Math.sin(streamT * Math.PI * 4.1)) +
+    noise2d(y * 0.07, 9, profile.seed + 401) * 0.8
   );
+}
+
+// road pressures at a (possibly fractional) tile coordinate — the same
+// bands biomeForTile uses, exported so the water painter can shallow the
+// channel into a gravel ford where a road actually crosses
+export function roadPressuresAt(x, y, cols, rows, profile = defaultTerrainProfile()) {
+  const centerX = cols / 2;
+  const centerY = rows / 2;
+  const centerDistance = Math.hypot(x + 0.5 - centerX, y + 0.5 - centerY);
+  const nsAxis = centerX + noise2d(y * 0.09, 3, profile.seed + 601) * 3.4;
+  const ewAxis = centerY + noise2d(x * 0.09, 7, profile.seed + 653) * 3.0;
+  const roadReach = clamp(1.18 - centerDistance / (Math.min(cols, rows) * 0.62), 0, 1);
+  return {
+    northSouth: clamp(1 - Math.abs(x + 0.5 - nsAxis) / 0.95, 0, 1) * roadReach,
+    eastWest: clamp(1 - Math.abs(y + 0.5 - ewAxis) / 0.9, 0, 1) * roadReach,
+  };
 }
 
 export function biomeForTile(x, y, cols, rows, safeRadiusTiles, profile = defaultTerrainProfile()) {
@@ -28,11 +48,9 @@ export function biomeForTile(x, y, cols, rows, safeRadiusTiles, profile = defaul
   // roads run the breadth of the map, wandering with noise so they read as
   // worn trails rather than surveyed lines; pressure fades toward the far
   // edges so trails peter out instead of slamming into the border
-  const nsAxis = centerX + noise2d(y * 0.09, 3, profile.seed + 601) * 3.4;
-  const ewAxis = centerY + noise2d(x * 0.09, 7, profile.seed + 653) * 3.0;
-  const roadReach = clamp(1.18 - centerDistance / (Math.min(cols, rows) * 0.62), 0, 1);
-  const northSouthPathPressure = clamp(1 - Math.abs(x + 0.5 - nsAxis) / 0.95, 0, 1) * roadReach;
-  const eastWestPathPressure = clamp(1 - Math.abs(y + 0.5 - ewAxis) / 0.9, 0, 1) * roadReach;
+  const roads = roadPressuresAt(x, y, cols, rows, profile);
+  const northSouthPathPressure = roads.northSouth;
+  const eastWestPathPressure = roads.eastWest;
 
   // a stream S-curves through the east half of the map: enters the north
   // edge, bends past the settlement, exits south — instead of the old river

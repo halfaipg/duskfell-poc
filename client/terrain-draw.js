@@ -11,6 +11,7 @@ import {
 } from "./terrain-draw-surface.js";
 import {
   drawChunkGroundPatch,
+  drawChunkWaterAnimation,
   tileUsesGroundPatch,
 } from "./terrain-ground-patches.js";
 import { TERRAIN_MATERIALS } from "./terrain.js";
@@ -83,6 +84,8 @@ export function createTerrainDrawer({
           drawTerrainTile(tileView, state.tick, now, visibleBounds);
         }
       }
+      // flowing water shimmer: per-frame overlay on top of the cached ground
+      drawChunkWaterAnimation(ctx, chunk, origin, worldTerrain, terrainAssets.groundPatches, now);
       terrainDebugDrawer.drawTerrainDebugChunk(chunk, terrainDebugMode);
     }
   }

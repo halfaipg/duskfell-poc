@@ -3,6 +3,7 @@ import {
   activeVisualBiomesForPatch,
   visualBiomeWeightsAt,
 } from "./terrain-visual-biomes.js";
+import { roadPressuresAt, streamCenterAt } from "./terrain-biome.js";
 import { projectTerrainTile } from "./terrain-geometry.js";
 import { TERRAIN_MATERIALS, terrainTileAt } from "./terrain.js";
 import { PROJECTION } from "./projection.js";
@@ -407,61 +408,267 @@ function drawRoadWear(composite, maskContext, maskCanvas, superX, superY, terrai
 // Water paints into the composite as three soft masked passes — wet sand
 // rim, water body, deep center — so ponds sit IN the ground painting with
 // organic edges instead of hard atlas diamonds.
+// The stream paints from its continuous centerline instead of per-tile
+// circles: every mask pixel measures its distance to the channel, so banks
+// are one smooth organic spline (no tile scallops), the rim is a narrow
+// textured gravel edge with a dark wet line, and where a road crosses the
+// channel shallows into a gravel ford instead of cutting the trail.
+const STREAM_HALF_WIDTH_TILES = 1.15;
+const STREAM_RIM_TILES = 0.42;
+const STREAM_DEEP_TILES = 0.5;
+
+function streamFieldsForPatch(superX, superY, terrain) {
+  let hasWater = false;
+  for (let ty = -2; ty <= PATCH_TILES + 1 && !hasWater; ty += 1) {
+    for (let tx = -2; tx <= PATCH_TILES + 1 && !hasWater; tx += 1) {
+      const material = terrainTileAt(terrain, superX * PATCH_TILES + tx, superY * PATCH_TILES + ty)?.material;
+      if (material === "water" || material === "shore") hasWater = true;
+    }
+  }
+  if (!hasWater) return null;
+
+  const seed = terrain.profile?.seed ?? 7341;
+  const profile = terrain.profile;
+  const size = MASK_SIZE;
+  const water = new Float32Array(size * size);
+  const rim = new Float32Array(size * size);
+  const deep = new Float32Array(size * size);
+  const wetline = new Float32Array(size * size);
+  let any = false;
+  // per-row centerline (the centerline is x(y), constant across a row)
+  for (let y = 0; y < size; y += 1) {
+    const mapY = superY * PATCH_TILES + ((y + 0.5) / size) * CANVAS_TILES - MARGIN_TILES;
+    const center = streamCenterAt(mapY, terrain.cols, terrain.rows, profile);
+    for (let x = 0; x < size; x += 1) {
+      const mapX = superX * PATCH_TILES + ((x + 0.5) / size) * CANVAS_TILES - MARGIN_TILES;
+      const rag = (wearNoise(mapX * 1.1, mapY * 1.1, 313) - 0.5) * 0.36;
+      const d = Math.abs(mapX - center) + rag;
+      if (d > STREAM_HALF_WIDTH_TILES + STREAM_RIM_TILES + 0.3) continue;
+      any = true;
+      const i = y * size + x;
+      const ford = roadPressuresAt(mapX, mapY, terrain.cols, terrain.rows, profile);
+      const fordness = clamp01((Math.max(ford.northSouth, ford.eastWest) - 0.25) / 0.45);
+      water[i] = clamp01((STREAM_HALF_WIDTH_TILES - d) / 0.22);
+      rim[i] = clamp01((STREAM_HALF_WIDTH_TILES + STREAM_RIM_TILES - d) / 0.16) - water[i] * 0.72;
+      // the ford turns the channel floor to gravel: deep vanishes, body thins
+      deep[i] = clamp01((STREAM_HALF_WIDTH_TILES - STREAM_DEEP_TILES - d) / 0.3) * (1 - fordness);
+      water[i] *= 1 - fordness * 0.55;
+      rim[i] = clamp01(rim[i] + fordness * water[i] * 0.8);
+      wetline[i] = clamp01(1 - Math.abs(d - STREAM_HALF_WIDTH_TILES) / 0.09) * 0.6;
+    }
+  }
+  return any ? { water, rim, deep, wetline } : null;
+}
+
+function writeFieldMask(maskContext, field, scale = 1) {
+  const imageData = maskContext.createImageData(MASK_SIZE, MASK_SIZE);
+  const data = imageData.data;
+  for (let i = 0; i < field.length; i += 1) {
+    const offset = i * 4;
+    data[offset] = 255;
+    data[offset + 1] = 255;
+    data[offset + 2] = 255;
+    data[offset + 3] = Math.round(clamp01(field[i] * scale) * 255);
+  }
+  maskContext.putImageData(imageData, 0, 0);
+}
+
 function drawWaterBodies(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches) {
-  const maskPxPerTile = MASK_SIZE / CANVAS_TILES;
-  const isWaterAt = (tx, ty) => {
-    const material = terrainTileAt(terrain, superX * PATCH_TILES + tx, superY * PATCH_TILES + ty)?.material;
-    // ford tiles are "shore": they stay dry gravel bars inside the channel,
-    // wrapped by the sand-rim pass, so crossings read shallow and walkable
-    return material === "water" ? material : null;
-  };
+  const fields = streamFieldsForPatch(superX, superY, terrain);
+  if (!fields) return;
   const waterImage = groundPatches?.get("stream-water") ?? null;
-  const passes = [
-    { radius: 1.05, alpha: 0.55, color: "rgb(196, 178, 138)", opacity: 0.85, materials: ["water"], kind: "fill" },
-    { radius: 0.72, alpha: 0.8, color: "rgb(43, 66, 62)", opacity: 0.94, materials: ["water"], kind: "body" },
-    { radius: 0.4, alpha: 0.9, color: "rgb(28, 46, 48)", opacity: 0.55, materials: ["water"], kind: "fill" },
-  ];
-  for (const pass of passes) {
-    let hasWater = false;
-    maskContext.save();
-    maskContext.globalCompositeOperation = "source-over";
-    maskContext.clearRect(0, 0, MASK_SIZE, MASK_SIZE);
-    maskContext.fillStyle = `rgba(255,255,255,${pass.alpha})`;
-    maskContext.strokeStyle = `rgba(255,255,255,${pass.alpha})`;
-    maskContext.lineWidth = maskPxPerTile * pass.radius * 1.6;
-    maskContext.lineCap = "round";
-    for (let ty = -2; ty <= PATCH_TILES + 1; ty += 1) {
-      for (let tx = -2; tx <= PATCH_TILES + 1; tx += 1) {
-        if (!pass.materials.includes(isWaterAt(tx, ty))) continue;
-        hasWater = true;
-        const cx = (tx + MARGIN_TILES + 0.5) * maskPxPerTile;
-        const cy = (ty + MARGIN_TILES + 0.5) * maskPxPerTile;
-        maskContext.beginPath();
-        maskContext.arc(cx, cy, maskPxPerTile * pass.radius, 0, Math.PI * 2);
-        maskContext.fill();
-        for (const [dx, dy] of [[1, 0], [0, 1], [1, 1], [1, -1]]) {
-          if (!pass.materials.includes(isWaterAt(tx + dx, ty + dy))) continue;
-          maskContext.beginPath();
-          maskContext.moveTo(cx, cy);
-          maskContext.lineTo((tx + dx + MARGIN_TILES + 0.5) * maskPxPerTile, (ty + dy + MARGIN_TILES + 0.5) * maskPxPerTile);
-          maskContext.stroke();
-        }
+  const trailImage = groundPatches?.get("trail") ?? null;
+
+  // narrow gravel rim: packed-dirt painting warmed toward sand, no halo
+  writeFieldMask(maskContext, fields.rim, 0.9);
+  composite.save();
+  composite.imageSmoothingEnabled = true;
+  if (trailImage) {
+    applyMaskedImage(composite, maskCanvas, trailImage, superX, superY);
+    composite.globalCompositeOperation = "multiply";
+    composite.fillStyle = "rgba(214, 196, 158, 0.42)";
+    applyMaskedFill(composite, maskCanvas);
+  } else {
+    composite.fillStyle = "rgba(176, 158, 120, 0.8)";
+    applyMaskedFill(composite, maskCanvas);
+  }
+  composite.restore();
+
+  // water body: the enriched painting carries foam/eddies
+  writeFieldMask(maskContext, fields.water);
+  composite.save();
+  composite.globalAlpha = 0.96;
+  if (waterImage) {
+    applyMaskedImage(composite, maskCanvas, waterImage, superX, superY);
+  } else {
+    composite.fillStyle = "rgb(43, 66, 62)";
+    applyMaskedFill(composite, maskCanvas);
+  }
+  composite.restore();
+
+  // deep channel: darkens the center without killing the painting
+  writeFieldMask(maskContext, fields.deep, 0.55);
+  composite.save();
+  composite.fillStyle = "rgb(24, 42, 44)";
+  applyMaskedFill(composite, maskCanvas);
+  composite.restore();
+
+  // dark wet line where water meets the bank
+  writeFieldMask(maskContext, fields.wetline);
+  composite.save();
+  composite.globalCompositeOperation = "multiply";
+  composite.fillStyle = "rgba(96, 96, 88, 0.6)";
+  applyMaskedFill(composite, maskCanvas);
+  composite.restore();
+}
+
+// ── animated stream flow ────────────────────────────────────────────────
+// The composite stays cached; per frame a half-res overlay scrolls the
+// enriched water painting along the channel tangent through the water mask
+// (two layers, opposing speeds, so the surface shimmers instead of sliding
+// like a conveyor). Clipped to water tile diamonds so translucent overlap
+// at supertile borders never double-brightens.
+// quarter resolution: the moving shimmer needs far less detail than the
+// static painting, and full-res scratch composites were costing 100ms+ per
+// frame near water
+const ANIM_SIZE = CANVAS_SIZE / 4;
+const waterAnimCache = new Map();
+
+function waterAnimationLayerFor(superX, superY, terrain) {
+  const seed = terrain.profile?.seed ?? 7341;
+  const key = `${superX}:${superY}:${terrain.cols}:${terrain.rows}:${seed}`;
+  if (waterAnimCache.has(key)) return waterAnimCache.get(key);
+  const fields = streamFieldsForPatch(superX, superY, terrain);
+  let entry = null;
+  if (fields) {
+    const full = document.createElement("canvas");
+    full.width = MASK_SIZE;
+    full.height = MASK_SIZE;
+    writeFieldMask(full.getContext("2d"), fields.water);
+    const mask = document.createElement("canvas");
+    mask.width = ANIM_SIZE;
+    mask.height = ANIM_SIZE;
+    const maskCtx = mask.getContext("2d");
+    maskCtx.imageSmoothingEnabled = true;
+    maskCtx.drawImage(full, 0, 0, ANIM_SIZE, ANIM_SIZE);
+    // flow tangent across this supertile, in plan-tile space
+    const y0 = superY * PATCH_TILES;
+    const x0 = streamCenterAt(y0, terrain.cols, terrain.rows, terrain.profile);
+    const x1 = streamCenterAt(y0 + PATCH_TILES, terrain.cols, terrain.rows, terrain.profile);
+    const length = Math.hypot(x1 - x0, PATCH_TILES);
+    entry = { mask, flowX: (x1 - x0) / length, flowY: PATCH_TILES / length };
+  }
+  waterAnimCache.set(key, entry);
+  while (waterAnimCache.size > MAX_COMPOSITE_PATCHES) {
+    waterAnimCache.delete(waterAnimCache.keys().next().value);
+  }
+  return entry;
+}
+
+const WATER_ANIM_TICK_MS = 66; // ~15fps shimmer: plenty for water, cheap to build
+
+function animationFrameFor(layer, waterImage, nowMs) {
+  const tick = Math.floor(nowMs / WATER_ANIM_TICK_MS) * WATER_ANIM_TICK_MS;
+  if (layer.frame && layer.frameTick === tick) return layer.frame;
+  if (!layer.frame) {
+    const canvas = document.createElement("canvas");
+    canvas.width = ANIM_SIZE;
+    canvas.height = ANIM_SIZE;
+    layer.frame = canvas;
+  }
+  const scratch = layer.frame.getContext("2d");
+  const pxPerTile = ANIM_SIZE / CANVAS_TILES;
+  scratch.save();
+  scratch.globalCompositeOperation = "source-over";
+  scratch.clearRect(0, 0, ANIM_SIZE, ANIM_SIZE);
+  scratch.imageSmoothingEnabled = true;
+  for (const pass of [
+    { speed: 1.1, alpha: 0.42, zoom: 1 },
+    { speed: -0.4, alpha: 0.22, zoom: 1.7 },
+  ]) {
+    const distance = (tick / 1000) * pass.speed * pxPerTile;
+    const span = ANIM_SIZE * pass.zoom;
+    const offX = ((layer.flowX * distance) % (span * 2) + span * 2) % (span * 2);
+    const offY = ((layer.flowY * distance) % (span * 2) + span * 2) % (span * 2);
+    scratch.globalAlpha = pass.alpha;
+    // mirror-tiled so the non-seamless painting scrolls without seams
+    for (let ny = -2; ny <= 1; ny += 1) {
+      for (let nx = -2; nx <= 1; nx += 1) {
+        const baseX = nx * span - offX + span * 2;
+        const baseY = ny * span - offY + span * 2;
+        if (baseX > ANIM_SIZE || baseY > ANIM_SIZE || baseX + span < 0 || baseY + span < 0) continue;
+        const mirrorX = ((nx % 2) + 2) % 2 === 1;
+        const mirrorY = ((ny % 2) + 2) % 2 === 1;
+        scratch.save();
+        scratch.translate(baseX + span / 2, baseY + span / 2);
+        scratch.scale(mirrorX ? -1 : 1, mirrorY ? -1 : 1);
+        scratch.drawImage(waterImage, -span / 2, -span / 2, span, span);
+        scratch.restore();
       }
     }
-    maskContext.restore();
-    if (!hasWater) continue;
-    composite.save();
-    composite.globalAlpha = pass.opacity;
-    if (pass.kind === "body" && waterImage) {
-      // the enriched water painting (foam streaks, eddies) carries the body
-      // of the stream; the dark deep pass above it keeps a readable channel
-      composite.globalCompositeOperation = "source-over";
-      applyMaskedImage(composite, maskCanvas, waterImage, superX, superY);
-    } else {
-      composite.fillStyle = pass.color;
-      applyMaskedFill(composite, maskCanvas);
+  }
+  scratch.globalAlpha = 1;
+  scratch.globalCompositeOperation = "destination-in";
+  scratch.drawImage(layer.mask, 0, 0);
+  scratch.restore();
+  layer.frameTick = tick;
+  return layer.frame;
+}
+
+// headless screenshot runs render hundreds of frames back-to-back under
+// --virtual-time-budget; ?noWaterAnim=1 keeps captures cheap and deterministic
+const waterAnimDisabled =
+  typeof globalThis.location !== "undefined" && /[?&]noWaterAnim=1/.test(globalThis.location.search ?? "");
+
+export function drawChunkWaterAnimation(ctx, chunk, origin, terrain, groundPatches, nowMs) {
+  if (waterAnimDisabled) return;
+  if (!origin || !terrain || !useGroundPatches(groundPatches)) return;
+  const waterImage = groundPatches.get("stream-water") ?? null;
+  if (!waterImage) return;
+  const groups = new Map();
+  for (const tileView of chunk.tiles) {
+    if (tileView.tile.material !== "water") continue;
+    const superX = Math.floor(tileView.tile.x / PATCH_TILES);
+    const superY = Math.floor(tileView.tile.y / PATCH_TILES);
+    const key = `${superX}:${superY}`;
+    if (!groups.has(key)) groups.set(key, { superX, superY, tiles: [] });
+    groups.get(key).tiles.push(tileView.tile);
+  }
+  if (!groups.size) return;
+
+  for (const group of groups.values()) {
+    const layer = waterAnimationLayerFor(group.superX, group.superY, terrain);
+    if (!layer) continue;
+    // the animation frame is built once per tick per supertile and shared
+    // by every chunk that overlaps it — per frame this is just one blit
+    const frame = animationFrameFor(layer, waterImage, nowMs);
+
+    const { halfW, halfH } = PROJECTION;
+    const animPxPerTile = ANIM_SIZE / CANVAS_TILES;
+    const planScaleX = halfW / animPxPerTile;
+    const planScaleY = halfH / animPxPerTile;
+    ctx.save();
+    ctx.beginPath();
+    for (const tile of group.tiles) {
+      const corners = projectTerrainTile(tile, origin);
+      ctx.moveTo(corners.nw.x, corners.nw.y - 2);
+      ctx.lineTo(corners.ne.x + 2, corners.ne.y);
+      ctx.lineTo(corners.se.x, corners.se.y + 2);
+      ctx.lineTo(corners.sw.x - 2, corners.sw.y);
+      ctx.closePath();
     }
-    composite.restore();
+    ctx.clip();
+    ctx.imageSmoothingEnabled = true;
+    ctx.transform(
+      planScaleX,
+      planScaleY,
+      -planScaleX,
+      planScaleY,
+      origin.x + (group.superX - group.superY) * PATCH_TILES * halfW,
+      origin.y + ((group.superX + group.superY) * PATCH_TILES - 2 * MARGIN_TILES) * halfH,
+    );
+    ctx.drawImage(frame, 0, 0);
+    ctx.restore();
   }
 }
 
