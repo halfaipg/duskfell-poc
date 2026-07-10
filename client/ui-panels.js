@@ -86,7 +86,7 @@ function renderDeedPanel(ui, deeds, itemDataUrls) {
   if (!deeds.length) {
     const empty = document.createElement("div");
     empty.className = "inventory-empty";
-    empty.textContent = "Walk to the Title Office and press E to claim a dry-run deed.";
+    empty.textContent = "Walk to the Bank and press E to claim a dry-run deed.";
     container.append(empty);
     return;
   }
