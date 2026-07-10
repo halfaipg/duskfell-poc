@@ -158,7 +158,7 @@ function draw(now = 0) {
     const players = Array.isArray(snapshot.players) ? snapshot.players : [];
     const me = players.find((player) => player.id === playerId) || players[0];
     const origin = defaultOrigin(snapshot.map);
-    playerRenderState.updateRenderOffsets(players, snapshot.map, playerId);
+    playerRenderState.updateRenderOffsets(players, snapshot.map, playerId, now);
     playerRenderState.updateVisualPositions(players, now);
     localPlayerRenderPosition = me ? playerRenderState.renderPosition(me) : null;
     const cameraFocus = viewOverride ?? (me ? { ...me, ...playerRenderState.renderPosition(me) } : me);

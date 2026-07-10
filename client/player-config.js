@@ -41,10 +41,13 @@ export const PLAYER_CARD_PORTRAITS = {
 };
 
 export const GENERATED_WAYFARER_NAME_RE = /^Wayfarer-([0-9a-f]{4})$/i;
-export const PLAYER_CLUSTER_DISTANCE = 118;
-export const PLAYER_CLUSTER_SPREAD_RADIUS = 142;
-export const PLAYER_CLUSTER_RING_STEP = 66;
+// de-stacking only kicks in when sprites genuinely overlap (~half a tile);
+// wider thresholds made bystanders visibly teleport whenever someone walked past
+export const PLAYER_CLUSTER_DISTANCE = 30;
+export const PLAYER_CLUSTER_SPREAD_RADIUS = 26;
+export const PLAYER_CLUSTER_RING_STEP = 20;
 export const PLAYER_CLUSTER_RING_SIZE = 8;
+export const PLAYER_CLUSTER_SMOOTHING_MS = 140;
 export const PLAYER_RENDER_MARGIN = 24;
 export const FALLBACK_PLAYER_SHEET_ID = "player-placeholder";
 export const PREFERRED_PROP_SHEET_ID = "duskfell-props";

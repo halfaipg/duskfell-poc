@@ -2,6 +2,7 @@ import {
   PLAYER_CLUSTER_DISTANCE,
   PLAYER_CLUSTER_RING_SIZE,
   PLAYER_CLUSTER_RING_STEP,
+  PLAYER_CLUSTER_SMOOTHING_MS,
   PLAYER_CLUSTER_SPREAD_RADIUS,
   PLAYER_RENDER_MARGIN,
 } from "./player-config.js";
@@ -18,10 +19,11 @@ export function createPlayerRenderState() {
   const renderOffsets = new Map();
   const variantIndexes = new Map();
   let lastRenderUpdateTime = 0;
+  let lastOffsetUpdateTime = 0;
 
   return {
-    updateRenderOffsets(players, map, localPlayerId = null) {
-      renderOffsets.clear();
+    updateRenderOffsets(players, map, localPlayerId = null, now = 0) {
+      const offsetTargets = new Map();
       variantIndexes.clear();
 
       [...players]
@@ -54,12 +56,35 @@ export function createPlayerRenderState() {
             target.x = clamp(target.x, PLAYER_RENDER_MARGIN, map.width - PLAYER_RENDER_MARGIN);
             target.y = clamp(target.y, PLAYER_RENDER_MARGIN, map.height - PLAYER_RENDER_MARGIN);
           }
-          renderOffsets.set(player.id, {
+          offsetTargets.set(player.id, {
             x: target.x - player.x,
             y: target.y - player.y,
           });
         }
       }
+
+      // ease offsets toward their targets (or back to zero) so a bystander
+      // never teleports when cluster membership flips as someone walks past
+      const elapsedMs = Math.max(0, now - (lastOffsetUpdateTime || now));
+      const alpha = 1 - Math.exp(-elapsedMs / PLAYER_CLUSTER_SMOOTHING_MS);
+      const activeIds = new Set(players.map((player) => player.id));
+      for (const id of renderOffsets.keys()) {
+        if (!activeIds.has(id)) renderOffsets.delete(id);
+      }
+      for (const player of players) {
+        const target = offsetTargets.get(player.id) ?? { x: 0, y: 0 };
+        const current = renderOffsets.get(player.id) ?? { x: 0, y: 0 };
+        const next = {
+          x: current.x + (target.x - current.x) * alpha,
+          y: current.y + (target.y - current.y) * alpha,
+        };
+        if (!offsetTargets.has(player.id) && Math.hypot(next.x, next.y) < 0.5) {
+          renderOffsets.delete(player.id);
+        } else {
+          renderOffsets.set(player.id, next);
+        }
+      }
+      lastOffsetUpdateTime = now;
     },
 
     updateVisualPositions(players, now) {
