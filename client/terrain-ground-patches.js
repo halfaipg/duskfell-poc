@@ -307,34 +307,40 @@ function drawRoadWear(composite, maskContext, maskCanvas, superX, superY, terrai
   maskContext.save();
   maskContext.globalCompositeOperation = "source-over";
   maskContext.clearRect(0, 0, MASK_SIZE, MASK_SIZE);
-  maskContext.strokeStyle = "rgba(255,255,255,0.5)";
-  maskContext.fillStyle = "rgba(255,255,255,0.5)";
-  maskContext.lineWidth = maskPxPerTile * 0.9;
-  maskContext.lineCap = "round";
-  // strokes between neighboring wear tiles keep diagonal road chains
-  // continuous; isolated tiles (and plazas) still get their disc
+  // two-pass strokes: a wide low-alpha halo gives the ragged pass a soft
+  // band to bite into (fringe), the full-alpha core stays solid trail
   const NEIGHBORS = [[1, 0], [0, 1], [1, 1], [1, -1]];
-  for (let ty = -2; ty <= PATCH_TILES + 1; ty += 1) {
-    for (let tx = -2; tx <= PATCH_TILES + 1; tx += 1) {
-      const zone = wearZoneAt(tx, ty);
-      if (!zone) continue;
-      hasWear = true;
-      const cx = (tx + MARGIN_TILES + 0.5) * maskPxPerTile;
-      const cy = (ty + MARGIN_TILES + 0.5) * maskPxPerTile;
-      maskContext.beginPath();
-      maskContext.arc(cx, cy, maskPxPerTile * (zone === "plaza" ? 0.8 : 0.6), 0, Math.PI * 2);
-      maskContext.fill();
-      for (const [dx, dy] of NEIGHBORS) {
-        if (!wearZoneAt(tx + dx, ty + dy)) continue;
+  for (const pass of [
+    { alpha: 0.38, width: 1.35, disc: 0.85 },
+    { alpha: 1.0, width: 0.72, disc: 0.45 },
+  ]) {
+    maskContext.strokeStyle = `rgba(255,255,255,${pass.alpha})`;
+    maskContext.fillStyle = `rgba(255,255,255,${pass.alpha})`;
+    maskContext.lineWidth = maskPxPerTile * pass.width;
+    maskContext.lineCap = "round";
+    for (let ty = -2; ty <= PATCH_TILES + 1; ty += 1) {
+      for (let tx = -2; tx <= PATCH_TILES + 1; tx += 1) {
+        const zone = wearZoneAt(tx, ty);
+        if (!zone) continue;
+        hasWear = true;
+        const cx = (tx + MARGIN_TILES + 0.5) * maskPxPerTile;
+        const cy = (ty + MARGIN_TILES + 0.5) * maskPxPerTile;
         maskContext.beginPath();
-        maskContext.moveTo(cx, cy);
-        maskContext.lineTo((tx + dx + 0.5) * maskPxPerTile, (ty + dy + 0.5) * maskPxPerTile);
-        maskContext.stroke();
+        maskContext.arc(cx, cy, maskPxPerTile * pass.disc * (zone === "plaza" ? 1.35 : 1), 0, Math.PI * 2);
+        maskContext.fill();
+        for (const [dx, dy] of NEIGHBORS) {
+          if (!wearZoneAt(tx + dx, ty + dy)) continue;
+          maskContext.beginPath();
+          maskContext.moveTo(cx, cy);
+          maskContext.lineTo((tx + dx + MARGIN_TILES + 0.5) * maskPxPerTile, (ty + dy + MARGIN_TILES + 0.5) * maskPxPerTile);
+          maskContext.stroke();
+        }
       }
     }
   }
   maskContext.restore();
   if (!hasWear) return;
+  raggedizeWearMask(maskContext, superX, superY);
 
   composite.save();
   composite.imageSmoothingEnabled = true;
@@ -408,6 +414,44 @@ function drawWaterBodies(composite, maskContext, maskCanvas, superX, superY, ter
 }
 
 let wearScratch = null;
+
+// Ragged trail borders like the mockup: a world-anchored noise threshold
+// eats into the smooth stroke mask, so grass bites the trail edge in
+// patches and a semi-transparent scuffed fringe forms around the core.
+// Noise samples world coordinates, so edges match across patch margins.
+function raggedizeWearMask(maskContext, superX, superY) {
+  const maskPxPerTile = MASK_SIZE / CANVAS_TILES;
+  const imageData = maskContext.getImageData(0, 0, MASK_SIZE, MASK_SIZE);
+  const data = imageData.data;
+  for (let y = 0; y < MASK_SIZE; y += 1) {
+    for (let x = 0; x < MASK_SIZE; x += 1) {
+      const offset = (y * MASK_SIZE + x) * 4;
+      const alpha = data[offset + 3] / 255;
+      if (alpha <= 0.01) continue;
+      const wtx = superX * PATCH_TILES + x / maskPxPerTile - MARGIN_TILES;
+      const wty = superY * PATCH_TILES + y / maskPxPerTile - MARGIN_TILES;
+      const noise =
+        wearNoise(wtx * 1.9, wty * 1.9, 31) * 0.65 +
+        wearNoise(wtx * 4.7, wty * 4.7, 67) * 0.35;
+      const threshold = 0.44 + (noise - 0.5) * 0.46;
+      const shaped = Math.min(1, Math.max(0, (alpha - threshold) / 0.2));
+      data[offset + 3] = Math.round(shaped * 255);
+    }
+  }
+  maskContext.putImageData(imageData, 0, 0);
+}
+
+function wearNoise(x, y, salt) {
+  const x0 = Math.floor(x);
+  const y0 = Math.floor(y);
+  const fx = (x - x0) * (x - x0) * (3 - 2 * (x - x0));
+  const fy = (y - y0) * (y - y0) * (3 - 2 * (y - y0));
+  const nw = stampHash01(x0, y0, salt);
+  const ne = stampHash01(x0 + 1, y0, salt);
+  const sw = stampHash01(x0, y0 + 1, salt);
+  const se = stampHash01(x0 + 1, y0 + 1, salt);
+  return (nw * (1 - fx) + ne * fx) * (1 - fy) + (sw * (1 - fx) + se * fx) * fy;
+}
 
 function applyMaskedImage(composite, maskCanvas, image, superX, superY) {
   const scratch = wearScratchContext();
