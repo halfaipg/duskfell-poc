@@ -48,7 +48,14 @@ export function createRuntimeAssets() {
         if (!loaded) return;
         Object.assign(terrainAssets, loaded);
         terrainAssetVersion += 1;
-      } catch {
+        console.info(
+          `Duskfell terrain assets loaded: atlas + ${terrainAssets.groundPatches.size} biome paintings`,
+        );
+      } catch (error) {
+        // a silent fallback here looks like "the old terrain" with no clue
+        // why — say exactly what failed (SHA mismatch, insecure context
+        // breaking crypto.subtle over LAN IPs, 404s...)
+        console.error("Duskfell terrain assets FAILED — falling back to flat tiles:", error);
         terrainAssets.atlas = null;
         terrainAssets.image = null;
         terrainAssets.groundPatches = new Map();

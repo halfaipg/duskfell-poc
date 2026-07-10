@@ -17,6 +17,7 @@ import { renderHud, renderPanel } from "./ui-panels.js";
 const { canvas, screenCtx, ui } = getAppDom();
 let ctx = screenCtx;
 const params = new URLSearchParams(window.location.search);
+console.info("Duskfell client build: painted-terrain v3 (2026-07-09)");
 
 const keys = new Set();
 let playerId = null;
