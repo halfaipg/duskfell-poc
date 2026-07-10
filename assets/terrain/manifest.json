@@ -1653,6 +1653,22 @@
       "sha256": "935a08fff25272b9a316486dfcd95fb8bbdca4717528a1170b59e03c4edca712",
       "width": 2048,
       "height": 2048
+    },
+    {
+      "id": "biome-ecotone",
+      "biome": "ecotone",
+      "image": "ground-patches/biome-ecotone.webp",
+      "sha256": "2f189ca3cefad05459796352f8fcf51f388dc03deaaf5d30a2fe3e72d302da32",
+      "width": 2048,
+      "height": 2048
+    },
+    {
+      "id": "biome-stream-water",
+      "biome": "stream-water",
+      "image": "ground-patches/biome-stream-water.webp",
+      "sha256": "3b040ecd52429fb5ff3294f94d3ce2d73cb0a375dec961ae0f8a8fbfedd025aa",
+      "width": 2048,
+      "height": 2048
     }
   ],
   "provenance": {

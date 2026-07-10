@@ -61,7 +61,18 @@ for (const transform of ["mirror-x", "mirror-y", "free-rotation"]) {
 }
 
 const manifest = JSON.parse(fs.readFileSync(path.join(root, "assets", "terrain", "manifest.json"), "utf8"));
-if (manifest.groundPatches?.length !== 8) errors.push("terrain manifest must expose eight biome ground patches");
+// contract: every visual biome has a painting; overlay patches ride alongside
+const REQUIRED_BIOME_PATCHES = ["meadow", "heath", "chalk", "frost", "fen", "moor", "ash", "blight"];
+const ALLOWED_OVERLAY_PATCHES = new Set(["trail", "ecotone", "stream-water"]);
+const patchBiomes = new Set((manifest.groundPatches ?? []).map((patch) => patch.biome));
+for (const biome of REQUIRED_BIOME_PATCHES) {
+  if (!patchBiomes.has(biome)) errors.push(`terrain manifest is missing the ${biome} biome ground patch`);
+}
+for (const patch of manifest.groundPatches ?? []) {
+  if (!REQUIRED_BIOME_PATCHES.includes(patch.biome) && !ALLOWED_OVERLAY_PATCHES.has(patch.biome)) {
+    errors.push(`unexpected ground patch biome: ${patch.biome}`);
+  }
+}
 
 const result = {
   ok: errors.length === 0,

@@ -11,37 +11,29 @@ export const VISUAL_BIOMES = [
   "blight",
 ];
 
-const BIOME_CENTERS = {
-  meadow: { x: 0.5, y: 0.5, bias: 0.16 },
-  heath: { x: 0.18, y: 0.24, bias: 0 },
-  chalk: { x: 0.8, y: 0.2, bias: 0 },
-  frost: { x: 0.5, y: -0.04, bias: 0.03 },
-  fen: { x: 0.12, y: 0.76, bias: 0.02 },
-  moor: { x: 0.46, y: 0.92, bias: 0 },
-  ash: { x: 0.91, y: 0.56, bias: 0 },
-  blight: { x: 0.82, y: 0.92, bias: -0.02 },
-};
-
-const SCORE_SHARPNESS = 5.4;
-const ORGANIC_WANDER = 0.22;
-
-export function visualBiomeWeightsAt(mapX, mapY, cols, rows, seed = 7341) {
+// Designed two-region layout: a meadow heartland with a dark heath crescent
+// across the northeast, split by one long organic border. The old 8-center
+// softmax scattered every biome across the map in small patches; a couple of
+// large readable regions is the approved map direction.
+export function visualBiomeHeathField(mapX, mapY, cols, rows, seed = 7341) {
   const nx = clamp(mapX / Math.max(1, cols), 0, 1);
   const ny = clamp(mapY / Math.max(1, rows), 0, 1);
-  const scores = VISUAL_BIOMES.map((biome, index) => {
-    const center = BIOME_CENTERS[biome];
-    const dx = nx - center.x;
-    const dy = ny - center.y;
-    const distanceScore = -(dx * dx + dy * dy) * 5.8;
-    const wander = smoothValueNoise(mapX * 0.14, mapY * 0.14, seed + index * 977);
-    const detail = smoothValueNoise(mapX * 0.32, mapY * 0.32, seed + index * 1597) * 0.36;
-    const centerShelter = biome === "meadow" ? Math.max(0, 0.24 - Math.hypot(dx, dy)) * 1.8 : 0;
-    return distanceScore + wander * ORGANIC_WANDER + detail * ORGANIC_WANDER + center.bias + centerShelter;
-  });
-  const maxScore = Math.max(...scores);
-  const exponentials = scores.map((score) => Math.exp((score - maxScore) * SCORE_SHARPNESS));
-  const total = exponentials.reduce((sum, value) => sum + value, 0) || 1;
-  return Object.fromEntries(VISUAL_BIOMES.map((biome, index) => [biome, exponentials[index] / total]));
+  const wander = smoothValueNoise(mapX * 0.09, mapY * 0.09, seed + 977) * 0.24;
+  const detail = smoothValueNoise(mapX * 0.28, mapY * 0.28, seed + 1597) * 0.08;
+  // >0 leans heath (northeast), <0 leans meadow
+  return (nx - 0.62) * 1.1 + (0.42 - ny) * 1.35 + wander + detail;
+}
+
+// full heath past this distance from the border, full meadow before it
+const BORDER_HALF_WIDTH = 0.16;
+
+export function visualBiomeWeightsAt(mapX, mapY, cols, rows, seed = 7341) {
+  const field = visualBiomeHeathField(mapX, mapY, cols, rows, seed);
+  const heath = clamp((field + BORDER_HALF_WIDTH) / (BORDER_HALF_WIDTH * 2), 0, 1);
+  const weights = Object.fromEntries(VISUAL_BIOMES.map((biome) => [biome, 0]));
+  weights.heath = heath;
+  weights.meadow = 1 - heath;
+  return weights;
 }
 
 export function dominantVisualBiomesAt(mapX, mapY, cols, rows, seed = 7341) {

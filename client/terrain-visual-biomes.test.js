@@ -27,14 +27,17 @@ test("visible patch blending stays bounded to four relevant biome layers", () =>
   }
 });
 
-test("the visual biome field exposes every authored biome in the demo world", () => {
+test("the designed world is a two-region layout: meadow heartland, heath crescent", () => {
   const dominant = new Set();
   for (let y = 0; y <= 34; y += 1) {
     for (let x = 0; x <= 52; x += 1) {
       dominant.add(dominantVisualBiomesAt(x, y, 52, 34, 7341)[0].biome);
     }
   }
-  assert.deepEqual([...dominant].sort(), [...VISUAL_BIOMES].sort());
+  assert.deepEqual([...dominant].sort(), ["heath", "meadow"]);
+  // heath owns the northeast corner, meadow the southwest
+  assert.equal(dominantVisualBiomesAt(50, 2, 52, 34, 7341)[0].biome, "heath");
+  assert.equal(dominantVisualBiomesAt(4, 30, 52, 34, 7341)[0].biome, "meadow");
 });
 
 test("the safe-zone center remains meadow while outer regions transition", () => {

@@ -183,8 +183,9 @@ function compositePatchForTile(tile, terrain, groundPatches) {
     composite.globalCompositeOperation = "source-over";
   }
 
+  drawEcotoneBand(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches);
   drawRoadWear(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches);
-  drawWaterBodies(composite, maskContext, maskCanvas, superX, superY, terrain);
+  drawWaterBodies(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches);
 
   compositeCache.set(key, canvas);
   while (compositeCache.size > MAX_COMPOSITE_PATCHES) {
@@ -293,6 +294,45 @@ function drawBombedPatchImage(ctx, image, superX, superY, seed) {
   }
 }
 
+// The biome border wears an enriched ecotone painting: scrub, stones and
+// trampled fringes stamped along the band where meadow gives way to heath,
+// so the transition carries img2img richness instead of a bare mask blend.
+function drawEcotoneBand(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches) {
+  const ecotoneImage = groundPatches?.get("ecotone") ?? null;
+  if (!ecotoneImage) return;
+  const seed = terrain.profile?.seed ?? 7341;
+  const imageData = maskContext.createImageData(MASK_SIZE, MASK_SIZE);
+  const data = imageData.data;
+  let hasBand = false;
+  for (let y = 0; y < MASK_SIZE; y += 1) {
+    for (let x = 0; x < MASK_SIZE; x += 1) {
+      const mapX = superX * PATCH_TILES + ((x + 0.5) / MASK_SIZE) * CANVAS_TILES - MARGIN_TILES;
+      const mapY = superY * PATCH_TILES + ((y + 0.5) / MASK_SIZE) * CANVAS_TILES - MARGIN_TILES;
+      const weights = visualBiomeWeightsAt(mapX, mapY, terrain.cols, terrain.rows, seed);
+      const heath = weights.heath ?? 0;
+      // bump centered on the 50/50 line, ragged at both edges
+      const rag =
+        wearNoise(mapX * 0.7, mapY * 0.7, 211) * 0.7 +
+        wearNoise(mapX * 2.1, mapY * 2.1, 241) * 0.3;
+      const bump = clamp01((0.40 - Math.abs(heath - 0.5)) / 0.40 + (rag - 0.5) * 0.5);
+      const alpha = Math.pow(bump, 1.4) * 0.85;
+      if (alpha > 0.02) hasBand = true;
+      const offset = (y * MASK_SIZE + x) * 4;
+      data[offset] = 255;
+      data[offset + 1] = 255;
+      data[offset + 2] = 255;
+      data[offset + 3] = Math.round(alpha * 255);
+    }
+  }
+  if (!hasBand) return;
+  maskContext.putImageData(imageData, 0, 0);
+  composite.save();
+  composite.imageSmoothingEnabled = true;
+  composite.globalCompositeOperation = "source-over";
+  applyMaskedImage(composite, maskCanvas, ecotoneImage, superX, superY);
+  composite.restore();
+}
+
 // Roads and plaza aprons on painted ground read as trampled earth: a soft
 // mask built from tile zones darkens and desaturates the painting along the
 // route, so paths stay legible without falling back to atlas ribbons.
@@ -367,17 +407,22 @@ function drawRoadWear(composite, maskContext, maskCanvas, superX, superY, terrai
 // Water paints into the composite as three soft masked passes — wet sand
 // rim, water body, deep center — so ponds sit IN the ground painting with
 // organic edges instead of hard atlas diamonds.
-function drawWaterBodies(composite, maskContext, maskCanvas, superX, superY, terrain) {
+function drawWaterBodies(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches) {
   const maskPxPerTile = MASK_SIZE / CANVAS_TILES;
-  const isWaterAt = (tx, ty) =>
-    terrainTileAt(terrain, superX * PATCH_TILES + tx, superY * PATCH_TILES + ty)?.material === "water";
+  const isWaterAt = (tx, ty) => {
+    const material = terrainTileAt(terrain, superX * PATCH_TILES + tx, superY * PATCH_TILES + ty)?.material;
+    // ford tiles are "shore": they stay dry gravel bars inside the channel,
+    // wrapped by the sand-rim pass, so crossings read shallow and walkable
+    return material === "water" ? material : null;
+  };
+  const waterImage = groundPatches?.get("stream-water") ?? null;
   const passes = [
-    { radius: 1.05, alpha: 0.55, color: "rgb(196, 178, 138)", opacity: 0.85 },
-    { radius: 0.72, alpha: 0.8, color: "rgb(43, 66, 62)", opacity: 0.94 },
-    { radius: 0.4, alpha: 0.9, color: "rgb(28, 46, 48)", opacity: 0.9 },
+    { radius: 1.05, alpha: 0.55, color: "rgb(196, 178, 138)", opacity: 0.85, materials: ["water"], kind: "fill" },
+    { radius: 0.72, alpha: 0.8, color: "rgb(43, 66, 62)", opacity: 0.94, materials: ["water"], kind: "body" },
+    { radius: 0.4, alpha: 0.9, color: "rgb(28, 46, 48)", opacity: 0.55, materials: ["water"], kind: "fill" },
   ];
-  let hasWater = false;
   for (const pass of passes) {
+    let hasWater = false;
     maskContext.save();
     maskContext.globalCompositeOperation = "source-over";
     maskContext.clearRect(0, 0, MASK_SIZE, MASK_SIZE);
@@ -387,15 +432,15 @@ function drawWaterBodies(composite, maskContext, maskCanvas, superX, superY, ter
     maskContext.lineCap = "round";
     for (let ty = -2; ty <= PATCH_TILES + 1; ty += 1) {
       for (let tx = -2; tx <= PATCH_TILES + 1; tx += 1) {
-        if (!isWaterAt(tx, ty)) continue;
+        if (!pass.materials.includes(isWaterAt(tx, ty))) continue;
         hasWater = true;
-        const cx = (tx + 0.5) * maskPxPerTile;
-        const cy = (ty + 0.5) * maskPxPerTile;
+        const cx = (tx + MARGIN_TILES + 0.5) * maskPxPerTile;
+        const cy = (ty + MARGIN_TILES + 0.5) * maskPxPerTile;
         maskContext.beginPath();
         maskContext.arc(cx, cy, maskPxPerTile * pass.radius, 0, Math.PI * 2);
         maskContext.fill();
         for (const [dx, dy] of [[1, 0], [0, 1], [1, 1], [1, -1]]) {
-          if (!isWaterAt(tx + dx, ty + dy)) continue;
+          if (!pass.materials.includes(isWaterAt(tx + dx, ty + dy))) continue;
           maskContext.beginPath();
           maskContext.moveTo(cx, cy);
           maskContext.lineTo((tx + dx + MARGIN_TILES + 0.5) * maskPxPerTile, (ty + dy + MARGIN_TILES + 0.5) * maskPxPerTile);
@@ -404,11 +449,18 @@ function drawWaterBodies(composite, maskContext, maskCanvas, superX, superY, ter
       }
     }
     maskContext.restore();
-    if (!hasWater) return;
+    if (!hasWater) continue;
     composite.save();
     composite.globalAlpha = pass.opacity;
-    composite.fillStyle = pass.color;
-    applyMaskedFill(composite, maskCanvas);
+    if (pass.kind === "body" && waterImage) {
+      // the enriched water painting (foam streaks, eddies) carries the body
+      // of the stream; the dark deep pass above it keeps a readable channel
+      composite.globalCompositeOperation = "source-over";
+      applyMaskedImage(composite, maskCanvas, waterImage, superX, superY);
+    } else {
+      composite.fillStyle = pass.color;
+      applyMaskedFill(composite, maskCanvas);
+    }
     composite.restore();
   }
 }
@@ -514,13 +566,24 @@ function writeBiomeMask(ctx, biome, activeBiomes, superX, superY, cols, rows, se
       const mapY = superY * PATCH_TILES + ((y + 0.5) / MASK_SIZE) * CANVAS_TILES - MARGIN_TILES;
       const weights = visualBiomeWeightsAt(mapX, mapY, cols, rows, seed);
       const activeTotal = activeBiomes.reduce((sum, activeBiome) => sum + weights[activeBiome], 0) || 1;
-      const weight = Math.pow((weights[biome] ?? 0) / activeTotal, 0.72);
+      const weight = (weights[biome] ?? 0) / activeTotal;
+      // banded transition: posterize the smooth weight into discrete steps
+      // with a world-anchored ragged edge, so biomes meet in worn bands
+      // like the approved mockup instead of a mushy cross-fade
+      const rag =
+        wearNoise(mapX * 0.55, mapY * 0.55, 131) * 0.7 +
+        wearNoise(mapX * 1.7, mapY * 1.7, 167) * 0.3;
+      const banded = Math.round(clamp01(weight + (rag - 0.5) * 0.34) * 3) / 3;
       const offset = (y * MASK_SIZE + x) * 4;
       data[offset] = 255;
       data[offset + 1] = 255;
       data[offset + 2] = 255;
-      data[offset + 3] = Math.round(weight * 255);
+      data[offset + 3] = Math.round(banded * 255);
     }
   }
   ctx.putImageData(imageData, 0, 0);
+}
+
+function clamp01(value) {
+  return Math.min(1, Math.max(0, value));
 }
