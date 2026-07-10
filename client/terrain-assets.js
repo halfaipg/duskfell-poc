@@ -2,6 +2,8 @@ import { PROJECTION } from "./projection.js";
 import { TERRAIN_MATERIALS } from "./terrain.js";
 import { VISUAL_BIOMES } from "./terrain-visual-biomes.js";
 
+const OVERLAY_PATCHES = ["trail"];
+
 const MANIFEST_SCHEMA_VERSION = "duskfell-terrain-atlas-v1";
 const ALLOWED_TILE_KINDS = new Set(["flat-base", "slope-texture", "transition", "pair-transition", "decal"]);
 const EDGE_MASKS = new Set(["north", "east", "south", "west"]);
@@ -105,7 +107,8 @@ function normalizeGroundPatches(patches) {
   const normalized = patches.map((patch, index) => {
     if (!isObject(patch)) throw new Error(`terrain atlas groundPatches[${index}] must be an object`);
     if (!isNonEmptyString(patch.id)) throw new Error(`terrain atlas groundPatches[${index}].id must be non-empty`);
-    if (!VISUAL_BIOMES.includes(patch.biome)) {
+    // overlay paintings (trail wear) ride alongside the biome set
+    if (!VISUAL_BIOMES.includes(patch.biome) && !OVERLAY_PATCHES.includes(patch.biome)) {
       throw new Error(`terrain atlas groundPatches[${index}].biome is unsupported`);
     }
     if (seenBiomes.has(patch.biome)) {

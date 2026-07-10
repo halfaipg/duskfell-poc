@@ -1645,6 +1645,14 @@
       "sha256": "7711d851d114e2bd40dccf226211eb7a970b6595a2fa1bdea9076047372aa3a7",
       "width": 2048,
       "height": 2048
+    },
+    {
+      "id": "biome-trail",
+      "biome": "trail",
+      "image": "ground-patches/biome-trail.webp",
+      "sha256": "935a08fff25272b9a316486dfcd95fb8bbdca4717528a1170b59e03c4edca712",
+      "width": 2048,
+      "height": 2048
     }
   ],
   "provenance": {

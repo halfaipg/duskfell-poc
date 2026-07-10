@@ -16,7 +16,7 @@ export function renderHud({ ui, snapshot, smoothedFps, terrainDebugMode, groundP
   // and did the paintings load?" never needs DevTools
   const artState = terrainAssetError
     ? `art v3 ASSETS FAILED: ${terrainAssetError}`
-    : `art v3 / paintings ${groundPatchCount ?? 0}/8`;
+    : `art v3 / paintings ${groundPatchCount ?? 0}`;
   ui.hud.textContent = `FPS ${Math.round(smoothedFps)} / Players ${players.length} / Tick ${snapshot.tick}${
     terrainDebugMode ? ` / Terrain ${terrainDebugMode}` : ""
   } / ${artState}`;

@@ -183,7 +183,7 @@ function compositePatchForTile(tile, terrain, groundPatches) {
     composite.globalCompositeOperation = "source-over";
   }
 
-  drawRoadWear(composite, maskContext, maskCanvas, superX, superY, terrain);
+  drawRoadWear(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches);
   drawWaterBodies(composite, maskContext, maskCanvas, superX, superY, terrain);
 
   compositeCache.set(key, canvas);
@@ -296,7 +296,7 @@ function drawBombedPatchImage(ctx, image, superX, superY, seed) {
 // Roads and plaza aprons on painted ground read as trampled earth: a soft
 // mask built from tile zones darkens and desaturates the painting along the
 // route, so paths stay legible without falling back to atlas ribbons.
-function drawRoadWear(composite, maskContext, maskCanvas, superX, superY, terrain) {
+function drawRoadWear(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches) {
   const maskPxPerTile = MASK_SIZE / CANVAS_TILES;
   const wearZoneAt = (tx, ty) => {
     const tile = terrainTileAt(terrain, superX * PATCH_TILES + tx, superY * PATCH_TILES + ty);
@@ -339,14 +339,22 @@ function drawRoadWear(composite, maskContext, maskCanvas, superX, superY, terrai
   composite.save();
   composite.imageSmoothingEnabled = true;
   composite.globalAlpha = 1;
-  // packed earth REPLACES the grass color (multiply over dark green only
-  // ever yields near-black); a multiply pass underneath keeps grain
-  composite.globalCompositeOperation = "source-over";
-  composite.fillStyle = "rgba(107, 86, 63, 0.82)";
-  applyMaskedFill(composite, maskCanvas);
-  composite.globalCompositeOperation = "multiply";
-  composite.fillStyle = "rgba(178, 156, 128, 0.5)";
-  applyMaskedFill(composite, maskCanvas);
+  const trailImage = groundPatches?.get("trail") ?? null;
+  if (trailImage) {
+    // stamp the packed-dirt PAINTING through the mask — the mockup trails
+    // are texture, not tint; parity mirroring keeps it world-continuous
+    composite.globalCompositeOperation = "source-over";
+    composite.globalAlpha = 0.94;
+    applyMaskedImage(composite, maskCanvas, trailImage, superX, superY);
+    composite.globalAlpha = 1;
+    composite.globalCompositeOperation = "multiply";
+    composite.fillStyle = "rgba(196, 180, 158, 0.35)";
+    applyMaskedFill(composite, maskCanvas);
+  } else {
+    composite.globalCompositeOperation = "source-over";
+    composite.fillStyle = "rgba(107, 86, 63, 0.82)";
+    applyMaskedFill(composite, maskCanvas);
+  }
   composite.restore();
 }
 
@@ -401,13 +409,40 @@ function drawWaterBodies(composite, maskContext, maskCanvas, superX, superY, ter
 
 let wearScratch = null;
 
-function applyMaskedFill(composite, maskCanvas) {
+function applyMaskedImage(composite, maskCanvas, image, superX, superY) {
+  const scratch = wearScratchContext();
+  scratch.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+  scratch.globalCompositeOperation = "source-over";
+  scratch.imageSmoothingEnabled = true;
+  for (let ny = -1; ny <= 1; ny += 1) {
+    for (let nx = -1; nx <= 1; nx += 1) {
+      scratch.save();
+      scratch.translate(
+        MARGIN_PX + nx * PATCH_SIZE + PATCH_SIZE / 2,
+        MARGIN_PX + ny * PATCH_SIZE + PATCH_SIZE / 2,
+      );
+      scratch.scale((((superX + nx) % 2) + 2) % 2 === 0 ? 1 : -1, (((superY + ny) % 2) + 2) % 2 === 0 ? 1 : -1);
+      scratch.drawImage(image, -PATCH_SIZE / 2, -PATCH_SIZE / 2, PATCH_SIZE, PATCH_SIZE);
+      scratch.restore();
+    }
+  }
+  scratch.globalCompositeOperation = "destination-in";
+  scratch.drawImage(maskCanvas, 0, 0, CANVAS_SIZE, CANVAS_SIZE);
+  composite.drawImage(scratch.canvas, 0, 0);
+}
+
+function wearScratchContext() {
   if (!wearScratch) {
     const canvas = document.createElement("canvas");
     canvas.width = CANVAS_SIZE;
     canvas.height = CANVAS_SIZE;
     wearScratch = canvas.getContext("2d");
   }
+  return wearScratch;
+}
+
+function applyMaskedFill(composite, maskCanvas) {
+  wearScratchContext();
   wearScratch.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
   wearScratch.globalCompositeOperation = "source-over";
   wearScratch.fillStyle = composite.fillStyle;
