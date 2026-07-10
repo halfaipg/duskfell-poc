@@ -1,5 +1,12 @@
 # Art Pipeline
 
+## July 10, 2026 Infrastructure Update
+
+A dedicated StableGen ComfyUI backend is live on the RTX 3090 (systemd
+service, VPN address, TRELLIS.2 mesh gen + RealVisXL/SDXL texturing +
+Marigold/StableDelight PBR). Connection details and installed stack:
+`docs/art/stablegen-comfyui.md`.
+
 Initial research snapshot from July 6, 2026. Refreshed July 7, 2026 against the running PoC and current GitHub topic results. Production adoption still needs a final license/API/terms check for each tool and model. This project needs original assets only. Do not use UO-derived art, screenshots, extracted tiles, paperdolls, hue tables, maps, UI, or "style reference" prompts based on UO.
 
 ## July 9, 2026 Decision Update
