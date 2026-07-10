@@ -614,18 +614,18 @@
     {
       "id": "duskfell-details",
       "image": "duskfell-details.png",
-      "imageSha256": "cf9343f76231a6401f6e83f12e78f1686b995705bdaef47350a2e2f4d93e0aeb",
+      "imageSha256": "85ae74ee6970e001f314fe98a6539094053839e5eb8d36867de2d4fcef7910c0",
       "frameGrid": {
-        "cellWidth": 64,
-        "cellHeight": 64,
+        "cellWidth": 192,
+        "cellHeight": 192,
         "columns": 23,
         "rows": 1,
         "frameCount": 23
       },
       "anchor": {
         "kind": "foot",
-        "x": 32,
-        "y": 54
+        "x": 96,
+        "y": 176
       },
       "footprint": {
         "kind": "diamond",
@@ -636,14 +636,14 @@
         "layer": "terrain",
         "sort": "footprint-y",
         "zBias": -4,
-        "scale": 0.72,
+        "scale": 1.1,
         "shadow": {
           "kind": "ellipse",
-          "x": 32,
-          "y": 56,
-          "width": 30,
-          "height": 8,
-          "opacity": 0.18
+          "x": 96,
+          "y": 180,
+          "width": 64,
+          "height": 16,
+          "opacity": 0.2
         }
       },
       "directions": [

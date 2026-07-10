@@ -14,7 +14,7 @@ import { drawObjectSprite } from "./object-sprite-draw.js";
 
 // Art-reset review mode: old prop/detail sprites are retired pending the
 // world-kit prop pass — draw only players until new props land.
-export const HIDE_WORLD_PROPS = true;
+export const HIDE_WORLD_PROPS = false;
 
 export function createObjectDrawer({
   getContext,
