@@ -1,7 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const root = path.resolve(import.meta.dirname, "..");
+// import.meta.dirname needs Node >= 20.11; this repo still runs on Node 18
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const recipePath = path.join(root, "assets", "terrain", "authoring-recipes.json");
 const allowedStatuses = new Set(["reviewed-proof", "live-proof", "runtime-review", "approved"]);
 const requiredMapFields = [
