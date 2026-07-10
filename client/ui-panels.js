@@ -12,9 +12,11 @@ export function renderHud({ ui, snapshot, smoothedFps, terrainDebugMode }) {
     return;
   }
   const players = Array.isArray(snapshot.players) ? snapshot.players : [];
+  // build tag stays visible so "am I running the new client?" never needs
+  // DevTools — bump when the art pipeline changes materially
   ui.hud.textContent = `FPS ${Math.round(smoothedFps)} / Players ${players.length} / Tick ${snapshot.tick}${
     terrainDebugMode ? ` / Terrain ${terrainDebugMode}` : ""
-  }`;
+  } / art v3`;
 }
 
 export function renderPanel({ ui, snapshot, playerId, sprites, playerSpriteFor }) {
