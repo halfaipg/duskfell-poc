@@ -6,7 +6,7 @@ import { getAppDom } from "./app-dom.js";
 import { computeCamera } from "./camera.js";
 import { createEcologyRenderer } from "./ecology-renderer.js";
 import { createInteriorRenderer } from "./interior-renderer.js";
-import { createObjectDrawer, HIDE_WORLD_PROPS } from "./object-draw.js";
+import { createObjectDrawer, HIDE_WORLD_PROPS, VEGETATION_ONLY_ART_PASS } from "./object-draw.js";
 import { createTerrainDrawer, normalizeTerrainDebugMode } from "./terrain-draw.js";
 import { drawOverlay as drawOverlayPanel } from "./overlay.js";
 import { createPlayerDrawer } from "./player-draw.js";
@@ -184,13 +184,13 @@ function draw(now = 0) {
     const objects = Array.isArray(snapshot.objects) ? snapshot.objects : [];
     terrainCache.terrainForMap(snapshot.map);
     terrainDrawer.drawMap(snapshot, origin, now, rect);
-    if (!HIDE_WORLD_PROPS) {
+    if (!HIDE_WORLD_PROPS && !VEGETATION_ONLY_ART_PASS) {
       ecologyRenderer.drawEcologyGroundEffects(objects, origin, now);
       ecologyRenderer.drawEcologyEnergyLinks(objects, origin, now);
       ecologyRenderer.drawEcologyFeedLinks(objects, origin, now);
     }
     objectDrawer.drawSceneEntities(players, objects, origin, now);
-    if (!HIDE_WORLD_PROPS) {
+    if (!HIDE_WORLD_PROPS && !VEGETATION_ONLY_ART_PASS) {
       interiorRenderer.drawInteriorRoofs(origin, localPlayerRenderPosition, now);
     }
     ctx.restore();

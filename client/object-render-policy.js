@@ -1,5 +1,13 @@
 export const TERRAIN_DETAIL_OBJECT_PREFIX = "terrain-detail:";
 
+// Vegetation-only art pass: everything on screen must be current-generation
+// art (terrain, stream, the tree/bush/tuft kit, players). Placeholder-era
+// props, items, ecology decals and procedural cue overlays stay hidden until
+// each gets its own art pass.
+export const VEGETATION_ONLY_ART_PASS = true;
+export const VISIBLE_DETAIL_KINDS = new Set(["tree", "scrub", "tuft"]);
+export const VISIBLE_OBJECT_KINDS = new Set(["saplingTree"]);
+
 export function isTerrainDetailAuthorityObject(object) {
   return typeof object?.id === "string" && object.id.startsWith(TERRAIN_DETAIL_OBJECT_PREFIX);
 }
