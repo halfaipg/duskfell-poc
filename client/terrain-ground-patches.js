@@ -715,7 +715,10 @@ function animationFrameFor(layer, waterImage, nowMs) {
     { speed: 1.1, alpha: 0.42, zoom: 1 },
     { speed: -0.4, alpha: 0.22, zoom: 1.7 },
   ]) {
-    const distance = (tick / 1000) * pass.speed * pxPerTile;
+    // canvas tiles sit at (n*span - offset), so a growing offset slides the
+    // painting AGAINST the flow vector — negate so speed>0 marches
+    // downstream, following the channel's local bend
+    const distance = (tick / 1000) * -pass.speed * pxPerTile;
     const span = ANIM_SIZE * pass.zoom;
     const offX = ((layer.flowX * distance) % (span * 2) + span * 2) % (span * 2);
     const offY = ((layer.flowY * distance) % (span * 2) + span * 2) % (span * 2);

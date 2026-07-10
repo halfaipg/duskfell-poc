@@ -28,6 +28,7 @@
     "terrain:ground-patches:generate": "python3 scripts/art-reset/build-biome-ground-patches.py",
     "terrain:authoring:verify": "node scripts/verify-terrain-authoring-recipes.js",
     "terrain:authority:generate": "node scripts/generate-terrain-detail-authority.js",
+    "terrain:grid": "node scripts/generate-terrain-grid.js",
     "terrain:authority:verify": "node scripts/verify-terrain-detail-authority.js assets/terrain/detail-authority.json",
     "assets:generate-placeholders": "npm run sprites:generate && npm run terrain:generate",
     "terrain:verify": "node scripts/verify-terrain-atlas.js assets/terrain/manifest.json",

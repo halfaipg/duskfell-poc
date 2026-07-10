@@ -78,6 +78,13 @@ pub struct TerrainContent {
     pub water_level: i32,
     pub max_walkable_step: u32,
     pub materials: Vec<String>,
+    // baked from the client worldgen by scripts/generate-terrain-grid.js so
+    // walkability matches what the player sees; row strings of base-36
+    // indices into `materials`, plus a (rows+1)x(cols+1) vertex height grid
+    #[serde(default)]
+    pub material_grid: Vec<String>,
+    #[serde(default)]
+    pub vertex_heights: Vec<Vec<i32>>,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize)]

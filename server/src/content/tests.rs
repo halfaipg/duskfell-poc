@@ -210,5 +210,7 @@ fn valid_terrain() -> TerrainContent {
             .iter()
             .map(|material| material.to_string())
             .collect(),
+        material_grid: Vec::new(),
+        vertex_heights: Vec::new(),
     }
 }
