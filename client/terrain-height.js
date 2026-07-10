@@ -79,7 +79,12 @@ export function continuousVertexHeight(x, y, cols, rows, safeRadiusTiles, profil
     (nx - 0.62) * 1.1 +
     (0.42 - ny) * 1.35 +
     noise2d(x * 0.05, y * 0.05, profile.seed + 41) * 0.18;
-  const highland = smooth01((highlandField + 0.05) / 0.7) * 4.6;
+  // mountain foot: the base ramp climbs on a narrower band than before and
+  // a second surge stacks contours into cliff bands toward the deep NE, so
+  // the ascent reads shelf - rock face - shelf instead of one even grade
+  const highland =
+    smooth01((highlandField + 0.05) / 0.5) * 4.2 +
+    smooth01((highlandField - 0.26) / 0.16) * 2.4;
   const rolling =
     noise2d(x * 0.05, y * 0.05, profile.seed + 11) * 1.4 +
     noise2d(x * 0.11, y * 0.11, profile.seed + 23) * 0.6;
