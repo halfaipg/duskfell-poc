@@ -92,9 +92,17 @@ Findings:
   cannot fill contract slots. It is a style reference, not a pipeline.
 - Gaps to tune: sandwich output is darker/more muted than the current atlas;
   push style descriptors in the prompt (or a curated grid style preset) to
-  move C toward D's look while keeping structure. The grid endpoint exposes
-  no explicit denoise-strength knob; structure preservation currently comes
-  from the service's img2img default, which behaved well here.
+  move C toward D's look while keeping structure.
+- **CORRECTION (July 9 parameter study,
+  `assets/terrain/candidates/img2img-parameter-study.png`): the grid DOES
+  accept a `strength` param** (maps to denoise), gated to **0.55–0.95** on
+  FLUX.2 Klein 4B FP8. Lower = closer to source structure with gentler
+  embellishment; 0.95 = heavy reinvention (layout drifts, features move).
+  All prior session outputs used the service default (~0.8 look). Other
+  gates on this model: `steps` 4–6 (visually near-identical across the
+  band), `cfg_scale` 1.0–1.5 (1.5 slightly punchier). Practical recipe:
+  structure-critical passes (borders, contract masks) at strength 0.55–0.65;
+  style-explorations at 0.8+; steps/cfg mostly noise, leave default.
 
 **Adopted terrain pipeline: 3D bake (continuous multi-tile patch, world-space
 noise, contract masks) → one whole-patch img2img enrichment pass (governed
@@ -443,6 +451,36 @@ still read hard (needs either worldgen smoothing or feathered patch edges);
 facet shading on hillsides still diamond-y. Facet/height/relief shading and
 elevation-ridge strokes retuned way down for the brighter art
 (terrain-draw-surface.js).
+
+### July 9 follow-up: larger world, eight-biome runtime proof, and symmetry rejection
+
+The demo world is now `96x64` tiles (`6144x4096` world units) with a centered
+safe zone and distributed landmarks/resources. Eight 2048px WebP biome sources
+are declared in `assets/terrain/manifest.json`, verified by the browser, Node
+asset verifier, HTTP smoke, and Rust startup, and blended in soft deterministic
+territories. Canvas composition is bounded to four active biome layers and four
+cached 2048px composites; elevation draping uses projected triangles instead
+of painting a flat screen-space sheet.
+
+This is a better proof, not the final renderer. Mirroring adjacent supertiles
+is now explicitly rejected because the bilateral repetition is visible. The
+production target remains PixiJS/WebGL material splatting: shared authored
+biome weights, two or three local material layers, stochastic non-mirrored
+sampling, height/normal-aware transitions, chunk streaming, and bounded GPU
+texture caches. The current Canvas path remains a removable compatibility
+fallback.
+
+The Blender/img2img terrain sandwich is reproducible again through
+`scripts/art-reset/blender-terrain-structure.py` and
+`scripts/art-reset/grid-img2img-proof.mjs`. The model bakeoff in
+`assets/terrain/candidates/proof-structure-model-bakeoff.png` confirms that
+Grid FLUX gives the strongest stylization while the OpenAI native edit best
+preserves structure. Neither output can become geometry authority: Blender
+height/material masks must be reapplied and boundary drift gated before intake.
+`assets/demos/terrain-sandwich-live.html` is the playable review surface: it
+uses the Wretch sheet, blocks movement against the Blender water authority,
+switches local Grid/native enrichments live, and crossfades to the preserved
+alpine LOD0 regional painting when the camera pulls back.
 
 ## Build order (updated July 9, post biomes/borders)
 

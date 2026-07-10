@@ -1,9 +1,9 @@
 {
   "schemaVersion": "sundermere-world-v1",
   "map": {
-    "width": 3328.0,
-    "height": 2176.0,
-    "safeZoneRadius": 360.0,
+    "width": 6144.0,
+    "height": 4096.0,
+    "safeZoneRadius": 480.0,
     "terrain": {
       "profile": "duskfell-terrain-v1",
       "seed": 7341,
@@ -19,48 +19,48 @@
     }
   },
   "spawn": {
-    "x": 1664.0,
-    "y": 1088.0
+    "x": 3072.0,
+    "y": 2048.0
   },
   "objects": [
     {
       "id": "registrar",
       "kind": "registrar",
       "label": "Title Office",
-      "x": 1664.0,
-      "y": 1040.0,
+      "x": 3072.0,
+      "y": 1984.0,
       "radius": 54.0
     },
     {
       "id": "north-grove",
       "kind": "grove",
       "label": "Ashen Grove",
-      "x": 640.0,
-      "y": 520.0,
+      "x": 2112.0,
+      "y": 1216.0,
       "radius": 88.0
     },
     {
       "id": "east-ore",
       "kind": "ore",
       "label": "Tin Vein",
-      "x": 2705.0,
-      "y": 1445.0,
+      "x": 4928.0,
+      "y": 2432.0,
       "radius": 72.0
     },
     {
       "id": "field-forge",
       "kind": "forge",
       "label": "Field Forge",
-      "x": 1904.0,
-      "y": 1184.0,
+      "x": 3328.0,
+      "y": 2176.0,
       "radius": 56.0
     },
     {
       "id": "old-shrine",
       "kind": "shrine",
       "label": "Plain Shrine",
-      "x": 2580.0,
-      "y": 500.0,
+      "x": 4864.0,
+      "y": 896.0,
       "radius": 68.0
     }
   ]

@@ -1581,6 +1581,72 @@
       }
     }
   ],
+  "groundPatches": [
+    {
+      "id": "biome-meadow",
+      "biome": "meadow",
+      "image": "ground-patches/biome-meadow.webp",
+      "sha256": "23b8365fb66513e6bcbe200e829c2b9e94aff79cbba28502e5d7f7562648aa16",
+      "width": 2048,
+      "height": 2048
+    },
+    {
+      "id": "biome-heath",
+      "biome": "heath",
+      "image": "ground-patches/biome-heath.webp",
+      "sha256": "5cf47cdc659b17522195449cbcf93bd6a628032dd9c798aa69f80b2940d6d1ed",
+      "width": 2048,
+      "height": 2048
+    },
+    {
+      "id": "biome-chalk",
+      "biome": "chalk",
+      "image": "ground-patches/biome-chalk.webp",
+      "sha256": "0b15ef5c86024297e35ecc6d86a1f3e5d31a80f5717a90eb81e1b4ab955757f9",
+      "width": 2048,
+      "height": 2048
+    },
+    {
+      "id": "biome-frost",
+      "biome": "frost",
+      "image": "ground-patches/biome-frost.webp",
+      "sha256": "2d0a21274927efa092d9f0ba8b2fd66525997453bd099436236783002675abac",
+      "width": 2048,
+      "height": 2048
+    },
+    {
+      "id": "biome-fen",
+      "biome": "fen",
+      "image": "ground-patches/biome-fen.webp",
+      "sha256": "77e4b3006aea7ec312e61dfc535a3958dc59847354b8afd5ee9e5e654e675f4e",
+      "width": 2048,
+      "height": 2048
+    },
+    {
+      "id": "biome-moor",
+      "biome": "moor",
+      "image": "ground-patches/biome-moor.webp",
+      "sha256": "4e007bbad7ca7c3729925d621fb68f3eca0b543b2fcda7872be72f33446e4aaf",
+      "width": 2048,
+      "height": 2048
+    },
+    {
+      "id": "biome-ash",
+      "biome": "ash",
+      "image": "ground-patches/biome-ash.webp",
+      "sha256": "871c59d220c0b9d7aeb4f95cd58e94fd5feb7d5fe31a96c2c0b56262a6c18d87",
+      "width": 2048,
+      "height": 2048
+    },
+    {
+      "id": "biome-blight",
+      "biome": "blight",
+      "image": "ground-patches/biome-blight.webp",
+      "sha256": "dabf0d056dad11c7863a02491d514f131f36bd0d5420a814f2de8cc651537d47",
+      "width": 2048,
+      "height": 2048
+    }
+  ],
   "provenance": {
     "cleanRoom": true,
     "source": "painterly biome patches (3D bake + img2img sandwich) sliced by scratchpad build-painterly-atlas.py",
@@ -1589,7 +1655,7 @@
     "reviewer": "codex",
     "prompt": "original clean-room military-plan-oblique fantasy MMO terrain texture source sheet with lush grass, trampled field grass, dirt path, rocky ground, shallow water, worn stone plaza, cobble, ruin masonry, shore bank, slopes, and edge transition variants",
     "negativePrompt": "no copied commercial game assets, no Ultima Online source art, no logos, no watermark, no photorealistic satellite texture, no muddy blur",
-    "method": "ai-assisted-source-plus-deterministic-local-normalization",
+    "method": "ai-assisted-source-plus-deterministic-asymmetric-upscale",
     "tool": "OpenAI built-in image generation plus Pillow local image processing",
     "toolVersion": "Pillow 2026-07-07 runtime",
     "sourceHash": "3322365d858da3f7bd4a8ba8a0b0ac17457a8f107a0fbabce171764501c41c61",

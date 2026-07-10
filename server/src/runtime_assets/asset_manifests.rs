@@ -118,6 +118,38 @@ pub(super) fn load_terrain_runtime_manifest(
         .pointer("/approval/state")
         .and_then(serde_json::Value::as_str)
         .map(str::to_string);
+    let mut images = vec![RuntimeAssetImage {
+        id,
+        image,
+        sha256,
+        sha256_verified: true,
+        bytes,
+        approval_state: approval_state.clone(),
+    }];
+    let ground_patches = json
+        .get("groundPatches")
+        .and_then(serde_json::Value::as_array)
+        .ok_or_else(|| anyhow!("{} groundPatches must be an array", manifest_path.display()))?;
+    for (index, patch) in ground_patches.iter().enumerate() {
+        let id = required_string(patch, "id")
+            .with_context(|| format!("terrain.groundPatches[{index}].id"))?;
+        let image = required_string(patch, "image")
+            .with_context(|| format!("terrain.groundPatches[{index}].image"))?;
+        let sha256 = required_string(patch, "sha256")
+            .with_context(|| format!("terrain.groundPatches[{index}].sha256"))?;
+        validate_sha256_pin(&sha256)
+            .with_context(|| format!("terrain.groundPatches[{index}].sha256"))?;
+        let bytes =
+            verified_runtime_image_bytes(image_root, &image, &sha256, max_runtime_asset_bytes)?;
+        images.push(RuntimeAssetImage {
+            id,
+            image,
+            sha256,
+            sha256_verified: true,
+            bytes,
+            approval_state: approval_state.clone(),
+        });
+    }
 
     Ok(RuntimeAssetManifest {
         kind: "terrain",
@@ -128,14 +160,7 @@ pub(super) fn load_terrain_runtime_manifest(
         max_manifest_bytes: max_runtime_manifest_bytes,
         max_image_bytes: max_runtime_asset_bytes,
         projection,
-        entry_count: tiles.len(),
-        images: vec![RuntimeAssetImage {
-            id,
-            image,
-            sha256,
-            sha256_verified: true,
-            bytes,
-            approval_state,
-        }],
+        entry_count: tiles.len() + ground_patches.len(),
+        images,
     })
 }

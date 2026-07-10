@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "duskfell-grid-img2img-proof-v1",
+  "input": "proof-structure-grid-input.png",
+  "inputSha256": "985fb6ba600c690e58006e9ab58e026dd1771218872318fce001d96d848234ce",
+  "output": "proof-style-uo-hd-river-muted.png",
+  "outputSha256": "47020fbf8484b7c49d3c56e1d5d6d24caa3990ab78ef1c3ee34ade137add9e51",
+  "model": "FLUX.2 Klein 4B FP8",
+  "style": null,
+  "worker": "half5090beast1",
+  "generationSeconds": 6.15,
+  "seed": 24080,
+  "prompt": "Ultima Online HD style, muted orthographic military-plan fantasy terrain showing a shallow winding river through an open meadow, worn earth, mossy banks, fine gravel, embedded fieldstones, sparse low grass and modest shrubs. Preserve the supplied river channel, shoreline, elevation and rock placement. Subtle hand-painted late-1990s RPG palette, soft overcast light, readable player-scale detail, restrained saturation, no giant plants, cliffs, buildings, paths added, tile seams or symmetry.",
+  "revisedPrompt": "Ultima Online HD style, muted orthographic military-plan fantasy terrain showing a shallow winding river through an open meadow, worn earth, mossy banks, fine gravel, embedded fieldstones, sparse low grass and modest shrubs. Preserve the supplied river channel, shoreline, elevation and rock placement. Subtle hand-painted late-1990s RPG palette, soft overcast light, readable player-scale detail, restrained saturation, no giant plants, cliffs, buildings, paths added, tile seams or symmetry."
+}

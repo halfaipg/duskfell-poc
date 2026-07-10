@@ -11,7 +11,6 @@ import {
 } from "./terrain-draw-surface.js";
 import {
   drawChunkGroundPatch,
-  groundPatchVersion,
   tileUsesGroundPatch,
 } from "./terrain-ground-patches.js";
 import { TERRAIN_MATERIALS } from "./terrain.js";
@@ -71,20 +70,15 @@ export function createTerrainDrawer({
     if (!worldTerrain) return;
     const visibleBounds = terrainLayerManager.visibleWorldBounds(viewport);
     const renderGeometry = terrainLayerManager.terrainGeometryForMap(worldTerrain, origin);
-    const patchVersion = groundPatchVersion();
     for (const chunk of renderGeometry.chunks) {
       if (!terrainLayerManager.boundsIntersect(chunk.bounds, visibleBounds)) continue;
-      if (chunk.groundPatchVersion !== patchVersion) {
-        chunk.staticLayer = null;
-        chunk.groundPatchVersion = patchVersion;
-      }
       if (drawTerrainStaticChunk(chunk)) {
         for (const tileView of chunk.tiles) {
           drawTerrainDynamicTile(tileView, state.tick, now, visibleBounds);
           terrainDebugDrawer.drawTerrainDebugTile(tileView.tile, tileView.corners, terrainDebugMode);
         }
       } else {
-        drawChunkGroundPatch(ctx, chunk, origin);
+        drawChunkGroundPatch(ctx, chunk, origin, worldTerrain, terrainAssets.groundPatches);
         for (const tileView of chunk.tiles) {
           drawTerrainTile(tileView, state.tick, now, visibleBounds);
         }
@@ -101,7 +95,7 @@ export function createTerrainDrawer({
 
     drawTerrainSideWalls(ctx, tile, corners, palette);
 
-    const groundPatchTile = tileUsesGroundPatch(tile);
+    const groundPatchTile = tileUsesGroundPatch(tile, terrainAssets.groundPatches);
     if (!groundPatchTile) {
       ctx.beginPath();
       ctx.moveTo(corners.nw.x, corners.nw.y);
@@ -118,7 +112,9 @@ export function createTerrainDrawer({
       drawTerrainFacetShade(ctx, tile, corners);
       drawTerrainHeightShade(ctx, tile, corners);
     }
-    drawTerrainReliefEdges(ctx, tile, corners);
+    if (!groundPatchTile) {
+      drawTerrainReliefEdges(ctx, tile, corners);
+    }
 
     terrainAtlasDrawer.drawTerrainTransitions(tile, corners);
     if (drawDynamic) {
@@ -150,7 +146,7 @@ export function createTerrainDrawer({
   function drawTerrainStaticChunk(chunk) {
     return terrainLayerManager.drawTerrainStaticChunk(ctx, chunk, (layerContext, staticChunk) => {
       withRenderContext(layerContext, () => {
-        drawChunkGroundPatch(ctx, staticChunk, lastOrigin);
+        drawChunkGroundPatch(ctx, staticChunk, lastOrigin, terrain, terrainAssets.groundPatches);
         for (const tileView of staticChunk.tiles) {
           drawTerrainTile(tileView, 0, 0, null, {
             drawDynamic: false,

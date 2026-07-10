@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "duskfell-grid-img2img-proof-v1",
+  "input": "proof-structure-grid-input.png",
+  "inputSha256": "985fb6ba600c690e58006e9ab58e026dd1771218872318fce001d96d848234ce",
+  "output": "proof-style-cleanroom-river-muted.png",
+  "outputSha256": "dc3c58b170e50ae0ab2ea89f5e16509bf796ee3fedd52712f47608be54c2aad2",
+  "model": "FLUX.2 Klein 4B FP8",
+  "style": null,
+  "worker": "half5090beast1",
+  "generationSeconds": 8.17,
+  "seed": 24081,
+  "prompt": "Strict 90-degree overhead orthographic game terrain map, square military-plan ground patch, no horizon and no sky. A shallow winding river crosses muted open meadow with worn earth, mossy banks, fine gravel, embedded fieldstones, sparse short grass and modest low shrubs. Preserve the supplied river channel, shoreline, elevation masks and rock field exactly. High-definition hand-painted late-1990s fantasy RPG land art, restrained saturation, soft overcast lighting, player walking scale, original unbranded world art, no text, logo, watermark, giant vegetation, buildings, seams or symmetry.",
+  "revisedPrompt": "Strict 90-degree overhead orthographic game terrain map, square military-plan ground patch, no horizon and no sky. A shallow winding river crosses muted open meadow with worn earth, mossy banks, fine gravel, embedded fieldstones, sparse short grass and modest low shrubs. Preserve the supplied river channel, shoreline, elevation masks and rock field exactly. High-definition hand-painted late-1990s fantasy RPG land art, restrained saturation, soft overcast lighting, player walking scale, original unbranded world art, no text, logo, watermark, giant vegetation, buildings, seams or symmetry."
+}

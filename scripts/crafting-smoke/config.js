@@ -1,8 +1,8 @@
 export const FALLBACK_TARGETS = {
-  "north-grove": { id: "north-grove", x: 640, y: 520 },
+  "north-grove": { id: "north-grove", x: 2112, y: 1216 },
   "ancient-ironleaf-tree": { id: "ancient-ironleaf-tree", x: 745, y: 640 },
-  "east-ore": { id: "east-ore", x: 2705, y: 1445 },
-  "field-forge": { id: "field-forge", x: 1904, y: 1184 },
+  "east-ore": { id: "east-ore", x: 4928, y: 2432 },
+  "field-forge": { id: "field-forge", x: 3328, y: 2176 },
 };
 
 export function createCraftingContext(rawArgs) {

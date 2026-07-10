@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "duskfell-grid-img2img-proof-v1",
+  "input": "proof-structure-grid-input.png",
+  "inputSha256": "985fb6ba600c690e58006e9ab58e026dd1771218872318fce001d96d848234ce",
+  "output": "proof-style-cleanroom-river-autumn.png",
+  "outputSha256": "6434904c82263c66fe0251c368c368e8274ee557d01fd898a4d2ccfc3d2b468f",
+  "model": "FLUX.2 Klein 4B FP8",
+  "style": null,
+  "worker": "half5090beast1",
+  "generationSeconds": 8.68,
+  "seed": 24081,
+  "prompt": "Strict 90-degree overhead orthographic game terrain map, square military-plan ground patch, no horizon and no sky. A winding river crosses autumn heath with russet grass, faded green moss, low heather, damp brown soil, pale river gravel and scattered gray stones. Preserve the supplied river channel, shoreline, elevation masks and rock field exactly. High-definition hand-painted late-1990s fantasy RPG land art, cohesive cloudy light, rich restrained seasonal color, player walking scale, original unbranded world art, no text, logo, watermark, giant vegetation, buildings, seams or symmetry.",
+  "revisedPrompt": "Strict 90-degree overhead orthographic game terrain map, square military-plan ground patch, no horizon and no sky. A winding river crosses autumn heath with russet grass, faded green moss, low heather, damp brown soil, pale river gravel and scattered gray stones. Preserve the supplied river channel, shoreline, elevation masks and rock field exactly. High-definition hand-painted late-1990s fantasy RPG land art, cohesive cloudy light, rich restrained seasonal color, player walking scale, original unbranded world art, no text, logo, watermark, giant vegetation, buildings, seams or symmetry."
+}

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "duskfell-universal-walk-proof-v1",
+  "bodySource": "/Users/j/Downloads/Universal Base Characters[Standard]/Base Characters/Godot - UE/Superhero_Male_FullBody.gltf",
+  "animation": "deterministic twelve-phase contact-passing-toeoff gait",
+  "directions": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north",
+    "north-west",
+    "west",
+    "south-west"
+  ],
+  "rootYawDegrees": [
+    0,
+    -45,
+    -90,
+    -135,
+    180,
+    135,
+    90,
+    45
+  ],
+  "frames": [
+    8
+  ],
+  "cell": {
+    "width": 128,
+    "height": 160
+  },
+  "hairPolicy": "separate registered overlay",
+  "output": "assets/sprites/candidates/universal-retarget/universal-facing-proof.png"
+}

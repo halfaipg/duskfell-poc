@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "duskfell-grid-img2img-proof-v1",
+  "input": "border-band-snowfringe.png",
+  "inputSha256": "d42787ed417433a7301a7e0f7e795514fd75984e320b41b6dfbb1d78bcc2ea7a",
+  "output": "proof-style-uo-hd-snow.png",
+  "outputSha256": "e7edb7d02666926a233c2445fcbc6b130301bc340c73902a53da8ad26dbbf5fd",
+  "model": "FLUX.2 Klein 4B FP8",
+  "style": null,
+  "worker": "half5090beast1",
+  "generationSeconds": 5.36,
+  "seed": 24071,
+  "prompt": "Ultima Online HD style, orthographic military-plan terrain patch showing a thawing snow fringe around an open mossy grass clearing, dark wet soil, exposed earth, embedded stones, short grass, pine needles, granular snow and restrained meltwater. Preserve the supplied geography exactly. High-definition hand-painted fantasy game terrain, readable at player walking scale, cohesive soft overcast lighting, crisp material transitions without photorealism, no giant props or repeated patterns.",
+  "revisedPrompt": "Ultima Online HD style, orthographic military-plan terrain patch showing a thawing snow fringe around an open mossy grass clearing, dark wet soil, exposed earth, embedded stones, short grass, pine needles, granular snow and restrained meltwater. Preserve the supplied geography exactly. High-definition hand-painted fantasy game terrain, readable at player walking scale, cohesive soft overcast lighting, crisp material transitions without photorealism, no giant props or repeated patterns."
+}

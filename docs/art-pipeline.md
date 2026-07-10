@@ -15,6 +15,55 @@ the full decision record, the terrain comparison artifact, the ground decal
 layer plan (footprints/wear), and the installed toolchain (blender-mcp, MPFB2,
 CC0 asset packs).
 
+## Level Editor Recipe Contract
+
+Successful terrain work must be retained as a reproducible recipe, not only as
+an exported image. `assets/terrain/authoring-recipes.json` is the current
+machine-readable catalog. A future level editor stores the recipe id/version,
+seed, declared parameters, and verified input/output asset ids. It must not
+embed generator credentials, unverified image bytes, or client-authored
+collision/resource authority into a map.
+
+The first cataloged recipes cover the deterministic Blender structure bake,
+Grid img2img enrichment with pinned provenance, registered regional/local LOD
+pairs, asymmetric biome WebP generation, and deterministic world-patch
+sampling. Recipe status is explicit: `reviewed-proof`, `live-proof`,
+`runtime-review`, or `approved`. Run `npm run terrain:authoring:verify` after
+adding or changing a recipe.
+
+For Grid/Klein img2img, send `strength` (or its `denoise` alias) beside the
+source `image`. The governed `FLUX.2 Klein 4B FP8` latent-blend recipe accepts
+`0.55–0.95`; unsupported models reject the knob rather than ignoring it. The
+reviewed terrain presets are `0.55` structure lock, `0.60` playable terrain,
+`0.70` richer but less authoritative terrain, and `0.90` concept/regional art.
+Klein's short schedule creates effective plateaus: the reviewed `0.60/0.65`
+outputs matched, as did `0.70/0.75`, so the editor should expose named presets
+before exposing an arbitrary decimal slider.
+
+The reviewed Klein playable-terrain sampler is `8` steps, `strength: 0.60`,
+`cfg_scale: 1.0`, and `euler`. Black Forest Labs recommends 4 steps for the
+distilled model's ordinary generation path. Grid's latent-blend recipe uses an
+8-step base schedule because strength splits/truncates that schedule after the
+source image is VAE-encoded. In the controlled proof, 6 steps produced more
+structural drift, 10 stayed closer but regressed toward blockier detail, and 8
+gave the best useful balance. Do not apply the 8-step rule to unrelated models
+or to Klein's normal text-to-image recipe.
+
+`z-image-turbo` now exposes img2img, LoRAs, `4–16` steps, and a wider
+`0.20–0.95` denoise range. In the same-seed terrain comparison it preserved the
+Blender structure much more closely than Klein at equal numeric strength, but
+its final texture was softer and developed patch/grid artifacts plus invented
+paths and trees as strength increased. The reviewed role for Z-Image is a
+low-strength (`0.30–0.45`) cleanup, mask preview, or editor-thumbnail backend.
+Klein remains the final playable-terrain renderer. The tested chained pass
+(`Z 0.45 -> Klein 0.55`) is rejected: it invented more macro detail and produced
+a marker artifact despite lower pixel RMSE.
+
+The editor-facing rule is separation of concerns: recipes produce visual
+assets; server map and terrain-detail data own walkability, elevation,
+collision, resources, decay, and gameplay state. A painted river or rock is not
+authoritative merely because it appears in a generated image.
+
 ## July 7, 2026 Decision Update
 
 The current camera/projection contract is right for the target: the live PoC renders `64x64` square diamond tiles in `military-plan-oblique` projection, not the common squashed `64x32` dimetric look. The graphics problem is asset quality and terrain richness, not the camera math. The placeholder atlas reads flat and repetitive, with weak terrain transitions, elevation character, props, shadows, and sprite identity.

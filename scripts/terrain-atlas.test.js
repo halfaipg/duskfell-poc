@@ -85,6 +85,40 @@ test("rejects missing material coverage and walkable water", async () => {
   assert.match(result.errors.join("\n"), /water surface must not be walkable/);
 });
 
+test("verifies every declared biome ground patch", async () => {
+  const dir = await makeTempDir();
+  await writeFile(path.join(dir, "terrain.png"), makePngHeader(640, 704));
+  const manifestPath = path.join(dir, "manifest.json");
+  const manifest = validAtlas();
+  const biomes = ["meadow", "heath", "chalk", "frost", "fen", "moor", "ash", "blight"];
+  manifest.groundPatches = [];
+  for (const biome of biomes) {
+    const bytes = makeWebpHeader(2048, 2048);
+    const image = `${biome}.webp`;
+    await writeFile(path.join(dir, image), bytes);
+    manifest.groundPatches.push({
+      id: `biome-${biome}`,
+      biome,
+      image,
+      sha256: sha256Hex(bytes),
+      width: 2048,
+      height: 2048,
+    });
+  }
+  await writeFile(manifestPath, JSON.stringify(manifest, null, 2));
+
+  let result = await verifyTerrainAtlas(manifestPath);
+  assert.equal(result.ok, true, result.errors.join("\n"));
+
+  manifest.groundPatches[3].sha256 = "0".repeat(64);
+  manifest.groundPatches[4].width = 1024;
+  await writeFile(manifestPath, JSON.stringify(manifest, null, 2));
+  result = await verifyTerrainAtlas(manifestPath);
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join("\n"), /groundPatches\[3\]\.sha256/);
+  assert.match(result.errors.join("\n"), /groundPatches\[4\]\.image dimensions 2048x2048/);
+});
+
 function validAtlas() {
   const materials = ["grass", "field", "dirt", "stone", "water", "settlement", "cobble", "rock", "ruin", "shore"];
   const edges = ["north", "east", "south", "west"];
@@ -201,6 +235,19 @@ function makePngHeader(width, height) {
   buffer.write("IHDR", 12, "ascii");
   buffer.writeUInt32BE(width, 16);
   buffer.writeUInt32BE(height, 20);
+  return buffer;
+}
+
+function makeWebpHeader(width, height) {
+  const buffer = Buffer.alloc(30);
+  buffer.write("RIFF", 0, "ascii");
+  buffer.writeUInt32LE(22, 4);
+  buffer.write("WEBP", 8, "ascii");
+  buffer.write("VP8 ", 12, "ascii");
+  buffer.writeUInt32LE(10, 16);
+  buffer.set([0x00, 0x00, 0x00, 0x9d, 0x01, 0x2a], 20);
+  buffer.writeUInt16LE(width, 26);
+  buffer.writeUInt16LE(height, 28);
   return buffer;
 }
 

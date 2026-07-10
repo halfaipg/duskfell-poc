@@ -4,7 +4,7 @@ use crate::protocol::{ObjectKind, ResourceKind};
 
 use super::super::resources::ResourceNode;
 
-pub(in crate::sim) const TERRAIN_DETAIL_RESOURCE_NODE_CAP: usize = 192;
+pub(in crate::sim) const TERRAIN_DETAIL_RESOURCE_NODE_CAP: usize = 256;
 pub(in crate::sim) const TERRAIN_DETAIL_DECAY_CONSUMER_CAP: usize = 128;
 pub(in crate::sim) const TERRAIN_DETAIL_DECAY_CONSUME_AMOUNT_CAP: u32 = 4;
 

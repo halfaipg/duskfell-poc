@@ -3,7 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { DEFAULT_MANIFEST } from "./terrain-atlas/constants.js";
-import { validateTileSheetImage } from "./terrain-atlas/image.js";
+import { validateGroundPatchImages, validateTileSheetImage } from "./terrain-atlas/image.js";
 import { validateManifest } from "./terrain-atlas/manifest.js";
 
 export async function verifyTerrainAtlas(manifestPath = DEFAULT_MANIFEST) {
@@ -27,6 +27,7 @@ export async function verifyTerrainAtlas(manifestPath = DEFAULT_MANIFEST) {
 
   validateManifest(manifest, absoluteManifestPath, manifestDir, errors, warnings);
   await validateTileSheetImage(manifest, manifestDir, errors);
+  await validateGroundPatchImages(manifest, manifestDir, errors);
 
   return {
     ok: errors.length === 0,

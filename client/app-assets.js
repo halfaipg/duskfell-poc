@@ -13,6 +13,7 @@ export function createRuntimeAssets() {
   const terrainAssets = {
     atlas: null,
     image: null,
+    groundPatches: new Map(),
     patternSources: [],
     patternContexts: new WeakMap(),
   };
@@ -50,6 +51,7 @@ export function createRuntimeAssets() {
       } catch {
         terrainAssets.atlas = null;
         terrainAssets.image = null;
+        terrainAssets.groundPatches = new Map();
         terrainAssets.patternSources = [];
         terrainAssets.patternContexts = new WeakMap();
         terrainAssetVersion += 1;

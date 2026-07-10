@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "duskfell-grid-img2img-proof-v1",
+  "input": "proof-structure-grid-input.png",
+  "inputSha256": "985fb6ba600c690e58006e9ab58e026dd1771218872318fce001d96d848234ce",
+  "output": "proof-structure-grid-oil.png",
+  "outputSha256": "d1a309f62b6582e785c55588d277f7c0220866f60701556a033ea218a4c1cc13",
+  "model": "FLUX.2 Klein 4B FP8",
+  "style": "oil-painting",
+  "worker": "half5090beast1",
+  "generationSeconds": 5.21,
+  "seed": 7341,
+  "prompt": "IMG2IMG enrichment of the supplied original Blender terrain structure bake. Preserve the exact river course, shoreline position, rock-field footprint, bank width, terrain elevation, and strict orthographic top-down framing. Transform only the flat placeholder materials into richly hand-painted late-1990s fantasy RPG game terrain: dark teal flowing water with fine restrained ripples, irregular pebble and mud banks, mossy meadow with individual grass tufts at human walking scale, weathered gray rock shelves with lichen, sparse tiny flowers and embedded stones. Original clean-room visual language, crisp painterly detail that survives downsampling, coherent overcast light. The image must remain one continuous asymmetric terrain patch with no mirrored halves, no repeated tile motifs, no visible grid, no fake tile borders, no new large features.",
+  "revisedPrompt": "IMG2IMG enrichment of the supplied original Blender terrain structure bake. Preserve the exact river course, shoreline position, rock-field footprint, bank width, terrain elevation, and strict orthographic top-down framing. Transform only the flat placeholder materials into richly hand-painted late-1990s fantasy RPG game terrain: dark teal flowing water with fine restrained ripples, irregular pebble and mud banks, mossy meadow with individual grass tufts at human walking scale, weathered gray rock shelves with lichen, sparse tiny flowers and embedded stones. Original clean-room visual language, crisp painterly detail that survives downsampling, coherent overcast light. The image must remain one continuous asymmetric terrain patch with no mirrored halves, no repeated tile motifs, no visible grid, no fake tile borders, no new large features., oil painting, thick impasto brushstrokes, rich textures, classical fine art, dramatic lighting"
+}

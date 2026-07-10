@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Duskfell Terrain Forge</title>
+    <link rel="stylesheet" href="/assets/demos/terrain-sandwich-live.css">
+  </head>
+  <body>
+    <canvas id="world" aria-label="Playable Duskfell terrain proof"></canvas>
+    <header class="brand">Duskfell</header>
+    <div class="toolbar" role="toolbar" aria-label="Terrain proof controls">
+      <div class="modes" role="group" aria-label="Terrain enrichment">
+        <button class="mode active" data-mode="snow" type="button">Snow</button>
+        <button class="mode" data-mode="hdSnow" type="button">HD Snow</button>
+        <button class="mode" data-mode="fantasy" type="button">River</button>
+        <button class="mode" data-mode="oil" type="button">Oil</button>
+        <button class="mode" data-mode="native" type="button">Native</button>
+      </div>
+      <button class="icon" id="zoom-out" type="button" title="Zoom out" aria-label="Zoom out">−</button>
+      <button class="icon" id="zoom-in" type="button" title="Zoom in" aria-label="Zoom in">+</button>
+    </div>
+    <div class="status" id="status" aria-live="polite">Loading terrain</div>
+    <script type="module" src="/assets/demos/terrain-sandwich-live.js?v=terrain-lod-5"></script>
+  </body>
+</html>

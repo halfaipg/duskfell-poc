@@ -192,6 +192,13 @@ world-space contract.
   transition rows, manifest hash, and provenance.
 - Terrain is chunked into fixed 8x8 tile chunks so visibility and future caching
   operate above individual tiles.
+- Terrain authoring steps that survive review now have stable recipe ids in
+  `assets/terrain/authoring-recipes.json`. This is the contract for a future
+  level editor: maps retain recipe version, seed, knobs, and verified asset ids,
+  while the server retains elevation, collision, resources, and decay
+  authority. The current runtime biome builder rejects four-way mirror symmetry
+  and atomically updates all eight WebP hashes; runtime placement uses seamless
+  world-aligned sampling and forbids mirroring and free rotation.
 - The renderer prepares projected chunk geometry once per terrain/origin, then
   culls chunks and tiles against the camera bounds each frame.
 - Static land, slope, cliff, road, and transition layers are rendered into

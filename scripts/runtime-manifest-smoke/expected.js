@@ -23,7 +23,7 @@ export async function expectedManifestState() {
     },
     terrain: {
       schemaVersion: terrainManifest.schemaVersion,
-      entryCount: terrainManifest.tiles.length,
+      entryCount: terrainManifest.tiles.length + (terrainManifest.groundPatches?.length ?? 0),
       images: [
         {
           id: terrainManifest.tileSheet.id,
@@ -32,6 +32,15 @@ export async function expectedManifestState() {
           bytes: (await stat(path.join("assets", "terrain", terrainManifest.tileSheet.image))).size,
           approvalState: terrainManifest.approval?.state,
         },
+        ...(await Promise.all(
+          (terrainManifest.groundPatches ?? []).map(async (patch) => ({
+            id: patch.id,
+            image: patch.image,
+            sha256: patch.sha256,
+            bytes: (await stat(path.join("assets", "terrain", patch.image))).size,
+            approvalState: terrainManifest.approval?.state,
+          })),
+        )),
       ],
     },
     terrainAuthority: {
