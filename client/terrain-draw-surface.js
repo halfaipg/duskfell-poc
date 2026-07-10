@@ -8,12 +8,15 @@ export function terrainUnderpaintMaterial(tile) {
 }
 
 export function drawTerrainSideWalls(ctx, tile, corners, palette) {
-  if (!Array.isArray(tile.elevationEdges) || tile.elevationEdges.length === 0 || tile.material === "water") return;
+  // water included: walls cover the screen-space gap below displaced edges
+  // for every material — skipping them leaves black notches at pond steps
+  if (!Array.isArray(tile.elevationEdges) || tile.elevationEdges.length === 0) return;
 
   for (const edge of tile.elevationEdges) {
-    // walls are structural: they fill the screen-space gap between
-    // height-displaced tile diamonds. Small steps stay, but nearly
-    // transparent so rolling ground doesn't read as a lattice.
+    // the ground painting drapes across step gaps (drawPatchGroup), so
+    // walls are pure shading now — only real cliffs get one; scattered
+    // single-tile steps read better from the painting's own shadows
+    if (edge.drop < 2) continue;
     const [from, to] = edgePoints(corners, edge.edge);
     const dropPx = Math.max(2, edge.drop * PROJECTION.zPx);
     const lowerFrom = { x: from.x, y: from.y + dropPx };
@@ -24,9 +27,7 @@ export function drawTerrainSideWalls(ctx, tile, corners, palette) {
       (lowerFrom.x + lowerTo.x) / 2,
       (lowerFrom.y + lowerTo.y) / 2,
     );
-    const shadowAlpha = edge.drop < 1.2
-      ? 0.05 + edge.drop * 0.04
-      : Math.min(0.3, 0.12 + edge.drop * 0.05);
+    const shadowAlpha = Math.min(0.22, 0.06 + edge.drop * 0.035);
     gradient.addColorStop(0, tintWithAlpha(palette.dark, shadowAlpha * 0.72));
     gradient.addColorStop(1, `rgba(8, 11, 10, ${shadowAlpha})`);
 

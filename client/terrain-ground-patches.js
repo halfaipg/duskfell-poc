@@ -10,6 +10,9 @@ import { edgePoints } from "./terrain-draw-geometry.js";
 
 const PATCHED_MATERIALS = new Set([
   "grass", "field", "dirt", "stone", "rock", "ruin", "shore", "settlement", "cobble",
+  // water is painted into the composite too (sand rim + dark body) — the
+  // teal atlas diamonds read as stickers on the painting
+  "water",
 ]);
 const PATCH_TILES = 16;
 const PLAN_PX_PER_TILE = 128;
@@ -29,10 +32,6 @@ function useGroundPatches(groundPatches) {
 }
 
 export function tileUsesGroundPatch(tile, groundPatches) {
-  // only true water (material) defers to the atlas for its shimmer; every
-  // land material is painted — roads/plazas get the trampled-earth wear
-  // overlay, and dry water-zone creeks stay painted rather than falling
-  // back to pale atlas transition strokes
   if (!tile || !PATCHED_MATERIALS.has(tile.material)) return false;
   return useGroundPatches(groundPatches);
 }
@@ -71,14 +70,18 @@ function drawPatchGroup(ctx, patch, group, origin) {
   const { halfW, halfH } = PROJECTION;
   const planScaleX = halfW / PLAN_PX_PER_TILE;
   const planScaleY = halfH / PLAN_PX_PER_TILE;
+  // inflating each diamond hides sub-threshold step gaps (elevationEdges
+  // skips drops < 0.75, up to ~4.5px of exposed base): overlapping the
+  // same continuous painting is invisible, so generous overlap is free
+  const INFLATE = 10;
   ctx.save();
   ctx.beginPath();
   for (const tile of group.tiles) {
     const corners = projectTerrainTile(tile, origin);
-    ctx.moveTo(corners.nw.x, corners.nw.y);
-    ctx.lineTo(corners.ne.x, corners.ne.y);
-    ctx.lineTo(corners.se.x, corners.se.y);
-    ctx.lineTo(corners.sw.x, corners.sw.y);
+    ctx.moveTo(corners.nw.x, corners.nw.y - INFLATE);
+    ctx.lineTo(corners.ne.x + INFLATE, corners.ne.y);
+    ctx.lineTo(corners.se.x, corners.se.y + INFLATE);
+    ctx.lineTo(corners.sw.x - INFLATE, corners.sw.y);
     ctx.closePath();
     // neighbor heights step at elevation edges, leaving screen-space gaps
     // below this tile's displaced edge — include those wall quads so the
@@ -87,8 +90,10 @@ function drawPatchGroup(ctx, patch, group, origin) {
       for (const edge of tile.elevationEdges) {
         const [from, to] = edgePoints(corners, edge.edge);
         const dropPx = Math.max(2, edge.drop * PROJECTION.zPx) + 0.75;
-        ctx.moveTo(from.x, from.y - 0.5);
-        ctx.lineTo(to.x, to.y - 0.5);
+        // extend both directions: the gap sits below south/east edges but
+        // above north/west edges — overdraw is continuous painting anyway
+        ctx.moveTo(from.x, from.y - dropPx);
+        ctx.lineTo(to.x, to.y - dropPx);
         ctx.lineTo(to.x, to.y + dropPx);
         ctx.lineTo(from.x, from.y + dropPx);
         ctx.closePath();
@@ -158,6 +163,7 @@ function compositePatchForTile(tile, terrain, groundPatches) {
   }
 
   drawRoadWear(composite, maskContext, maskCanvas, superX, superY, terrain);
+  drawWaterBodies(composite, maskContext, maskCanvas, superX, superY, terrain);
 
   compositeCache.set(key, canvas);
   while (compositeCache.size > MAX_COMPOSITE_PATCHES) {
@@ -315,6 +321,55 @@ function drawRoadWear(composite, maskContext, maskCanvas, superX, superY, terrai
   composite.fillStyle = "rgba(224, 204, 170, 0.5)";
   applyMaskedFill(composite, maskCanvas);
   composite.restore();
+}
+
+// Water paints into the composite as three soft masked passes — wet sand
+// rim, water body, deep center — so ponds sit IN the ground painting with
+// organic edges instead of hard atlas diamonds.
+function drawWaterBodies(composite, maskContext, maskCanvas, superX, superY, terrain) {
+  const maskPxPerTile = MASK_SIZE / PATCH_TILES;
+  const isWaterAt = (tx, ty) =>
+    terrainTileAt(terrain, superX * PATCH_TILES + tx, superY * PATCH_TILES + ty)?.material === "water";
+  const passes = [
+    { radius: 1.05, alpha: 0.55, color: "rgb(196, 178, 138)", opacity: 0.85 },
+    { radius: 0.72, alpha: 0.8, color: "rgb(43, 66, 62)", opacity: 0.94 },
+    { radius: 0.4, alpha: 0.9, color: "rgb(28, 46, 48)", opacity: 0.9 },
+  ];
+  let hasWater = false;
+  for (const pass of passes) {
+    maskContext.save();
+    maskContext.globalCompositeOperation = "source-over";
+    maskContext.clearRect(0, 0, MASK_SIZE, MASK_SIZE);
+    maskContext.fillStyle = `rgba(255,255,255,${pass.alpha})`;
+    maskContext.strokeStyle = `rgba(255,255,255,${pass.alpha})`;
+    maskContext.lineWidth = maskPxPerTile * pass.radius * 1.6;
+    maskContext.lineCap = "round";
+    for (let ty = -2; ty <= PATCH_TILES + 1; ty += 1) {
+      for (let tx = -2; tx <= PATCH_TILES + 1; tx += 1) {
+        if (!isWaterAt(tx, ty)) continue;
+        hasWater = true;
+        const cx = (tx + 0.5) * maskPxPerTile;
+        const cy = (ty + 0.5) * maskPxPerTile;
+        maskContext.beginPath();
+        maskContext.arc(cx, cy, maskPxPerTile * pass.radius, 0, Math.PI * 2);
+        maskContext.fill();
+        for (const [dx, dy] of [[1, 0], [0, 1], [1, 1], [1, -1]]) {
+          if (!isWaterAt(tx + dx, ty + dy)) continue;
+          maskContext.beginPath();
+          maskContext.moveTo(cx, cy);
+          maskContext.lineTo((tx + dx + 0.5) * maskPxPerTile, (ty + dy + 0.5) * maskPxPerTile);
+          maskContext.stroke();
+        }
+      }
+    }
+    maskContext.restore();
+    if (!hasWater) return;
+    composite.save();
+    composite.globalAlpha = pass.opacity;
+    composite.fillStyle = pass.color;
+    applyMaskedFill(composite, maskCanvas);
+    composite.restore();
+  }
 }
 
 let wearScratch = null;

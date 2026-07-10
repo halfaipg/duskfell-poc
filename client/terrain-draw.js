@@ -143,6 +143,9 @@ export function createTerrainDrawer({
   function drawTerrainDynamicTile(tileView, tick, now, visibleBounds) {
     const { tile, corners, bounds } = tileView;
     if (visibleBounds && !terrainLayerManager.boundsIntersect(bounds, visibleBounds)) return;
+    // same rule as the direct path: procedural decals were tuned for flat
+    // atlas tiles and scratch dark marks all over the painted ground
+    if (tileUsesGroundPatch(tile, terrainAssets.groundPatches)) return;
     drawTerrainDecals(ctx, tile, corners, tick, now);
   }
 
