@@ -216,7 +216,14 @@ function drawOverlay(rect) {
 }
 
 function updateHud() {
-  renderHud({ ui, snapshot, smoothedFps: frame.smoothedFps(), terrainDebugMode });
+  renderHud({
+    ui,
+    snapshot,
+    smoothedFps: frame.smoothedFps(),
+    terrainDebugMode,
+    groundPatchCount: terrainAssets.groundPatches?.size ?? 0,
+    terrainAssetError: runtimeAssets.terrainAssetError?.() ?? null,
+  });
 }
 
 function updatePanel() {

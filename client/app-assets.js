@@ -18,11 +18,13 @@ export function createRuntimeAssets() {
     patternContexts: new WeakMap(),
   };
   let terrainAssetVersion = 0;
+  let terrainAssetError = null;
 
   return {
     sprites,
     terrainAssets,
     terrainAssetVersion: () => terrainAssetVersion,
+    terrainAssetError: () => terrainAssetError,
     async loadSpriteAssets() {
       try {
         const response = await fetch("/assets/sprites/manifest.json", {
@@ -56,6 +58,7 @@ export function createRuntimeAssets() {
         // why — say exactly what failed (SHA mismatch, insecure context
         // breaking crypto.subtle over LAN IPs, 404s...)
         console.error("Duskfell terrain assets FAILED — falling back to flat tiles:", error);
+        terrainAssetError = error instanceof Error ? error.message : String(error);
         terrainAssets.atlas = null;
         terrainAssets.image = null;
         terrainAssets.groundPatches = new Map();

@@ -76,7 +76,9 @@
         "negative constraints",
         "seed",
         "strength",
-        "steps"
+        "steps",
+        "sampler",
+        "scheduler"
       ],
       "strengthContract": {
         "model": "FLUX.2 Klein 4B FP8",
@@ -137,21 +139,34 @@
         "assets/terrain/candidates/proof-zimage-strength-070-darkage.json",
         "assets/terrain/candidates/proof-zimage-strength-080-darkage.json",
         "assets/terrain/candidates/proof-zimage-richness-vs-klein.png",
+        "assets/terrain/candidates/proof-zimage-rich-micro.json",
+        "assets/terrain/candidates/proof-zimage-rich-chunky.json",
+        "assets/terrain/candidates/proof-zimage-rich-weathered.json",
+        "assets/terrain/candidates/proof-zimage-rich-moody.json",
+        "assets/terrain/candidates/proof-zimage-rich-prompts-comparison.png",
+        "assets/terrain/candidates/proof-zimage-rich-weathered-12-res-simple.json",
+        "assets/terrain/candidates/proof-zimage-rich-weathered-12-dpm-normal.json",
+        "assets/terrain/candidates/proof-zimage-weathered-sampler-comparison.png",
         "assets/terrain/candidates/proof-hybrid-z045-klein055-darkage.json",
         "assets/terrain/candidates/proof-hybrid-zimage-klein-comparison.png"
       ],
       "promotionPolicy": "review-only comparison; rewrite trademark-referential prompts into approved descriptive art direction before runtime promotion",
       "modelDecision": {
         "finalTerrainRenderer": "FLUX.2 Klein 4B FP8 at 8 steps and strength 0.60",
-        "structureCleanupCandidate": "z-image-turbo at 8 steps and strength 0.30 to 0.45",
+        "structureCleanupCandidate": "z-image-turbo at 8 steps and strength 0.30 to 0.45 for masks and editor previews",
+        "structurePreservingMaterialPass": "z-image-turbo with the weathered-age prompt at 12 steps, strength 0.55, DPM++ 2M, normal scheduler",
         "rejectedDefault": "z-image-turbo to Klein chained pass",
-        "reason": "Klein produced stronger painterly terrain language; Z-Image preserved structure but remained soft and introduced patch artifacts at higher strength; chaining invented paths and a marker artifact."
+        "reason": "Klein produced stronger painterly terrain language and readable props. Z-Image preserved structure and the 12-step DPM++ pass improved material detail, but it remained softer and introduced patch artifacts at higher strength; chaining invented paths and a marker artifact."
       },
       "editorKnobs": [
         "structure input",
         "style language",
         "terrain description",
-        "seed"
+        "seed",
+        "strength",
+        "steps",
+        "sampler",
+        "scheduler"
       ],
       "outputs": [
         "same-seed style proofs",

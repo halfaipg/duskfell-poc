@@ -5,18 +5,21 @@ import {
   PLAYER_CARD_PORTRAITS,
 } from "./player-config.js";
 
-export function renderHud({ ui, snapshot, smoothedFps, terrainDebugMode }) {
+export function renderHud({ ui, snapshot, smoothedFps, terrainDebugMode, groundPatchCount, terrainAssetError }) {
   if (!ui.hud) return;
   if (!snapshot) {
     ui.hud.textContent = `FPS ${Math.round(smoothedFps)} / connecting`;
     return;
   }
   const players = Array.isArray(snapshot.players) ? snapshot.players : [];
-  // build tag stays visible so "am I running the new client?" never needs
-  // DevTools — bump when the art pipeline changes materially
+  // build tag + asset state stay visible so "am I running the new client
+  // and did the paintings load?" never needs DevTools
+  const artState = terrainAssetError
+    ? `art v3 ASSETS FAILED: ${terrainAssetError}`
+    : `art v3 / paintings ${groundPatchCount ?? 0}/8`;
   ui.hud.textContent = `FPS ${Math.round(smoothedFps)} / Players ${players.length} / Tick ${snapshot.tick}${
     terrainDebugMode ? ` / Terrain ${terrainDebugMode}` : ""
-  } / art v3`;
+  } / ${artState}`;
 }
 
 export function renderPanel({ ui, snapshot, playerId, sprites, playerSpriteFor }) {

@@ -23,6 +23,8 @@ const steps = args.steps == null ? null : Number.parseInt(args.steps, 10);
 if (steps != null && (!Number.isSafeInteger(steps) || steps < 1 || steps > 100)) {
   throw new Error("--steps must be an integer between 1 and 100");
 }
+const sampler = args.sampler ?? null;
+const scheduler = args.scheduler ?? null;
 
 const sourceBytes = await readFile(inputPath);
 const sourceMime = mimeTypeFor(inputPath);
@@ -45,6 +47,8 @@ const response = await fetch(`${process.env.GRID_BASE_URL ?? DEFAULT_BASE_URL}/v
     seed,
     ...(strength != null ? { strength } : {}),
     ...(steps != null ? { steps } : {}),
+    ...(sampler ? { sampler } : {}),
+    ...(scheduler ? { scheduler } : {}),
     n: 1,
   }),
 });
@@ -73,6 +77,8 @@ await writeFile(
       seed: imageData.seed ?? seed,
       strength,
       steps,
+      sampler,
+      scheduler,
       prompt,
       revisedPrompt: imageData.revised_prompt ?? null,
     },
@@ -91,6 +97,8 @@ console.log(
     seed: imageData.seed ?? seed,
     strength,
     steps,
+    sampler,
+    scheduler,
   }),
 );
 

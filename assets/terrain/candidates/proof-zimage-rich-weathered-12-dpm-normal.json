@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "duskfell-grid-img2img-proof-v1",
+  "input": "proof-structure-grid-input.png",
+  "inputSha256": "985fb6ba600c690e58006e9ab58e026dd1771218872318fce001d96d848234ce",
+  "output": "proof-zimage-rich-weathered-12-dpm-normal.png",
+  "outputSha256": "0b106757887c803f6a99c6895be89998fe14a2322c7c48bc1d651bb50a60ce2e",
+  "model": "z-image-turbo",
+  "style": null,
+  "worker": "half5090beast1",
+  "generationSeconds": 6.03,
+  "seed": 24120,
+  "strength": 0.55,
+  "steps": 12,
+  "sampler": "dpmpp_2m",
+  "scheduler": "normal",
+  "prompt": "Strict 90-degree overhead orthographic military-plan game terrain texture, square map patch, no horizon, no sky. Preserve the supplied river channel, shoreline, elevation masks, open walkable areas and every large rock mass exactly. Do not add paths, roads, trees, buildings, river branches, islands, cliffs, standing walls or new macro rocks. Original unbranded world art, no text, logo, watermark, tile seams, checkerboard patches or symmetry. Enrich only weathering and age: dark wet soil, compacted mud, lichen on existing stones, mineral staining, cracked earth, water-darkened banks, scattered fine scree, moss in crevices and subtle erosion lines. Somber dark-age fantasy RPG ground art, crisp player-scale detail and unified cold daylight.",
+  "revisedPrompt": "Strict 90-degree overhead orthographic military-plan game terrain texture, square map patch, no horizon, no sky. Preserve the supplied river channel, shoreline, elevation masks, open walkable areas and every large rock mass exactly. Do not add paths, roads, trees, buildings, river branches, islands, cliffs, standing walls or new macro rocks. Original unbranded world art, no text, logo, watermark, tile seams, checkerboard patches or symmetry. Enrich only weathering and age: dark wet soil, compacted mud, lichen on existing stones, mineral staining, cracked earth, water-darkened banks, scattered fine scree, moss in crevices and subtle erosion lines. Somber dark-age fantasy RPG ground art, crisp player-scale detail and unified cold daylight."
+}

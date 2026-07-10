@@ -55,6 +55,11 @@ Blender structure much more closely than Klein at equal numeric strength, but
 its final texture was softer and developed patch/grid artifacts plus invented
 paths and trees as strength increased. The reviewed role for Z-Image is a
 low-strength (`0.30–0.45`) cleanup, mask preview, or editor-thumbnail backend.
+For a structure-preserving material pass, the reviewed richer preset is the
+weathered-age prompt at `12` steps, `strength: 0.55`, `dpmpp_2m`, and the
+`normal` scheduler. It added finer grass, bank erosion, and water texture while
+drifting slightly less from the structure input than the 8-step default in the
+controlled proof. It is still too soft to replace Klein as the final renderer.
 Klein remains the final playable-terrain renderer. The tested chained pass
 (`Z 0.45 -> Klein 0.55`) is rejected: it invented more macro detail and produced
 a marker artifact despite lower pixel RMSE.
