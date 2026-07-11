@@ -55,6 +55,7 @@ export function walkAnimationSample({
   idleElapsedMs = null,
   fidgetFrames = null,
   idleFrames = null,
+  phaseFrames = null,
 }) {
   const safeFrameCount = Math.max(1, frameCount);
   const idleFrameIndex = clampInteger(idleFrame, 0, safeFrameCount - 1);
@@ -77,10 +78,14 @@ export function walkAnimationSample({
   const sequenceLength = sequence.length;
   const speed = clamp(speedRatio, PLAYER_WALK_MIN_SPEED_RATIO, PLAYER_WALK_MAX_SPEED_RATIO);
   const frameMs = PLAYER_WALK_FRAME_MS / speed;
-  const phaseFrames = elapsed / frameMs + stablePhase;
-  const sequenceIndex = Math.floor(phaseFrames % sequenceLength);
+  // callers that track motion state pass an incrementally accumulated phase:
+  // scaling total elapsed time by a wobbling speed ratio teleports the cycle
+  const phase = Number.isFinite(phaseFrames)
+    ? phaseFrames + stablePhase
+    : elapsed / frameMs + stablePhase;
+  const sequenceIndex = Math.floor(phase % sequenceLength);
   const frameIndex = sequence[sequenceIndex];
-  const cycleRadians = (phaseFrames / sequenceLength) * Math.PI * 2;
+  const cycleRadians = (phase / sequenceLength) * Math.PI * 2;
   const sway = PLAYER_WALK_SWAY_PX * clamp(0.76 + speed * 0.2, 0.72, 1);
   const footfallWave = Math.cos(cycleRadians * 2);
   const footfallStrength = clamp((footfallWave - 0.72) / 0.28, 0, 1);

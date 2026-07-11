@@ -129,6 +129,7 @@ function playerSpriteFrame(player, point, motion, now, sprite, grounding = null,
       motion.lastMovementMs != null ? now - motion.lastMovementMs : now - motion.walkStartMs,
     fidgetFrames: sprite.animation?.fidgetFrames ?? null,
     idleFrames: sprite.animation?.idleFrames ?? null,
+    phaseFrames: motion.animPhaseFrames ?? null,
   });
   const sourceFrame = direction.startFrame + animation.frameIndex;
   const sx = (sourceFrame % sprite.columns) * sprite.cellWidth;
