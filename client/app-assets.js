@@ -19,12 +19,21 @@ export function createRuntimeAssets() {
   };
   let terrainAssetVersion = 0;
   let terrainAssetError = null;
+  // loading-screen state: the world never renders over fallback graphics —
+  // the client shows a progress bar until every painting and sheet is in
+  const progress = { done: 0, total: 1, spritesReady: false, terrainReady: false };
 
   return {
     sprites,
     terrainAssets,
     terrainAssetVersion: () => terrainAssetVersion,
     terrainAssetError: () => terrainAssetError,
+    assetsReady: () => progress.spritesReady && progress.terrainReady,
+    assetProgress: () => ({
+      done: progress.done + (progress.spritesReady ? 1 : 0),
+      total: progress.total + 1,
+      error: terrainAssetError,
+    }),
     async loadSpriteAssets() {
       try {
         const response = await fetch("/assets/sprites/manifest.json", {
@@ -34,6 +43,7 @@ export function createRuntimeAssets() {
         if (!response.ok) return;
         const manifest = await response.json();
         Object.assign(sprites, await loadRuntimeSpriteAssets(manifest));
+        progress.spritesReady = true;
       } catch (error) {
         console.warn("Sprite assets disabled", error);
         sprites.player = null;
@@ -42,14 +52,22 @@ export function createRuntimeAssets() {
         sprites.props = null;
         sprites.items = null;
         sprites.details = null;
+        progress.spritesReady = true;
       }
     },
     async loadTerrainAssets() {
       try {
-        const loaded = await loadRuntimeTerrainAssets();
-        if (!loaded) return;
+        const loaded = await loadRuntimeTerrainAssets((done, total) => {
+          progress.done = done;
+          progress.total = total;
+        });
+        if (!loaded) {
+          progress.terrainReady = true;
+          return;
+        }
         Object.assign(terrainAssets, loaded);
         terrainAssetVersion += 1;
+        progress.terrainReady = true;
         console.info(
           `Duskfell terrain assets loaded: atlas + ${terrainAssets.groundPatches.size} biome paintings`,
         );
@@ -65,6 +83,7 @@ export function createRuntimeAssets() {
         terrainAssets.patternSources = [];
         terrainAssets.patternContexts = new WeakMap();
         terrainAssetVersion += 1;
+        progress.terrainReady = true;
       }
     },
   };

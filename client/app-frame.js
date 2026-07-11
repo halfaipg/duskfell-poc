@@ -40,10 +40,45 @@ export function createCanvasFrame({ canvas, screenCtx }) {
   };
 }
 
-export function drawLoading(ctx, rect) {
-  ctx.fillStyle = "#d9cfae";
+export function drawLoading(ctx, rect, progress = null) {
+  ctx.fillStyle = "#14181a";
   ctx.fillRect(0, 0, rect.width, rect.height);
-  ctx.fillStyle = "#161a1d";
-  ctx.font = "18px system-ui";
-  ctx.fillText("Connecting to authoritative server...", 28, 42);
+  const cx = rect.width / 2;
+  const cy = rect.height / 2;
+
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#e8dcbc";
+  ctx.font = "700 34px Georgia, serif";
+  ctx.fillText("Duskfell", cx, cy - 46);
+
+  if (progress?.error) {
+    ctx.fillStyle = "#e0907c";
+    ctx.font = "600 15px system-ui";
+    ctx.fillText("The world failed to load — reload to try again.", cx, cy + 4);
+    ctx.fillStyle = "#8a7d63";
+    ctx.font = "13px system-ui";
+    ctx.fillText(String(progress.error).slice(0, 90), cx, cy + 28);
+    ctx.textAlign = "left";
+    return;
+  }
+
+  const fraction = progress?.total ? Math.min(1, progress.done / progress.total) : 0;
+  const barWidth = Math.min(380, rect.width * 0.7);
+  const barX = cx - barWidth / 2;
+  const barY = cy - 8;
+  ctx.fillStyle = "#242b28";
+  ctx.fillRect(barX, barY, barWidth, 14);
+  ctx.fillStyle = "#c8ad7a";
+  ctx.fillRect(barX + 2, barY + 2, Math.max(0, (barWidth - 4) * fraction), 10);
+  ctx.strokeStyle = "#514331";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(barX + 0.5, barY + 0.5, barWidth - 1, 13);
+
+  ctx.fillStyle = "#8f9d95";
+  ctx.font = "600 14px system-ui";
+  const label = progress
+    ? `Painting the world… ${progress.done}/${progress.total}`
+    : "Connecting to authoritative server…";
+  ctx.fillText(label, cx, barY + 38);
+  ctx.textAlign = "left";
 }

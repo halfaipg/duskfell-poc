@@ -251,8 +251,8 @@ function draw(now = 0) {
     const rect = fitCanvas();
     screenCtx.clearRect(0, 0, rect.width, rect.height);
 
-    if (!snapshot) {
-      drawLoading(ctx, rect);
+    if (!snapshot || !runtimeAssets.assetsReady()) {
+      drawLoading(ctx, rect, runtimeAssets.assetProgress());
       updateHud();
       requestAnimationFrame(draw);
       return;
