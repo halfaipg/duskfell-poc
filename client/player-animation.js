@@ -1,7 +1,7 @@
 import { PROJECTION } from "./projection.js";
 
 export const PLAYER_MOVEMENT_EPSILON = 0.015;
-export const PLAYER_WALK_FRAME_MS = 40;
+export const PLAYER_WALK_FRAME_MS = 55;
 export const PLAYER_WALK_STOP_GRACE_MS = 145;
 export const PLAYER_WALK_SWAY_PX = 0.65;
 export const PLAYER_WALK_MIN_SPEED_RATIO = 0.62;
@@ -10,7 +10,7 @@ export const PLAYER_RENDER_SMOOTHING_MS = 78;
 export const PLAYER_RENDER_SNAP_DISTANCE = PROJECTION.unitsPerTile * 2.5;
 // idle fidget: after a quiet delay, the fidget clip plays once per period,
 // staggered per player so a crowd never fidgets in unison
-export const PLAYER_FIDGET_DELAY_MS = 3800;
+export const PLAYER_FIDGET_DELAY_MS = 15000;
 export const PLAYER_FIDGET_PERIOD_MS = 9200;
 export const PLAYER_FIDGET_FRAME_MS = 150;
 // breathing: a slow ping-pong of subtle weight-shift frames while standing
