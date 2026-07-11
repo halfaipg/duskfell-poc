@@ -1,7 +1,7 @@
 import { PROJECTION } from "./projection.js";
 
 export const PLAYER_MOVEMENT_EPSILON = 0.015;
-export const PLAYER_WALK_FRAME_MS = 45;
+export const PLAYER_WALK_FRAME_MS = 40;
 export const PLAYER_WALK_STOP_GRACE_MS = 145;
 export const PLAYER_WALK_SWAY_PX = 0.65;
 export const PLAYER_WALK_MIN_SPEED_RATIO = 0.62;
