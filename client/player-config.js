@@ -30,6 +30,7 @@ export const PREFERRED_PLAYER_PAPERDOLL_IDS = [
 ];
 
 export const PLAYER_CARD_PORTRAITS = {
+  "duskfell-wretch": "/assets/sprites/player-cards/duskfell-wretch-portrait.png?v=hero-pose-1",
   "duskfell-paperdoll-wayfarer": "/assets/sprites/player-cards/duskfell-paperdoll-wayfarer-front.png?v=stylized-base-1",
   "duskfell-paperdoll-ranger": "/assets/sprites/player-cards/duskfell-paperdoll-ranger-front.png?v=stylized-base-1",
   "duskfell-paperdoll-warden": "/assets/sprites/player-cards/duskfell-paperdoll-warden-front.png?v=stylized-base-1",
@@ -93,7 +94,7 @@ export const DETAIL_SPRITE_SCALE = {
   pebble: 0.18,
   tuft: 0.85,
   flower: 0.18,
-  scrub: 0.95,
+  scrub: 1.9,
   "fallen-log": 0.14,
   stump: 0.22,
   mushroom: 0.1,

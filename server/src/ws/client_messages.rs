@@ -45,6 +45,10 @@ pub(super) async fn handle_client_text(
             );
             false
         }
+        Ok(ClientMessage::Say { text }) => {
+            state.sim.lock().await.player_say(player_id, &text);
+            false
+        }
         Ok(ClientMessage::Rename { name }) => {
             let mut sim = state.sim.lock().await;
             match sim.rename_player(player_id, &name) {

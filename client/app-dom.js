@@ -6,6 +6,9 @@ export function getAppDom() {
     ui: {
       connection: document.getElementById("connection"),
       hud: document.getElementById("hud"),
+      playerPanel: document.getElementById("playerPanel"),
+      panelClose: document.getElementById("panelClose"),
+      panelOpen: document.getElementById("panelOpen"),
       playerCardPortrait: document.getElementById("playerCardPortrait"),
       playerCardName: document.getElementById("playerCardName"),
       playerCardArchetype: document.getElementById("playerCardArchetype"),

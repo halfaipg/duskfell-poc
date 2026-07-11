@@ -17,6 +17,9 @@ pub enum ClientMessage {
     Rename {
         name: String,
     },
+    Say {
+        text: String,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -90,6 +93,15 @@ pub struct PlayerSnapshot {
     pub demo_deeds: Vec<String>,
     pub resources: ResourceSnapshot,
     pub inventory: InventorySnapshot,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub speech: Option<SpeechSnapshot>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SpeechSnapshot {
+    pub text: String,
+    pub until_tick: u64,
 }
 
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
@@ -249,7 +261,7 @@ mod tests {
                 assert!(right);
                 assert!(!interact);
             }
-            ClientMessage::Rename { .. } => panic!("expected input message"),
+            ClientMessage::Rename { .. } | ClientMessage::Say { .. } => panic!("expected input message"),
         }
     }
 

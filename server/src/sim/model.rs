@@ -50,6 +50,14 @@ pub(super) struct Player {
     pub(super) color: String,
     pub(super) demo_deeds: Vec<String>,
     pub(super) inventory: PlayerInventory,
+    pub(super) speech: Option<PlayerSpeech>,
+}
+
+// UO-style overhead speech: the latest line and the tick it stops showing
+#[derive(Debug, Clone)]
+pub(super) struct PlayerSpeech {
+    pub(super) text: String,
+    pub(super) until_tick: u64,
 }
 
 #[derive(Component, Debug, Clone)]

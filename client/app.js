@@ -112,7 +112,42 @@ ui.renameButton.addEventListener("click", () => {
   });
 });
 
+// floating player card: X hides it, the Player button brings it back
+ui.panelClose?.addEventListener("click", () => {
+  ui.playerPanel?.classList.add("panel-hidden");
+  ui.panelOpen?.removeAttribute("hidden");
+});
+ui.panelOpen?.addEventListener("click", () => {
+  ui.playerPanel?.classList.remove("panel-hidden");
+  ui.panelOpen?.setAttribute("hidden", "");
+});
+
+// UO-style speech: Enter opens the say box, Enter again sends and the words
+// float above your head; Escape backs out
+const chatInput = document.getElementById("chatInput");
+chatInput?.addEventListener("keydown", (event) => {
+  event.stopPropagation();
+  if (event.key === "Enter") {
+    const text = chatInput.value.trim();
+    if (text) networkClient.send({ type: "say", text });
+    chatInput.value = "";
+    chatInput.hidden = true;
+    chatInput.blur();
+  } else if (event.key === "Escape") {
+    chatInput.value = "";
+    chatInput.hidden = true;
+    chatInput.blur();
+  }
+});
+
 window.addEventListener("keydown", (event) => {
+  if (isTextEntryTarget(event.target)) return;
+  if (event.key === "Enter" && chatInput) {
+    event.preventDefault();
+    chatInput.hidden = false;
+    chatInput.focus();
+    return;
+  }
   if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " ", "e", "E"].includes(event.key)) {
     event.preventDefault();
   }
@@ -121,9 +156,14 @@ window.addEventListener("keydown", (event) => {
 });
 
 window.addEventListener("keyup", (event) => {
+  if (isTextEntryTarget(event.target)) return;
   keys.delete(event.key);
   networkClient.sendInput();
 });
+
+function isTextEntryTarget(target) {
+  return target instanceof HTMLElement && ["INPUT", "TEXTAREA"].includes(target.tagName);
+}
 
 window.addEventListener("resize", () => {
   fitCanvas();

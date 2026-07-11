@@ -33,6 +33,17 @@ export function normalizePlayer(player, prefix) {
     ),
     resources: normalizeResources(player.resources, `${prefix}.resources`),
     inventory: normalizeInventory(player.inventory, `${prefix}.inventory`),
+    speech: player.speech == null ? null : normalizeSpeech(player.speech, `${prefix}.speech`),
+  };
+}
+
+function normalizeSpeech(speech, prefix) {
+  if (!isObject(speech)) {
+    throw new Error(`${prefix} must be an object`);
+  }
+  return {
+    text: normalizeText(speech.text, `${prefix}.text`).slice(0, 96),
+    untilTick: normalizePositiveInteger(speech.untilTick, `${prefix}.untilTick`),
   };
 }
 
