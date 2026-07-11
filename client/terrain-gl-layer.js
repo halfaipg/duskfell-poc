@@ -247,12 +247,14 @@ void main() {
     cos(wc.x * 1.3 + t * 0.7) + cos(wc.y * 2.1 + t * 0.5)
   ) * 0.22;
 
-  // two octaves of drifting caustic web (bright cell borders)
-  vec2 w1 = worley((wc - drift) * 1.9 + warp, t * 0.8);
-  vec2 w2 = worley((wc - drift * 1.6) * 3.4 - warp, t * 1.1 + 3.0);
-  float web1 = smoothstep(0.16, 0.0, w1.y);
-  float web2 = smoothstep(0.22, 0.0, w2.y);
-  float caustic = web1 * 0.5 + web2 * 0.28 + web1 * web2 * 0.5;
+  // calm caustics: bigger cells, soft wide borders, slow morph — one main
+  // octave with a faint fine shimmer, so the surface glimmers without
+  // reading as a busy net of lines
+  vec2 w1 = worley((wc - drift) * 1.15 + warp, t * 0.45);
+  vec2 w2 = worley((wc - drift * 1.6) * 2.6 - warp, t * 0.7 + 3.0);
+  float web1 = smoothstep(0.30, 0.02, w1.y);
+  float web2 = smoothstep(0.26, 0.0, w2.y);
+  float caustic = web1 * 0.42 + web2 * 0.10;
 
   // the painted river stays the base — the shader only deepens the core
   // slightly and lays moving light on top
@@ -266,7 +268,7 @@ void main() {
   float foam = edge * smoothstep(0.45, 0.05, wf.x);
 
   vec3 rgb = deep * baseAlpha
-           + vec3(0.75, 0.85, 0.8) * caustic * body * 0.30
+           + vec3(0.75, 0.85, 0.8) * caustic * body * 0.22
            + vec3(0.85, 0.9, 0.86) * foam * 0.5;
   float alpha = baseAlpha + foam * 0.35;
   gl_FragColor = vec4(rgb, alpha);
