@@ -24,6 +24,7 @@ const params = new URLSearchParams(window.location.search);
 const terrainGlLayer =
   params.get("nogl") === "1" ? null : createTerrainGlLayer(document.getElementById("worldgl"));
 const DAY_TINT = params.get("dayTint");
+const SHOW_NPCS = params.get("npcs") === "1";
 console.info("Duskfell client build: painted-terrain v3 (2026-07-09)");
 
 const keys = new Set();
@@ -291,10 +292,14 @@ function draw(now = 0) {
     }
 
     const players = Array.isArray(snapshot.players) ? snapshot.players : [];
+    // NPCs are hidden until they have real art and behaviour — ?npcs=1
+    // shows the work-in-progress ones for development
+    const npcs = SHOW_NPCS && Array.isArray(snapshot.npcs) ? snapshot.npcs : [];
+    const actors = [...players, ...npcs];
     const me = players.find((player) => player.id === playerId) || players[0];
     const origin = defaultOrigin(snapshot.map);
     playerRenderState.updateRenderOffsets(players, snapshot.map, playerId, now);
-    playerRenderState.updateVisualPositions(players, now);
+    playerRenderState.updateVisualPositions(actors, now);
     localPlayerRenderPosition = me ? playerRenderState.renderPosition(me) : null;
     if (moveTarget && me) {
       // re-evaluate the synthesized heading; sendInput dedupes so this only
@@ -345,7 +350,7 @@ function draw(now = 0) {
       ecologyRenderer.drawEcologyEnergyLinks(objects, origin, now);
       ecologyRenderer.drawEcologyFeedLinks(objects, origin, now);
     }
-    objectDrawer.drawSceneEntities(players, objects, origin, now);
+    objectDrawer.drawSceneEntities(actors, objects, origin, now);
     if (!HIDE_WORLD_PROPS && !VEGETATION_ONLY_ART_PASS) {
       interiorRenderer.drawInteriorRoofs(origin, localPlayerRenderPosition, now);
     }

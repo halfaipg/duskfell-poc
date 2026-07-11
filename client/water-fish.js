@@ -4,7 +4,7 @@ import { streamCenterAt } from "./terrain-biome.js";
 // Ambient fish: dark shapes cruising the stream under the surface, with the
 // occasional ripple ring. Pure client ambience — when fishing gameplay lands
 // server-side these become the visual layer over real fish stock.
-const FISH_COUNT = 14;
+const FISH_COUNT = 5;
 const FISH_ALPHA = 0.38;
 
 export function drawWaterFish(ctx, terrain, origin, camera, viewport, now) {

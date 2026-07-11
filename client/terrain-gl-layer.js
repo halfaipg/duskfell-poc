@@ -210,40 +210,66 @@ uniform float uTime;
 uniform float uCanvasTiles;
 varying vec2 vUv;
 
-vec2 mirrorUv(vec2 uv) {
-  return abs(fract(uv * 0.5) * 2.0 - 1.0);
+vec2 hash2(vec2 p) {
+  p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
+  return fract(sin(p) * 43758.5453);
+}
+
+// animated cellular noise: x = distance to nearest point, y = border factor
+vec2 worley(vec2 p, float t) {
+  vec2 n = floor(p);
+  vec2 f = fract(p);
+  float f1 = 8.0;
+  float f2 = 8.0;
+  for (int j = -1; j <= 1; j++) {
+    for (int i = -1; i <= 1; i++) {
+      vec2 g = vec2(float(i), float(j));
+      vec2 o = hash2(n + g);
+      o = 0.5 + 0.5 * sin(t + 6.2831 * o);
+      float d = length(g + o - f);
+      if (d < f1) { f2 = f1; f1 = d; }
+      else if (d < f2) { f2 = d; }
+    }
+  }
+  return vec2(f1, f2 - f1);
 }
 
 void main() {
   float mask = texture2D(uMask, vUv).a;
   if (mask < 0.02) discard;
-  vec2 wc = vUv * uCanvasTiles;                 // tile-space coords
+  vec2 wc = vUv * uCanvasTiles;
   float t = uTime;
+  vec2 drift = uFlow * t * 0.35;
 
-  // ripple field distorts the sampling — the fluid wobble
-  vec2 wob = vec2(
-    sin(wc.y * 6.3 + t * 2.4) + sin(wc.x * 3.7 - t * 1.6) * 0.7,
-    cos(wc.x * 5.1 + t * 2.0) + cos(wc.y * 4.3 + t * 1.3) * 0.7
-  ) * 0.018;
+  // large slow swell warps the caustic domain — the fluid feel lives here
+  vec2 warp = vec2(
+    sin(wc.y * 1.7 + t * 0.9) + sin(wc.x * 0.9 - t * 0.6),
+    cos(wc.x * 1.3 + t * 0.7) + cos(wc.y * 2.1 + t * 0.5)
+  ) * 0.22;
 
-  // two advected layers of the painted water drift along the channel
-  vec2 uv1 = wc * 0.22 + uFlow * t * 0.055 + wob;
-  vec2 uv2 = wc * 0.37 - uFlow * t * 0.028 - wob * 1.5 + vec2(0.31);
-  vec3 base = texture2D(uWater, mirrorUv(uv1)).rgb;
-  vec3 drift = texture2D(uWater, mirrorUv(uv2)).rgb;
-  vec3 col = base * 0.66 + drift * 0.44;
+  // two octaves of drifting caustic web (bright cell borders)
+  vec2 w1 = worley((wc - drift) * 1.9 + warp, t * 0.8);
+  vec2 w2 = worley((wc - drift * 1.6) * 3.4 - warp, t * 1.1 + 3.0);
+  float web1 = smoothstep(0.16, 0.0, w1.y);
+  float web2 = smoothstep(0.22, 0.0, w2.y);
+  float caustic = web1 * 0.5 + web2 * 0.28 + web1 * web2 * 0.5;
 
-  // travelling glints: sharp moving highlight bands
-  float g = sin(dot(wc, vec2(7.5, 9.5)) + t * 3.2 + sin(wc.y * 4.7 + t));
-  col += vec3(0.85, 0.9, 0.85) * pow(max(g, 0.0), 22.0) * 0.22;
+  // the painted river stays the base — the shader only deepens the core
+  // slightly and lays moving light on top
+  float body = smoothstep(0.35, 0.9, mask);
+  float baseAlpha = body * 0.18;
+  vec3 deep = vec3(0.10, 0.16, 0.15);
 
-  // edge foam: a soft band where the mask fades at the banks
-  float edge = smoothstep(0.04, 0.30, mask) * (1.0 - smoothstep(0.45, 0.9, mask));
-  float foamWave = 0.5 + 0.5 * sin(wc.x * 12.0 + wc.y * 9.0 + t * 1.8 + wob.x * 60.0);
-  col = mix(col, vec3(0.78, 0.82, 0.78), edge * foamWave * 0.22);
+  // bank foam: cellular clumps inside the mask fade band
+  float edge = smoothstep(0.03, 0.28, mask) * (1.0 - smoothstep(0.34, 0.72, mask));
+  vec2 wf = worley(wc * 4.6 + warp * 1.4 - uFlow * t * 0.15, t * 0.6);
+  float foam = edge * smoothstep(0.45, 0.05, wf.x);
 
-  float alpha = mask * 0.62;
-  gl_FragColor = vec4(col * alpha, alpha);
+  vec3 rgb = deep * baseAlpha
+           + vec3(0.75, 0.85, 0.8) * caustic * body * 0.30
+           + vec3(0.85, 0.9, 0.86) * foam * 0.5;
+  float alpha = baseAlpha + foam * 0.35;
+  gl_FragColor = vec4(rgb, alpha);
 }`;
   const vertex = compile(gl, gl.VERTEX_SHADER, vertexSource);
   const fragment = compile(gl, gl.FRAGMENT_SHADER, fragmentSource);
