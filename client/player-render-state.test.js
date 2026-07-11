@@ -39,8 +39,9 @@ test("render offsets spread crowded remote players while leaving local player an
   assert.deepEqual(state.renderPosition(players[0]), { x: 10, y: 10 });
   assert.notDeepEqual(state.renderPosition(players[1]), { x: 10.1, y: 10 });
   assert.notDeepEqual(state.renderPosition(players[2]), { x: 10.2, y: 10 });
-  assert.equal(state.variantIndexFor(players[1], 99), 0);
-  assert.equal(state.variantIndexFor(players[2], 99), 1);
+  // variants are stable per player id (the caller's hash), never roster order
+  assert.equal(state.variantIndexFor(players[1], 99), 99);
+  assert.equal(state.variantIndexFor(players[2], 99), 99);
 });
 
 test("walking past a nearby player never displaces them", () => {

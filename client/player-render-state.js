@@ -24,19 +24,12 @@ export function createPlayerRenderState() {
   const motion = new Map();
   const visualPositions = new Map();
   const renderOffsets = new Map();
-  const variantIndexes = new Map();
   let lastRenderUpdateTime = 0;
   let lastOffsetUpdateTime = 0;
 
   return {
     updateRenderOffsets(players, map, localPlayerId = null, now = 0) {
       const offsetTargets = new Map();
-      variantIndexes.clear();
-
-      [...players]
-        .sort((a, b) => String(a.id).localeCompare(String(b.id)))
-        .forEach((player, index) => variantIndexes.set(player.id, index));
-
       const clusters = playerProximityClusters(players);
 
       for (const cluster of clusters) {
@@ -216,7 +209,9 @@ export function createPlayerRenderState() {
     },
 
     variantIndexFor(player, fallbackIndex = 0) {
-      return variantIndexes.get(player.id) ?? fallbackIndex;
+      // stable per-id hash only: roster-order variants made a player's body
+      // (and card portrait) swap whenever someone crossed the interest radius
+      return fallbackIndex;
     },
 
     nearbyPlayerCount(players, player) {
