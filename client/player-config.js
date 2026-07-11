@@ -39,7 +39,15 @@ export const PREFERRED_PLAYER_PAPERDOLL_IDS = [
 ];
 
 export const PLAYER_CARD_PORTRAITS = {
-  "duskfell-wretch": "/assets/sprites/player-cards/duskfell-wretch-portrait.png?v=hero-pose-1",
+  "duskfell-wretch": "/assets/sprites/player-cards/duskfell-wretch-hero.png?v=painted-hero-1",
+  "duskfell-wayfarer": "/assets/sprites/player-cards/duskfell-wayfarer-hero.png?v=painted-hero-1",
+  "duskfell-ranger": "/assets/sprites/player-cards/duskfell-ranger-hero.png?v=painted-hero-1",
+  "duskfell-warden": "/assets/sprites/player-cards/duskfell-warden-hero.png?v=painted-hero-1",
+  "duskfell-brigand": "/assets/sprites/player-cards/duskfell-brigand-hero.png?v=painted-hero-1",
+  "duskfell-paperdoll-wayfarer": "/assets/sprites/player-cards/duskfell-wayfarer-hero.png?v=painted-hero-1",
+  "duskfell-paperdoll-ranger": "/assets/sprites/player-cards/duskfell-ranger-hero.png?v=painted-hero-1",
+  "duskfell-paperdoll-warden": "/assets/sprites/player-cards/duskfell-warden-hero.png?v=painted-hero-1",
+  "duskfell-paperdoll-brigand": "/assets/sprites/player-cards/duskfell-brigand-hero.png?v=painted-hero-1",
 };
 
 export const GENERATED_WAYFARER_NAME_RE = /^Wayfarer-([0-9a-f]{4})$/i;
