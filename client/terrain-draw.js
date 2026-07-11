@@ -109,8 +109,11 @@ export function createTerrainDrawer({
       }
       terrainDebugDrawer.drawTerrainDebugChunk(chunk, terrainDebugMode);
     }
-    if (waterEntries?.size) {
-      drawGlWater(glLayer, waterEntries, origin, now);
+    if (glActive) {
+      glLayer.finishTerrain();
+      if (waterEntries?.size) {
+        drawGlWater(glLayer, waterEntries, origin, now);
+      }
     }
     return glActive;
   }

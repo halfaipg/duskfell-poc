@@ -21,10 +21,39 @@ export function createTerrainGlLayer(canvas) {
   const uniformCamera = gl.getUniformLocation(program, "uCamera");
   const uniformViewport = gl.getUniformLocation(program, "uViewport");
   const uniformTexture = gl.getUniformLocation(program, "uTexture");
+  const blitProgram = buildBlitProgram(gl);
   const vertexBuffer = gl.createBuffer();
   const vertexData = new Float32Array(4 * 4);
   const textures = new Set();
   let contextLost = false;
+  let sceneFbo = null;
+  let sceneTexture = null;
+  let sceneWidth = 0;
+  let sceneHeight = 0;
+
+  function ensureSceneTarget() {
+    if (sceneFbo && sceneWidth === canvas.width && sceneHeight === canvas.height) return true;
+    if (sceneTexture) gl.deleteTexture(sceneTexture);
+    if (sceneFbo) gl.deleteFramebuffer(sceneFbo);
+    sceneTexture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, sceneTexture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, canvas.width, canvas.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    sceneFbo = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, sceneFbo);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, sceneTexture, 0);
+    const ok = gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    sceneWidth = canvas.width;
+    sceneHeight = canvas.height;
+    if (!ok) {
+      sceneFbo = null;
+    }
+    return Boolean(sceneFbo);
+  }
 
   canvas.addEventListener("webglcontextlost", (event) => {
     event.preventDefault();
@@ -43,6 +72,9 @@ export function createTerrainGlLayer(canvas) {
   function beginFrame(camera, cssWidth, cssHeight, dpr) {
     if (contextLost) return false;
     resize(cssWidth, cssHeight, dpr);
+    // terrain renders into the scene texture; the water pass refracts it
+    const useFbo = Boolean(blitProgram) && ensureSceneTarget();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, useFbo ? sceneFbo : null);
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clearColor(CLEAR_COLOR[0], CLEAR_COLOR[1], CLEAR_COLOR[2], 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -132,6 +164,28 @@ export function createTerrainGlLayer(canvas) {
     return texture;
   }
 
+  // present the scene texture to the canvas, then let the water pass sample
+  // it for refraction — the riverbed genuinely bends under the surface
+  function finishTerrain() {
+    if (contextLost || !blitProgram || !sceneFbo) return false;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.disable(gl.BLEND);
+    gl.useProgram(blitProgram);
+    const blitPosition = gl.getAttribLocation(blitProgram, "aPosition");
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+    gl.enableVertexAttribArray(blitPosition);
+    gl.vertexAttribPointer(blitPosition, 2, gl.FLOAT, false, 16, 0);
+    vertexData.set([-1, -1, 0, 0, 1, -1, 0, 0, -1, 1, 0, 0, 1, 1, 0, 0]);
+    gl.bufferData(gl.ARRAY_BUFFER, vertexData, gl.DYNAMIC_DRAW);
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, sceneTexture);
+    gl.uniform1i(gl.getUniformLocation(blitProgram, "uScene"), 2);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    gl.enable(gl.BLEND);
+    return true;
+  }
+
   function beginWater(camera, cssWidth, cssHeight, nowMs, waterImage) {
     if (contextLost || !waterProgram || !waterImage) return false;
     if (waterTextureSource !== waterImage) {
@@ -153,6 +207,12 @@ export function createTerrainGlLayer(canvas) {
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, waterTexture);
     gl.uniform1i(waterUniforms.water, 1);
+    if (sceneTexture) {
+      gl.activeTexture(gl.TEXTURE2);
+      gl.bindTexture(gl.TEXTURE_2D, sceneTexture);
+      gl.uniform1i(gl.getUniformLocation(waterProgram, "uScene"), 2);
+    }
+    gl.uniform2f(gl.getUniformLocation(waterProgram, "uResolution"), canvas.width, canvas.height);
     return true;
   }
 
@@ -182,10 +242,37 @@ export function createTerrainGlLayer(canvas) {
   return {
     beginFrame,
     drawChunkLayer,
+    finishTerrain,
     beginWater,
     drawWaterQuad,
     isLost: () => contextLost,
   };
+}
+
+function buildBlitProgram(gl) {
+  const vertexSource = `
+attribute vec2 aPosition;
+varying vec2 vUv;
+void main() {
+  gl_Position = vec4(aPosition, 0.0, 1.0);
+  vUv = aPosition * 0.5 + 0.5;
+}`;
+  const fragmentSource = `
+precision mediump float;
+uniform sampler2D uScene;
+varying vec2 vUv;
+void main() {
+  gl_FragColor = texture2D(uScene, vUv);
+}`;
+  const vertex = compile(gl, gl.VERTEX_SHADER, vertexSource);
+  const fragment = compile(gl, gl.FRAGMENT_SHADER, fragmentSource);
+  if (!vertex || !fragment) return null;
+  const program = gl.createProgram();
+  gl.attachShader(program, vertex);
+  gl.attachShader(program, fragment);
+  gl.linkProgram(program);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return null;
+  return program;
 }
 
 function buildWaterProgram(gl) {
