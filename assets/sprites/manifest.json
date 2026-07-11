@@ -2779,7 +2779,7 @@
     {
       "id": "duskfell-wretch",
       "image": "duskfell-wretch.png",
-      "imageSha256": "0389cb00af7388fb03472bb6f84a5121864025800b084b764399f8be5ae3f06d",
+      "imageSha256": "19d1e90d01712556a011ab244aaf20072d9139097fe53bdab1279b6f3f2610cb",
       "frameGrid": {
         "cellWidth": 128,
         "cellHeight": 128,
