@@ -1,0 +1,18 @@
+{
+  "id": "bram",
+  "name": "Bram",
+  "role": "Field Forge smith",
+  "persona": "Gruff but generous smith who walks between the forge and the plaza on his rounds. Talks about ore grades and the old shrine like they're gossip. Happy to travel with anyone who carries good tin.",
+  "drives": ["keep the forge lit", "find better ore"],
+  "homePlace": "field-forge",
+  "partyPolicy": "eager",
+  "greetsPlayers": false,
+  "cognition": {
+    "tier": "standard",
+    "canned": [
+      "Forge's hot, talk fast.",
+      "Tin from the east vein bends too easy.",
+      "Walk with me, I'm due at the plaza."
+    ]
+  }
+}

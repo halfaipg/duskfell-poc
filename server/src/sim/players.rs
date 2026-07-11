@@ -77,6 +77,7 @@ impl SimWorld {
     }
 
     pub fn remove_player(&mut self, id: PlayerId) {
+        self.dissolve_parties_for_player(id);
         if let Some(entity) = self.players.remove(&id) {
             if let Some(player) = self.world.get::<Player>(entity) {
                 self.player_name_index

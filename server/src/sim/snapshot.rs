@@ -1,11 +1,12 @@
 use bevy_ecs::prelude::Entity;
 
 use crate::protocol::{
-    MapSnapshot, ObjectSnapshot, PlayerId, PlayerSnapshot, ResourceKind, ResourceSnapshot,
-    SettlementSnapshot, WorldSnapshot,
+    MapSnapshot, NpcSnapshot, ObjectSnapshot, PlayerId, PlayerSnapshot, ResourceKind,
+    ResourceSnapshot, SettlementSnapshot, WorldSnapshot,
 };
 
 use super::movement::distance;
+use super::npcs::Npc;
 use super::{point_from_position, Player, Position, ResourceNode, SimWorld, WorldObject};
 
 impl SimWorld {
@@ -14,6 +15,7 @@ impl SimWorld {
             tick: self.tick,
             map: self.map_snapshot(),
             players: self.player_snapshots(None, None, f32::INFINITY),
+            npcs: self.npc_snapshots(None, None, f32::INFINITY),
             objects: self.object_snapshots(None, None, f32::INFINITY),
             settlement,
         }
@@ -39,11 +41,16 @@ impl SimWorld {
                 interest_radius + self.max_object_radius,
             )
         });
+        let npc_entities = center.map(|center| {
+            self.npc_index
+                .query_radius(point_from_position(center), interest_radius)
+        });
 
         WorldSnapshot {
             tick: self.tick,
             map: self.map_snapshot(),
             players: self.player_snapshots(player_entities.as_deref(), center, interest_radius),
+            npcs: self.npc_snapshots(npc_entities.as_deref(), center, interest_radius),
             objects: self.object_snapshots(object_entities.as_deref(), center, interest_radius),
             settlement,
         }
@@ -95,6 +102,41 @@ impl SimWorld {
         }
         players.sort_by_key(|player| player.id);
         players
+    }
+
+    fn npc_snapshots(
+        &mut self,
+        candidates: Option<&[Entity]>,
+        center: Option<Position>,
+        interest_radius: f32,
+    ) -> Vec<NpcSnapshot> {
+        let mut npcs = Vec::new();
+        if let Some(candidates) = candidates {
+            for entity in candidates {
+                let Some((npc, position)) = self
+                    .world
+                    .get::<Npc>(*entity)
+                    .zip(self.world.get::<Position>(*entity))
+                else {
+                    continue;
+                };
+                npcs.push(npc_snapshot(npc, position, self.npc_party_leader(&npc.id)));
+            }
+        } else {
+            let mut collected = Vec::new();
+            let mut query = self.world.query::<(&Npc, &Position)>();
+            for (npc, position) in query.iter(&self.world) {
+                collected.push((npc.clone(), *position));
+            }
+            for (npc, position) in &collected {
+                npcs.push(npc_snapshot(npc, position, self.npc_party_leader(&npc.id)));
+            }
+        }
+        if let Some(center) = center {
+            npcs.retain(|npc| distance(center, Position { x: npc.x, y: npc.y }) <= interest_radius);
+        }
+        npcs.sort_by(|a, b| a.id.cmp(&b.id));
+        npcs
     }
 
     fn object_snapshots(
@@ -158,6 +200,17 @@ fn player_snapshot(player: &Player, position: &Position) -> PlayerSnapshot {
             seed: player.inventory.resource_total(ResourceKind::Seed),
         },
         inventory: player.inventory.snapshot(),
+    }
+}
+
+fn npc_snapshot(npc: &Npc, position: &Position, party_player_id: Option<PlayerId>) -> NpcSnapshot {
+    NpcSnapshot {
+        id: npc.id.clone(),
+        name: npc.name.clone(),
+        x: position.x,
+        y: position.y,
+        radius: npc.radius,
+        party_player_id,
     }
 }
 

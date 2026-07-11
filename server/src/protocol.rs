@@ -17,6 +17,19 @@ pub enum ClientMessage {
     Rename {
         name: String,
     },
+    PartyInvite {
+        #[serde(rename = "npcId")]
+        npc_id: String,
+    },
+    PartyLeave {
+        #[serde(rename = "npcId")]
+        npc_id: String,
+    },
+    Say {
+        #[serde(rename = "npcId")]
+        npc_id: String,
+        text: String,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -32,6 +45,23 @@ pub enum ServerMessage {
         level: NoticeLevel,
         message: String,
     },
+    NpcSay {
+        #[serde(rename = "npcId")]
+        npc_id: String,
+        #[serde(rename = "sayId")]
+        say_id: Uuid,
+        seq: u32,
+        text: String,
+        done: bool,
+        source: NpcSaySource,
+    },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum NpcSaySource {
+    Canned,
+    Live,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -48,8 +78,21 @@ pub struct WorldSnapshot {
     pub tick: u64,
     pub map: MapSnapshot,
     pub players: Vec<PlayerSnapshot>,
+    pub npcs: Vec<NpcSnapshot>,
     pub objects: Vec<ObjectSnapshot>,
     pub settlement: SettlementSnapshot,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NpcSnapshot {
+    pub id: String,
+    pub name: String,
+    pub x: f32,
+    pub y: f32,
+    pub radius: f32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub party_player_id: Option<PlayerId>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -224,7 +267,7 @@ pub struct SettlementReceiptSnapshot {
 
 #[cfg(test)]
 mod tests {
-    use super::ClientMessage;
+    use super::{ClientMessage, NpcSnapshot};
 
     #[test]
     fn client_input_accepts_exact_fields() {
@@ -249,7 +292,7 @@ mod tests {
                 assert!(right);
                 assert!(!interact);
             }
-            ClientMessage::Rename { .. } => panic!("expected input message"),
+            other => panic!("expected input message, got {other:?}"),
         }
     }
 
@@ -266,5 +309,95 @@ mod tests {
         )
         .expect_err("extra rename field should fail");
         assert!(rename_err.to_string().contains("unknown field"));
+
+        let party_err = serde_json::from_str::<ClientMessage>(
+            r#"{"type":"partyInvite","npcId":"maren","force":true}"#,
+        )
+        .expect_err("extra party invite field should fail");
+        assert!(party_err.to_string().contains("unknown field"));
+    }
+
+    #[test]
+    fn party_messages_use_camel_case_wire_shape() {
+        let invite =
+            serde_json::from_str::<ClientMessage>(r#"{"type":"partyInvite","npcId":"maren"}"#)
+                .expect("party invite parses");
+        match invite {
+            ClientMessage::PartyInvite { npc_id } => assert_eq!(npc_id, "maren"),
+            other => panic!("expected party invite, got {other:?}"),
+        }
+
+        let leave =
+            serde_json::from_str::<ClientMessage>(r#"{"type":"partyLeave","npcId":"maren"}"#)
+                .expect("party leave parses");
+        match leave {
+            ClientMessage::PartyLeave { npc_id } => assert_eq!(npc_id, "maren"),
+            other => panic!("expected party leave, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn say_message_uses_camel_case_and_rejects_unknown_fields() {
+        let say = serde_json::from_str::<ClientMessage>(
+            r#"{"type":"say","npcId":"maren","text":"hello"}"#,
+        )
+        .expect("say parses");
+        match say {
+            ClientMessage::Say { npc_id, text } => {
+                assert_eq!(npc_id, "maren");
+                assert_eq!(text, "hello");
+            }
+            other => panic!("expected say, got {other:?}"),
+        }
+
+        let err = serde_json::from_str::<ClientMessage>(
+            r#"{"type":"say","npcId":"maren","text":"hello","admin":true}"#,
+        )
+        .expect_err("extra say field should fail");
+        assert!(err.to_string().contains("unknown field"));
+    }
+
+    #[test]
+    fn npc_say_serializes_camel_case_wire_shape() {
+        let say_id = uuid::Uuid::new_v4();
+        let frame = super::ServerMessage::NpcSay {
+            npc_id: "maren".to_string(),
+            say_id,
+            seq: 0,
+            text: "Mm.".to_string(),
+            done: true,
+            source: super::NpcSaySource::Canned,
+        };
+        let json = serde_json::to_string(&frame).expect("npcSay serializes");
+        assert!(json.contains(r#""type":"npcSay""#));
+        assert!(json.contains(r#""npcId":"maren""#));
+        assert!(json.contains(&format!(r#""sayId":"{say_id}""#)));
+        assert!(json.contains(r#""source":"canned""#));
+        assert!(json.contains(r#""done":true"#));
+    }
+
+    #[test]
+    fn npc_snapshot_serializes_camel_case_and_omits_empty_party() {
+        let npc = NpcSnapshot {
+            id: "maren".to_string(),
+            name: "Maren".to_string(),
+            x: 1.0,
+            y: 2.0,
+            radius: 20.0,
+            party_player_id: None,
+        };
+        let json = serde_json::to_string(&npc).expect("npc snapshot serializes");
+        assert_eq!(
+            json,
+            r#"{"id":"maren","name":"Maren","x":1.0,"y":2.0,"radius":20.0}"#
+        );
+
+        let player_id = uuid::Uuid::new_v4();
+        let npc = NpcSnapshot {
+            party_player_id: Some(player_id),
+            ..npc
+        };
+        let json = serde_json::to_string(&npc).expect("npc snapshot serializes");
+        assert!(json.contains(&format!(r#""partyPlayerId":"{player_id}""#)));
     }
 }

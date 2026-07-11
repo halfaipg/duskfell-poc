@@ -7,7 +7,11 @@ use crate::protocol::ObjectKind;
 use crate::spatial::{Point, SpatialIndex};
 use crate::terrain::TerrainAuthority;
 
-use super::model::{MapBounds, Position, SimWorld, WorldObject, SPATIAL_CELL_SIZE};
+use super::model::{
+    MapBounds, Position, SimWorld, Velocity, WorldObject, DEFAULT_WORLD_DAY_SECONDS,
+    SPATIAL_CELL_SIZE,
+};
+use super::npcs::Npc;
 use super::resources::{generated_ecology_objects, resource_node_for_object};
 use super::terrain_authority::{
     terrain_detail_authority_blockers, terrain_detail_authority_decay_consumers,
@@ -136,6 +140,27 @@ impl SimWorld {
             &object_entities,
         )?;
 
+        let mut npc_index = SpatialIndex::new(SPATIAL_CELL_SIZE);
+        let mut npc_entities = HashMap::new();
+        for npc in content.npcs {
+            let npc_id = npc.id.clone();
+            let entity = world
+                .spawn((
+                    Npc {
+                        id: npc.id,
+                        persona_id: npc.persona,
+                        name: npc.name,
+                        radius: npc.radius,
+                        schedule: npc.schedule,
+                    },
+                    Position { x: npc.x, y: npc.y },
+                    Velocity::default(),
+                ))
+                .id();
+            npc_index.insert_or_update(entity, Point { x: npc.x, y: npc.y });
+            npc_entities.insert(npc_id, entity);
+        }
+
         Ok(Self {
             world,
             tick: 0,
@@ -145,6 +170,12 @@ impl SimWorld {
             interact_latches: HashMap::new(),
             player_name_index: HashMap::new(),
             player_index: SpatialIndex::new(SPATIAL_CELL_SIZE),
+            npc_entities,
+            npc_index,
+            npc_parties: HashMap::new(),
+            player_party: HashMap::new(),
+            world_day_seconds: DEFAULT_WORLD_DAY_SECONDS,
+            npc_invites_deterministic: true,
             object_entities,
             object_index,
             max_object_radius,

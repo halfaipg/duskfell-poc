@@ -127,6 +127,17 @@ pub(crate) async fn readyz(State(state): State<AppState>) -> impl IntoResponse {
             "{session_pending_tickets}/{session_ticket_capacity} pending session tickets"
         ),
     });
+    // NPC cognition never gates readiness: a degraded or absent provider means
+    // NPCs answer canned lines, not that the shard is down (design D7).
+    let npc_cognition_detail = match &state.npc_engine {
+        Some(bridge) => bridge.status.lock().await.detail(),
+        None => "canned-only (engine disabled or no provider configured)".to_string(),
+    };
+    checks.push(ReadinessCheck {
+        name: "npcCognition",
+        ok: true,
+        detail: npc_cognition_detail,
+    });
 
     let ready = checks.iter().all(|check| check.ok);
     let status = if ready {

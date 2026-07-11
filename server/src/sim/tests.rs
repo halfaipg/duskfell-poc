@@ -6,6 +6,7 @@ use crate::protocol::SettlementSnapshot;
 mod crafting_inventory;
 mod ecology_resources;
 mod movement;
+mod npcs;
 mod player_identity;
 mod terrain_detail_authority;
 

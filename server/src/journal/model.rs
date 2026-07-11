@@ -134,6 +134,67 @@ pub enum JournalEventKind {
         asset_id: String,
         error: String,
     },
+    NpcRelocated {
+        #[serde(rename = "npcId")]
+        npc_id: String,
+        x: f32,
+        y: f32,
+    },
+    NpcPartyInvited {
+        #[serde(rename = "playerId")]
+        player_id: PlayerId,
+        #[serde(rename = "npcId")]
+        npc_id: String,
+        #[serde(rename = "inviteId")]
+        invite_id: Uuid,
+    },
+    NpcPartyJoined {
+        #[serde(rename = "playerId")]
+        player_id: PlayerId,
+        #[serde(rename = "npcId")]
+        npc_id: String,
+    },
+    NpcPartyDeclined {
+        #[serde(rename = "playerId")]
+        player_id: PlayerId,
+        #[serde(rename = "npcId")]
+        npc_id: String,
+        #[serde(rename = "inviteId")]
+        invite_id: Uuid,
+    },
+    NpcPartyLeft {
+        #[serde(rename = "playerId")]
+        player_id: PlayerId,
+        #[serde(rename = "npcId")]
+        npc_id: String,
+    },
+    PlayerSpokeToNpc {
+        #[serde(rename = "playerId")]
+        player_id: PlayerId,
+        #[serde(rename = "npcId")]
+        npc_id: String,
+        text: String,
+    },
+    NpcSaid {
+        #[serde(rename = "playerId")]
+        player_id: PlayerId,
+        #[serde(rename = "npcId")]
+        npc_id: String,
+        #[serde(rename = "sayId")]
+        say_id: Uuid,
+        chars: usize,
+        source: String,
+    },
+    NpcIntentRejected {
+        #[serde(rename = "npcId")]
+        npc_id: String,
+        #[serde(rename = "decisionId")]
+        decision_id: String,
+        reason: String,
+    },
+    NpcCognitionStatusChanged {
+        status: String,
+    },
     BadClientMessage {
         #[serde(rename = "playerId")]
         player_id: PlayerId,

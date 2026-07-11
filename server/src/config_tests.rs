@@ -237,6 +237,7 @@ fn valid_runtime_budget_config() -> RuntimeBudgetConfig {
             message_burst: 20,
             message_refill_per_second: 30,
             max_input_sequence_step: DEFAULT_MAX_INPUT_SEQUENCE_STEP,
+            ..ClientIngressConfig::default()
         },
         max_snapshot_bytes: 65_536,
         max_admin_snapshot_bytes: 262_144,

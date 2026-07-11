@@ -165,6 +165,20 @@ pub(super) fn write_websocket_metrics(output: &mut String, metrics: &AppMetrics)
     );
     write_metric(
         output,
+        "sundermere_npc_say_frames_total",
+        "npcSay dialogue frames delivered to player socket channels.",
+        "counter",
+        metrics.npc_say_frames_total.load(Ordering::Relaxed),
+    );
+    write_metric(
+        output,
+        "sundermere_npc_say_dropped_total",
+        "npcSay dialogue frames dropped because the target player was gone or their channel was full.",
+        "counter",
+        metrics.npc_say_dropped_total.load(Ordering::Relaxed),
+    );
+    write_metric(
+        output,
         "sundermere_ws_send_errors_total",
         "WebSocket send failures.",
         "counter",

@@ -16,6 +16,23 @@ pub(crate) async fn run_tick_loop(state: AppState) {
             let outcome = sim.tick(0.05);
             (sim.tick_count(), outcome)
         };
+        // 1 Hz greeting trigger: players lingering near greeting-enabled NPCs
+        // (D17). The engine debounces per pair; here we only detect proximity.
+        if tick % 20 == 0 && !state.greeting_npc_ids.is_empty() {
+            if let Some(bridge) = &state.npc_engine {
+                let pairs = {
+                    let mut sim = state.sim.lock().await;
+                    sim.players_near_npcs(&state.greeting_npc_ids)
+                };
+                for (player_id, player_name, npc_id) in pairs {
+                    let _ = bridge.events.try_send(animus::GameEvent::ActorLingered {
+                        npc_id,
+                        actor_id: player_id.to_string(),
+                        actor_name: player_name,
+                    });
+                }
+            }
+        }
         for event in outcome.resource_events {
             record_journal(
                 &state,
@@ -108,6 +125,36 @@ pub(crate) async fn run_tick_loop(state: AppState) {
                 },
             )
             .await;
+        }
+        for event in outcome.npc_relocation_events {
+            record_journal(
+                &state,
+                tick,
+                JournalEventKind::NpcRelocated {
+                    npc_id: event.npc_id,
+                    x: event.x,
+                    y: event.y,
+                },
+            )
+            .await;
+        }
+        for event in outcome.npc_party_events {
+            crate::npc::notify_party_event(&state, &event).await;
+            let kind = match event {
+                crate::sim::NpcPartyEvent::Joined { player_id, npc_id } => {
+                    JournalEventKind::NpcPartyJoined { player_id, npc_id }
+                }
+                crate::sim::NpcPartyEvent::Declined {
+                    player_id,
+                    npc_id,
+                    invite_id,
+                } => JournalEventKind::NpcPartyDeclined {
+                    player_id,
+                    npc_id,
+                    invite_id,
+                },
+            };
+            record_journal(&state, tick, kind).await;
         }
         for job in outcome.settlement_jobs {
             let journal_job = job.clone();

@@ -17,7 +17,7 @@ use crate::config::{
 use crate::content::WorldContent;
 use crate::metrics::AppMetrics;
 use crate::runtime_assets::{load_terrain_detail_authority_for_sim, RuntimeManifest};
-use crate::runtime_paths::{assets_dir, client_dir, content_path};
+use crate::runtime_paths::{assets_dir, client_dir, content_path, personas_dir};
 use crate::session::{SessionAccountRateLimiter, SessionIssueRateLimiter, SessionTickets};
 use crate::settlement::{self, SettlementConfig, SettlementLedger};
 use crate::sim::SimWorld;
@@ -54,7 +54,17 @@ pub(crate) async fn initialize_runtime() -> anyhow::Result<RuntimeServer> {
     let max_content_objects =
         env_positive_usize("MAX_CONTENT_OBJECTS", DEFAULT_MAX_CONTENT_OBJECTS)?;
     let loaded_content = WorldContent::load_with_limits(content_path(), max_content_objects)?;
-    let content_manifest = loaded_content.manifest.clone();
+    let referenced_personas: Vec<String> = loaded_content
+        .content
+        .npcs
+        .iter()
+        .map(|npc| npc.persona.clone())
+        .collect();
+    let loaded_personas = crate::content::load_personas(personas_dir(), &referenced_personas)?;
+    let personas = Arc::new(loaded_personas.personas);
+    let mut content_manifest = loaded_content.manifest.clone();
+    content_manifest.persona_count = personas.len();
+    content_manifest.personas_hash = loaded_personas.personas_hash;
     let session_config = session_config()?;
     let account_auth = account_auth_config()?;
     let session_issue_rate_limit_config = session_issue_rate_limit_config()?;
@@ -131,6 +141,49 @@ pub(crate) async fn initialize_runtime() -> anyhow::Result<RuntimeServer> {
     validate_bind_addr(public_deployment, addr)?;
     validate_chain_mode(public_deployment, settlement_config.chain_enabled)?;
 
+    let npc_say_routes = crate::npc::egress::new_routes();
+    let (npc_speech_tx, npc_reply_rx) = crate::npc::dialogue::spawn_canned_responder(
+        personas.clone(),
+        npc_say_routes.clone(),
+        metrics_handle.clone(),
+    );
+    let npc_personas: Arc<std::collections::HashMap<String, String>> = Arc::new(
+        loaded_content
+            .content
+            .npcs
+            .iter()
+            .map(|npc| (npc.id.clone(), npc.persona.clone()))
+            .collect(),
+    );
+    let npc_names: Arc<std::collections::HashMap<String, String>> = Arc::new(
+        loaded_content
+            .content
+            .npcs
+            .iter()
+            .map(|npc| (npc.id.clone(), npc.name.clone()))
+            .collect(),
+    );
+    let greeting_npc_ids: Arc<std::collections::HashSet<String>> = Arc::new(
+        npc_personas
+            .iter()
+            .filter(|(_, persona_id)| {
+                personas
+                    .get(*persona_id)
+                    .map(|persona| persona.greets_players)
+                    .unwrap_or(false)
+            })
+            .map(|(npc_id, _)| npc_id.clone())
+            .collect(),
+    );
+    let engine = crate::npc::engine_bridge::maybe_spawn_engine(&loaded_content.content, &personas)?;
+    let (npc_engine, npc_engine_outputs) = match engine {
+        Some((bridge, outputs)) => {
+            info!("npc cognition engine enabled");
+            (Some(bridge), Some(outputs))
+        }
+        None => (None, None),
+    };
+
     tokio::spawn(settlement::run_worker(
         settlement_config.clone(),
         settlement_rx,
@@ -165,11 +218,17 @@ pub(crate) async fn initialize_runtime() -> anyhow::Result<RuntimeServer> {
     let terrain_detail_authority =
         load_terrain_detail_authority_for_sim(&assets_dir, max_runtime_manifest_bytes)?;
 
+    let world_day_seconds =
+        env_positive_u64("WORLD_DAY_SECONDS", crate::sim::DEFAULT_WORLD_DAY_SECONDS)?;
     let mut sim = SimWorld::from_content_with_terrain_detail_authority(
         loaded_content.content,
         Some(terrain_detail_authority),
     )
     .map_err(|err| anyhow!(err))?;
+    sim.set_world_day_seconds(world_day_seconds);
+    // With the engine running, party invites wait for the NPC's decision
+    // instead of deterministically auto-accepting.
+    sim.set_npc_invites_deterministic(npc_engine.is_none());
     let replayed_resource_node_count =
         sim.apply_resource_node_replay(&durable_runtime.replayed_resource_nodes);
     if replayed_resource_node_count > 0 {
@@ -235,9 +294,18 @@ pub(crate) async fn initialize_runtime() -> anyhow::Result<RuntimeServer> {
             http_body_limit_bytes,
             admin_event_limit_cap,
             runtime_manifest,
+            personas,
+            npc_personas,
+            npc_names,
+            greeting_npc_ids,
+            npc_say_routes,
+            npc_speech_tx,
+            npc_engine,
         },
         addr,
         assets_dir,
         client_dir: client_dir(),
+        npc_reply_rx,
+        npc_engine_outputs,
     })
 }

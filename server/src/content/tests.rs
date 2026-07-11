@@ -156,6 +156,74 @@ fn rejects_too_many_objects() {
     assert!(err.to_string().contains("MAX_CONTENT_OBJECTS"));
 }
 
+fn valid_npc() -> NpcContent {
+    NpcContent {
+        id: "maren".to_string(),
+        persona: "maren".to_string(),
+        name: "Maren".to_string(),
+        x: 15.0,
+        y: 15.0,
+        radius: 5.0,
+        schedule: Vec::new(),
+    }
+}
+
+#[test]
+fn accepts_valid_npcs() {
+    let mut content = valid_minimal_content();
+    content.npcs.push(valid_npc());
+    assert!(content.validate().is_ok());
+}
+
+#[test]
+fn rejects_npc_id_that_is_not_kebab_case() {
+    let mut content = valid_minimal_content();
+    let mut npc = valid_npc();
+    npc.id = "Maren!".to_string();
+    content.npcs.push(npc);
+
+    let err = content.validate().expect_err("bad npc id");
+    assert!(err.to_string().contains("kebab-case"));
+}
+
+#[test]
+fn rejects_duplicate_npc_ids() {
+    let mut content = valid_minimal_content();
+    content.npcs.push(valid_npc());
+    content.npcs.push(valid_npc());
+
+    let err = content.validate().expect_err("duplicate npc id");
+    assert!(err.to_string().contains("duplicate npc id"));
+}
+
+#[test]
+fn rejects_npc_outside_map_bounds() {
+    let mut content = valid_minimal_content();
+    let mut npc = valid_npc();
+    npc.x = 500.0;
+    content.npcs.push(npc);
+
+    let err = content.validate().expect_err("npc out of bounds");
+    assert!(err.to_string().contains("inside map bounds"));
+}
+
+#[test]
+fn rejects_npc_schedule_destination_outside_map_bounds() {
+    let mut content = valid_minimal_content();
+    let mut npc = valid_npc();
+    npc.schedule.push(NpcScheduleContent {
+        at_seconds: 60,
+        x: 500.0,
+        y: 15.0,
+    });
+    content.npcs.push(npc);
+
+    let err = content
+        .validate()
+        .expect_err("schedule destination out of bounds");
+    assert!(err.to_string().contains("schedule entry"));
+}
+
 #[test]
 fn stable_hash_is_deterministic() {
     assert_eq!(stable_content_hash("abc"), stable_content_hash("abc"));
@@ -191,6 +259,8 @@ fn valid_minimal_content() -> WorldContent {
                 radius: 5.0,
             },
         ],
+        npcs: Vec::new(),
+        lore: None,
     }
 }
 

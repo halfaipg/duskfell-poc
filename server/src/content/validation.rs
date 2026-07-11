@@ -97,6 +97,56 @@ impl WorldContent {
         self.require_object_kind("registrar", ObjectKind::Registrar)?;
         self.require_object_kind("field-forge", ObjectKind::Forge)?;
 
+        let mut npc_ids = HashSet::new();
+        for npc in &self.npcs {
+            if npc.id.is_empty()
+                || !npc
+                    .id
+                    .chars()
+                    .all(|ch| ch.is_ascii_lowercase() || ch.is_ascii_digit() || ch == '-')
+            {
+                return Err(anyhow!(
+                    "npc id '{}' must be lowercase ascii kebab-case",
+                    npc.id
+                ));
+            }
+            if !npc_ids.insert(npc.id.as_str()) {
+                return Err(anyhow!("duplicate npc id '{}'", npc.id));
+            }
+            if npc.persona.is_empty()
+                || !npc
+                    .persona
+                    .chars()
+                    .all(|ch| ch.is_ascii_lowercase() || ch.is_ascii_digit() || ch == '-')
+            {
+                return Err(anyhow!(
+                    "npc '{}' persona '{}' must be lowercase ascii kebab-case",
+                    npc.id,
+                    npc.persona
+                ));
+            }
+            if npc.name.trim().is_empty() || npc.name.len() > 40 {
+                return Err(anyhow!("npc '{}' name must be 1-40 characters", npc.id));
+            }
+            validate_positive("npc.radius", npc.radius)?;
+            if npc.x < 0.0 || npc.x > self.map.width || npc.y < 0.0 || npc.y > self.map.height {
+                return Err(anyhow!("npc '{}' must be inside map bounds", npc.id));
+            }
+            for (index, entry) in npc.schedule.iter().enumerate() {
+                if entry.x < 0.0
+                    || entry.x > self.map.width
+                    || entry.y < 0.0
+                    || entry.y > self.map.height
+                {
+                    return Err(anyhow!(
+                        "npc '{}' schedule entry {} destination must be inside map bounds",
+                        npc.id,
+                        index
+                    ));
+                }
+            }
+        }
+
         Ok(())
     }
 
