@@ -81,8 +81,9 @@ function portraitImageFor(url) {
 
 function drawPlayerCardPortrait(canvas, sprite) {
   if (!canvas?.getContext) return;
-  const heroUrl =
-    PLAYER_CARD_PORTRAITS[sprite?.id] ?? PLAYER_CARD_PORTRAITS[sprite?.baseSheetId] ?? null;
+  // exact id only: paperdolls share the wretch base sheet, and matching on
+  // baseSheetId would show the naked hero render for a clothed character
+  const heroUrl = PLAYER_CARD_PORTRAITS[sprite?.id] ?? null;
   if (heroUrl) {
     const image = portraitImageFor(heroUrl);
     if (!image.complete || image.naturalWidth === 0) {
