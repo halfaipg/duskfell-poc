@@ -15,6 +15,7 @@ import { createPlayerRenderState } from "./player-render-state.js";
 import { createNetworkClient } from "./network-client.js";
 import { renderHud, renderPanel } from "./ui-panels.js";
 import { terrainHeightAtWorld } from "./terrain.js";
+import { drawWaterFish } from "./water-fish.js";
 
 const { canvas, screenCtx, ui } = getAppDom();
 let ctx = screenCtx;
@@ -338,6 +339,7 @@ function draw(now = 0) {
     const objects = Array.isArray(snapshot.objects) ? snapshot.objects : [];
     terrainCache.terrainForMap(snapshot.map);
     terrainDrawer.drawMap(snapshot, origin, now, rect);
+    drawWaterFish(ctx, terrainCache.getTerrain(), origin, camera, rect, now);
     if (!HIDE_WORLD_PROPS && !VEGETATION_ONLY_ART_PASS) {
       ecologyRenderer.drawEcologyGroundEffects(objects, origin, now);
       ecologyRenderer.drawEcologyEnergyLinks(objects, origin, now);

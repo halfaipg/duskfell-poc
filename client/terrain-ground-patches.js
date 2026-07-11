@@ -784,6 +784,52 @@ const waterAnimDisabled =
 const reliefOnlyDebug =
   typeof globalThis.location !== "undefined" && /[?&]reliefOnly=1/.test(globalThis.location.search ?? "");
 
+// water supertile groups for a chunk — shared by the 2D animator and the
+// GL shader path. Each entry carries the cached mask/flow layer.
+export function waterGroupsForChunk(chunk, terrain, groundPatches) {
+  if (!terrain || !useGroundPatches(groundPatches)) return [];
+  const groups = collectWaterGroups(chunk, terrain);
+  const out = [];
+  for (const group of groups.values()) {
+    const layer = waterAnimationLayerFor(group.superX, group.superY, terrain);
+    if (layer) out.push({ ...group, layer });
+  }
+  return out;
+}
+
+export function waterAnimConstants() {
+  return {
+    ANIM_SIZE,
+    CANVAS_TILES,
+    PATCH_TILES,
+    MARGIN_TILES,
+  };
+}
+
+function collectWaterGroups(chunk, terrain) {
+  const groups = new Map();
+  let rowY = null;
+  let rowCenter = 0;
+  for (const tileView of chunk.tiles) {
+    const tile = tileView.tile;
+    let inChannel = tile.material === "water" || tile.material === "shore";
+    if (!inChannel && PATCHED_MATERIALS.has(tile.material)) {
+      if (rowY !== tile.y) {
+        rowY = tile.y;
+        rowCenter = streamCenterAt(tile.y, terrain.cols, terrain.rows, terrain.profile);
+      }
+      inChannel = Math.abs(tile.x + 0.5 - rowCenter) < STREAM_HALF_WIDTH_TILES + 1.2;
+    }
+    if (!inChannel) continue;
+    const superX = Math.floor(tile.x / PATCH_TILES);
+    const superY = Math.floor(tile.y / PATCH_TILES);
+    const key = `${superX}:${superY}`;
+    if (!groups.has(key)) groups.set(key, { superX, superY, tiles: [] });
+    groups.get(key).tiles.push(tile);
+  }
+  return groups;
+}
+
 export function drawChunkWaterAnimation(ctx, chunk, origin, terrain, groundPatches, nowMs) {
   if (waterAnimDisabled) return;
   if (!origin || !terrain || !useGroundPatches(groundPatches)) return;

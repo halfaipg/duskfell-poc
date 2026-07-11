@@ -13,7 +13,10 @@ import {
   drawChunkGroundPatch,
   drawChunkWaterAnimation,
   tileUsesGroundPatch,
+  waterAnimConstants,
+  waterGroupsForChunk,
 } from "./terrain-ground-patches.js";
+import { PROJECTION } from "./projection.js";
 import { TERRAIN_MATERIALS } from "./terrain.js";
 import { RENDER_DPR_CAP } from "./device-profile.js";
 
@@ -79,6 +82,7 @@ export function createTerrainDrawer({
     const glActive = Boolean(
       glLayer && viewport && glLayer.beginFrame(camera, viewport.width, viewport.height, glDpr()),
     );
+    const waterEntries = glActive ? new Map() : null;
     for (const chunk of renderGeometry.chunks) {
       if (!terrainLayerManager.boundsIntersect(chunk.bounds, visibleBounds)) continue;
       const staticDrawn = glActive
@@ -95,11 +99,43 @@ export function createTerrainDrawer({
           drawTerrainTile(tileView, state.tick, now, visibleBounds);
         }
       }
-      // flowing water shimmer: per-frame overlay on top of the cached ground
-      drawChunkWaterAnimation(ctx, chunk, origin, worldTerrain, terrainAssets.groundPatches, now);
+      if (waterEntries) {
+        for (const entry of waterGroupsForChunk(chunk, worldTerrain, terrainAssets.groundPatches)) {
+          waterEntries.set(`${entry.superX}:${entry.superY}`, entry);
+        }
+      } else {
+        // 2D fallback: per-frame canvas shimmer on top of the cached ground
+        drawChunkWaterAnimation(ctx, chunk, origin, worldTerrain, terrainAssets.groundPatches, now);
+      }
       terrainDebugDrawer.drawTerrainDebugChunk(chunk, terrainDebugMode);
     }
+    if (waterEntries?.size) {
+      drawGlWater(glLayer, waterEntries, origin, now);
+    }
     return glActive;
+  }
+
+  // shader water: one quad per water supertile, masked and animated on the
+  // GPU — per-pixel advection, ripple distortion, glints and bank foam
+  function drawGlWater(glLayer, waterEntries, origin, now) {
+    const waterImage = terrainAssets.groundPatches?.get?.("stream-water") ?? null;
+    if (!waterImage) return;
+    const { ANIM_SIZE, CANVAS_TILES, PATCH_TILES, MARGIN_TILES } = waterAnimConstants();
+    if (!glLayer.beginWater(camera, canvas.clientWidth, canvas.clientHeight, now, waterImage)) return;
+    const { halfW, halfH } = PROJECTION;
+    const animPxPerTile = ANIM_SIZE / CANVAS_TILES;
+    const a = halfW / animPxPerTile;
+    const b = halfH / animPxPerTile;
+    for (const entry of waterEntries.values()) {
+      const tx = origin.x + (entry.superX - entry.superY) * PATCH_TILES * halfW;
+      const ty = origin.y + ((entry.superX + entry.superY) * PATCH_TILES - 2 * MARGIN_TILES) * halfH;
+      const corner = (u, v) => ({ x: tx + a * u - a * v, y: ty + b * u + b * v });
+      glLayer.drawWaterQuad(
+        entry,
+        [corner(0, 0), corner(ANIM_SIZE, 0), corner(0, ANIM_SIZE), corner(ANIM_SIZE, ANIM_SIZE)],
+        CANVAS_TILES,
+      );
+    }
   }
 
   function glDpr() {
