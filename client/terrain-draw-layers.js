@@ -122,6 +122,7 @@ export function createTerrainLayerManager({
   return {
     boundsIntersect,
     drawTerrainStaticChunk,
+    staticLayerForChunk: terrainStaticLayerForChunk,
     terrainGeometryForMap,
     visibleWorldBounds,
   };

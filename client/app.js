@@ -8,6 +8,7 @@ import { createEcologyRenderer } from "./ecology-renderer.js";
 import { createInteriorRenderer } from "./interior-renderer.js";
 import { createObjectDrawer, HIDE_WORLD_PROPS, VEGETATION_ONLY_ART_PASS } from "./object-draw.js";
 import { createTerrainDrawer, normalizeTerrainDebugMode } from "./terrain-draw.js";
+import { createTerrainGlLayer } from "./terrain-gl-layer.js";
 import { drawOverlay as drawOverlayPanel } from "./overlay.js";
 import { createPlayerDrawer } from "./player-draw.js";
 import { createPlayerRenderState } from "./player-render-state.js";
@@ -18,6 +19,9 @@ import { terrainHeightAtWorld } from "./terrain.js";
 const { canvas, screenCtx, ui } = getAppDom();
 let ctx = screenCtx;
 const params = new URLSearchParams(window.location.search);
+// GPU terrain compositor on the canvas below; ?nogl=1 forces the 2D path
+const terrainGlLayer =
+  params.get("nogl") === "1" ? null : createTerrainGlLayer(document.getElementById("worldgl"));
 const DAY_TINT = params.get("dayTint");
 console.info("Duskfell client build: painted-terrain v3 (2026-07-09)");
 
@@ -60,6 +64,7 @@ const terrainDrawer = createTerrainDrawer({
   getTerrainAssets: () => terrainAssets,
   getTerrainAssetVersion: () => runtimeAssets.terrainAssetVersion(),
   getTerrainDebugMode: () => terrainDebugMode,
+  getGlLayer: () => terrainGlLayer,
 });
 const ecologyRenderer = createEcologyRenderer({
   getContext: () => ctx,
@@ -292,11 +297,15 @@ function draw(now = 0) {
     camera.x = nextCamera.x;
     camera.y = nextCamera.y;
 
-    // reset the buffer each frame: stale paint (e.g. the parchment loading
-    // screen) must never show through coverage gaps at elevation steps —
-    // a dark base makes any residual gap read as crevice shadow
-    ctx.fillStyle = "#161d18";
-    ctx.fillRect(0, 0, rect.width, rect.height);
+    // reset the buffer each frame: with the GL terrain layer active the GL
+    // canvas below provides the dark base, so the 2D canvas clears to
+    // transparent; without GL, fill dark so coverage gaps read as crevices
+    if (terrainGlLayer) {
+      ctx.clearRect(0, 0, rect.width, rect.height);
+    } else {
+      ctx.fillStyle = "#161d18";
+      ctx.fillRect(0, 0, rect.width, rect.height);
+    }
     ctx.save();
     ctx.scale(camera.scale, camera.scale);
     ctx.translate(-camera.x, -camera.y);

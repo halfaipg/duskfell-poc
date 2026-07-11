@@ -15,6 +15,7 @@ import {
   tileUsesGroundPatch,
 } from "./terrain-ground-patches.js";
 import { TERRAIN_MATERIALS } from "./terrain.js";
+import { RENDER_DPR_CAP } from "./device-profile.js";
 
 export { normalizeTerrainDebugMode };
 
@@ -27,6 +28,7 @@ export function createTerrainDrawer({
   getTerrainAssets,
   getTerrainAssetVersion,
   getTerrainDebugMode,
+  getGlLayer = () => null,
 }) {
   let ctx = getContext();
   let canvas = getCanvas();
@@ -71,9 +73,18 @@ export function createTerrainDrawer({
     if (!worldTerrain) return;
     const visibleBounds = terrainLayerManager.visibleWorldBounds(viewport);
     const renderGeometry = terrainLayerManager.terrainGeometryForMap(worldTerrain, origin);
+    // GPU path: static chunk canvases upload once and draw as quads on the
+    // GL canvas below; the 2D context keeps water shimmer, decals and debug
+    const glLayer = getGlLayer();
+    const glActive = Boolean(
+      glLayer && viewport && glLayer.beginFrame(camera, viewport.width, viewport.height, glDpr()),
+    );
     for (const chunk of renderGeometry.chunks) {
       if (!terrainLayerManager.boundsIntersect(chunk.bounds, visibleBounds)) continue;
-      if (drawTerrainStaticChunk(chunk)) {
+      const staticDrawn = glActive
+        ? drawTerrainStaticChunkGl(glLayer, chunk)
+        : drawTerrainStaticChunk(chunk);
+      if (staticDrawn) {
         for (const tileView of chunk.tiles) {
           drawTerrainDynamicTile(tileView, state.tick, now, visibleBounds);
           terrainDebugDrawer.drawTerrainDebugTile(tileView.tile, tileView.corners, terrainDebugMode);
@@ -88,6 +99,27 @@ export function createTerrainDrawer({
       drawChunkWaterAnimation(ctx, chunk, origin, worldTerrain, terrainAssets.groundPatches, now);
       terrainDebugDrawer.drawTerrainDebugChunk(chunk, terrainDebugMode);
     }
+    return glActive;
+  }
+
+  function glDpr() {
+    return Math.min(globalThis.devicePixelRatio || 1, RENDER_DPR_CAP);
+  }
+
+  function drawTerrainStaticChunkGl(glLayer, chunk) {
+    const layer = terrainLayerManager.staticLayerForChunk(chunk, (layerContext, staticChunk) => {
+      withRenderContext(layerContext, () => {
+        drawChunkGroundPatch(ctx, staticChunk, lastOrigin, terrain, terrainAssets.groundPatches);
+        for (const tileView of staticChunk.tiles) {
+          drawTerrainTile(tileView, 0, 0, null, {
+            drawDynamic: false,
+            drawDebug: false,
+          });
+        }
+      });
+    });
+    if (!layer) return false;
+    return glLayer.drawChunkLayer(layer);
   }
 
   function drawTerrainTile(tileView, tick, now, visibleBounds, options = {}) {
