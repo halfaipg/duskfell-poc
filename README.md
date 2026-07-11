@@ -39,6 +39,71 @@ Then open [http://127.0.0.1:4107](http://127.0.0.1:4107).
 
 Use WASD or arrow keys to move. Press `E` near groves or ore veins to gather inventory resources, near the Field Forge to craft a Trail Kit from `wood + ore`, or near the Title Office to claim a dry-run deed. The deed appears immediately in the game state, while the settlement worker confirms the queued job asynchronously. Settlement jobs are durably appended before worker handoff, and a full settlement queue is surfaced through readiness and metrics instead of blocking the simulation tick.
 
+## Talk to an NPC
+
+The world ships with LLM-capable NPCs (design: `docs/npc-engine-design.md`,
+engine crate: `animus/`). NPC bodies are always deterministic game logic;
+their dialogue is driven by the cognition engine when a provider is
+configured, and by persona canned lines otherwise. The game never blocks on
+the LLM: slow or missing cognition degrades to canned dialogue.
+
+### 1. Canned mode (no API key — always works)
+
+```sh
+cargo run -p sundermere-server
+```
+
+Open [http://127.0.0.1:4107](http://127.0.0.1:4107):
+
+1. **Maren** stands just southwest of the spawn plaza by the Title Office;
+   **Bram** walks a schedule between the Field Forge and the plaza.
+2. Walk up to Maren. When the overlay shows `T: talk to Maren`, press `T`,
+   type a message, press Enter. Her reply streams into a speech bubble and
+   the Dialogue panel.
+3. Press `P` to invite her to your party — she joins and follows you.
+   Press `P` again to part ways.
+
+### 2. Live LLM mode (AI Power Grid)
+
+```sh
+export ANIMUS_API_KEY=<key from https://console.aipowergrid.io>
+# optional: pin a model instead of discovering one from GET /v1/models
+# export ANIMUS_MODEL=<model id>
+cargo run -p sundermere-server
+```
+
+Talk to Maren as above: replies now stream from the grid, in persona, with
+conversation memory across turns (first token can take a few seconds on the
+free tier). Party invites become real decisions — Maren is reluctant, Bram is
+eager. If the grid has no workers, the key is wrong, or you go offline, the
+game keeps running: NPCs answer canned lines, `/readyz` stays ready and
+reports `npcCognition: degraded`, and `animus_*` metrics appear on `/metrics`.
+
+For a deterministic engine demo without network or key, run with
+`ANIMUS_PROVIDER=mock`.
+
+| Env var | Default | Meaning |
+|---|---|---|
+| `ANIMUS_ENABLED` | `true` | `false` disables cognition entirely (canned only) |
+| `ANIMUS_PROVIDER` | `auto` | `auto` (key ⇒ live, no key ⇒ canned), `mock`, `openai-compatible` |
+| `ANIMUS_API_KEY` | unset | AI Power Grid key; never logged or exposed on admin surfaces |
+| `ANIMUS_BASE_URL` | `https://api.aipowergrid.io` | any OpenAI-compatible endpoint |
+| `ANIMUS_MODEL` | unset | pin a model; otherwise first id from `/v1/models` |
+| `ANIMUS_REQUESTS_PER_MINUTE` | `20` | global cognition request budget (grid allows 30/min/IP) |
+| `ANIMUS_INTERACTIVE_TIMEOUT_MS` | `15000` | per-decision timeout before canned fallback |
+| `ANIMUS_MAX_REPLY_TOKENS` | `256` | provider `max_tokens` per reply |
+| `PERSONAS_PATH` | `server/data/personas` | persona content files (one JSON per character) |
+| `WORLD_DAY_SECONDS` | `600` | world-day length driving scheduled NPC relocation |
+
+Verify the NPC stack end-to-end (no key required):
+
+```sh
+npm run smoke:npc-render        # bodies: render, party follow, scheduled relocation
+npm run smoke:npc-chat          # speech: say -> streamed canned reply, input hardening
+npm run smoke:npc-chat-mock     # cognition: mock engine, transcript memory, party decisions
+npm run smoke:cognition-fallback # provider down: degrade-to-canned, readiness, no key leaks
+```
+
 ## Container
 
 Build and smoke-test the deployment image:
