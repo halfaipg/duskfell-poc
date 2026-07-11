@@ -106,8 +106,8 @@ export function createTerrainDrawer({
     return Math.min(globalThis.devicePixelRatio || 1, RENDER_DPR_CAP);
   }
 
-  function drawTerrainStaticChunkGl(glLayer, chunk) {
-    const layer = terrainLayerManager.staticLayerForChunk(chunk, (layerContext, staticChunk) => {
+  function buildStaticLayer(chunk) {
+    return terrainLayerManager.staticLayerForChunk(chunk, (layerContext, staticChunk) => {
       withRenderContext(layerContext, () => {
         drawChunkGroundPatch(ctx, staticChunk, lastOrigin, terrain, terrainAssets.groundPatches);
         for (const tileView of staticChunk.tiles) {
@@ -118,8 +118,38 @@ export function createTerrainDrawer({
         }
       });
     });
+  }
+
+  function drawTerrainStaticChunkGl(glLayer, chunk) {
+    const layer = buildStaticLayer(chunk);
     if (!layer) return false;
     return glLayer.drawChunkLayer(layer);
+  }
+
+  // incremental first-frame warmup: build ONE visible chunk layer (and its
+  // supertile composite) per call so the loading bar keeps moving instead of
+  // freezing at 100% while the whole viewport composites in one frame
+  let warmKey = null;
+  let warmIndex = 0;
+
+  function warmup(origin, viewport) {
+    refreshRendererState();
+    lastOrigin = origin;
+    if (!terrain) return { done: false, built: 0, total: 1 };
+    if (warmKey !== `${terrainCacheKey}:${terrainAssetVersion}`) {
+      warmKey = `${terrainCacheKey}:${terrainAssetVersion}`;
+      warmIndex = 0;
+    }
+    const visibleBounds = terrainLayerManager.visibleWorldBounds(viewport);
+    const geometry = terrainLayerManager.terrainGeometryForMap(terrain, origin);
+    const visible = geometry.chunks.filter((chunk) =>
+      terrainLayerManager.boundsIntersect(chunk.bounds, visibleBounds),
+    );
+    if (warmIndex < visible.length) {
+      buildStaticLayer(visible[warmIndex]);
+      warmIndex += 1;
+    }
+    return { done: warmIndex >= visible.length, built: warmIndex, total: visible.length };
   }
 
   function drawTerrainTile(tileView, tick, now, visibleBounds, options = {}) {
@@ -210,5 +240,6 @@ export function createTerrainDrawer({
 
   return {
     drawMap,
+    warmup,
   };
 }

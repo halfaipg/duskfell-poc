@@ -77,7 +77,7 @@ export function drawLoading(ctx, rect, progress = null) {
   ctx.fillStyle = "#8f9d95";
   ctx.font = "600 14px system-ui";
   const label = progress
-    ? `Painting the world… ${progress.done}/${progress.total}`
+    ? `${progress.label ?? "Painting the world…"} ${progress.done}/${progress.total}`
     : "Connecting to authoritative server…";
   ctx.fillText(label, cx, barY + 38);
   ctx.textAlign = "left";

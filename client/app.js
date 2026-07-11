@@ -34,6 +34,7 @@ const playerRenderState = createPlayerRenderState();
 const terrainCache = createTerrainCache();
 const frame = createCanvasFrame({ canvas, screenCtx });
 let localPlayerRenderPosition = null;
+let terrainWarmed = false;
 
 const camera = {
   x: 0,
@@ -256,8 +257,33 @@ function draw(now = 0) {
     const rect = fitCanvas();
     screenCtx.clearRect(0, 0, rect.width, rect.height);
 
-    if (!snapshot || !runtimeAssets.assetsReady()) {
-      drawLoading(ctx, rect, runtimeAssets.assetProgress());
+    if (!snapshot || !runtimeAssets.assetsReady() || !terrainWarmed) {
+      if (snapshot && runtimeAssets.assetsReady()) {
+        // stage 2: raise the land — build one visible chunk per frame so
+        // the bar moves instead of freezing while composites paint
+        terrainCache.terrainForMap(snapshot.map);
+        const origin = defaultOrigin(snapshot.map);
+        const players = Array.isArray(snapshot.players) ? snapshot.players : [];
+        const me = players.find((player) => player.id === playerId) || players[0];
+        const warmCamera = computeCamera({
+          viewport: rect,
+          map: snapshot.map,
+          focus: viewOverride ?? me,
+          origin,
+        });
+        camera.scale = warmCamera.scale * viewScaleOverride;
+        camera.x = warmCamera.x;
+        camera.y = warmCamera.y;
+        const warm = terrainDrawer.warmup(origin, rect);
+        drawLoading(ctx, rect, {
+          done: warm.built,
+          total: Math.max(1, warm.total),
+          label: "Raising the land…",
+        });
+        if (warm.done) terrainWarmed = true;
+      } else {
+        drawLoading(ctx, rect, runtimeAssets.assetProgress());
+      }
       updateHud();
       requestAnimationFrame(draw);
       return;
