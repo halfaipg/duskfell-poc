@@ -6,6 +6,8 @@ export function createNetworkClient({
   setConnection,
   onWelcome,
   onSnapshot,
+  onNpcSay,
+  onNotice,
   onServerStateChange,
 }) {
   let socket = null;
@@ -47,6 +49,10 @@ export function createNetworkClient({
         onWelcome(message);
       } else if (message.type === "snapshot") {
         onSnapshot(message);
+      } else if (message.type === "npcSay") {
+        onNpcSay?.(message);
+      } else if (message.type === "notice") {
+        onNotice?.(message);
       }
       onServerStateChange();
     });

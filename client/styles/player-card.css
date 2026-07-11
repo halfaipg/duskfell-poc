@@ -101,3 +101,13 @@
   background: #27231d;
   border-color: #5b4b36;
 }
+
+.party-status {
+  color: #66706f;
+  font-size: 12px;
+}
+
+.party-status.party-active {
+  color: #2e6a63;
+  font-weight: 700;
+}

@@ -34,6 +34,17 @@ export function renderPanel({ ui, snapshot, playerId, sprites, playerSpriteFor }
 
   renderDeedPanel(ui, me?.demoDeeds ?? [], itemDataUrls);
   renderInventoryPanel(ui, me?.inventory ?? null, itemDataUrls);
+  renderPartyStatus(ui, snapshot, playerId);
+}
+
+function renderPartyStatus(ui, snapshot, playerId) {
+  if (!ui.partyStatus) return;
+  const npcs = Array.isArray(snapshot.npcs) ? snapshot.npcs : [];
+  const companion = npcs.find((npc) => npc.partyPlayerId === playerId);
+  ui.partyStatus.textContent = companion
+    ? `Traveling with ${companion.name}`
+    : "Traveling alone";
+  ui.partyStatus.classList.toggle("party-active", Boolean(companion));
 }
 
 export function playerDisplayName(player, sprite) {

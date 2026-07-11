@@ -11,7 +11,11 @@ import { createTerrainDrawer, normalizeTerrainDebugMode } from "./terrain-draw.j
 import { drawOverlay as drawOverlayPanel } from "./overlay.js";
 import { createPlayerDrawer } from "./player-draw.js";
 import { createPlayerRenderState } from "./player-render-state.js";
+import { createChatUi } from "./chat-ui.js";
 import { createNetworkClient } from "./network-client.js";
+import { createNpcDrawer, toNpcAdapter } from "./npc-draw.js";
+import { nearestNpc, npcPartyPrompt } from "./npc-interaction.js";
+import { createNpcSpeech } from "./npc-speech.js";
 import { renderHud, renderPanel } from "./ui-panels.js";
 
 const { canvas, screenCtx, ui } = getAppDom();
@@ -62,6 +66,15 @@ const playerDrawer = createPlayerDrawer({
   getTerrainDebugMode: () => terrainDebugMode,
   playerRenderState,
 });
+const npcSpeech = createNpcSpeech();
+const npcDrawer = createNpcDrawer({
+  getContext: () => ctx,
+  getTerrain: () => terrainCache.getTerrain(),
+  getLocalPlayerId: () => playerId,
+  getBubbleFor: (npcId) => npcSpeech.bubbleFor(npcId),
+  playerDrawer,
+  playerRenderState,
+});
 const objectDrawer = createObjectDrawer({
   getContext: () => ctx,
   getTerrain: () => terrainCache.getTerrain(),
@@ -69,6 +82,7 @@ const objectDrawer = createObjectDrawer({
   getTerrainDebugMode: () => terrainDebugMode,
   getLocalPlayerRenderPosition: () => localPlayerRenderPosition,
   playerDrawer,
+  npcDrawer,
 });
 const networkClient = createNetworkClient({
   getRequestedName: () => ui.nameInput.value,
@@ -81,8 +95,74 @@ const networkClient = createNetworkClient({
   onSnapshot: (message) => {
     snapshot = message;
   },
+  onNpcSay: (frame) => {
+    const completed = npcSpeech.handleFrame(frame);
+    if (completed) {
+      appendDialogueLine(completed.npcId, completed.completed);
+    }
+  },
+  onNotice: (notice) => {
+    appendSystemLine(notice.message, notice.level);
+  },
   onServerStateChange: updatePanel,
 });
+
+const chatUi = createChatUi({
+  input: ui.chatInput,
+  send: (payload) => {
+    networkClient.send(payload);
+    if (payload.type === "say") {
+      appendPlayerLine(payload.text);
+      npcSpeech.noteAwaitingReply(payload.npcId);
+    }
+  },
+  onOpenStateChange: (open) => {
+    if (open) {
+      keys.clear();
+      networkClient.sendInput(true);
+    }
+  },
+});
+
+function appendDialogueLine(npcId, text) {
+  const npcs = Array.isArray(snapshot?.npcs) ? snapshot.npcs : [];
+  const name = npcs.find((npc) => npc.id === npcId)?.name ?? npcId;
+  const line = document.createElement("div");
+  line.className = "dialogue-line";
+  const speaker = document.createElement("strong");
+  speaker.textContent = `${name}: `;
+  line.append(speaker, document.createTextNode(text));
+  appendToDialogueLog(line);
+}
+
+function appendPlayerLine(text) {
+  const line = document.createElement("div");
+  line.className = "dialogue-line dialogue-player";
+  const speaker = document.createElement("strong");
+  speaker.textContent = "You: ";
+  line.append(speaker, document.createTextNode(text));
+  appendToDialogueLog(line);
+}
+
+function appendSystemLine(text, level = "info") {
+  const line = document.createElement("div");
+  line.className = `dialogue-line dialogue-system dialogue-${level}`;
+  line.textContent = text;
+  appendToDialogueLog(line);
+}
+
+function appendToDialogueLog(line) {
+  if (!ui.dialogueLog) return;
+  if (ui.dialogueLog.dataset.hasLines !== "true") {
+    ui.dialogueLog.textContent = "";
+    ui.dialogueLog.dataset.hasLines = "true";
+  }
+  ui.dialogueLog.append(line);
+  while (ui.dialogueLog.children.length > 30) {
+    ui.dialogueLog.firstChild.remove();
+  }
+  ui.dialogueLog.scrollTop = ui.dialogueLog.scrollHeight;
+}
 
 runtimeAssets.loadSpriteAssets();
 runtimeAssets.loadTerrainAssets();
@@ -97,14 +177,44 @@ ui.renameButton.addEventListener("click", () => {
 });
 
 window.addEventListener("keydown", (event) => {
+  if (isTypingTarget(event.target)) return;
   if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " ", "e", "E"].includes(event.key)) {
     event.preventDefault();
+  }
+  if ((event.key === "p" || event.key === "P") && !event.repeat) {
+    sendPartyAction();
+    return;
+  }
+  if ((event.key === "t" || event.key === "T") && !event.repeat) {
+    const npcs = Array.isArray(snapshot?.npcs) ? snapshot.npcs : [];
+    const npc = nearestNpc(npcs, localPlayerRenderPosition);
+    if (npc) {
+      event.preventDefault();
+      chatUi.openChat(npc);
+    }
+    return;
   }
   keys.add(event.key);
   networkClient.sendInput();
 });
 
+function isTypingTarget(target) {
+  return target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement;
+}
+
+function sendPartyAction() {
+  const npcs = Array.isArray(snapshot?.npcs) ? snapshot.npcs : [];
+  const npc = nearestNpc(npcs, localPlayerRenderPosition);
+  const prompt = npcPartyPrompt(npc, playerId);
+  if (!prompt?.action) return;
+  networkClient.send({
+    type: prompt.action,
+    npcId: prompt.npcId,
+  });
+}
+
 window.addEventListener("keyup", (event) => {
+  if (isTypingTarget(event.target)) return;
   keys.delete(event.key);
   networkClient.sendInput();
 });
@@ -141,10 +251,13 @@ function draw(now = 0) {
     }
 
     const players = Array.isArray(snapshot.players) ? snapshot.players : [];
+    const npcAdapters = (Array.isArray(snapshot.npcs) ? snapshot.npcs : []).map(toNpcAdapter);
     const me = players.find((player) => player.id === playerId) || players[0];
     const origin = defaultOrigin(snapshot.map);
-    playerRenderState.updateRenderOffsets(players, snapshot.map, playerId);
-    playerRenderState.updateVisualPositions(players, now);
+    // NPCs share the player render state so they get the same position
+    // smoothing, walk animation sampling, and crowd spreading.
+    playerRenderState.updateRenderOffsets([...players, ...npcAdapters], snapshot.map, playerId);
+    playerRenderState.updateVisualPositions([...players, ...npcAdapters], now);
     localPlayerRenderPosition = me ? playerRenderState.renderPosition(me) : null;
     const cameraFocus = me ? { ...me, ...playerRenderState.renderPosition(me) } : me;
     const nextCamera = computeCamera({
@@ -166,7 +279,7 @@ function draw(now = 0) {
     ecologyRenderer.drawEcologyGroundEffects(objects, origin, now);
     ecologyRenderer.drawEcologyEnergyLinks(objects, origin, now);
     ecologyRenderer.drawEcologyFeedLinks(objects, origin, now);
-    objectDrawer.drawSceneEntities(players, objects, origin, now);
+    objectDrawer.drawSceneEntities(players, objects, origin, now, npcAdapters);
     interiorRenderer.drawInteriorRoofs(origin, localPlayerRenderPosition, now);
     ctx.restore();
 
@@ -188,6 +301,7 @@ function drawOverlay(rect) {
     terrain: terrainCache.getTerrain(),
     terrainDebugMode,
     localPlayerRenderPosition,
+    playerId,
   });
 }
 

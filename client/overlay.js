@@ -1,6 +1,7 @@
 import { ecologyObjectPressures, terrainDecayConsumerRules } from "./ecology-links.js";
 import { nearestEcologyAction } from "./nearby-ecology-action.js";
 import { nearestInteractableObject } from "./object-render-policy.js";
+import { nearestNpc, npcPartyPrompt } from "./npc-interaction.js";
 
 export function drawOverlay({
   ctx,
@@ -9,16 +10,21 @@ export function drawOverlay({
   terrain,
   terrainDebugMode,
   localPlayerRenderPosition,
+  playerId,
 }) {
   const objects = Array.isArray(snapshot.objects) ? snapshot.objects : [];
   const decayConsumerRules = terrainDecayConsumerRules(terrain?.detailAuthority);
+  const npcs = Array.isArray(snapshot.npcs) ? snapshot.npcs : [];
   const nearby = nearestInteractableObject(objects, localPlayerRenderPosition);
   const nearbyEcology = nearestEcologyAction(objects, localPlayerRenderPosition, {
     pressures: ecologyObjectPressures(objects, { decayConsumerRules }),
   });
-  const nearbyPrompt = nearby
-    ? { label: nearby.label, action: nearby.label, tone: "landmark" }
-    : nearbyEcology;
+  const npcPrompt = npcPartyPrompt(nearestNpc(npcs, localPlayerRenderPosition), playerId);
+  const nearbyPrompt = npcPrompt
+    ? { label: npcPrompt.label, action: npcPrompt.label, tone: "npc" }
+    : nearby
+      ? { label: nearby.label, action: nearby.label, tone: "landmark" }
+      : nearbyEcology;
   const overlayHeight = terrainDebugMode ? (nearbyPrompt ? 148 : 126) : nearbyPrompt ? 124 : 80;
   ctx.fillStyle = "rgba(17, 20, 23, 0.72)";
   ctx.fillRect(14, 14, 278, overlayHeight);
@@ -62,5 +68,6 @@ function promptToneColor(tone) {
     mineral: "#d7d1b8",
     resource: "#dce9cc",
     landmark: "#dce9cc",
+    npc: "#f2d98b",
   }[tone] ?? "#dce9cc";
 }
