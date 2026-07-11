@@ -1,7 +1,7 @@
-import { loadVerifiedPngImage } from "./runtime-image-loader.js";
+import { loadVerifiedImage, loadVerifiedPngImage } from "./runtime-image-loader.js";
 import { normalizeTerrainAtlas } from "./terrain-assets.js";
 
-export async function loadRuntimeTerrainAssets() {
+export async function loadRuntimeTerrainAssets(onProgress = null) {
   const response = await fetch("/assets/terrain/manifest.json", {
     cache: "no-store",
     headers: { accept: "application/json" },
@@ -9,11 +9,29 @@ export async function loadRuntimeTerrainAssets() {
   if (!response.ok) return null;
   const manifest = await response.json();
   const atlas = normalizeTerrainAtlas(manifest);
+  let done = 0;
+  const total = 1 + atlas.groundPatches.length;
+  const report = () => onProgress?.(++done, total);
   const image = await loadVerifiedPngImage(`/assets/terrain/${atlas.tileSheet.imagePath}`, atlas.tileSheet.sha256);
+  report();
+  const groundPatches = new Map();
+  await Promise.all(
+    atlas.groundPatches.map(async (patch) => {
+      const patchImage = await loadVerifiedImage(`/assets/terrain/${patch.imagePath}`, patch.sha256);
+      report();
+      if (patchImage.naturalWidth !== patch.width || patchImage.naturalHeight !== patch.height) {
+        throw new Error(
+          `terrain ground patch ${patch.id} dimensions ${patchImage.naturalWidth}x${patchImage.naturalHeight} do not match ${patch.width}x${patch.height}`,
+        );
+      }
+      groundPatches.set(patch.biome, patchImage);
+    }),
+  );
 
   return {
     atlas,
     image,
+    groundPatches,
     patternSources: terrainPatternFrames(image, atlas.tileSheet),
     patternContexts: new WeakMap(),
   };

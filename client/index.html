@@ -1,80 +1,26 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Duskfell PoC</title>
-    <link rel="stylesheet" href="/styles.css" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Duskfell Terrain Forge</title>
+    <link rel="stylesheet" href="/assets/demos/terrain-sandwich-live.css">
   </head>
   <body>
-    <main class="app">
-      <header class="topbar">
-        <div>
-          <p class="eyebrow">Clean-room sandbox MMO PoC</p>
-          <h1>Duskfell</h1>
-        </div>
-        <div class="connection" id="connection">Connecting</div>
-      </header>
-
-      <section class="playfield">
-        <canvas id="world" width="1280" height="720" aria-label="Duskfell world"></canvas>
-        <div class="hud" id="hud">Loading</div>
-        <input id="chatInput" class="chat-input" maxlength="240" autocomplete="off" hidden />
-        <aside class="panel">
-          <div class="panel-block player-card-block">
-            <h2>Player</h2>
-            <div class="player-card">
-              <div class="player-card-frame">
-                <img id="playerCardPortrait" alt="" decoding="async" />
-              </div>
-              <div class="player-card-meta">
-                <strong id="playerCardName">Wayfarer</strong>
-                <span id="playerCardArchetype">Base paperdoll</span>
-                <span id="partyStatus" class="party-status">Traveling alone</span>
-              </div>
-            </div>
-            <label class="name-row">
-              <span>Name</span>
-              <input id="nameInput" maxlength="20" placeholder="Wayfarer" />
-            </label>
-            <button id="renameButton" type="button">Rename</button>
-          </div>
-
-          <div class="panel-block">
-            <h2>Title Office</h2>
-            <div class="deed-list" id="deedStatus">Walk to the Title Office and press E to claim a dry-run deed.</div>
-          </div>
-
-          <div class="panel-block">
-            <h2>Inventory</h2>
-            <div class="inventory-list" id="resourceStatus">Gather wood and ore, then craft at the Field Forge.</div>
-          </div>
-
-          <div class="panel-block">
-            <h2>Dialogue</h2>
-            <div class="dialogue-log" id="dialogueLog">Walk up to an NPC and press T to talk.</div>
-          </div>
-
-          <div class="panel-block">
-            <h2>Settlement</h2>
-            <dl class="metrics">
-              <div><dt>Mode</dt><dd id="chainMode">-</dd></div>
-              <div><dt>Pending</dt><dd id="pendingJobs">0</dd></div>
-              <div><dt>Confirmed</dt><dd id="confirmedJobs">0</dd></div>
-              <div><dt>Latest</dt><dd id="latestReceipt">-</dd></div>
-            </dl>
-          </div>
-        </aside>
-      </section>
-
-      <footer class="statusbar">
-        <span>Move with WASD or arrow keys.</span>
-        <span>Press E near the Title Office, groves, or ore veins.</span>
-        <span>Press T near an NPC to talk, P to invite them to your party.</span>
-        <span>All gameplay is server-authoritative; chain settlement is async dry-run.</span>
-      </footer>
-    </main>
-
-    <script src="/app.js?v=duskfell-npc-demo-3" type="module"></script>
+    <canvas id="world" aria-label="Playable Duskfell terrain proof"></canvas>
+    <header class="brand">Duskfell</header>
+    <div class="toolbar" role="toolbar" aria-label="Terrain proof controls">
+      <div class="modes" role="group" aria-label="Terrain enrichment">
+        <button class="mode active" data-mode="snow" type="button">Snow</button>
+        <button class="mode" data-mode="hdSnow" type="button">HD Snow</button>
+        <button class="mode" data-mode="fantasy" type="button">River</button>
+        <button class="mode" data-mode="oil" type="button">Oil</button>
+        <button class="mode" data-mode="native" type="button">Native</button>
+      </div>
+      <button class="icon" id="zoom-out" type="button" title="Zoom out" aria-label="Zoom out">-</button>
+      <button class="icon" id="zoom-in" type="button" title="Zoom in" aria-label="Zoom in">+</button>
+    </div>
+    <div class="status" id="status" aria-live="polite">Loading terrain</div>
+    <script type="module" src="/assets/demos/terrain-sandwich-live.js?v=terrain-lod-5"></script>
   </body>
 </html>

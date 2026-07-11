@@ -1,3 +1,5 @@
+import { streamCenterAt } from "./terrain-biome.js";
+
 export function createTerrainCompositionKits(cols, rows, safeRadiusTiles, profile) {
   const centerX = cols / 2;
   const centerY = rows / 2;
@@ -74,7 +76,9 @@ export function createTerrainCompositionKits(cols, rows, safeRadiusTiles, profil
       id: "river-reedbed",
       kind: "river-reedbed",
       label: "River Reedbed",
-      x: clamp(centerX - safeRadiusTiles * 0.12, 4, cols - 5),
+      // anchored on the stream channel so reeds/driftwood/wet stones land
+      // on actual banks instead of the dry ground where the old river ran
+      x: clamp(streamCenterAt(Math.round(deepSouthY), cols, rows, profile), 4, cols - 5),
       y: clamp(deepSouthY, 5, rows - 4),
       radius: Math.max(3.1, safeRadiusTiles * 0.68),
       priority: 15,

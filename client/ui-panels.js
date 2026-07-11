@@ -5,16 +5,21 @@ import {
   PLAYER_CARD_PORTRAITS,
 } from "./player-config.js";
 
-export function renderHud({ ui, snapshot, smoothedFps, terrainDebugMode }) {
+export function renderHud({ ui, snapshot, smoothedFps, terrainDebugMode, groundPatchCount, terrainAssetError }) {
   if (!ui.hud) return;
   if (!snapshot) {
     ui.hud.textContent = `FPS ${Math.round(smoothedFps)} / connecting`;
     return;
   }
   const players = Array.isArray(snapshot.players) ? snapshot.players : [];
+  // build tag + asset state stay visible so "am I running the new client
+  // and did the paintings load?" never needs DevTools
+  const artState = terrainAssetError
+    ? `art v3 ASSETS FAILED: ${terrainAssetError}`
+    : `art v3 / paintings ${groundPatchCount ?? 0}`;
   ui.hud.textContent = `FPS ${Math.round(smoothedFps)} / Players ${players.length} / Tick ${snapshot.tick}${
     terrainDebugMode ? ` / Terrain ${terrainDebugMode}` : ""
-  }`;
+  } / ${artState}`;
 }
 
 export function renderPanel({ ui, snapshot, playerId, sprites, playerSpriteFor }) {
@@ -62,26 +67,78 @@ export function inventoryItemCount(inventory) {
 function renderPlayerCard(ui, player, sprite) {
   const label = sprite?.label ?? PLAYER_ARCHETYPE_LABELS[sprite?.id] ?? "Wayfarer";
   const displayName = player ? playerDisplayName(player, sprite) : "Wayfarer";
-  const portrait = playerCardPortraitFor(sprite);
 
   if (ui.playerCardName) {
     ui.playerCardName.textContent = displayName;
   }
   if (ui.playerCardArchetype) {
-    ui.playerCardArchetype.textContent = `${label} base paperdoll`;
+    ui.playerCardArchetype.textContent = label;
   }
-  if (ui.playerCardPortrait && portrait && ui.playerCardPortrait.getAttribute("src") !== portrait) {
-    ui.playerCardPortrait.src = portrait;
-  }
+  drawPlayerCardPortrait(ui.playerCardPortrait, sprite);
 }
 
-function playerCardPortraitFor(sprite) {
-  if (!sprite) return PLAYER_CARD_PORTRAITS["duskfell-paperdoll-wayfarer"];
-  return (
-    PLAYER_CARD_PORTRAITS[sprite.id] ??
-    PLAYER_CARD_PORTRAITS[sprite.baseSheetId] ??
-    PLAYER_CARD_PORTRAITS["duskfell-paperdoll-wayfarer"]
-  );
+// the card shows the actual dude: a hi-res hero-pose render of his current
+// body when one exists, else his live sheet frame (paperdoll layers included)
+const portraitImageCache = new Map();
+
+function portraitImageFor(url) {
+  if (!portraitImageCache.has(url)) {
+    const image = new Image();
+    image.src = url;
+    portraitImageCache.set(url, image);
+  }
+  return portraitImageCache.get(url);
+}
+
+function drawPlayerCardPortrait(canvas, sprite) {
+  if (!canvas?.getContext) return;
+  // exact id only: paperdolls share the wretch base sheet, and matching on
+  // baseSheetId would show the naked hero render for a clothed character
+  const heroUrl = PLAYER_CARD_PORTRAITS[sprite?.id] ?? null;
+  if (heroUrl) {
+    const image = portraitImageFor(heroUrl);
+    if (!image.complete || image.naturalWidth === 0) {
+      image.addEventListener("load", () => drawPlayerCardPortrait(canvas, sprite), { once: true });
+      return;
+    }
+    if (canvas.dataset.portraitKey === heroUrl) return;
+    canvas.dataset.portraitKey = heroUrl;
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.imageSmoothingEnabled = true;
+    const scale = Math.min(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight);
+    const dw = image.naturalWidth * scale;
+    const dh = image.naturalHeight * scale;
+    ctx.drawImage(image, (canvas.width - dw) / 2, canvas.height - dh, dw, dh);
+    return;
+  }
+  const layers =
+    sprite?.kind === "paperdoll" && Array.isArray(sprite.layers)
+      ? sprite.layers.map((layer) => layer.image)
+      : sprite?.image
+        ? [sprite.image]
+        : [];
+  if (layers.length === 0 || layers.some((image) => !image?.complete || image.naturalWidth === 0)) {
+    return;
+  }
+  const frame = (sprite.directions?.south?.startFrame ?? 0) + (sprite.animation?.idleFrame ?? 0);
+  const sx = (frame % sprite.columns) * sprite.cellWidth;
+  const sy = Math.floor(frame / sprite.columns) * sprite.cellHeight;
+  const cacheKey = `${sprite.id}:${frame}:${layers.length}`;
+  if (canvas.dataset.portraitKey === cacheKey) return;
+  canvas.dataset.portraitKey = cacheKey;
+
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.imageSmoothingEnabled = false;
+  const scale = Math.min(canvas.width / sprite.cellWidth, canvas.height / sprite.cellHeight) * 0.94;
+  const dw = sprite.cellWidth * scale;
+  const dh = sprite.cellHeight * scale;
+  const dx = (canvas.width - dw) / 2;
+  const dy = canvas.height - dh - canvas.height * 0.04;
+  for (const image of layers) {
+    ctx.drawImage(image, sx, sy, sprite.cellWidth, sprite.cellHeight, dx, dy, dw, dh);
+  }
 }
 
 function renderDeedPanel(ui, deeds, itemDataUrls) {
@@ -92,7 +149,7 @@ function renderDeedPanel(ui, deeds, itemDataUrls) {
   if (!deeds.length) {
     const empty = document.createElement("div");
     empty.className = "inventory-empty";
-    empty.textContent = "Walk to the Title Office and press E to claim a dry-run deed.";
+    empty.textContent = "Walk to the Bank and press E to claim a dry-run deed.";
     container.append(empty);
     return;
   }

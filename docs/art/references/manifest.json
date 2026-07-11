@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "duskfell-art-reference-manifest-v1",
+  "purpose": "Reference images for the Blender structure plus img2img richness pipeline. These are inspiration and pipeline evidence, not production-ready game assets.",
+  "references": [
+    {
+      "path": "docs/art/references/blender-img2img-terrain-before-after.png",
+      "note": "Shows the core pipeline: simple 3D terrain bake becomes rich terrain through img2img."
+    },
+    {
+      "path": "docs/art/references/img2img-alpine-valley-wide.png",
+      "note": "Wide painterly alpine valley reference for macro terrain richness."
+    },
+    {
+      "path": "docs/art/references/img2img-alpine-valley-topdown.png",
+      "note": "Top-down terrain reference for rivers, cliffs, banks, snow, and meadow detail."
+    },
+    {
+      "path": "docs/art/references/img2img-biome-tileset-sampler.png",
+      "note": "Biome sampler reference for grassland, heath, chalk, frost, marsh, moor, ash, and blight terrain families."
+    },
+    {
+      "path": "docs/art/references/human-base-walk-cycle-reference.png",
+      "note": "Walk-cycle reference emphasizing body consistency, foot anchors, and frame count needs."
+    }
+  ]
+}

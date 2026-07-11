@@ -35,7 +35,7 @@
         "layer": "actor",
         "sort": "footprint-y",
         "zBias": 0,
-        "scale": 0.78,
+        "scale": 0.95,
         "shadow": {
           "kind": "ellipse",
           "x": 64,
@@ -137,7 +137,7 @@
         "layer": "actor",
         "sort": "footprint-y",
         "zBias": 0,
-        "scale": 0.78,
+        "scale": 0.95,
         "shadow": {
           "kind": "ellipse",
           "x": 64,
@@ -236,7 +236,7 @@
         "layer": "actor",
         "sort": "footprint-y",
         "zBias": 0,
-        "scale": 0.78,
+        "scale": 0.95,
         "shadow": {
           "kind": "ellipse",
           "x": 64,
@@ -335,7 +335,7 @@
         "layer": "actor",
         "sort": "footprint-y",
         "zBias": 0,
-        "scale": 0.78,
+        "scale": 0.95,
         "shadow": {
           "kind": "ellipse",
           "x": 64,
@@ -614,18 +614,18 @@
     {
       "id": "duskfell-details",
       "image": "duskfell-details.png",
-      "imageSha256": "cf9343f76231a6401f6e83f12e78f1686b995705bdaef47350a2e2f4d93e0aeb",
+      "imageSha256": "f2b43f5bd0a8b3f8b4c67b201882d09fcfc33119cf808f6e7c58a398a553211f",
       "frameGrid": {
-        "cellWidth": 64,
-        "cellHeight": 64,
+        "cellWidth": 192,
+        "cellHeight": 192,
         "columns": 23,
         "rows": 1,
         "frameCount": 23
       },
       "anchor": {
         "kind": "foot",
-        "x": 32,
-        "y": 54
+        "x": 96,
+        "y": 176
       },
       "footprint": {
         "kind": "diamond",
@@ -636,14 +636,14 @@
         "layer": "terrain",
         "sort": "footprint-y",
         "zBias": -4,
-        "scale": 0.72,
+        "scale": 1.1,
         "shadow": {
           "kind": "ellipse",
-          "x": 32,
-          "y": 56,
-          "width": 30,
-          "height": 8,
-          "opacity": 0.18
+          "x": 96,
+          "y": 180,
+          "width": 64,
+          "height": 16,
+          "opacity": 0.2
         }
       },
       "directions": [
@@ -2775,6 +2775,150 @@
       "approval": {
         "state": "review"
       }
+    },
+    {
+      "id": "duskfell-wretch",
+      "image": "duskfell-wretch.png",
+      "imageSha256": "19d1e90d01712556a011ab244aaf20072d9139097fe53bdab1279b6f3f2610cb",
+      "frameGrid": {
+        "cellWidth": 128,
+        "cellHeight": 128,
+        "columns": 27,
+        "rows": 8,
+        "frameCount": 216
+      },
+      "anchor": {
+        "kind": "foot",
+        "x": 64,
+        "y": 116
+      },
+      "footprint": {
+        "kind": "diamond",
+        "widthTiles": 1,
+        "heightTiles": 1
+      },
+      "render": {
+        "layer": "actor",
+        "sort": "footprint-y",
+        "zBias": 0,
+        "scale": 1.08,
+        "shadow": {
+          "kind": "ellipse",
+          "x": 64,
+          "y": 119,
+          "width": 44,
+          "height": 12,
+          "opacity": 0.3
+        }
+      },
+      "directions": [
+        {
+          "name": "south",
+          "startFrame": 0,
+          "frameCount": 27
+        },
+        {
+          "name": "east",
+          "startFrame": 27,
+          "frameCount": 27
+        },
+        {
+          "name": "north",
+          "startFrame": 54,
+          "frameCount": 27
+        },
+        {
+          "name": "west",
+          "startFrame": 81,
+          "frameCount": 27
+        },
+        {
+          "name": "southeast",
+          "startFrame": 108,
+          "frameCount": 27
+        },
+        {
+          "name": "northeast",
+          "startFrame": 135,
+          "frameCount": 27
+        },
+        {
+          "name": "northwest",
+          "startFrame": 162,
+          "frameCount": 27
+        },
+        {
+          "name": "southwest",
+          "startFrame": 189,
+          "frameCount": 27
+        }
+      ],
+      "animation": {
+        "idleFrame": 0,
+        "walkFrames": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14
+        ],
+        "fidgetFrames": [
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22
+        ],
+        "idleFrames": [
+          0,
+          23,
+          24,
+          25,
+          26,
+          25,
+          24,
+          23
+        ]
+      },
+      "provenance": {
+        "cleanRoom": true,
+        "source": "Blender world-kit render of MPFB2 parametric human (CC0) with procedural tattered shorts; deterministic pose script",
+        "createdAt": "2026-07-09",
+        "license": "project-original-cc0-derived",
+        "reviewer": "claude",
+        "prompt": "n/a - deterministic 3D render, no AI image generation",
+        "negativePrompt": "n/a",
+        "method": "deterministic-local",
+        "tool": "Blender 5.1 + MPFB2 20260613",
+        "toolVersion": "Blender 5.1.2",
+        "sourceHash": "c479770545cb3b388fa2bb686bd9abef685407aa742324f734a6bc04d4ad5c4a",
+        "termsSnapshot": "OpenAI service terms reviewed 2026-07-08 for internal PoC asset review",
+        "model": "n/a",
+        "modelVersion": "n/a",
+        "seed": "deterministic-pose-script",
+        "toolReview": {
+          "status": "approved-internal",
+          "reviewedAt": "2026-07-08",
+          "reviewer": "codex",
+          "sourceUrl": "https://openai.com/policies/service-terms",
+          "risk": "internal review-only paperdoll prototype; row perspective is not final Duskfell quality and needs a replacement oblique body pass before production"
+        }
+      },
+      "approval": {
+        "state": "review"
+      }
     }
   ],
   "paperdolls": [
@@ -2782,28 +2926,28 @@
       "id": "duskfell-paperdoll-wayfarer",
       "role": "player",
       "label": "Wayfarer",
-      "baseSheetId": "duskfell-body-base",
+      "baseSheetId": "duskfell-wretch",
       "layers": []
     },
     {
       "id": "duskfell-paperdoll-ranger",
       "role": "player",
       "label": "Ranger",
-      "baseSheetId": "duskfell-body-base",
+      "baseSheetId": "duskfell-wretch",
       "layers": []
     },
     {
       "id": "duskfell-paperdoll-warden",
       "role": "player",
       "label": "Warden",
-      "baseSheetId": "duskfell-body-base",
+      "baseSheetId": "duskfell-wretch",
       "layers": []
     },
     {
       "id": "duskfell-paperdoll-brigand",
       "role": "player",
       "label": "Brigand",
-      "baseSheetId": "duskfell-body-base",
+      "baseSheetId": "duskfell-wretch",
       "layers": []
     }
   ]

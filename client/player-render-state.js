@@ -2,6 +2,7 @@ import {
   PLAYER_CLUSTER_DISTANCE,
   PLAYER_CLUSTER_RING_SIZE,
   PLAYER_CLUSTER_RING_STEP,
+  PLAYER_CLUSTER_SMOOTHING_MS,
   PLAYER_CLUSTER_SPREAD_RADIUS,
   PLAYER_RENDER_MARGIN,
 } from "./player-config.js";
@@ -10,24 +11,25 @@ import {
   PLAYER_WALK_STOP_GRACE_MS,
   directionFromWorldDelta,
   smoothPlayerRenderPosition,
+  PLAYER_WALK_FRAME_MS,
+  PLAYER_WALK_MIN_SPEED_RATIO,
+  PLAYER_WALK_MAX_SPEED_RATIO,
 } from "./player-animation.js";
+
+// a new facing must persist ~90ms before the sprite row switches, so tick
+// noise at 45-degree sector boundaries cannot whip the sheet between rows
+const PLAYER_DIRECTION_COMMIT_MS = 90;
 
 export function createPlayerRenderState() {
   const motion = new Map();
   const visualPositions = new Map();
   const renderOffsets = new Map();
-  const variantIndexes = new Map();
   let lastRenderUpdateTime = 0;
+  let lastOffsetUpdateTime = 0;
 
   return {
-    updateRenderOffsets(players, map, localPlayerId = null) {
-      renderOffsets.clear();
-      variantIndexes.clear();
-
-      [...players]
-        .sort((a, b) => String(a.id).localeCompare(String(b.id)))
-        .forEach((player, index) => variantIndexes.set(player.id, index));
-
+    updateRenderOffsets(players, map, localPlayerId = null, now = 0) {
+      const offsetTargets = new Map();
       const clusters = playerProximityClusters(players);
 
       for (const cluster of clusters) {
@@ -54,12 +56,35 @@ export function createPlayerRenderState() {
             target.x = clamp(target.x, PLAYER_RENDER_MARGIN, map.width - PLAYER_RENDER_MARGIN);
             target.y = clamp(target.y, PLAYER_RENDER_MARGIN, map.height - PLAYER_RENDER_MARGIN);
           }
-          renderOffsets.set(player.id, {
+          offsetTargets.set(player.id, {
             x: target.x - player.x,
             y: target.y - player.y,
           });
         }
       }
+
+      // ease offsets toward their targets (or back to zero) so a bystander
+      // never teleports when cluster membership flips as someone walks past
+      const elapsedMs = Math.max(0, now - (lastOffsetUpdateTime || now));
+      const alpha = 1 - Math.exp(-elapsedMs / PLAYER_CLUSTER_SMOOTHING_MS);
+      const activeIds = new Set(players.map((player) => player.id));
+      for (const id of renderOffsets.keys()) {
+        if (!activeIds.has(id)) renderOffsets.delete(id);
+      }
+      for (const player of players) {
+        const target = offsetTargets.get(player.id) ?? { x: 0, y: 0 };
+        const current = renderOffsets.get(player.id) ?? { x: 0, y: 0 };
+        const next = {
+          x: current.x + (target.x - current.x) * alpha,
+          y: current.y + (target.y - current.y) * alpha,
+        };
+        if (!offsetTargets.has(player.id) && Math.hypot(next.x, next.y) < 0.5) {
+          renderOffsets.delete(player.id);
+        } else {
+          renderOffsets.set(player.id, next);
+        }
+      }
+      lastOffsetUpdateTime = now;
     },
 
     updateVisualPositions(players, now) {
@@ -107,6 +132,10 @@ export function createPlayerRenderState() {
           sampleMs: now,
           speedRatio: 0,
           direction: "south",
+          pendingDirection: null,
+          pendingDirectionSince: 0,
+          animPhaseFrames: 0,
+          phaseSampledMs: now,
         };
         motion.set(player.id, next);
         return next;
@@ -123,9 +152,28 @@ export function createPlayerRenderState() {
           && now - previous.lastMovementMs <= PLAYER_WALK_STOP_GRACE_MS;
         const walkStartMs =
           moved && !previous.moving && !wasRecentlyMoving ? now : previous.walkStartMs;
-        const direction = moved
+        const sampledDirection = moved
           ? directionFromWorldDelta(dx, dy, previous.direction)
           : previous.direction;
+        let direction = previous.direction;
+        if (sampledDirection === previous.direction) {
+          previous.pendingDirection = null;
+        } else if (!previous.moving) {
+          // first step from standstill faces immediately — hysteresis only
+          // guards against sector flapping mid-walk
+          direction = sampledDirection;
+          previous.pendingDirection = null;
+          previous.previousDirection = previous.direction;
+          previous.directionChangedMs = now;
+        } else if (previous.pendingDirection !== sampledDirection) {
+          previous.pendingDirection = sampledDirection;
+          previous.pendingDirectionSince = now;
+        } else if (now - previous.pendingDirectionSince >= PLAYER_DIRECTION_COMMIT_MS) {
+          direction = sampledDirection;
+          previous.pendingDirection = null;
+          previous.previousDirection = previous.direction;
+          previous.directionChangedMs = now;
+        }
         previous.x = player.x;
         previous.y = player.y;
         previous.tick = tick;
@@ -145,11 +193,25 @@ export function createPlayerRenderState() {
         previous.speedRatio = 0;
       }
 
+      const phaseElapsed = Math.max(0, now - previous.phaseSampledMs);
+      previous.phaseSampledMs = now;
+      if (previous.moving) {
+        const speed = Math.min(
+          PLAYER_WALK_MAX_SPEED_RATIO,
+          Math.max(PLAYER_WALK_MIN_SPEED_RATIO, previous.speedRatio || 1),
+        );
+        previous.animPhaseFrames += (phaseElapsed * speed) / PLAYER_WALK_FRAME_MS;
+      } else {
+        previous.animPhaseFrames = 0;
+      }
+
       return previous;
     },
 
     variantIndexFor(player, fallbackIndex = 0) {
-      return variantIndexes.get(player.id) ?? fallbackIndex;
+      // stable per-id hash only: roster-order variants made a player's body
+      // (and card portrait) swap whenever someone crossed the interest radius
+      return fallbackIndex;
     },
 
     nearbyPlayerCount(players, player) {

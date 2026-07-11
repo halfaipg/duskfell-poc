@@ -1,5 +1,8 @@
 import { PROJECTION } from "./projection.js";
 import { TERRAIN_MATERIALS } from "./terrain.js";
+import { VISUAL_BIOMES } from "./terrain-visual-biomes.js";
+
+const OVERLAY_PATCHES = ["trail", "ecotone", "stream-water", "cliff", "scree"];
 
 const MANIFEST_SCHEMA_VERSION = "duskfell-terrain-atlas-v1";
 const ALLOWED_TILE_KINDS = new Set(["flat-base", "slope-texture", "transition", "pair-transition", "decal"]);
@@ -47,6 +50,7 @@ export function normalizeTerrainAtlas(manifest) {
     }
     normalizedTiles.push(normalized);
   }
+  const groundPatches = normalizeGroundPatches(manifest.groundPatches);
 
   for (const material of Object.keys(TERRAIN_MATERIALS)) {
     if (!byMaterial.has(material)) {
@@ -90,7 +94,51 @@ export function normalizeTerrainAtlas(manifest) {
     transitionByMaterialAndMask,
     pairTransitionByPair,
     pairTransitionByPairAndMask,
+    groundPatches,
   };
+}
+
+function normalizeGroundPatches(patches) {
+  if (patches == null) return [];
+  if (!Array.isArray(patches)) {
+    throw new Error("terrain atlas groundPatches must be an array");
+  }
+  const seenBiomes = new Set();
+  const normalized = patches.map((patch, index) => {
+    if (!isObject(patch)) throw new Error(`terrain atlas groundPatches[${index}] must be an object`);
+    if (!isNonEmptyString(patch.id)) throw new Error(`terrain atlas groundPatches[${index}].id must be non-empty`);
+    // overlay paintings (trail wear) ride alongside the biome set
+    if (!VISUAL_BIOMES.includes(patch.biome) && !OVERLAY_PATCHES.includes(patch.biome)) {
+      throw new Error(`terrain atlas groundPatches[${index}].biome is unsupported`);
+    }
+    if (seenBiomes.has(patch.biome)) {
+      throw new Error(`terrain atlas groundPatches biome ${patch.biome} is duplicated`);
+    }
+    seenBiomes.add(patch.biome);
+    if (!isSafeRelativeImage(patch.image)) {
+      throw new Error(`terrain atlas groundPatches[${index}].image must be a safe relative PNG or WebP path`);
+    }
+    if (typeof patch.sha256 !== "string" || !/^[a-f0-9]{64}$/.test(patch.sha256)) {
+      throw new Error(`terrain atlas groundPatches[${index}].sha256 must be a lowercase SHA-256 hex digest`);
+    }
+    if (!isPositiveInteger(patch.width) || !isPositiveInteger(patch.height)) {
+      throw new Error(`terrain atlas groundPatches[${index}] dimensions must be positive integers`);
+    }
+    return {
+      id: patch.id,
+      biome: patch.biome,
+      imagePath: patch.image,
+      sha256: patch.sha256,
+      width: patch.width,
+      height: patch.height,
+    };
+  });
+  if (normalized.length > 0) {
+    for (const biome of VISUAL_BIOMES) {
+      if (!seenBiomes.has(biome)) throw new Error(`terrain atlas missing ground patch for biome ${biome}`);
+    }
+  }
+  return normalized;
 }
 
 export function transitionMaskKey(material, mask) {
@@ -270,5 +318,15 @@ function isSafeRelativePng(value) {
     !/^[a-z][a-z0-9+.-]*:/i.test(value) &&
     !value.split(/[\\/]+/).includes("..") &&
     value.toLowerCase().endsWith(".png")
+  );
+}
+
+function isSafeRelativeImage(value) {
+  return (
+    isNonEmptyString(value) &&
+    !value.startsWith("/") &&
+    !/^[a-z][a-z0-9+.-]*:/i.test(value) &&
+    !value.split(/[\\/]+/).includes("..") &&
+    /\.(png|webp)$/i.test(value)
   );
 }

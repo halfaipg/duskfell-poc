@@ -55,7 +55,7 @@ cargo run -p sundermere-server
 
 Open [http://127.0.0.1:4107](http://127.0.0.1:4107):
 
-1. **Maren** stands just southwest of the spawn plaza by the Title Office;
+1. **Maren** stands just west of the spawn plaza by the Bank;
    **Bram** walks a schedule between the Field Forge and the plaza.
 2. Walk up to Maren. When the overlay shows `T: talk to Maren`, press `T`,
    type a message, press Enter. Her reply streams into a speech bubble and
@@ -230,6 +230,7 @@ docs/        Architecture, security, clean-room process
 Important current docs:
 
 - [Agent Instructions](AGENTS.md)
+- [Humans Guide](HUMANS.md)
 - [Development Constitution](docs/development-constitution.md)
 - [Refactor Map](docs/refactor-map.md)
 - [Architecture](docs/architecture.md)

@@ -12,7 +12,7 @@
   "tileSheet": {
     "id": "terrain-placeholder",
     "image": "terrain-placeholder.png",
-    "sha256": "ee13fbd01210ed83466704abc2ffa81df7e3f0f50dd341b29effc0ed40e92042",
+    "sha256": "2b4be3429740a9e0e74cb13bc2ccf808faeda4a9636c8b980791a0e754ffc0ac",
     "cellWidth": 64,
     "cellHeight": 64,
     "columns": 10,
@@ -1581,18 +1581,124 @@
       }
     }
   ],
+  "groundPatches": [
+    {
+      "id": "biome-meadow",
+      "biome": "meadow",
+      "image": "ground-patches/biome-meadow.webp",
+      "sha256": "76112f8ee92e9d0151225b3de165c1956134c8aa53619b801927d9308fd451e0",
+      "width": 2048,
+      "height": 2048
+    },
+    {
+      "id": "biome-heath",
+      "biome": "heath",
+      "image": "ground-patches/biome-heath.webp",
+      "sha256": "abf285c77344e53c2203d8053e0d5b3c5b7127f1a9f4e787429a258aaa67416c",
+      "width": 2048,
+      "height": 2048
+    },
+    {
+      "id": "biome-chalk",
+      "biome": "chalk",
+      "image": "ground-patches/biome-chalk.webp",
+      "sha256": "56b47370d099d351ae7f932ab20e0aa569d4671178d9cb73ae6fe8f4387ab946",
+      "width": 2048,
+      "height": 2048
+    },
+    {
+      "id": "biome-frost",
+      "biome": "frost",
+      "image": "ground-patches/biome-frost.webp",
+      "sha256": "e8c069b470780870677ca650da5469b77dbf76fa95d7b00929616253e53d5ef0",
+      "width": 2048,
+      "height": 2048
+    },
+    {
+      "id": "biome-fen",
+      "biome": "fen",
+      "image": "ground-patches/biome-fen.webp",
+      "sha256": "f249ce629c83e826c5f09e1c07bf2b1efeb7814e08f8665f802f21b907a769a7",
+      "width": 2048,
+      "height": 2048
+    },
+    {
+      "id": "biome-moor",
+      "biome": "moor",
+      "image": "ground-patches/biome-moor.webp",
+      "sha256": "d802f581e5119958485eb99d51e317686af0eee62c104cedf2e818858ec58644",
+      "width": 2048,
+      "height": 2048
+    },
+    {
+      "id": "biome-ash",
+      "biome": "ash",
+      "image": "ground-patches/biome-ash.webp",
+      "sha256": "1986c635c2519dd9aeefccb2cb55071ecb4fc89f6af066d7f896f7910bf0ca00",
+      "width": 2048,
+      "height": 2048
+    },
+    {
+      "id": "biome-blight",
+      "biome": "blight",
+      "image": "ground-patches/biome-blight.webp",
+      "sha256": "7711d851d114e2bd40dccf226211eb7a970b6595a2fa1bdea9076047372aa3a7",
+      "width": 2048,
+      "height": 2048
+    },
+    {
+      "id": "biome-trail",
+      "biome": "trail",
+      "image": "ground-patches/biome-trail.webp",
+      "sha256": "935a08fff25272b9a316486dfcd95fb8bbdca4717528a1170b59e03c4edca712",
+      "width": 2048,
+      "height": 2048
+    },
+    {
+      "id": "biome-ecotone",
+      "biome": "ecotone",
+      "image": "ground-patches/biome-ecotone.webp",
+      "sha256": "2f189ca3cefad05459796352f8fcf51f388dc03deaaf5d30a2fe3e72d302da32",
+      "width": 2048,
+      "height": 2048
+    },
+    {
+      "id": "biome-stream-water",
+      "biome": "stream-water",
+      "image": "ground-patches/biome-stream-water.webp",
+      "sha256": "2d73185dc3bb9fac0fa596afa919ea567cef9ca432eb67dff5d8002cddbf14e3",
+      "width": 2048,
+      "height": 2048
+    },
+    {
+      "id": "biome-cliff",
+      "biome": "cliff",
+      "image": "ground-patches/biome-cliff.webp",
+      "sha256": "49931560148a8f7e22c4e3bf3a4fad86857b3d88be6dbdbb5a2ef37ee846b37f",
+      "width": 2048,
+      "height": 2048
+    },
+    {
+      "id": "biome-scree",
+      "biome": "scree",
+      "image": "ground-patches/biome-scree.webp",
+      "sha256": "9fb59c93902eb0f9980764e14d355a9172c99d3c581432f10f0795c3dbaebc38",
+      "width": 2048,
+      "height": 2048
+    }
+  ],
   "provenance": {
     "cleanRoom": true,
-    "source": "AI-assisted clean-room source texture sheet normalized by scripts/normalize-generated-terrain-atlas.py",
+    "source": "painterly biome patches (3D bake + img2img sandwich) sliced by scratchpad build-painterly-atlas.py",
     "createdAt": "2026-07-07",
     "license": "project-original-ai-assisted-review",
     "reviewer": "codex",
     "prompt": "original clean-room military-plan-oblique fantasy MMO terrain texture source sheet with lush grass, trampled field grass, dirt path, rocky ground, shallow water, worn stone plaza, cobble, ruin masonry, shore bank, slopes, and edge transition variants",
     "negativePrompt": "no copied commercial game assets, no Ultima Online source art, no logos, no watermark, no photorealistic satellite texture, no muddy blur",
-    "method": "ai-assisted-source-plus-deterministic-local-normalization",
+    "method": "ai-assisted-source-plus-deterministic-asymmetric-upscale",
     "tool": "OpenAI built-in image generation plus Pillow local image processing",
     "toolVersion": "Pillow 2026-07-07 runtime",
-    "sourceHash": "5b22c744c614a6d306cefea5195c91a09ec8355cfa188212df6a20906893fc42",
+    "sourceHash": "3322365d858da3f7bd4a8ba8a0b0ac17457a8f107a0fbabce171764501c41c61",
     "termsSnapshot": "OpenAI service terms reviewed 2026-07-07 for source concept; local deterministic terrain generation adds no external source",
     "model": "built-in image generation",
     "modelVersion": "2026-07-07",
@@ -1604,7 +1710,7 @@
       "sourceUrl": "https://openai.com/policies/service-terms",
       "risk": "internal PoC terrain sheet from clean-room prompt; human art review still required before production approval"
     },
-    "sourceImageHash": "e436147914586e1377e45a2d0614f99e9da010f6e38497b72a13a129b6b89f1e"
+    "sourceImageHash": "61a91ca94d668331a94a367329776cae5d0aa69b1b1056b1e5baa71daaf7e91b"
   },
   "approval": {
     "state": "review"

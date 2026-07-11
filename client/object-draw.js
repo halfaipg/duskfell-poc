@@ -3,6 +3,9 @@ import {
   shouldDrawTerrainDetailAuthorityBody,
   shouldDrawWorldObjectLabel,
   terrainDetailAuthorityObjectIds,
+  VEGETATION_ONLY_ART_PASS,
+  VISIBLE_DETAIL_KINDS,
+  VISIBLE_OBJECT_KINDS,
 } from "./object-render-policy.js";
 import { terrainHeightAtWorld } from "./terrain.js";
 import { createObjectCueDrawer } from "./object-cue-draw.js";
@@ -11,6 +14,12 @@ import { drawTerrainDetailAuthorityCue } from "./object-authority-cue-draw.js";
 import { drawFallbackObject, objectColors } from "./object-fallback-draw.js";
 import { drawObjectLabel, drawWorldObjectExtras } from "./object-label-draw.js";
 import { drawObjectSprite } from "./object-sprite-draw.js";
+
+// Art-reset review mode: old prop/detail sprites are retired pending the
+// world-kit prop pass — draw only players until new props land.
+export const HIDE_WORLD_PROPS = false;
+
+export { VEGETATION_ONLY_ART_PASS } from "./object-render-policy.js";
 
 export function createObjectDrawer({
   getContext,
@@ -49,16 +58,24 @@ export function createObjectDrawer({
     refreshRendererState();
     const terrainDetailObjectIds = terrainDetailAuthorityObjectIds(terrain?.details);
     const entities = [
-      ...(terrain?.details ?? []).map((detail) => ({
-        type: "terrain-detail",
-        sort: terrainDetailDrawer.terrainDetailSortKey(detail, origin),
-        value: detail,
-      })),
-      ...objects.map((object) => ({
-        type: "object",
-        sort: objectRenderSortKey(object, origin),
-        value: object,
-      })),
+      ...(HIDE_WORLD_PROPS
+        ? []
+        : (terrain?.details ?? [])
+            .filter((detail) => !VEGETATION_ONLY_ART_PASS || VISIBLE_DETAIL_KINDS.has(detail.kind))
+            .map((detail) => ({
+              type: "terrain-detail",
+              sort: terrainDetailDrawer.terrainDetailSortKey(detail, origin),
+              value: detail,
+            }))),
+      ...(HIDE_WORLD_PROPS
+        ? []
+        : objects
+            .filter((object) => !VEGETATION_ONLY_ART_PASS || VISIBLE_OBJECT_KINDS.has(object.kind))
+            .map((object) => ({
+              type: "object",
+              sort: objectRenderSortKey(object, origin),
+              value: object,
+            }))),
       ...(npcDrawer
         ? npcs.map((npc) => ({
             type: "npc",

@@ -30,14 +30,62 @@ test("render offsets spread crowded remote players while leaving local player an
     { id: "bravo", x: 10.2, y: 10 },
   ];
 
-  state.updateRenderOffsets(players, { width: 20, height: 20 }, "local");
-  state.updateVisualPositions(players, 100);
+  // offsets ease in over PLAYER_CLUSTER_SMOOTHING_MS, so run a few frames
+  state.updateRenderOffsets(players, { width: 200, height: 200 }, "local", 100);
+  state.updateRenderOffsets(players, { width: 200, height: 200 }, "local", 600);
+  state.updateRenderOffsets(players, { width: 200, height: 200 }, "local", 1100);
+  state.updateVisualPositions(players, 1100);
 
   assert.deepEqual(state.renderPosition(players[0]), { x: 10, y: 10 });
   assert.notDeepEqual(state.renderPosition(players[1]), { x: 10.1, y: 10 });
   assert.notDeepEqual(state.renderPosition(players[2]), { x: 10.2, y: 10 });
-  assert.equal(state.variantIndexFor(players[1], 99), 0);
-  assert.equal(state.variantIndexFor(players[2], 99), 1);
+  // variants are stable per player id (the caller's hash), never roster order
+  assert.equal(state.variantIndexFor(players[1], 99), 99);
+  assert.equal(state.variantIndexFor(players[2], 99), 99);
+});
+
+test("walking past a nearby player never displaces them", () => {
+  const state = createPlayerRenderState();
+  const bystander = { id: "idle", x: 100, y: 100 };
+  // local walks past ~one tile away: closer than the old 118-unit cluster
+  // radius, farther than genuine sprite overlap
+  for (let step = 0; step < 8; step += 1) {
+    const players = [{ id: "local", x: 40 + step * 20, y: 160 }, bystander];
+    state.updateRenderOffsets(players, { width: 400, height: 400 }, "local", 100 + step * 100);
+    state.updateVisualPositions(players, 100 + step * 100);
+    assert.deepEqual(state.renderPosition(bystander), { x: 100, y: 100 });
+  }
+});
+
+test("cluster offsets ease out instead of snapping when players separate", () => {
+  const state = createPlayerRenderState();
+  const bystander = { id: "idle", x: 100, y: 100 };
+  const stacked = [{ id: "local", x: 100, y: 100 }, bystander];
+
+  let now = 100;
+  for (let frame = 0; frame < 30; frame += 1) {
+    now += 50;
+    state.updateRenderOffsets(stacked, { width: 400, height: 400 }, "local", now);
+  }
+  state.updateVisualPositions(stacked, now);
+  const spread = state.renderPosition(bystander);
+  const spreadDistance = Math.hypot(spread.x - 100, spread.y - 100);
+  assert.ok(spreadDistance > 10, `expected spread, got ${spreadDistance}`);
+
+  // local steps away: bystander should glide home, not teleport
+  const apart = [{ id: "local", x: 300, y: 300 }, bystander];
+  now += 50;
+  state.updateRenderOffsets(apart, { width: 400, height: 400 }, "local", now);
+  const easing = state.renderPosition(bystander);
+  const easingDistance = Math.hypot(easing.x - 100, easing.y - 100);
+  assert.ok(easingDistance > 1, "offset should not vanish in a single frame");
+  assert.ok(easingDistance < spreadDistance, "offset should shrink toward zero");
+
+  for (let frame = 0; frame < 40; frame += 1) {
+    now += 50;
+    state.updateRenderOffsets(apart, { width: 400, height: 400 }, "local", now);
+  }
+  assert.deepEqual(state.renderPosition(bystander), { x: 100, y: 100 });
 });
 
 test("render state smooths authoritative positions between samples", () => {

@@ -18,7 +18,7 @@ const runId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
 // Deliberately conspicuous: must never appear on any ops surface.
 const SENTINEL_KEY = "smoke-sentinel-animus-key-do-not-leak";
-const RELOCATED_BRAM = { x: 1560, y: 1160 };
+const RELOCATED_BRAM = { x: 2980, y: 2120 };
 
 await mkdir(runtimeDir, { recursive: true });
 

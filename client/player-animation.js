@@ -1,13 +1,22 @@
 import { PROJECTION } from "./projection.js";
 
 export const PLAYER_MOVEMENT_EPSILON = 0.015;
-export const PLAYER_WALK_FRAME_MS = 90;
+export const PLAYER_WALK_FRAME_MS = 55;
 export const PLAYER_WALK_STOP_GRACE_MS = 145;
 export const PLAYER_WALK_SWAY_PX = 0.65;
 export const PLAYER_WALK_MIN_SPEED_RATIO = 0.62;
 export const PLAYER_WALK_MAX_SPEED_RATIO = 1.45;
 export const PLAYER_RENDER_SMOOTHING_MS = 78;
 export const PLAYER_RENDER_SNAP_DISTANCE = PROJECTION.unitsPerTile * 2.5;
+// idle fidget: after a quiet delay, the fidget clip plays once per period,
+// staggered per player so a crowd never fidgets in unison
+export const PLAYER_FIDGET_DELAY_MS = 15000;
+export const PLAYER_FIDGET_PERIOD_MS = 9200;
+export const PLAYER_FIDGET_FRAME_MS = 150;
+// breathing: a slow ping-pong of subtle weight-shift frames while standing
+export const PLAYER_BREATH_FRAME_MS = 340;
+// direction changes crossfade briefly instead of hard-snapping the sprite
+export const PLAYER_TURN_FADE_MS = 110;
 
 export function projectedMovementDelta(dx, dy) {
   return {
@@ -16,20 +25,23 @@ export function projectedMovementDelta(dx, dy) {
   };
 }
 
+// eight world-compass sectors, 45 degrees each: +x is east, +y is south
+const DIRECTION_SECTORS = [
+  "east",
+  "southeast",
+  "south",
+  "southwest",
+  "west",
+  "northwest",
+  "north",
+  "northeast",
+];
+
 export function directionFromWorldDelta(dx, dy, fallback = "south") {
   if (Math.hypot(dx, dy) <= PLAYER_MOVEMENT_EPSILON) return fallback;
-
-  const screen = projectedMovementDelta(dx, dy);
-  const absScreenX = Math.abs(screen.x);
-  const absScreenY = Math.abs(screen.y);
-  if (Math.abs(absScreenX - absScreenY) <= 0.000001) {
-    if (Math.abs(dx) > Math.abs(dy)) return dx > 0 ? "east" : "west";
-    if (Math.abs(dy) > Math.abs(dx)) return dy > 0 ? "south" : "north";
-    if (Math.sign(dx) !== Math.sign(dy)) return screen.x > 0 ? "east" : "west";
-    return screen.y > 0 ? "south" : "north";
-  }
-  if (absScreenX > absScreenY) return screen.x > 0 ? "east" : "west";
-  return screen.y > 0 ? "south" : "north";
+  const angle = Math.atan2(dy, dx);
+  const sector = (((Math.round(angle / (Math.PI / 4)) % 8) + 8) % 8);
+  return DIRECTION_SECTORS[sector];
 }
 
 export function walkAnimationSample({
@@ -40,12 +52,19 @@ export function walkAnimationSample({
   speedRatio = 1,
   idleFrame = 0,
   frameSequence = null,
+  idleElapsedMs = null,
+  fidgetFrames = null,
+  idleFrames = null,
+  phaseFrames = null,
 }) {
   const safeFrameCount = Math.max(1, frameCount);
   const idleFrameIndex = clampInteger(idleFrame, 0, safeFrameCount - 1);
   if (!moving) {
     return {
-      frameIndex: idleFrameIndex,
+      frameIndex:
+        idleFidgetFrame(idleElapsedMs, fidgetFrames, stablePhase, safeFrameCount) ??
+        idleBreathingFrame(idleElapsedMs, idleFrames, stablePhase, safeFrameCount) ??
+        idleFrameIndex,
       bodyOffsetX: 0,
       bodyOffsetY: 0,
       cycleRadians: 0,
@@ -59,10 +78,14 @@ export function walkAnimationSample({
   const sequenceLength = sequence.length;
   const speed = clamp(speedRatio, PLAYER_WALK_MIN_SPEED_RATIO, PLAYER_WALK_MAX_SPEED_RATIO);
   const frameMs = PLAYER_WALK_FRAME_MS / speed;
-  const phaseFrames = elapsed / frameMs + stablePhase;
-  const sequenceIndex = Math.floor(phaseFrames % sequenceLength);
+  // callers that track motion state pass an incrementally accumulated phase:
+  // scaling total elapsed time by a wobbling speed ratio teleports the cycle
+  const phase = Number.isFinite(phaseFrames)
+    ? phaseFrames + stablePhase
+    : elapsed / frameMs + stablePhase;
+  const sequenceIndex = Math.floor(phase % sequenceLength);
   const frameIndex = sequence[sequenceIndex];
-  const cycleRadians = (phaseFrames / sequenceLength) * Math.PI * 2;
+  const cycleRadians = (phase / sequenceLength) * Math.PI * 2;
   const sway = PLAYER_WALK_SWAY_PX * clamp(0.76 + speed * 0.2, 0.72, 1);
   const footfallWave = Math.cos(cycleRadians * 2);
   const footfallStrength = clamp((footfallWave - 0.72) / 0.28, 0, 1);
@@ -74,6 +97,24 @@ export function walkAnimationSample({
     footfallStrength,
     footfallSide: Math.cos(cycleRadians) >= 0 ? 1 : -1,
   };
+}
+
+function idleFidgetFrame(idleElapsedMs, fidgetFrames, stablePhase, frameCount) {
+  if (!Array.isArray(fidgetFrames) || fidgetFrames.length === 0) return null;
+  if (!Number.isFinite(idleElapsedMs) || idleElapsedMs < PLAYER_FIDGET_DELAY_MS) return null;
+  const stagger = (stablePhase * 11700) % PLAYER_FIDGET_PERIOD_MS;
+  const phase = (idleElapsedMs - PLAYER_FIDGET_DELAY_MS + stagger) % PLAYER_FIDGET_PERIOD_MS;
+  const clipMs = fidgetFrames.length * PLAYER_FIDGET_FRAME_MS;
+  if (phase >= clipMs) return null;
+  const index = Math.min(fidgetFrames.length - 1, Math.floor(phase / PLAYER_FIDGET_FRAME_MS));
+  return clampInteger(fidgetFrames[index], 0, frameCount - 1);
+}
+
+function idleBreathingFrame(idleElapsedMs, idleFrames, stablePhase, frameCount) {
+  if (!Array.isArray(idleFrames) || idleFrames.length === 0) return null;
+  if (!Number.isFinite(idleElapsedMs)) return null;
+  const phase = Math.floor(idleElapsedMs / PLAYER_BREATH_FRAME_MS + stablePhase * 10);
+  return clampInteger(idleFrames[phase % idleFrames.length], 0, frameCount - 1);
 }
 
 function normalizeFrameSequence(sequence, frameCount) {

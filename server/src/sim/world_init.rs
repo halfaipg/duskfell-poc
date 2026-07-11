@@ -5,7 +5,7 @@ use bevy_ecs::prelude::*;
 use crate::content::WorldContent;
 use crate::protocol::ObjectKind;
 use crate::spatial::{Point, SpatialIndex};
-use crate::terrain::TerrainAuthority;
+use crate::terrain::{BakedTerrainGrid, TerrainAuthority};
 
 use super::model::{
     MapBounds, Position, SimWorld, Velocity, WorldObject, DEFAULT_WORLD_DAY_SECONDS,
@@ -36,11 +36,20 @@ impl SimWorld {
         terrain_detail_authority: Option<TerrainDetailAuthority>,
     ) -> Result<Self, String> {
         let mut world = World::new();
-        let terrain_snapshot = content
+        let terrain_content = content
             .map
             .terrain
-            .expect("validated world content includes terrain")
-            .snapshot();
+            .clone()
+            .expect("validated world content includes terrain");
+        let terrain_snapshot = terrain_content.snapshot();
+        let units_per_tile = terrain_snapshot.units_per_tile as f32;
+        let baked_grid = BakedTerrainGrid::from_grids(
+            &terrain_content.material_grid,
+            &terrain_content.vertex_heights,
+            &terrain_snapshot.materials,
+            (content.map.width / units_per_tile).ceil() as u32,
+            (content.map.height / units_per_tile).ceil() as u32,
+        )?;
         let terrain_detail_blockers = terrain_detail_authority_blockers(
             terrain_detail_authority.as_ref(),
             &terrain_snapshot,
@@ -57,11 +66,12 @@ impl SimWorld {
             content.map.width,
             content.map.height,
         )?;
-        let terrain = TerrainAuthority::new(
+        let terrain = TerrainAuthority::with_baked_grid(
             terrain_snapshot.clone(),
             content.map.width,
             content.map.height,
             content.map.safe_zone_radius,
+            baked_grid,
         );
         let map = MapBounds {
             width: content.map.width,

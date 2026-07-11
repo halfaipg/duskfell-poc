@@ -1,10 +1,15 @@
 import { transitionMaskKey, transitionPairKey, transitionPairMaskKey } from "./terrain-assets.js";
 import { clamp, cornerBandPoints, edgeBandPoints, edgePoints, stableStringHash } from "./terrain-draw-geometry.js";
+import { tileUsesGroundPatch } from "./terrain-ground-patches.js";
 
 export function createTerrainTransitionDrawer({ getContext, getTerrainAssets, drawAtlasFrame }) {
   function drawTerrainTransitions(tile, corners) {
     const ctx = getContext();
     for (const transition of tile.transitions) {
+      // painted ground blends in the painting itself — band/stroke/cue
+      // overlays just scratch lines onto it (water edges included: the dark
+      // water body against the painting is the shoreline)
+      if (tileUsesGroundPatch(tile, getTerrainAssets().groundPatches)) continue;
       const drewAtlasTransition = drawTerrainTransitionAtlas(transition, corners);
       drawTransitionMaterialCues(transition, corners, drewAtlasTransition);
       const edgeStyle = transitionEdgeStyle(transition, drewAtlasTransition);

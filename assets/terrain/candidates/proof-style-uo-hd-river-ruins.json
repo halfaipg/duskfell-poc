@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "duskfell-grid-img2img-proof-v1",
+  "input": "proof-structure-grid-input.png",
+  "inputSha256": "985fb6ba600c690e58006e9ab58e026dd1771218872318fce001d96d848234ce",
+  "output": "proof-style-uo-hd-river-ruins.png",
+  "outputSha256": "fa1223f57bf814f700edf589f2f03f9fa983764a8088873a15444da7d36404af",
+  "model": "FLUX.2 Klein 4B FP8",
+  "style": null,
+  "worker": "half5090beast1",
+  "generationSeconds": 5.32,
+  "seed": 24080,
+  "prompt": "Ultima Online HD style, ancient weathered river-crossing terrain in strict orthographic military-plan view, with a winding river, eroded stone paving fragments, mossy foundation traces, worn earth, gravel banks, embedded rocks and sparse low weeds. Preserve the supplied river channel, shoreline and elevation; add only subtle ground-level ruin traces that could belong to a long-decayed civilization. High-definition hand-painted fantasy RPG terrain, soft overcast light, player walking scale, no standing walls, buildings, giant props, tile seams or symmetry.",
+  "revisedPrompt": "Ultima Online HD style, ancient weathered river-crossing terrain in strict orthographic military-plan view, with a winding river, eroded stone paving fragments, mossy foundation traces, worn earth, gravel banks, embedded rocks and sparse low weeds. Preserve the supplied river channel, shoreline and elevation; add only subtle ground-level ruin traces that could belong to a long-decayed civilization. High-definition hand-painted fantasy RPG terrain, soft overcast light, player walking scale, no standing walls, buildings, giant props, tile seams or symmetry."
+}

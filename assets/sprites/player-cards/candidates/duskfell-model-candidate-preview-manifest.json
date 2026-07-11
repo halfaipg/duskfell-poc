@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "duskfell-model-candidate-preview-v1",
+  "note": "Visual comparison renders for third-party human model candidates. Prototype only.",
+  "candidates": [
+    {
+      "slug": "oga-base-char",
+      "label": "OpenGameArt base-char rigged CC0",
+      "path": "/Users/j/Documents/New project/uo-chain-sandbox-poc/var/third-party-model-candidates/opengameart/base-char/base-char.blend",
+      "hide": [
+        "char-highpoly",
+        "metarig"
+      ]
+    },
+    {
+      "slug": "oga-human-male",
+      "label": "OpenGameArt low-poly human male",
+      "path": "/Users/j/Documents/New project/uo-chain-sandbox-poc/var/third-party-model-candidates/opengameart/human_male.blend",
+      "hide": []
+    }
+  ],
+  "outputs": [
+    "assets/sprites/player-cards/candidates/duskfell-model-candidate-oga-base-char.png",
+    "assets/sprites/player-cards/candidates/duskfell-model-candidate-oga-human-male.png"
+  ]
+}

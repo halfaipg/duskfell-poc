@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "duskfell-uo-esque-character-v1",
+  "note": "Clothed UO-esque Blender character prototype using Quaternius CC0 body as hidden anatomical scaffold.",
+  "sourcePack": "/Users/j/Downloads/Universal Base Characters[Standard]",
+  "sourceFiles": [
+    "/Users/j/Downloads/Universal Base Characters[Standard]/Base Characters/Godot - UE/Superhero_Male_FullBody.gltf",
+    "/Users/j/Downloads/Universal Base Characters[Standard]/Hairstyles/Origin at 0/glTF (Godot)/Hair_SimpleParted.gltf",
+    "/Users/j/Downloads/Universal Base Characters[Standard]/Hairstyles/Origin at 0/glTF (Godot)/Hair_Beard.gltf"
+  ],
+  "outputs": [
+    "assets/sprites/player-cards/candidates/duskfell-uo-esque-character-paperdoll.png",
+    "assets/sprites/player-cards/candidates/duskfell-uo-esque-character-card.png",
+    "assets/sprites/player-cards/candidates/duskfell-uo-esque-character-direction-strip.png"
+  ]
+}

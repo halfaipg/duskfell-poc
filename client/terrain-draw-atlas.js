@@ -52,8 +52,8 @@ export function createTerrainAtlasDrawer({ getContext, getTerrainAssets }) {
 
 function terrainAtlasAlpha(tile) {
   const hasMaterialEdge = tile.transitions.length > 0;
-  if (tile.material === "dirt") return hasMaterialEdge ? 0.62 : 0.76;
-  if (tile.material === "stone") return hasMaterialEdge ? 0.7 : 0.82;
-  if (tile.material === "field") return hasMaterialEdge ? 0.58 : 0.7;
-  return tile.sloped ? 0.82 : 0.88;
+  if (tile.material === "dirt") return hasMaterialEdge ? 0.88 : 0.97;
+  if (tile.material === "stone") return hasMaterialEdge ? 0.9 : 0.97;
+  if (tile.material === "field") return hasMaterialEdge ? 0.86 : 0.95;
+  return tile.sloped ? 0.95 : 1.0;
 }

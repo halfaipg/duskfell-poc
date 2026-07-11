@@ -163,8 +163,8 @@ fn object_positions_are_indexed_by_content_id() {
     let registrar_position = sim
         .object_position("registrar")
         .expect("registrar should be indexed");
-    assert_eq!(registrar_position.x, 1664.0);
-    assert_eq!(registrar_position.y, 1040.0);
+    assert_eq!(registrar_position.x, 3072.0);
+    assert_eq!(registrar_position.y, 1984.0);
     assert!(sim.object_position("missing-object").is_none());
 }
 

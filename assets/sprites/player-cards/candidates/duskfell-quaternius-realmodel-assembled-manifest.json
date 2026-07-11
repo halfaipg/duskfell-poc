@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "duskfell-quaternius-realmodel-assembled-v1",
+  "note": "Assembled review assets from real Quaternius model renders.",
+  "outputs": [
+    "assets/sprites/player-cards/candidates/duskfell-quaternius-realmodel-direction-strip.png",
+    "assets/sprites/player-cards/candidates/duskfell-quaternius-realmodel-paperdoll-card-preview.png"
+  ]
+}

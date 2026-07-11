@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "duskfell-terrain-structure-proof-v1",
+  "output": "proof-structure-grid-input.png",
+  "blend": "proof-structure-grid-input.blend",
+  "seed": 7341,
+  "size": 1024,
+  "grid": 128,
+  "extent": 16.0,
+  "projection": "orthographic-plan",
+  "purpose": "deterministic structure input for whole-patch img2img enrichment"
+}

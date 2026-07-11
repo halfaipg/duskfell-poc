@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "duskfell-character-style-prototype-assembled-v1",
+  "note": "Review assets assembled from deterministic Blender character style frames.",
+  "sourceFrames": "var/blender-duskfell-style-prototype/frames",
+  "cell": {
+    "width": 128,
+    "height": 160,
+    "displayScale": 3
+  },
+  "directions": [
+    "south",
+    "east",
+    "north",
+    "west"
+  ],
+  "frames": 8,
+  "variants": [
+    "base",
+    "leather",
+    "hooded",
+    "ghost"
+  ],
+  "outputs": [
+    "assets/sprites/player-cards/candidates/duskfell-character-style-prototype-base-sheet.png",
+    "assets/sprites/player-cards/candidates/duskfell-character-style-prototype-leather-sheet.png",
+    "assets/sprites/player-cards/candidates/duskfell-character-style-prototype-hooded-sheet.png",
+    "assets/sprites/player-cards/candidates/duskfell-character-style-prototype-ghost-sheet.png",
+    "assets/sprites/player-cards/candidates/duskfell-character-style-prototype-player-card-lineup.png",
+    "assets/sprites/player-cards/candidates/duskfell-character-style-prototype-world-lineup.png"
+  ]
+}

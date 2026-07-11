@@ -104,8 +104,8 @@ fn party_invite_auto_accepts_and_npc_follows_leader() {
         &mut sim,
         player_id,
         Position {
-            x: 1420.0,
-            y: 1100.0,
+            x: 2800.0,
+            y: 2060.0,
         },
     );
     let start_gap = separation(&sim, player_id, "maren");
@@ -136,8 +136,8 @@ fn lagging_party_npcs_catch_up_by_teleporting_to_the_leader() {
         &mut sim,
         player_id,
         Position {
-            x: 1100.0,
-            y: 1500.0,
+            x: 2500.0,
+            y: 2048.0,
         },
     );
     let outcome = sim.tick(0.05);
@@ -283,15 +283,15 @@ fn scheduled_relocation_fires_on_world_day_offset() {
         .iter()
         .find(|event| event.npc_id == "bram")
         .expect("bram relocates at his scheduled world time");
-    assert_eq!((event.x, event.y), (1560.0, 1160.0));
+    assert_eq!((event.x, event.y), (2980.0, 2120.0));
     let position = npc_position(&sim, "bram");
-    assert_eq!((position.x, position.y), (1560.0, 1160.0));
+    assert_eq!((position.x, position.y), (2980.0, 2120.0));
 
     // The spatial index followed the teleport.
     let hits = sim.npc_index.query_radius(
         Point {
-            x: 1560.0,
-            y: 1160.0,
+            x: 2980.0,
+            y: 2120.0,
         },
         30.0,
     );
@@ -333,8 +333,8 @@ fn moving_npcs_stay_out_of_the_player_spatial_index() {
         &mut sim,
         player_id,
         Position {
-            x: 1420.0,
-            y: 1100.0,
+            x: 2800.0,
+            y: 2060.0,
         },
     );
     for _ in 0..10 {

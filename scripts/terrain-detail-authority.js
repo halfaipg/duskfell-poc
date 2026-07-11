@@ -92,7 +92,7 @@ export function validateTerrainDetailAuthority(authority) {
 }
 
 export function canonicalJson(value) {
-  return `${JSON.stringify(value, null, 2)}\n`;
+  return `${JSON.stringify(value)}\n`;
 }
 
 function normalizedEntries(entries, field) {

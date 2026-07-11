@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "duskfell-rig-walk-proof-v1",
+  "source": "/Users/j/Documents/New project/uo-chain-sandbox-poc/var/third-party-model-candidates/poly-pizza/quaternius-character-animated.glb",
+  "action": "CharacterArmature|Walk",
+  "directions": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north",
+    "north-west",
+    "west",
+    "south-west"
+  ],
+  "rootYawDegrees": [
+    0,
+    -45,
+    -90,
+    -135,
+    180,
+    135,
+    90,
+    45
+  ],
+  "frames": [
+    8
+  ],
+  "cell": {
+    "width": 128,
+    "height": 160
+  },
+  "camera": {
+    "kind": "orthographic",
+    "location": [
+      0,
+      -7,
+      12
+    ],
+    "orthoScale": 2.72
+  },
+  "output": "assets/sprites/candidates/rig-walk/rig-walk-facing-proof.png"
+}

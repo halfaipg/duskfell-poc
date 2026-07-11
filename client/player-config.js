@@ -1,8 +1,18 @@
 export const PLAYER_RENDER_SCALE = 0.66;
-export const PLAYER_DIRECTION_NAMES = ["south", "east", "north", "west"];
+export const PLAYER_DIRECTION_NAMES = [
+  "south",
+  "east",
+  "north",
+  "west",
+  "southeast",
+  "northeast",
+  "northwest",
+  "southwest",
+];
 
-export const PREFERRED_PLAYER_SHEET_ID = "duskfell-wayfarer";
+export const PREFERRED_PLAYER_SHEET_ID = "duskfell-wretch";
 export const PREFERRED_PLAYER_SHEET_IDS = [
+  "duskfell-wretch",
   "duskfell-wayfarer",
   "duskfell-ranger",
   "duskfell-warden",
@@ -10,6 +20,7 @@ export const PREFERRED_PLAYER_SHEET_IDS = [
 ];
 
 export const PLAYER_ARCHETYPE_LABELS = {
+  "duskfell-wretch": "Wretch",
   "duskfell-wayfarer": "Wayfarer",
   "duskfell-ranger": "Ranger",
   "duskfell-warden": "Warden",
@@ -28,21 +39,25 @@ export const PREFERRED_PLAYER_PAPERDOLL_IDS = [
 ];
 
 export const PLAYER_CARD_PORTRAITS = {
-  "duskfell-paperdoll-wayfarer": "/assets/sprites/player-cards/duskfell-paperdoll-wayfarer-front.png?v=stylized-base-1",
-  "duskfell-paperdoll-ranger": "/assets/sprites/player-cards/duskfell-paperdoll-ranger-front.png?v=stylized-base-1",
-  "duskfell-paperdoll-warden": "/assets/sprites/player-cards/duskfell-paperdoll-warden-front.png?v=stylized-base-1",
-  "duskfell-paperdoll-brigand": "/assets/sprites/player-cards/duskfell-paperdoll-brigand-front.png?v=stylized-base-1",
-  "duskfell-wayfarer": "/assets/sprites/player-cards/duskfell-paperdoll-wayfarer-front.png?v=stylized-base-1",
-  "duskfell-ranger": "/assets/sprites/player-cards/duskfell-paperdoll-ranger-front.png?v=stylized-base-1",
-  "duskfell-warden": "/assets/sprites/player-cards/duskfell-paperdoll-warden-front.png?v=stylized-base-1",
-  "duskfell-brigand": "/assets/sprites/player-cards/duskfell-paperdoll-brigand-front.png?v=stylized-base-1",
+  "duskfell-wretch": "/assets/sprites/player-cards/duskfell-wretch-hero.png?v=painted-hero-1",
+  "duskfell-wayfarer": "/assets/sprites/player-cards/duskfell-wayfarer-hero.png?v=painted-hero-1",
+  "duskfell-ranger": "/assets/sprites/player-cards/duskfell-ranger-hero.png?v=painted-hero-1",
+  "duskfell-warden": "/assets/sprites/player-cards/duskfell-warden-hero.png?v=painted-hero-1",
+  "duskfell-brigand": "/assets/sprites/player-cards/duskfell-brigand-hero.png?v=painted-hero-1",
+  "duskfell-paperdoll-wayfarer": "/assets/sprites/player-cards/duskfell-wayfarer-hero.png?v=painted-hero-1",
+  "duskfell-paperdoll-ranger": "/assets/sprites/player-cards/duskfell-ranger-hero.png?v=painted-hero-1",
+  "duskfell-paperdoll-warden": "/assets/sprites/player-cards/duskfell-warden-hero.png?v=painted-hero-1",
+  "duskfell-paperdoll-brigand": "/assets/sprites/player-cards/duskfell-brigand-hero.png?v=painted-hero-1",
 };
 
 export const GENERATED_WAYFARER_NAME_RE = /^Wayfarer-([0-9a-f]{4})$/i;
-export const PLAYER_CLUSTER_DISTANCE = 118;
-export const PLAYER_CLUSTER_SPREAD_RADIUS = 142;
-export const PLAYER_CLUSTER_RING_STEP = 66;
+// de-stacking only kicks in when sprites genuinely overlap (~half a tile);
+// wider thresholds made bystanders visibly teleport whenever someone walked past
+export const PLAYER_CLUSTER_DISTANCE = 30;
+export const PLAYER_CLUSTER_SPREAD_RADIUS = 26;
+export const PLAYER_CLUSTER_RING_STEP = 20;
 export const PLAYER_CLUSTER_RING_SIZE = 8;
+export const PLAYER_CLUSTER_SMOOTHING_MS = 140;
 export const PLAYER_RENDER_MARGIN = 24;
 export const FALLBACK_PLAYER_SHEET_ID = "player-placeholder";
 export const PREFERRED_PROP_SHEET_ID = "duskfell-props";
@@ -84,19 +99,19 @@ export const DETAIL_SPRITE_FRAMES = {
 };
 
 export const DETAIL_SPRITE_SCALE = {
-  rock: 1.28,
-  pebble: 0.82,
-  tuft: 0.9,
-  flower: 0.84,
-  scrub: 1.1,
-  "fallen-log": 1.06,
-  stump: 1,
-  mushroom: 0.78,
-  tree: 1.48,
-  boulder: 1.42,
-  reeds: 1.34,
-  ruin: 1.46,
-  wall: 1,
-  stairs: 1,
-  foundation: 1,
+  rock: 0.28,
+  pebble: 0.18,
+  tuft: 0.85,
+  flower: 0.18,
+  scrub: 1.9,
+  "fallen-log": 0.14,
+  stump: 0.22,
+  mushroom: 0.1,
+  tree: 1.35,
+  boulder: 0.31,
+  reeds: 0.29,
+  ruin: 0.32,
+  wall: 0.22,
+  stairs: 0.22,
+  foundation: 0.22,
 };

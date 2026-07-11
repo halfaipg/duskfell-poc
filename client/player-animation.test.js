@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  PLAYER_WALK_FRAME_MS,
   directionFromWorldDelta,
   projectedMovementDelta,
   smoothPlayerRenderPosition,
@@ -15,15 +16,15 @@ test("projected movement delta follows military-plan-oblique screen axes", () =>
   assert.deepEqual(projectedMovementDelta(64, 64), { x: 0, y: 64 });
 });
 
-test("direction selection preserves plan-axis movement and projected diagonals", () => {
+test("direction selection buckets movement into eight world-compass sectors", () => {
   assert.equal(directionFromWorldDelta(64, 0), "east");
   assert.equal(directionFromWorldDelta(-64, 0), "west");
   assert.equal(directionFromWorldDelta(0, 64), "south");
   assert.equal(directionFromWorldDelta(0, -64), "north");
-  assert.equal(directionFromWorldDelta(64, -64), "east");
-  assert.equal(directionFromWorldDelta(-64, 64), "west");
-  assert.equal(directionFromWorldDelta(64, 64), "south");
-  assert.equal(directionFromWorldDelta(-64, -64), "north");
+  assert.equal(directionFromWorldDelta(64, -64), "northeast");
+  assert.equal(directionFromWorldDelta(-64, 64), "southwest");
+  assert.equal(directionFromWorldDelta(64, 64), "southeast");
+  assert.equal(directionFromWorldDelta(-64, -64), "northwest");
 });
 
 test("tiny movement keeps previous facing", () => {
@@ -41,7 +42,7 @@ test("walk animation samples frame progression without lifting the foot anchor",
     footfallSide: 0,
   });
 
-  const moving = walkAnimationSample({ moving: true, elapsedMs: 270, frameCount: 8, stablePhase: 0 });
+  const moving = walkAnimationSample({ moving: true, elapsedMs: PLAYER_WALK_FRAME_MS * 3, frameCount: 8, stablePhase: 0 });
   assert.equal(moving.frameIndex, 3);
   assert.equal(moving.bodyOffsetY, 0);
   assert.ok(Math.abs(moving.bodyOffsetX) <= 0.65);
@@ -50,9 +51,9 @@ test("walk animation samples frame progression without lifting the foot anchor",
 });
 
 test("walk animation cadence responds to speed without changing the foot anchor", () => {
-  const slow = walkAnimationSample({ moving: true, elapsedMs: 270, frameCount: 8, speedRatio: 0.62 });
-  const normal = walkAnimationSample({ moving: true, elapsedMs: 270, frameCount: 8, speedRatio: 1 });
-  const fast = walkAnimationSample({ moving: true, elapsedMs: 270, frameCount: 8, speedRatio: 1.45 });
+  const slow = walkAnimationSample({ moving: true, elapsedMs: PLAYER_WALK_FRAME_MS * 3, frameCount: 8, speedRatio: 0.62 });
+  const normal = walkAnimationSample({ moving: true, elapsedMs: PLAYER_WALK_FRAME_MS * 3, frameCount: 8, speedRatio: 1 });
+  const fast = walkAnimationSample({ moving: true, elapsedMs: PLAYER_WALK_FRAME_MS * 3, frameCount: 8, speedRatio: 1.45 });
 
   assert.ok(slow.frameIndex < normal.frameIndex, "slow movement should advance fewer frames");
   assert.ok(fast.frameIndex > normal.frameIndex, "fast movement should advance more frames");
@@ -77,7 +78,7 @@ test("walk animation can use an authored gait sequence and idle frame", () => {
   });
   const next = walkAnimationSample({
     moving: true,
-    elapsedMs: 90,
+    elapsedMs: PLAYER_WALK_FRAME_MS,
     frameCount: 8,
     frameSequence: [1, 2, 3, 2],
   });
@@ -96,13 +97,13 @@ test("walk animation exposes alternating footfall pulses for terrain feedback", 
   });
   const midStride = walkAnimationSample({
     moving: true,
-    elapsedMs: 180,
+    elapsedMs: PLAYER_WALK_FRAME_MS * 2,
     frameCount: 8,
     frameSequence: [1, 2, 3, 4, 5, 6, 7, 6],
   });
   const secondPlant = walkAnimationSample({
     moving: true,
-    elapsedMs: 360,
+    elapsedMs: PLAYER_WALK_FRAME_MS * 4,
     frameCount: 8,
     frameSequence: [1, 2, 3, 4, 5, 6, 7, 6],
   });

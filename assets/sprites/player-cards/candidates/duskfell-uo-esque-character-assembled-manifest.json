@@ -1,0 +1,8 @@
+{
+  "schemaVersion": "duskfell-uo-esque-character-assembled-v1",
+  "note": "Review assets assembled from the clothed UO-esque Blender character render.",
+  "outputs": [
+    "assets/sprites/player-cards/candidates/duskfell-uo-esque-character-card.png",
+    "assets/sprites/player-cards/candidates/duskfell-uo-esque-character-direction-strip.png"
+  ]
+}

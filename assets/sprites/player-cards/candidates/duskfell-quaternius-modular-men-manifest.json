@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "duskfell-quaternius-modular-men-v1",
+  "note": "Slimmer paperdoll and direction candidates rendered from Quaternius Ultimate Modular Men GLTF assets.",
+  "sourceDirectory": "/Users/j/Documents/New project/uo-chain-sandbox-poc/var/third-party-model-candidates/quaternius-ultimate-modular-men/Individual Characters/glTF",
+  "outputs": [
+    "assets/sprites/player-cards/candidates/duskfell-quaternius-beach-paperdoll.png",
+    "assets/sprites/player-cards/candidates/duskfell-quaternius-adventurer-paperdoll.png",
+    "assets/sprites/player-cards/candidates/duskfell-quaternius-farmer-paperdoll.png",
+    "assets/sprites/player-cards/candidates/duskfell-quaternius-worker-paperdoll.png",
+    "assets/sprites/player-cards/candidates/duskfell-quaternius-king-paperdoll.png",
+    "assets/sprites/player-cards/candidates/duskfell-quaternius-farmer-south.png",
+    "assets/sprites/player-cards/candidates/duskfell-quaternius-farmer-east.png",
+    "assets/sprites/player-cards/candidates/duskfell-quaternius-farmer-north.png",
+    "assets/sprites/player-cards/candidates/duskfell-quaternius-farmer-west.png"
+  ]
+}

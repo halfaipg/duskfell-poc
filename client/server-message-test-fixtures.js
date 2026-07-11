@@ -13,9 +13,9 @@ export function validSnapshot() {
     players: [validPlayer()],
     objects: [
       {
-        id: "title-office",
+        id: "bank",
         kind: "registrar",
-        label: "Title Office",
+        label: "Bank",
         x: 760,
         y: 620,
         radius: 48,

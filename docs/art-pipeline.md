@@ -1,6 +1,80 @@
 # Art Pipeline
 
+## July 10, 2026 Infrastructure Update
+
+A dedicated StableGen ComfyUI backend is live on the RTX 3090 (systemd
+service, VPN address, TRELLIS.2 mesh gen + RealVisXL/SDXL texturing +
+Marigold/StableDelight PBR). Connection details and installed stack:
+`docs/art/stablegen-comfyui.md`.
+
 Initial research snapshot from July 6, 2026. Refreshed July 7, 2026 against the running PoC and current GitHub topic results. Production adoption still needs a final license/API/terms check for each tool and model. This project needs original assets only. Do not use UO-derived art, screenshots, extracted tiles, paperdolls, hue tables, maps, UI, or "style reference" prompts based on UO.
+
+## July 9, 2026 Decision Update
+
+The graphics direction was reset around a Blender world-kit pipeline after AI
+sheet generation failed structurally and 3D-rendered characters (MPFB2 + rig +
+procedural cloth) produced the first approved player look. Character animation
+sheets now come from the 3D factory, AI generation is retained for props,
+icons, portraits, and source textures, and terrain is moving to a hybrid where
+base materials may stay AI-sourced but transitions/slopes/lighting render
+through the same 3D sun as characters. See `docs/graphics-reset-plan.md` for
+the full decision record, the terrain comparison artifact, the ground decal
+layer plan (footprints/wear), and the installed toolchain (blender-mcp, MPFB2,
+CC0 asset packs).
+
+## Level Editor Recipe Contract
+
+Successful terrain work must be retained as a reproducible recipe, not only as
+an exported image. `assets/terrain/authoring-recipes.json` is the current
+machine-readable catalog. A future level editor stores the recipe id/version,
+seed, declared parameters, and verified input/output asset ids. It must not
+embed generator credentials, unverified image bytes, or client-authored
+collision/resource authority into a map.
+
+The first cataloged recipes cover the deterministic Blender structure bake,
+Grid img2img enrichment with pinned provenance, registered regional/local LOD
+pairs, asymmetric biome WebP generation, and deterministic world-patch
+sampling. Recipe status is explicit: `reviewed-proof`, `live-proof`,
+`runtime-review`, or `approved`. Run `npm run terrain:authoring:verify` after
+adding or changing a recipe.
+
+For Grid/Klein img2img, send `strength` (or its `denoise` alias) beside the
+source `image`. The governed `FLUX.2 Klein 4B FP8` latent-blend recipe accepts
+`0.55–0.95`; unsupported models reject the knob rather than ignoring it. The
+reviewed terrain presets are `0.55` structure lock, `0.60` playable terrain,
+`0.70` richer but less authoritative terrain, and `0.90` concept/regional art.
+Klein's short schedule creates effective plateaus: the reviewed `0.60/0.65`
+outputs matched, as did `0.70/0.75`, so the editor should expose named presets
+before exposing an arbitrary decimal slider.
+
+The reviewed Klein playable-terrain sampler is `8` steps, `strength: 0.60`,
+`cfg_scale: 1.0`, and `euler`. Black Forest Labs recommends 4 steps for the
+distilled model's ordinary generation path. Grid's latent-blend recipe uses an
+8-step base schedule because strength splits/truncates that schedule after the
+source image is VAE-encoded. In the controlled proof, 6 steps produced more
+structural drift, 10 stayed closer but regressed toward blockier detail, and 8
+gave the best useful balance. Do not apply the 8-step rule to unrelated models
+or to Klein's normal text-to-image recipe.
+
+`z-image-turbo` now exposes img2img, LoRAs, `4–16` steps, and a wider
+`0.20–0.95` denoise range. In the same-seed terrain comparison it preserved the
+Blender structure much more closely than Klein at equal numeric strength, but
+its final texture was softer and developed patch/grid artifacts plus invented
+paths and trees as strength increased. The reviewed role for Z-Image is a
+low-strength (`0.30–0.45`) cleanup, mask preview, or editor-thumbnail backend.
+For a structure-preserving material pass, the reviewed richer preset is the
+weathered-age prompt at `12` steps, `strength: 0.55`, `dpmpp_2m`, and the
+`normal` scheduler. It added finer grass, bank erosion, and water texture while
+drifting slightly less from the structure input than the 8-step default in the
+controlled proof. It is still too soft to replace Klein as the final renderer.
+Klein remains the final playable-terrain renderer. The tested chained pass
+(`Z 0.45 -> Klein 0.55`) is rejected: it invented more macro detail and produced
+a marker artifact despite lower pixel RMSE.
+
+The editor-facing rule is separation of concerns: recipes produce visual
+assets; server map and terrain-detail data own walkability, elevation,
+collision, resources, decay, and gameplay state. A painted river or rock is not
+authoritative merely because it appears in a generated image.
 
 ## July 7, 2026 Decision Update
 

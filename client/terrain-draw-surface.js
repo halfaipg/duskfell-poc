@@ -7,38 +7,69 @@ export function terrainUnderpaintMaterial(tile) {
   return tile.material;
 }
 
-export function drawTerrainSideWalls(ctx, tile, corners, palette) {
-  if (!Array.isArray(tile.elevationEdges) || tile.elevationEdges.length === 0 || tile.material === "water") return;
+export function drawTerrainSideWalls(ctx, tile, corners, palette, cliffImage = null) {
+  // water included: walls cover the screen-space gap below displaced edges
+  // for every material — skipping them leaves black notches at pond steps
+  if (!Array.isArray(tile.elevationEdges) || tile.elevationEdges.length === 0) return;
 
   for (const edge of tile.elevationEdges) {
+    // Only real cliffs get a wall; scattered single-tile steps read better
+    // from the top painting and the material undercoat beneath it.
+    if (edge.drop < 2) continue;
     const [from, to] = edgePoints(corners, edge.edge);
     const dropPx = Math.max(2, edge.drop * PROJECTION.zPx);
     const lowerFrom = { x: from.x, y: from.y + dropPx };
     const lowerTo = { x: to.x, y: to.y + dropPx };
+
+    const wallPath = () => {
+      ctx.beginPath();
+      ctx.moveTo(from.x, from.y);
+      ctx.lineTo(to.x, to.y);
+      ctx.lineTo(lowerTo.x, lowerTo.y);
+      ctx.lineTo(lowerFrom.x, lowerFrom.y);
+      ctx.closePath();
+    };
+
+    if (cliffImage) {
+      // real rock face: the enriched cliff painting fills the wall quad;
+      // the source window hashes from tile coords so neighbouring walls
+      // don't repeat, and the depth gradient below keeps the shading
+      ctx.save();
+      wallPath();
+      ctx.clip();
+      const windowSize = 280;
+      const su = (((tile.x * 53 + tile.y * 97) % 7) / 7) * (cliffImage.width - windowSize);
+      const sv = (((tile.x * 31 + tile.y * 61) % 5) / 5) * (cliffImage.height - windowSize);
+      ctx.imageSmoothingEnabled = true;
+      const left = Math.min(from.x, to.x, lowerFrom.x, lowerTo.x);
+      const top = Math.min(from.y, to.y);
+      ctx.drawImage(
+        cliffImage,
+        su, sv, windowSize, windowSize * 0.6,
+        left - 2, top - 2,
+        Math.abs(to.x - from.x) + 4, dropPx + Math.abs(to.y - from.y) + 4,
+      );
+      ctx.restore();
+    }
+
     const gradient = ctx.createLinearGradient(
       (from.x + to.x) / 2,
       (from.y + to.y) / 2,
       (lowerFrom.x + lowerTo.x) / 2,
       (lowerFrom.y + lowerTo.y) / 2,
     );
-    const shadowAlpha = Math.min(0.52, 0.2 + edge.drop * 0.08);
-    gradient.addColorStop(0, tintWithAlpha(palette.dark, shadowAlpha * 0.72));
-    gradient.addColorStop(1, `rgba(8, 11, 10, ${shadowAlpha})`);
-
-    ctx.beginPath();
-    ctx.moveTo(from.x, from.y);
-    ctx.lineTo(to.x, to.y);
-    ctx.lineTo(lowerTo.x, lowerTo.y);
-    ctx.lineTo(lowerFrom.x, lowerFrom.y);
-    ctx.closePath();
+    const shadowAlpha = Math.min(0.22, 0.06 + edge.drop * 0.035);
+    gradient.addColorStop(0, tintWithAlpha(palette.dark, shadowAlpha * (cliffImage ? 0.45 : 0.72)));
+    gradient.addColorStop(1, `rgba(8, 11, 10, ${shadowAlpha * (cliffImage ? 1.5 : 1)})`);
+    wallPath();
     ctx.fillStyle = gradient;
     ctx.fill();
 
     ctx.beginPath();
     ctx.moveTo(from.x, from.y);
     ctx.lineTo(to.x, to.y);
-    ctx.strokeStyle = "rgba(242, 224, 166, 0.13)";
-    ctx.lineWidth = 0.9;
+    ctx.strokeStyle = "rgba(242, 224, 166, 0.06)";
+    ctx.lineWidth = 0.8;
     ctx.stroke();
   }
 }
@@ -59,8 +90,8 @@ export function drawTerrainFacetShade(ctx, tile, corners) {
     ctx.closePath();
     ctx.fillStyle =
       facet.shade >= 0
-        ? `rgba(255, 239, 184, ${Math.min(0.22, shadeAlpha)})`
-        : `rgba(12, 16, 14, ${Math.min(0.3, shadeAlpha * 1.2)})`;
+        ? `rgba(255, 239, 184, ${Math.min(0.11, shadeAlpha * 0.55)})`
+        : `rgba(12, 16, 14, ${Math.min(0.14, shadeAlpha * 0.6)})`;
     ctx.fill();
   }
 }
@@ -91,7 +122,7 @@ export function drawTerrainHeightShade(ctx, tile, corners) {
   ctx.lineTo(corners.se.x, corners.se.y);
   ctx.lineTo(corners.sw.x, corners.sw.y);
   ctx.closePath();
-  ctx.fillStyle = shade >= 0 ? `rgba(255, 238, 178, ${alpha * shade * 3})` : `rgba(13, 18, 16, ${alpha * Math.abs(shade) * 4})`;
+  ctx.fillStyle = shade >= 0 ? `rgba(255, 238, 178, ${alpha * shade * 1.6})` : `rgba(13, 18, 16, ${alpha * Math.abs(shade) * 2.2})`;
   ctx.fill();
   ctx.restore();
 }
@@ -130,8 +161,8 @@ export function drawTerrainReliefEdges(ctx, tile, corners) {
     ctx.beginPath();
     ctx.moveTo(from.x, from.y);
     ctx.lineTo(to.x, to.y);
-    ctx.strokeStyle = `rgba(244, 226, 164, ${Math.min(0.18, alpha * 0.82)})`;
-    ctx.lineWidth = 1.05;
+    ctx.strokeStyle = `rgba(244, 226, 164, ${Math.min(0.07, alpha * 0.3)})`;
+    ctx.lineWidth = 0.8;
     ctx.stroke();
   }
 }

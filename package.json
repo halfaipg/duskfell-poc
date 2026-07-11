@@ -1,5 +1,8 @@
 {
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "doctor:server": "node scripts/dev-server-doctor.js",
     "preflight:deployment": "node scripts/deployment-preflight.js",
@@ -12,6 +15,7 @@
     "test:terrain": "node --test scripts/terrain-atlas.test.js",
     "art:direction": "python3 scripts/art-direction-audit.py",
     "verify:supply-chain": "node scripts/supply-chain-smoke.js",
+    "test:scripts": "node --test scripts/lib/*.test.js",
     "sprites:verify": "node scripts/verify-sprite-manifest.js assets/sprites/manifest.json",
     "sprites:gait": "python3 scripts/analyze-sprite-gait.py --image assets/sprites/duskfell-body-base.png",
     "sprites:pipeline": "python3 scripts/character-pipeline-audit.py",
@@ -21,11 +25,14 @@
     "sprites:generate-details": "python3 scripts/normalize-generated-detail-sheet.py",
     "sprites:generate-placeholders": "node scripts/generate-placeholder-sprites.js",
     "terrain:generate": "python3 scripts/normalize-generated-terrain-atlas.py && node scripts/generate-terrain-detail-authority.js",
+    "terrain:ground-patches:generate": "python3 scripts/art-reset/build-biome-ground-patches.py",
+    "terrain:authoring:verify": "node scripts/verify-terrain-authoring-recipes.js",
     "terrain:authority:generate": "node scripts/generate-terrain-detail-authority.js",
+    "terrain:grid": "node scripts/generate-terrain-grid.js",
     "terrain:authority:verify": "node scripts/verify-terrain-detail-authority.js assets/terrain/detail-authority.json",
     "assets:generate-placeholders": "npm run sprites:generate && npm run terrain:generate",
     "terrain:verify": "node scripts/verify-terrain-atlas.js assets/terrain/manifest.json",
-    "assets:verify": "npm run sprites:verify && npm run terrain:verify && npm run terrain:authority:verify",
+    "assets:verify": "npm run sprites:verify && npm run terrain:verify && npm run terrain:authority:verify && npm run terrain:authoring:verify",
     "bench:ws": "node scripts/ws-load-smoke.js",
     "smoke:admin-auth": "node scripts/admin-auth-smoke.js",
     "smoke:admin-events-limit": "node scripts/admin-events-limit-smoke.js",

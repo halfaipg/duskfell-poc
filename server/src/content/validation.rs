@@ -34,7 +34,7 @@ impl WorldContent {
             self.map.terrain.as_ref().ok_or_else(|| {
                 anyhow!("map.terrain must be declared for supported world content")
             })?;
-        validate_terrain(terrain)?;
+        validate_terrain(terrain, self.map.width, self.map.height)?;
 
         if self.objects.len() > max_objects {
             return Err(anyhow!(
@@ -176,7 +176,11 @@ fn validate_positive(field: &str, value: f32) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn validate_terrain(terrain: &TerrainContent) -> anyhow::Result<()> {
+fn validate_terrain(
+    terrain: &TerrainContent,
+    map_width: f32,
+    map_height: f32,
+) -> anyhow::Result<()> {
     if terrain.profile != TERRAIN_PROFILE {
         return Err(anyhow!(
             "map.terrain.profile '{}' is not supported; expected '{}'",
@@ -243,6 +247,58 @@ fn validate_terrain(terrain: &TerrainContent) -> anyhow::Result<()> {
             .any(|material| material == expected)
         {
             return Err(anyhow!("map.terrain.materials must include '{}'", expected));
+        }
+    }
+
+    // baked walkability grids (optional, but must agree with map dimensions
+    // and declare heights inside the elevation range when present)
+    if !terrain.material_grid.is_empty() || !terrain.vertex_heights.is_empty() {
+        let cols = (map_width / terrain.units_per_tile as f32).ceil() as usize;
+        let rows = (map_height / terrain.units_per_tile as f32).ceil() as usize;
+        if terrain.material_grid.len() != rows {
+            return Err(anyhow!(
+                "map.terrain.materialGrid must have {rows} rows, found {}",
+                terrain.material_grid.len()
+            ));
+        }
+        for (y, row) in terrain.material_grid.iter().enumerate() {
+            if row.chars().count() != cols {
+                return Err(anyhow!(
+                    "map.terrain.materialGrid row {y} must have {cols} tiles"
+                ));
+            }
+            for ch in row.chars() {
+                let index = ch.to_digit(36).ok_or_else(|| {
+                    anyhow!("map.terrain.materialGrid contains non-base-36 '{ch}'")
+                })?;
+                if index as usize >= terrain.materials.len() {
+                    return Err(anyhow!(
+                        "map.terrain.materialGrid index {index} is outside the material legend"
+                    ));
+                }
+            }
+        }
+        if terrain.vertex_heights.len() != rows + 1 {
+            return Err(anyhow!(
+                "map.terrain.vertexHeights must have {} rows, found {}",
+                rows + 1,
+                terrain.vertex_heights.len()
+            ));
+        }
+        for (y, row) in terrain.vertex_heights.iter().enumerate() {
+            if row.len() != cols + 1 {
+                return Err(anyhow!(
+                    "map.terrain.vertexHeights row {y} must have {} vertices",
+                    cols + 1
+                ));
+            }
+            for height in row {
+                if *height < terrain.min_elevation || *height > terrain.max_elevation {
+                    return Err(anyhow!(
+                        "map.terrain.vertexHeights contains {height} outside the elevation range"
+                    ));
+                }
+            }
         }
     }
     Ok(())

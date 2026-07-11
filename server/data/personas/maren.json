@@ -1,8 +1,8 @@
 {
   "id": "maren",
   "name": "Maren",
-  "role": "Title Office registrar",
-  "persona": "Meticulous, dry-witted, proud of the ledger. Distrusts adventurers who claim deeds without reading them. Speaks in short, precise sentences and never wastes ink.",
+  "role": "registrar at the Bank",
+  "persona": "Meticulous, dry-witted, proud of the Bank's ledger. Distrusts adventurers who claim deeds without reading them. Speaks in short, precise sentences and never wastes ink.",
   "drives": ["keep the ledger accurate", "gossip about land claims"],
   "homePlace": "registrar",
   "partyPolicy": "reluctant",

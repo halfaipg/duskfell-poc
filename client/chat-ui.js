@@ -1,22 +1,26 @@
 const MAX_SAY_CHARS = 240;
 const MAX_HISTORY = 20;
 
-// Chat bar state machine: T near an NPC opens it targeting that NPC. Enter
-// sends and keeps the conversation open for follow-ups; Esc closes. Arrow-up/
-// down recall previously sent messages. The server re-validates range and
-// content; this only shapes input.
+// Chat bar state machine: Enter (or T near an NPC) opens it — targeting the
+// NPC when one is in range, plain overhead speech otherwise. Enter sends and
+// keeps the conversation open for follow-ups; Esc closes. Arrow-up/down
+// recall previously sent messages. The server re-validates range and content;
+// this only shapes input.
 export function createChatUi({ input, send, onOpenStateChange }) {
+  let open = false;
   let target = null;
   const history = [];
   let historyIndex = -1;
   let draft = "";
 
-  function openChat(npc) {
-    if (!npc) return;
-    target = { id: npc.id, name: npc.name };
+  function openChat(npc = null) {
+    open = true;
+    target = npc ? { id: npc.id, name: npc.name } : null;
     input.hidden = false;
     input.value = "";
-    input.placeholder = `Talking to ${npc.name}… (Enter to send, Esc to leave)`;
+    input.placeholder = target
+      ? `Talking to ${target.name}… (Enter to send, Esc to leave)`
+      : "Say something… (Enter to send, Esc to leave)";
     historyIndex = -1;
     draft = "";
     input.focus();
@@ -24,6 +28,7 @@ export function createChatUi({ input, send, onOpenStateChange }) {
   }
 
   function close() {
+    open = false;
     target = null;
     input.hidden = true;
     input.value = "";
@@ -33,7 +38,7 @@ export function createChatUi({ input, send, onOpenStateChange }) {
   }
 
   function isOpen() {
-    return target != null;
+    return open;
   }
 
   input.addEventListener("keydown", (event) => {
@@ -54,8 +59,11 @@ export function createChatUi({ input, send, onOpenStateChange }) {
     }
     if (event.key !== "Enter") return;
     const text = input.value.trim().slice(0, MAX_SAY_CHARS);
-    if (text && target) {
-      send({ type: "say", npcId: target.id, text });
+    if (text) {
+      const payload = target
+        ? { type: "say", npcId: target.id, text }
+        : { type: "say", text };
+      send(payload);
       history.push(text);
       if (history.length > MAX_HISTORY) {
         history.shift();

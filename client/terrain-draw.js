@@ -9,6 +9,11 @@ import {
   drawTerrainSideWalls,
   terrainUnderpaintMaterial,
 } from "./terrain-draw-surface.js";
+import {
+  drawChunkGroundPatch,
+  drawChunkWaterAnimation,
+  tileUsesGroundPatch,
+} from "./terrain-ground-patches.js";
 import { TERRAIN_MATERIALS } from "./terrain.js";
 
 export { normalizeTerrainDebugMode };
@@ -57,8 +62,11 @@ export function createTerrainDrawer({
     terrainDebugMode = getTerrainDebugMode();
   }
 
+  let lastOrigin = null;
+
   function drawMap(state, origin, now, viewport) {
     refreshRendererState();
+    lastOrigin = origin;
     const worldTerrain = terrain;
     if (!worldTerrain) return;
     const visibleBounds = terrainLayerManager.visibleWorldBounds(viewport);
@@ -71,10 +79,13 @@ export function createTerrainDrawer({
           terrainDebugDrawer.drawTerrainDebugTile(tileView.tile, tileView.corners, terrainDebugMode);
         }
       } else {
+        drawChunkGroundPatch(ctx, chunk, origin, worldTerrain, terrainAssets.groundPatches);
         for (const tileView of chunk.tiles) {
           drawTerrainTile(tileView, state.tick, now, visibleBounds);
         }
       }
+      // flowing water shimmer: per-frame overlay on top of the cached ground
+      drawChunkWaterAnimation(ctx, chunk, origin, worldTerrain, terrainAssets.groundPatches, now);
       terrainDebugDrawer.drawTerrainDebugChunk(chunk, terrainDebugMode);
     }
   }
@@ -84,25 +95,35 @@ export function createTerrainDrawer({
     const { tile, corners, bounds } = tileView;
     if (visibleBounds && !terrainLayerManager.boundsIntersect(bounds, visibleBounds)) return;
     const palette = TERRAIN_MATERIALS[terrainUnderpaintMaterial(tile)];
+    const groundPatchTile = tileUsesGroundPatch(tile, terrainAssets.groundPatches);
 
-    drawTerrainSideWalls(ctx, tile, corners, palette);
+    drawTerrainSideWalls(ctx, tile, corners, palette, terrainAssets.groundPatches?.get?.("cliff") ?? null);
 
-    ctx.beginPath();
-    ctx.moveTo(corners.nw.x, corners.nw.y);
-    ctx.lineTo(corners.ne.x, corners.ne.y);
-    ctx.lineTo(corners.se.x, corners.se.y);
-    ctx.lineTo(corners.sw.x, corners.sw.y);
-    ctx.closePath();
-    ctx.fillStyle = palette.fill;
-    ctx.fill();
-    terrainAtlasDrawer.drawTerrainUnderpaint(tile, corners);
-    terrainAtlasDrawer.drawTerrainAtlasTile(tile, corners);
-    drawTerrainFacetShade(ctx, tile, corners);
-    drawTerrainHeightShade(ctx, tile, corners);
-    drawTerrainReliefEdges(ctx, tile, corners);
+    if (!groundPatchTile) {
+      ctx.beginPath();
+      ctx.moveTo(corners.nw.x, corners.nw.y);
+      ctx.lineTo(corners.ne.x, corners.ne.y);
+      ctx.lineTo(corners.se.x, corners.se.y);
+      ctx.lineTo(corners.sw.x, corners.sw.y);
+      ctx.closePath();
+      ctx.fillStyle = palette.fill;
+      ctx.fill();
+      terrainAtlasDrawer.drawTerrainUnderpaint(tile, corners);
+      terrainAtlasDrawer.drawTerrainAtlasTile(tile, corners);
+    }
+    if (!groundPatchTile) {
+      drawTerrainFacetShade(ctx, tile, corners);
+      drawTerrainHeightShade(ctx, tile, corners);
+    }
+    if (!groundPatchTile) {
+      drawTerrainReliefEdges(ctx, tile, corners);
+    }
 
     terrainAtlasDrawer.drawTerrainTransitions(tile, corners);
-    if (drawDynamic) {
+    // painted ground carries its own detail; procedural decals (masonry
+    // joints, cracks, tufts) were tuned for flat atlas tiles and read as a
+    // lattice on top of the paintings
+    if (drawDynamic && !groundPatchTile) {
       drawTerrainDecals(ctx, tile, corners, tick, now);
     }
 
@@ -125,12 +146,16 @@ export function createTerrainDrawer({
   function drawTerrainDynamicTile(tileView, tick, now, visibleBounds) {
     const { tile, corners, bounds } = tileView;
     if (visibleBounds && !terrainLayerManager.boundsIntersect(bounds, visibleBounds)) return;
+    // same rule as the direct path: procedural decals were tuned for flat
+    // atlas tiles and scratch dark marks all over the painted ground
+    if (tileUsesGroundPatch(tile, terrainAssets.groundPatches)) return;
     drawTerrainDecals(ctx, tile, corners, tick, now);
   }
 
   function drawTerrainStaticChunk(chunk) {
     return terrainLayerManager.drawTerrainStaticChunk(ctx, chunk, (layerContext, staticChunk) => {
       withRenderContext(layerContext, () => {
+        drawChunkGroundPatch(ctx, staticChunk, lastOrigin, terrain, terrainAssets.groundPatches);
         for (const tileView of staticChunk.tiles) {
           drawTerrainTile(tileView, 0, 0, null, {
             drawDynamic: false,

@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "duskfell-painted-paperdoll-v1",
+  "note": "Bespoke Blender-built UO-esque paperdoll made from controlled rounded forms and cloth pieces.",
+  "outputs": [
+    "assets/sprites/player-cards/candidates/duskfell-painted-paperdoll.png",
+    "assets/sprites/player-cards/candidates/duskfell-painted-south.png",
+    "assets/sprites/player-cards/candidates/duskfell-painted-east.png",
+    "assets/sprites/player-cards/candidates/duskfell-painted-north.png",
+    "assets/sprites/player-cards/candidates/duskfell-painted-west.png"
+  ]
+}

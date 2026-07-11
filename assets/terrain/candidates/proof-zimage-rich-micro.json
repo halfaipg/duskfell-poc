@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "duskfell-grid-img2img-proof-v1",
+  "input": "proof-structure-grid-input.png",
+  "inputSha256": "985fb6ba600c690e58006e9ab58e026dd1771218872318fce001d96d848234ce",
+  "output": "proof-zimage-rich-micro.png",
+  "outputSha256": "453642a6ccefb0aaa8e0ea42ee05f086abd2ce0f73583e3b10a35a10ed58e987",
+  "model": "z-image-turbo",
+  "style": null,
+  "worker": "half5090beast1",
+  "generationSeconds": 4.91,
+  "seed": 24120,
+  "strength": 0.55,
+  "steps": 8,
+  "prompt": "Strict 90-degree overhead orthographic military-plan game terrain texture, square map patch, no horizon, no sky. Preserve the supplied river channel, shoreline, elevation masks, open walkable areas and every large rock mass exactly. Do not add paths, roads, trees, buildings, river branches, islands, cliffs, standing walls or new macro rocks. Original unbranded world art, no text, logo, watermark, tile seams, checkerboard patches or symmetry. Enrich only the surface: fine short grass blades, tiny clover, moss flecks, damp silt, granular gravel, embedded pebbles, subtle bank erosion, small water ripples, restrained reeds and natural color variation. High-definition hand-painted fantasy RPG ground art readable at player walking scale, crisp material boundaries, soft overcast light.",
+  "revisedPrompt": "Strict 90-degree overhead orthographic military-plan game terrain texture, square map patch, no horizon, no sky. Preserve the supplied river channel, shoreline, elevation masks, open walkable areas and every large rock mass exactly. Do not add paths, roads, trees, buildings, river branches, islands, cliffs, standing walls or new macro rocks. Original unbranded world art, no text, logo, watermark, tile seams, checkerboard patches or symmetry. Enrich only the surface: fine short grass blades, tiny clover, moss flecks, damp silt, granular gravel, embedded pebbles, subtle bank erosion, small water ripples, restrained reeds and natural color variation. High-definition hand-painted fantasy RPG ground art readable at player walking scale, crisp material boundaries, soft overcast light."
+}

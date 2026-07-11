@@ -54,6 +54,7 @@ impl SimWorld {
                     color,
                     demo_deeds: Vec::new(),
                     inventory: PlayerInventory::default(),
+                    speech: None,
                 },
                 Position {
                     x: spawn_position.x,
@@ -116,6 +117,38 @@ impl SimWorld {
             return Ok(Some(clean_name));
         }
         Ok(None)
+    }
+
+    // UO-style overhead speech: sanitize, clamp, and stamp an expiry that
+    // scales with message length so long lines linger a little longer
+    pub fn player_say(&mut self, id: PlayerId, text: &str) -> bool {
+        const SPEECH_MAX_CHARS: usize = 96;
+        const TICKS_PER_SECOND: u64 = 20;
+        let clean: String = text
+            .chars()
+            .filter(|c| !c.is_control())
+            .collect::<String>()
+            .trim()
+            .chars()
+            .take(SPEECH_MAX_CHARS)
+            .collect();
+        if clean.is_empty() {
+            return false;
+        }
+        let Some(entity) = self.players.get(&id).copied() else {
+            return false;
+        };
+        let duration_ticks =
+            (TICKS_PER_SECOND * 3 + (clean.chars().count() as u64) / 2).min(TICKS_PER_SECOND * 10);
+        let until_tick = self.tick + duration_ticks;
+        let Some(mut player) = self.world.get_mut::<Player>(entity) else {
+            return false;
+        };
+        player.speech = Some(super::model::PlayerSpeech {
+            text: clean,
+            until_tick,
+        });
+        true
     }
 
     pub fn is_player_name_available(&self, name: &str, owner: Option<PlayerId>) -> bool {

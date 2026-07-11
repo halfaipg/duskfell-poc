@@ -1,0 +1,255 @@
+{
+  "schemaVersion": "duskfell-terrain-authoring-v1",
+  "projection": {
+    "kind": "military-plan-oblique",
+    "tileWidth": 64,
+    "tileHeight": 64,
+    "axisAngleDegrees": 45
+  },
+  "levelEditorContract": {
+    "mapStores": [
+      "recipeId",
+      "recipeVersion",
+      "seed",
+      "parameters",
+      "inputAssetIds",
+      "outputAssetIds"
+    ],
+    "mapDoesNotStore": [
+      "generator credentials",
+      "unverified image bytes",
+      "client-authored collision",
+      "client-authored resource authority"
+    ],
+    "authoritySource": "server map and terrain-detail authority",
+    "visualSource": "verified runtime asset manifests"
+  },
+  "recipes": [
+    {
+      "id": "terrain.structure.blender-plan.v1",
+      "version": 1,
+      "status": "reviewed-proof",
+      "kind": "structure-bake",
+      "deterministic": true,
+      "command": "blender --background --python scripts/art-reset/blender-terrain-structure.py",
+      "files": [
+        "scripts/art-reset/blender-terrain-structure.py",
+        "assets/terrain/candidates/proof-structure-grid-input.png",
+        "assets/terrain/candidates/proof-structure-grid-input.blend",
+        "assets/terrain/candidates/proof-structure-grid-input.json"
+      ],
+      "editorKnobs": [
+        "seed",
+        "extent",
+        "river spline",
+        "height field",
+        "material masks",
+        "rock density"
+      ],
+      "outputs": [
+        "structure image",
+        "Blender source",
+        "height and material masks",
+        "generation metadata"
+      ]
+    },
+    {
+      "id": "terrain.enrichment.grid-img2img.v1",
+      "version": 1,
+      "status": "reviewed-proof",
+      "kind": "surface-enrichment",
+      "deterministic": false,
+      "reproducibility": "input hash, model, style, prompt, and seed are pinned; provider execution may drift",
+      "command": "node scripts/art-reset/grid-img2img-proof.mjs",
+      "requiredEnvironment": [
+        "GRID_API_KEY"
+      ],
+      "files": [
+        "scripts/art-reset/grid-img2img-proof.mjs",
+        "assets/terrain/candidates/lod1-snowfringe-grid-fantasy.json"
+      ],
+      "editorKnobs": [
+        "input asset",
+        "model",
+        "style preset",
+        "prompt",
+        "negative constraints",
+        "seed",
+        "strength",
+        "steps",
+        "sampler",
+        "scheduler"
+      ],
+      "strengthContract": {
+        "model": "FLUX.2 Klein 4B FP8",
+        "minimum": 0.55,
+        "maximum": 0.95,
+        "presets": {
+          "structure-lock": 0.55,
+          "playable-terrain": 0.6,
+          "rich-terrain": 0.7,
+          "concept-regional": 0.9
+        },
+        "note": "Klein's short schedule produces effective strength plateaus; 0.60 and 0.65 matched in the reviewed proof, as did 0.70 and 0.75."
+      },
+      "stepContract": {
+        "modelDefaultForTextToImage": 4,
+        "latentBlendMinimum": 6,
+        "latentBlendMaximum": 10,
+        "playableTerrain": 8,
+        "note": "The latent-blend recipe starts from an encoded source and strength truncates its sigma schedule. The reviewed 8-step output balanced detail and structural retention better than 6 or 10."
+      },
+      "outputs": [
+        "enriched image",
+        "source and output hashes",
+        "provider metadata"
+      ]
+    },
+    {
+      "id": "terrain.enrichment.grid-style-bakeoff.v1",
+      "version": 1,
+      "status": "reviewed-proof",
+      "kind": "style-comparison",
+      "deterministic": false,
+      "reproducibility": "same source and seed comparison; provider execution may drift",
+      "command": "node scripts/art-reset/grid-img2img-proof.mjs",
+      "requiredEnvironment": [
+        "GRID_API_KEY"
+      ],
+      "files": [
+        "assets/terrain/candidates/proof-style-uo-hd-snow.json",
+        "assets/terrain/candidates/proof-style-cleanroom-hd-snow.json",
+        "assets/terrain/candidates/proof-style-uo-hd-river.json",
+        "assets/terrain/candidates/proof-style-grid-comparison.png",
+        "assets/terrain/candidates/proof-strength-055-darkage.json",
+        "assets/terrain/candidates/proof-strength-060-darkage.json",
+        "assets/terrain/candidates/proof-strength-065-darkage.json",
+        "assets/terrain/candidates/proof-strength-070-darkage.json",
+        "assets/terrain/candidates/proof-strength-075-darkage.json",
+        "assets/terrain/candidates/proof-strength-090-darkage.json",
+        "assets/terrain/candidates/proof-strength-darkage-fine-comparison.png",
+        "assets/terrain/candidates/proof-steps-6-strength-060-darkage.json",
+        "assets/terrain/candidates/proof-steps-8-strength-060-darkage.json",
+        "assets/terrain/candidates/proof-steps-10-strength-060-darkage.json",
+        "assets/terrain/candidates/proof-steps-strength-060-comparison.png",
+        "assets/terrain/candidates/proof-style-cleanroom-river-prompts.png",
+        "assets/terrain/candidates/proof-zimage-strength-030-darkage.json",
+        "assets/terrain/candidates/proof-zimage-strength-045-darkage.json",
+        "assets/terrain/candidates/proof-zimage-strength-060-darkage.json",
+        "assets/terrain/candidates/proof-zimage-strength-070-darkage.json",
+        "assets/terrain/candidates/proof-zimage-strength-080-darkage.json",
+        "assets/terrain/candidates/proof-zimage-richness-vs-klein.png",
+        "assets/terrain/candidates/proof-zimage-rich-micro.json",
+        "assets/terrain/candidates/proof-zimage-rich-chunky.json",
+        "assets/terrain/candidates/proof-zimage-rich-weathered.json",
+        "assets/terrain/candidates/proof-zimage-rich-moody.json",
+        "assets/terrain/candidates/proof-zimage-rich-prompts-comparison.png",
+        "assets/terrain/candidates/proof-zimage-rich-weathered-12-res-simple.json",
+        "assets/terrain/candidates/proof-zimage-rich-weathered-12-dpm-normal.json",
+        "assets/terrain/candidates/proof-zimage-weathered-sampler-comparison.png",
+        "assets/terrain/candidates/proof-hybrid-z045-klein055-darkage.json",
+        "assets/terrain/candidates/proof-hybrid-zimage-klein-comparison.png"
+      ],
+      "promotionPolicy": "review-only comparison; rewrite trademark-referential prompts into approved descriptive art direction before runtime promotion",
+      "modelDecision": {
+        "finalTerrainRenderer": "FLUX.2 Klein 4B FP8 at 8 steps and strength 0.60",
+        "structureCleanupCandidate": "z-image-turbo at 8 steps and strength 0.30 to 0.45 for masks and editor previews",
+        "structurePreservingMaterialPass": "z-image-turbo with the weathered-age prompt at 12 steps, strength 0.55, DPM++ 2M, normal scheduler",
+        "rejectedDefault": "z-image-turbo to Klein chained pass",
+        "reason": "Klein produced stronger painterly terrain language and readable props. Z-Image preserved structure and the 12-step DPM++ pass improved material detail, but it remained softer and introduced patch artifacts at higher strength; chaining invented paths and a marker artifact."
+      },
+      "editorKnobs": [
+        "structure input",
+        "style language",
+        "terrain description",
+        "seed",
+        "strength",
+        "steps",
+        "sampler",
+        "scheduler"
+      ],
+      "outputs": [
+        "same-seed style proofs",
+        "comparison board",
+        "per-output provenance"
+      ]
+    },
+    {
+      "id": "terrain.lod.registered-pair.v1",
+      "version": 1,
+      "status": "live-proof",
+      "kind": "registered-lod-pair",
+      "deterministic": true,
+      "files": [
+        "assets/terrain/candidates/border-band-snowfringe.png",
+        "assets/terrain/candidates/lod1-snowfringe-grid-fantasy.png",
+        "assets/demos/terrain-sandwich-live.js"
+      ],
+      "editorKnobs": [
+        "regional asset",
+        "local asset",
+        "world bounds",
+        "crossfade start",
+        "crossfade end"
+      ],
+      "invariants": [
+        "regional and local assets describe the same geography",
+        "both layers use one world-to-screen transform",
+        "player coordinates remain fixed through the crossfade",
+        "walkability comes from authority data, not painted pixels"
+      ],
+      "outputs": [
+        "registered visual LOD pair"
+      ]
+    },
+    {
+      "id": "terrain.biome-ground-patches.v2",
+      "version": 2,
+      "status": "runtime-review",
+      "kind": "biome-runtime-build",
+      "deterministic": true,
+      "command": "npm run terrain:ground-patches:generate",
+      "files": [
+        "scripts/art-reset/build-biome-ground-patches.py",
+        "assets/terrain/manifest.json"
+      ],
+      "editorKnobs": [
+        "source candidate",
+        "biome tone",
+        "microvariation seed"
+      ],
+      "invariants": [
+        "no baked mirror quadrants",
+        "2048 by 2048 output",
+        "SHA-256 manifest pins updated atomically",
+        "mirror-symmetry gate passes"
+      ],
+      "outputs": [
+        "eight verified biome WebP patches",
+        "updated terrain manifest hashes"
+      ]
+    },
+    {
+      "id": "terrain.runtime.world-aligned-sampling.v1",
+      "version": 1,
+      "status": "runtime-review",
+      "kind": "world-placement",
+      "deterministic": true,
+      "files": [
+        "client/terrain-ground-patches.js"
+      ],
+      "editorKnobs": [
+        "biome",
+        "world seed"
+      ],
+      "forbiddenTransforms": [
+        "mirror-x",
+        "mirror-y",
+        "free-rotation"
+      ],
+      "outputs": [
+        "seamless world-aligned source sampling"
+      ]
+    }
+  ]
+}

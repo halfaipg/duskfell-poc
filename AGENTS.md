@@ -5,6 +5,21 @@ editing any file, read this file and every `AGENTS.md` between the repo root and
 the file being changed. The nearest file owns local details; the root owns
 project-wide rules.
 
+## How To Traverse This Repo
+
+1. Start here.
+2. Read each nearer `AGENTS.md` on the path to the file you will edit.
+3. Read `HUMANS.md` when you need the senior-dev explanation of how the pieces
+   fit together.
+4. Read the topic doc for the system you are touching.
+5. Check sibling scopes when a change crosses a boundary. For example, a new
+   server protocol field usually touches `server/`, `client/`, tests, and docs;
+   a new runtime asset usually touches `assets/`, `scripts/`, client rendering,
+   server runtime verification, and manifests.
+
+Do not rely on chat history for project state. If a decision matters to future
+work, put it in the nearest durable doc.
+
 ## Order Of Authority
 
 1. User instructions and safety/legal constraints.
@@ -29,6 +44,7 @@ must be original.
 For any substantial change, read the relevant subset:
 
 - `docs/development-constitution.md` for project law.
+- `HUMANS.md` for the human-readable system map and common change recipes.
 - `docs/architecture.md` for server/client/runtime shape.
 - `docs/security.md` for auth, clean-room, public deployment, and threat model.
 - `docs/art-direction.md` for camera, style, terrain, character, and decay rules.
@@ -86,9 +102,17 @@ single commit unless it is clearly an integration commit.
 
 Read child instructions when working under these directories:
 
-- `client/AGENTS.md`
-- `server/AGENTS.md`
-- `assets/AGENTS.md`
-- `scripts/AGENTS.md`
-- `docs/AGENTS.md`
-- `contracts/AGENTS.md`
+- `client/AGENTS.md`: browser renderer, input capture, protocol parsing,
+  asset loading, UI, terrain/player/object drawing.
+- `server/AGENTS.md`: authoritative sim, runtime, sessions, WebSocket ingress,
+  settlement, durability, content, metrics, admin surfaces.
+- `assets/AGENTS.md`: runtime image assets, manifests, provenance, generated
+  candidates, sprites, terrain, detail authority.
+- `scripts/AGENTS.md`: generators, verifiers, smoke tests, deployment/ops gates.
+- `docs/AGENTS.md`: durable project state, architecture/security/art docs,
+  handoffs, refactor map.
+- `contracts/AGENTS.md`: future Base/$DUSK settlement boundary only.
+
+When in doubt, open the nearest child file plus the sibling file for any surface
+that consumes your output. This is especially important for protocol changes,
+runtime asset changes, deployment/security changes, and art/camera changes.

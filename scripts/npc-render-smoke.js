@@ -16,7 +16,7 @@ const runId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
 // Short world day so bram's scheduled relocation fires within the smoke.
 const WORLD_DAY_SECONDS = "5";
-const RELOCATED_BRAM = { x: 1560, y: 1160 };
+const RELOCATED_BRAM = { x: 2980, y: 2120 };
 
 await mkdir(runtimeDir, { recursive: true });
 
@@ -199,7 +199,7 @@ async function runNpcFlow(sessionToken, sessionId) {
         flow.maxFollowSeparation = round(
           Math.max(flow.maxFollowSeparation, separation),
         );
-        const waypoint = { x: 1380, y: 1240 };
+        const waypoint = { x: 2800, y: 2150 };
         const remaining = Math.hypot(waypoint.x - me.x, waypoint.y - me.y);
         if (remaining <= 60) {
           sendInput({});

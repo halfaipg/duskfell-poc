@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "duskfell-darkage-base-bodies-prototype-v1",
+  "note": "Dark-age base body prototypes: male/female, lean/heavy, procedural tattered rags.",
+  "sourceBundle": "/Users/j/Documents/New project/uo-chain-sandbox-poc/var/third-party-model-candidates/blender-studio-human-base/human-base-meshes-bundle-v1.4.1/human_base_meshes_bundle.blend",
+  "license": "CC0, Blender Studio Human Base Meshes bundle.",
+  "outputs": [
+    "assets/sprites/player-cards/candidates/duskfell-darkage-base-bodies-lineup.png",
+    "assets/sprites/player-cards/candidates/duskfell-darkage-male-lean-game-angle.png",
+    "assets/sprites/player-cards/candidates/duskfell-darkage-male-heavy-game-angle.png",
+    "assets/sprites/player-cards/candidates/duskfell-darkage-female-lean-game-angle.png",
+    "assets/sprites/player-cards/candidates/duskfell-darkage-female-heavy-game-angle.png"
+  ]
+}

@@ -26,8 +26,11 @@ pub enum ClientMessage {
         npc_id: String,
     },
     Say {
-        #[serde(rename = "npcId")]
-        npc_id: String,
+        /// Present when the speech addresses an NPC (drives cognition);
+        /// absent for plain overhead speech. Either way the words float
+        /// above the speaker's head.
+        #[serde(rename = "npcId", default)]
+        npc_id: Option<String>,
         text: String,
     },
 }
@@ -133,6 +136,15 @@ pub struct PlayerSnapshot {
     pub demo_deeds: Vec<String>,
     pub resources: ResourceSnapshot,
     pub inventory: InventorySnapshot,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub speech: Option<SpeechSnapshot>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SpeechSnapshot {
+    pub text: String,
+    pub until_tick: u64,
 }
 
 #[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
@@ -344,7 +356,17 @@ mod tests {
         .expect("say parses");
         match say {
             ClientMessage::Say { npc_id, text } => {
-                assert_eq!(npc_id, "maren");
+                assert_eq!(npc_id.as_deref(), Some("maren"));
+                assert_eq!(text, "hello");
+            }
+            other => panic!("expected say, got {other:?}"),
+        }
+
+        let untargeted = serde_json::from_str::<ClientMessage>(r#"{"type":"say","text":"hello"}"#)
+            .expect("untargeted say parses");
+        match untargeted {
+            ClientMessage::Say { npc_id, text } => {
+                assert_eq!(npc_id, None);
                 assert_eq!(text, "hello");
             }
             other => panic!("expected say, got {other:?}"),

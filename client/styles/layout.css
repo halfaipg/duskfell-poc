@@ -101,21 +101,147 @@ canvas {
   flex-wrap: wrap;
 }
 
-.chat-input {
-  position: absolute;
-  left: 14px;
-  bottom: 14px;
-  width: min(420px, 60%);
-  padding: 10px 12px;
-  background: rgba(17, 20, 23, 0.86);
-  color: #fffdf7;
-  border: 1px solid #5a6360;
-  font: 500 14px/1.4 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+/* fullscreen world: the canvas is the page, chrome floats above it */
+.app-fullscreen {
+  width: 100vw;
+  padding: 0;
+  display: block;
 }
 
-.chat-input:focus {
-  outline: 2px solid #c9a227;
+.app-fullscreen canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  min-height: 0;
+  border: none;
 }
+
+.floating-strip {
+  position: fixed;
+  z-index: 12;
+  pointer-events: none;
+}
+
+.floating-strip .connection,
+.floating-strip button {
+  pointer-events: auto;
+}
+
+.app-fullscreen .topbar {
+  top: 12px;
+  left: 16px;
+  right: auto;
+  gap: 18px;
+}
+
+.app-fullscreen .topbar h1 {
+  margin: 0;
+  font-size: 1.35rem;
+  color: #f0e9d8;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.app-fullscreen .topbar .eyebrow {
+  margin: 0;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.app-fullscreen .hud {
+  z-index: 11;
+  top: auto;
+  bottom: 46px;
+  left: 14px;
+}
+
+.statusbar-floating {
+  bottom: 10px;
+  left: 16px;
+  right: 16px;
+  font-size: 0.82rem;
+  color: #cbd4d0;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  gap: 22px;
+}
+
+.floating-panel {
+  position: fixed;
+  z-index: 14;
+  top: 68px;
+  right: 16px;
+  width: 320px;
+  max-height: calc(100vh - 96px);
+  overflow-y: auto;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+}
+
+.floating-panel.panel-hidden {
+  display: none;
+}
+
+.panel-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid #514331;
+  background: #241f19;
+  color: #c8ad7a;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.panel-close:hover {
+  color: #f0e0b8;
+  border-color: #7a6544;
+}
+
+.panel-open {
+  position: fixed;
+  z-index: 14;
+  top: 68px;
+  right: 16px;
+  padding: 8px 14px;
+  border: 1px solid #514331;
+  background: rgba(25, 23, 21, 0.92);
+  color: #c8ad7a;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.panel-open:hover {
+  color: #f0e0b8;
+  border-color: #7a6544;
+}
+
+#playerCardPortrait {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.chat-input {
+  position: fixed;
+  z-index: 15;
+  left: 50%;
+  bottom: 44px;
+  transform: translateX(-50%);
+  width: min(440px, 80vw);
+  padding: 10px 14px;
+  border: 1px solid #514331;
+  background: rgba(20, 18, 15, 0.92);
+  color: #f0e0b8;
+  font: 700 15px system-ui, sans-serif;
+  outline: none;
+}
+
+.chat-input::placeholder {
+  color: #8a7d63;
 
 .dialogue-log {
   display: grid;

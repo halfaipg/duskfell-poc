@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "duskfell-grid-img2img-proof-v1",
+  "input": "border-band-snowfringe.png",
+  "inputSha256": "d42787ed417433a7301a7e0f7e795514fd75984e320b41b6dfbb1d78bcc2ea7a",
+  "output": "lod1-snowfringe-grid-fantasy.png",
+  "outputSha256": "7ce83c17a47998cbfd05eecab48b7b4fc53b4b3b9695c984e0416aa50168ec3e",
+  "model": "FLUX.2 Klein 4B FP8",
+  "style": "fantasy-art",
+  "worker": "half5090beast1",
+  "generationSeconds": 5.28,
+  "seed": 20177,
+  "prompt": "IMG2IMG player-scale enrichment of the supplied original Duskfell snow-fringe terrain patch. Preserve the exact snow boundaries, central green clearing, dark wet-soil pocket, exposed earth shapes, stone positions, crop, and strict orthographic plan view. Change only surface resolution and richness: resolve the central grass into subtle short human-scale blades, moss, clover, fine grit, tiny embedded pebbles, thin thawed mud, scattered pine needles, granular snow crystals and restrained meltwater. Hand-painted late-1990s fantasy RPG environment art, crisp but not photorealistic, muted natural palette, soft overcast lighting. Keep the central clearing open and walkable. No new paths, ponds, cliffs, trees, large boulders, giant grass tufts, mirrored patterns, tile grid, text, logo, or watermark.",
+  "revisedPrompt": "IMG2IMG player-scale enrichment of the supplied original Duskfell snow-fringe terrain patch. Preserve the exact snow boundaries, central green clearing, dark wet-soil pocket, exposed earth shapes, stone positions, crop, and strict orthographic plan view. Change only surface resolution and richness: resolve the central grass into subtle short human-scale blades, moss, clover, fine grit, tiny embedded pebbles, thin thawed mud, scattered pine needles, granular snow crystals and restrained meltwater. Hand-painted late-1990s fantasy RPG environment art, crisp but not photorealistic, muted natural palette, soft overcast lighting. Keep the central clearing open and walkable. No new paths, ponds, cliffs, trees, large boulders, giant grass tufts, mirrored patterns, tile grid, text, logo, or watermark., epic fantasy concept art, painterly, dramatic atmosphere, intricate detail, volumetric light, ArtStation trending"
+}

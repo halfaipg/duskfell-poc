@@ -2,7 +2,7 @@ use bevy_ecs::prelude::Entity;
 
 use crate::protocol::{
     MapSnapshot, NpcSnapshot, ObjectSnapshot, PlayerId, PlayerSnapshot, ResourceKind,
-    ResourceSnapshot, SettlementSnapshot, WorldSnapshot,
+    ResourceSnapshot, SettlementSnapshot, SpeechSnapshot, WorldSnapshot,
 };
 
 use super::movement::distance;
@@ -71,6 +71,7 @@ impl SimWorld {
         center: Option<Position>,
         interest_radius: f32,
     ) -> Vec<PlayerSnapshot> {
+        let tick = self.tick;
         let mut players = Vec::new();
         if let Some(candidates) = candidates {
             for entity in candidates {
@@ -81,12 +82,12 @@ impl SimWorld {
                 else {
                     continue;
                 };
-                players.push(player_snapshot(player, position));
+                players.push(player_snapshot(player, position, tick));
             }
         } else {
             let mut query = self.world.query::<(&Player, &Position)>();
             for (player, position) in query.iter(&self.world) {
-                players.push(player_snapshot(player, position));
+                players.push(player_snapshot(player, position, tick));
             }
         }
         if let Some(center) = center {
@@ -179,7 +180,7 @@ impl SimWorld {
     }
 }
 
-fn player_snapshot(player: &Player, position: &Position) -> PlayerSnapshot {
+fn player_snapshot(player: &Player, position: &Position, tick: u64) -> PlayerSnapshot {
     PlayerSnapshot {
         id: player.id,
         account_subject: player.account_subject.clone(),
@@ -200,6 +201,14 @@ fn player_snapshot(player: &Player, position: &Position) -> PlayerSnapshot {
             seed: player.inventory.resource_total(ResourceKind::Seed),
         },
         inventory: player.inventory.snapshot(),
+        speech: player
+            .speech
+            .as_ref()
+            .filter(|speech| speech.until_tick > tick)
+            .map(|speech| SpeechSnapshot {
+                text: speech.text.clone(),
+                until_tick: speech.until_tick,
+            }),
     }
 }
 

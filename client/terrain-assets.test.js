@@ -93,6 +93,27 @@ test("normalizes optional material-pair transition frames", () => {
   assert.equal(atlas.pairTransitionByPair.get(transitionPairKey("dirt", "grass")).frame, 110);
 });
 
+test("normalizes complete biome patches and rejects coverage gaps", () => {
+  const manifest = validAtlas();
+  manifest.groundPatches = ["meadow", "heath", "chalk", "frost", "fen", "moor", "ash", "blight"].map(
+    (biome) => ({
+      id: `biome-${biome}`,
+      biome,
+      image: `ground-patches/${biome}.webp`,
+      sha256: "a".repeat(64),
+      width: 2048,
+      height: 2048,
+    }),
+  );
+
+  const atlas = normalizeTerrainAtlas(manifest);
+  assert.equal(atlas.groundPatches.length, 8);
+  assert.equal(atlas.groundPatches[0].biome, "meadow");
+
+  manifest.groundPatches.pop();
+  assert.throws(() => normalizeTerrainAtlas(manifest), /missing ground patch for biome blight/);
+});
+
 test("rejects malformed material-pair transition frames", () => {
   const manifest = validAtlas();
   manifest.tileSheet.rows = 12;

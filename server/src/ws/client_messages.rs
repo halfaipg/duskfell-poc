@@ -219,6 +219,12 @@ pub(super) async fn handle_client_text(
                 }
             };
             let mut sim = state.sim.lock().await;
+            // All speech floats above the speaker's head (UO-style); when an
+            // NPC is addressed it additionally drives that NPC's cognition.
+            sim.player_say(player_id, &clean_text);
+            let Some(npc_id) = npc_id else {
+                return false;
+            };
             match sim.npc_talk_persona(player_id, &npc_id) {
                 Ok(persona_id) => {
                     let actor_name = sim

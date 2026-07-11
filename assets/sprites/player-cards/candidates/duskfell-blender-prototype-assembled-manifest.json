@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "duskfell-blender-prototype-assembled-v1",
+  "note": "Prototype review assets assembled from deterministic Blender frame renders.",
+  "sourceFrames": "var/blender-paperdoll-prototype/frames",
+  "cell": {
+    "width": 96,
+    "height": 128,
+    "displayScale": 3
+  },
+  "directions": [
+    "south",
+    "east",
+    "north",
+    "west"
+  ],
+  "frames": 4,
+  "outputs": [
+    "assets/sprites/player-cards/candidates/duskfell-blender-prototype-base-sheet.png",
+    "assets/sprites/player-cards/candidates/duskfell-blender-prototype-equipped-sheet.png",
+    "assets/sprites/player-cards/candidates/duskfell-blender-prototype-ghost-sheet.png",
+    "assets/sprites/player-cards/candidates/duskfell-blender-prototype-player-card-triptych.png"
+  ]
+}

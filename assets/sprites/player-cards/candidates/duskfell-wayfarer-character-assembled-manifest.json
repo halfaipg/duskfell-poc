@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "duskfell-wayfarer-character-assembled-v1",
+  "outputs": [
+    "assets/sprites/player-cards/candidates/duskfell-wayfarer-card.png",
+    "assets/sprites/player-cards/candidates/duskfell-wayfarer-direction-strip.png",
+    "assets/sprites/player-cards/candidates/duskfell-wayfarer-card-sprite.png",
+    "assets/sprites/player-cards/candidates/duskfell-wayfarer-direction-strip-sprite.png",
+    "assets/sprites/player-cards/candidates/duskfell-wayfarer-card-comparison.png"
+  ]
+}

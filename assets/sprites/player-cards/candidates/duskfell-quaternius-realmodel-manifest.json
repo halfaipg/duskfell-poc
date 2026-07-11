@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "duskfell-quaternius-realmodel-prototype-v1",
+  "note": "Prototype render from real Quaternius Universal Base Characters Standard CC0 models.",
+  "sourcePack": "/Users/j/Downloads/Universal Base Characters[Standard]",
+  "license": "CC0 1.0 Universal, per License_Standard.txt in downloaded pack.",
+  "sourceFiles": [
+    "/Users/j/Downloads/Universal Base Characters[Standard]/Base Characters/Godot - UE/Superhero_Male_FullBody.gltf",
+    "/Users/j/Downloads/Universal Base Characters[Standard]/Base Characters/Godot - UE/Superhero_Female_FullBody.gltf",
+    "/Users/j/Downloads/Universal Base Characters[Standard]/Hairstyles/Origin at 0/glTF (Godot)/Hair_Long.gltf",
+    "/Users/j/Downloads/Universal Base Characters[Standard]/Hairstyles/Origin at 0/glTF (Godot)/Hair_SimpleParted.gltf",
+    "/Users/j/Downloads/Universal Base Characters[Standard]/Hairstyles/Origin at 0/glTF (Godot)/Hair_Beard.gltf"
+  ],
+  "outputs": [
+    "assets/sprites/player-cards/candidates/duskfell-quaternius-realmodel-paperdoll-lineup.png",
+    "assets/sprites/player-cards/candidates/duskfell-quaternius-realmodel-south.png",
+    "assets/sprites/player-cards/candidates/duskfell-quaternius-realmodel-east.png",
+    "assets/sprites/player-cards/candidates/duskfell-quaternius-realmodel-north.png",
+    "assets/sprites/player-cards/candidates/duskfell-quaternius-realmodel-west.png"
+  ]
+}

@@ -1,0 +1,159 @@
+:root {
+  color-scheme: dark;
+  font-family: Georgia, "Times New Roman", serif;
+  background: #0d1010;
+  color: #efe7d5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #0d1010;
+}
+
+button {
+  font: inherit;
+}
+
+#world {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.brand {
+  position: fixed;
+  top: 18px;
+  left: 20px;
+  color: #f2e9d5;
+  font-size: 24px;
+  line-height: 1;
+  text-shadow: 0 2px 5px #000;
+  pointer-events: none;
+}
+
+.toolbar {
+  position: fixed;
+  top: 14px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  background: rgba(17, 20, 19, 0.88);
+  border: 1px solid rgba(221, 208, 177, 0.3);
+  border-radius: 6px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+}
+
+.modes {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(56px, auto));
+  border: 1px solid rgba(221, 208, 177, 0.22);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.mode,
+.icon {
+  min-height: 32px;
+  border: 0;
+  color: #cfc5af;
+  background: #181d1b;
+  cursor: pointer;
+}
+
+.mode {
+  padding: 0 12px;
+  border-right: 1px solid rgba(221, 208, 177, 0.18);
+}
+
+.mode:last-child {
+  border-right: 0;
+}
+
+.mode:hover,
+.icon:hover {
+  background: #252c28;
+  color: #fff4dc;
+}
+
+.mode.active {
+  background: #556346;
+  color: #fff7e6;
+}
+
+.icon {
+  width: 32px;
+  padding: 0;
+  border: 1px solid rgba(221, 208, 177, 0.22);
+  border-radius: 4px;
+  font-family: system-ui, sans-serif;
+  font-size: 21px;
+  line-height: 1;
+}
+
+.status {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  min-width: 170px;
+  padding: 7px 12px;
+  color: #d7cdb8;
+  background: rgba(17, 20, 19, 0.82);
+  border: 1px solid rgba(221, 208, 177, 0.22);
+  border-radius: 4px;
+  text-align: center;
+  font: 12px/1.2 system-ui, sans-serif;
+  letter-spacing: 0;
+  pointer-events: none;
+}
+
+@media (max-width: 620px) {
+  .brand {
+    top: 14px;
+    left: 14px;
+    font-size: 19px;
+  }
+
+  .toolbar {
+    top: auto;
+    right: 50%;
+    bottom: 14px;
+    width: calc(100% - 20px);
+    max-width: 480px;
+    gap: 6px;
+    transform: translateX(50%);
+  }
+
+  .modes {
+    flex: 1;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .mode {
+    height: 36px;
+    padding: 0 5px;
+    font-size: 12px;
+    line-height: 1.1;
+  }
+
+  .status {
+    top: 15px;
+    right: 14px;
+    bottom: auto;
+    left: auto;
+    min-width: 0;
+    transform: none;
+  }
+}

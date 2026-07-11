@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "duskfell-quaternius-modular-men-assembled-v1",
+  "outputs": [
+    "assets/sprites/player-cards/candidates/duskfell-quaternius-modular-men-lineup.png",
+    "assets/sprites/player-cards/candidates/duskfell-quaternius-farmer-card.png",
+    "assets/sprites/player-cards/candidates/duskfell-quaternius-farmer-direction-strip.png",
+    "assets/sprites/player-cards/candidates/duskfell-quaternius-modular-men-lineup-sprite.png",
+    "assets/sprites/player-cards/candidates/duskfell-quaternius-farmer-card-sprite.png",
+    "assets/sprites/player-cards/candidates/duskfell-quaternius-farmer-direction-strip-sprite.png"
+  ]
+}

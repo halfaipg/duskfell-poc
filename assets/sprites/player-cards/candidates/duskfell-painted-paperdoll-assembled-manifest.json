@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "duskfell-painted-paperdoll-assembled-v1",
+  "outputs": [
+    "assets/sprites/player-cards/candidates/duskfell-painted-paperdoll-card.png",
+    "assets/sprites/player-cards/candidates/duskfell-painted-direction-strip.png",
+    "assets/sprites/player-cards/candidates/duskfell-painted-paperdoll-card-sprite.png",
+    "assets/sprites/player-cards/candidates/duskfell-painted-direction-strip-sprite.png",
+    "assets/sprites/player-cards/candidates/duskfell-painted-paperdoll-comparison.png"
+  ]
+}

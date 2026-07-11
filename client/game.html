@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Duskfell Systems Client</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="app app-fullscreen">
+      <canvas id="world" width="1280" height="720" aria-label="Duskfell world"></canvas>
+      <div class="hud" id="hud">Loading</div>
+
+      <header class="topbar floating-strip">
+        <div>
+          <p class="eyebrow">Clean-room sandbox MMO PoC</p>
+          <h1>Duskfell</h1>
+        </div>
+        <div class="connection" id="connection">Connecting</div>
+      </header>
+
+      <button id="panelOpen" class="panel-open" type="button" hidden>Player</button>
+      <aside class="panel floating-panel" id="playerPanel">
+        <button id="panelClose" class="panel-close" type="button" aria-label="Close player card">&times;</button>
+        <div class="panel-block player-card-block">
+          <h2>Player</h2>
+          <div class="player-card">
+            <div class="player-card-frame">
+              <canvas id="playerCardPortrait" width="384" height="512"></canvas>
+            </div>
+            <div class="player-card-meta">
+              <strong id="playerCardName">Wayfarer</strong>
+              <span id="playerCardArchetype">Base paperdoll</span>
+              <span id="partyStatus" class="party-status">Traveling alone</span>
+            </div>
+          </div>
+          <label class="name-row">
+            <span>Name</span>
+            <input id="nameInput" maxlength="20" placeholder="Wayfarer" />
+          </label>
+          <button id="renameButton" type="button">Rename</button>
+        </div>
+
+        <div class="panel-block">
+          <h2>Bank</h2>
+          <div class="deed-list" id="deedStatus">Walk to the Bank and press E to claim a dry-run deed.</div>
+        </div>
+
+        <div class="panel-block">
+          <h2>Inventory</h2>
+          <div class="inventory-list" id="resourceStatus">Gather wood and ore, then craft at the Field Forge.</div>
+        </div>
+
+        <div class="panel-block">
+          <h2>Dialogue</h2>
+          <div class="dialogue-log" id="dialogueLog">Walk up to an NPC and press Enter or T to talk.</div>
+        </div>
+
+        <div class="panel-block">
+          <h2>Settlement</h2>
+          <dl class="metrics">
+            <div><dt>Mode</dt><dd id="chainMode">-</dd></div>
+            <div><dt>Pending</dt><dd id="pendingJobs">0</dd></div>
+            <div><dt>Confirmed</dt><dd id="confirmedJobs">0</dd></div>
+            <div><dt>Latest</dt><dd id="latestReceipt">-</dd></div>
+          </dl>
+        </div>
+      </aside>
+
+      <input id="chatInput" class="chat-input" maxlength="240" placeholder="Say something&hellip;" autocomplete="off" hidden />
+
+      <footer class="statusbar floating-strip statusbar-floating">
+        <span>Move with WASD or arrow keys.</span>
+        <span>Press E near the Bank, groves, or ore veins.</span>
+        <span>Press Enter to speak — near an NPC it starts a conversation. P invites them to your party.</span>
+      </footer>
+    </main>
+
+    <script src="/app.js?v=duskfell-npc-merge-1" type="module"></script>
+  </body>
+</html>

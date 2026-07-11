@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "duskfell-grid-img2img-proof-v1",
+  "input": "proof-zimage-strength-045-darkage.png",
+  "inputSha256": "3b977aa88ac5334d5424dead15cb02b9fab2cc832d64c6765a807fabb1f9a35a",
+  "output": "proof-hybrid-z045-klein055-darkage.png",
+  "outputSha256": "bb3c5255e15c42a6af47298c272f4bf11be8308c05dc432cd1bd0ad10fe74f9b",
+  "model": "FLUX.2 Klein 4B FP8",
+  "style": null,
+  "worker": "half5090beast1",
+  "generationSeconds": 6.34,
+  "seed": 24090,
+  "strength": 0.55,
+  "steps": 8,
+  "prompt": "Strict 90-degree overhead orthographic military-plan game terrain map, no horizon and no sky. A cold winding river crosses dark-age frontier ground with wet soil, short trampled sedge, slate stones, gravel banks, sparse low scrub and subtle moss. Preserve the supplied river channel, shoreline, elevation masks, open walkable areas and rock field. High-definition hand-painted late-1990s fantasy RPG land art, somber natural palette, soft diffuse daylight, original unbranded world art, no text, logo, watermark, giant trees, buildings, standing walls, tile seams or symmetry.",
+  "revisedPrompt": "Strict 90-degree overhead orthographic military-plan game terrain map, no horizon and no sky. A cold winding river crosses dark-age frontier ground with wet soil, short trampled sedge, slate stones, gravel banks, sparse low scrub and subtle moss. Preserve the supplied river channel, shoreline, elevation masks, open walkable areas and rock field. High-definition hand-painted late-1990s fantasy RPG land art, somber natural palette, soft diffuse daylight, original unbranded world art, no text, logo, watermark, giant trees, buildings, standing walls, tile seams or symmetry."
+}

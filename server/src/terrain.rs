@@ -6,6 +6,7 @@ pub struct TerrainAuthority {
     cols: u32,
     rows: u32,
     safe_radius_tiles: f32,
+    baked: Option<BakedTerrainGrid>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -16,6 +17,100 @@ pub enum TerrainMaterial {
     Stone,
     Water,
     Settlement,
+    Cobble,
+    Rock,
+    Ruin,
+    Shore,
+}
+
+impl TerrainMaterial {
+    fn from_name(name: &str) -> Option<Self> {
+        match name {
+            "grass" => Some(Self::Grass),
+            "field" => Some(Self::Field),
+            "dirt" => Some(Self::Dirt),
+            "stone" => Some(Self::Stone),
+            "water" => Some(Self::Water),
+            "settlement" => Some(Self::Settlement),
+            "cobble" => Some(Self::Cobble),
+            "rock" => Some(Self::Rock),
+            "ruin" => Some(Self::Ruin),
+            "shore" => Some(Self::Shore),
+            _ => None,
+        }
+    }
+}
+
+// per-tile materials and per-vertex heights baked from the client worldgen
+// (scripts/generate-terrain-grid.js) — the walkability authority must match
+// the map the player actually sees, so baked data always wins over the
+// legacy procedural fallback below
+#[derive(Debug, Clone)]
+pub struct BakedTerrainGrid {
+    materials: Vec<Vec<TerrainMaterial>>,
+    vertex_heights: Vec<Vec<i32>>,
+}
+
+impl BakedTerrainGrid {
+    pub fn from_grids(
+        material_grid: &[String],
+        vertex_heights: &[Vec<i32>],
+        legend: &[String],
+        cols: u32,
+        rows: u32,
+    ) -> Result<Option<Self>, String> {
+        if material_grid.is_empty() && vertex_heights.is_empty() {
+            return Ok(None);
+        }
+        if material_grid.len() != rows as usize {
+            return Err(format!(
+                "materialGrid has {} rows, expected {rows}",
+                material_grid.len()
+            ));
+        }
+        if vertex_heights.len() != rows as usize + 1 {
+            return Err(format!(
+                "vertexHeights has {} rows, expected {}",
+                vertex_heights.len(),
+                rows + 1
+            ));
+        }
+        let mut materials = Vec::with_capacity(rows as usize);
+        for (y, row) in material_grid.iter().enumerate() {
+            if row.chars().count() != cols as usize {
+                return Err(format!(
+                    "materialGrid row {y} has {} tiles, expected {cols}",
+                    row.len()
+                ));
+            }
+            let mut tile_row = Vec::with_capacity(cols as usize);
+            for (x, ch) in row.chars().enumerate() {
+                let index = ch
+                    .to_digit(36)
+                    .ok_or_else(|| format!("materialGrid[{y}][{x}] '{ch}' is not base-36"))?;
+                let name = legend.get(index as usize).ok_or_else(|| {
+                    format!("materialGrid[{y}][{x}] index {index} outside legend")
+                })?;
+                let material = TerrainMaterial::from_name(name)
+                    .ok_or_else(|| format!("unknown terrain material '{name}'"))?;
+                tile_row.push(material);
+            }
+            materials.push(tile_row);
+        }
+        for (y, row) in vertex_heights.iter().enumerate() {
+            if row.len() != cols as usize + 1 {
+                return Err(format!(
+                    "vertexHeights row {y} has {} vertices, expected {}",
+                    row.len(),
+                    cols + 1
+                ));
+            }
+        }
+        Ok(Some(Self {
+            materials,
+            vertex_heights: vertex_heights.to_vec(),
+        }))
+    }
 }
 
 impl TerrainAuthority {
@@ -25,12 +120,23 @@ impl TerrainAuthority {
         map_height: f32,
         safe_zone_radius: f32,
     ) -> Self {
+        Self::with_baked_grid(profile, map_width, map_height, safe_zone_radius, None)
+    }
+
+    pub fn with_baked_grid(
+        profile: TerrainSnapshot,
+        map_width: f32,
+        map_height: f32,
+        safe_zone_radius: f32,
+        baked: Option<BakedTerrainGrid>,
+    ) -> Self {
         let units_per_tile = profile.units_per_tile as f32;
         Self {
             profile,
             cols: (map_width / units_per_tile).ceil() as u32,
             rows: (map_height / units_per_tile).ceil() as u32,
             safe_radius_tiles: safe_zone_radius / units_per_tile,
+            baked,
         }
     }
 
@@ -70,6 +176,9 @@ impl TerrainAuthority {
     }
 
     fn material_for_tile(&self, x: u32, y: u32) -> TerrainMaterial {
+        if let Some(baked) = &self.baked {
+            return baked.materials[y as usize][x as usize];
+        }
         let x_f = x as f32;
         let y_f = y as f32;
         let rows_f = self.rows as f32;
@@ -129,6 +238,9 @@ impl TerrainAuthority {
     }
 
     fn vertex_height(&self, x: u32, y: u32) -> f32 {
+        if let Some(baked) = &self.baked {
+            return baked.vertex_heights[y as usize][x as usize] as f32;
+        }
         let x_f = x as f32;
         let y_f = y as f32;
         let center_distance = ((x_f - self.cols as f32 / 2.0).powi(2)

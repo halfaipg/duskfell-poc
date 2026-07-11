@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "duskfell-grid-img2img-proof-v1",
+  "input": "proof-structure-grid-input.png",
+  "inputSha256": "985fb6ba600c690e58006e9ab58e026dd1771218872318fce001d96d848234ce",
+  "output": "proof-style-uo-hd-river.png",
+  "outputSha256": "5b73abc98b84b5244aa41149e69fa048958b2d2ad2acea996c74d4938980f89e",
+  "model": "FLUX.2 Klein 4B FP8",
+  "style": null,
+  "worker": "half5090beast1",
+  "generationSeconds": 8.04,
+  "seed": 24072,
+  "prompt": "Ultima Online HD style, orthographic military-plan terrain patch showing a winding shallow river through grassy and rocky ground, coherent banks, pebbled shore, moss, low scrub, embedded stones and modest elevation relief. Preserve the supplied river channel, bank geometry, rock field and walkable ground exactly. High-definition hand-painted fantasy game terrain at player walking scale, cohesive soft daylight, crisp but not photorealistic, no mountains, horizon, buildings, giant plants or repeated patterns.",
+  "revisedPrompt": "Ultima Online HD style, orthographic military-plan terrain patch showing a winding shallow river through grassy and rocky ground, coherent banks, pebbled shore, moss, low scrub, embedded stones and modest elevation relief. Preserve the supplied river channel, bank geometry, rock field and walkable ground exactly. High-definition hand-painted fantasy game terrain at player walking scale, cohesive soft daylight, crisp but not photorealistic, no mountains, horizon, buildings, giant plants or repeated patterns."
+}
