@@ -16,15 +16,15 @@ test("projected movement delta follows military-plan-oblique screen axes", () =>
   assert.deepEqual(projectedMovementDelta(64, 64), { x: 0, y: 64 });
 });
 
-test("direction selection preserves plan-axis movement and projected diagonals", () => {
+test("direction selection buckets movement into eight world-compass sectors", () => {
   assert.equal(directionFromWorldDelta(64, 0), "east");
   assert.equal(directionFromWorldDelta(-64, 0), "west");
   assert.equal(directionFromWorldDelta(0, 64), "south");
   assert.equal(directionFromWorldDelta(0, -64), "north");
-  assert.equal(directionFromWorldDelta(64, -64), "east");
-  assert.equal(directionFromWorldDelta(-64, 64), "west");
-  assert.equal(directionFromWorldDelta(64, 64), "south");
-  assert.equal(directionFromWorldDelta(-64, -64), "north");
+  assert.equal(directionFromWorldDelta(64, -64), "northeast");
+  assert.equal(directionFromWorldDelta(-64, 64), "southwest");
+  assert.equal(directionFromWorldDelta(64, 64), "southeast");
+  assert.equal(directionFromWorldDelta(-64, -64), "northwest");
 });
 
 test("tiny movement keeps previous facing", () => {

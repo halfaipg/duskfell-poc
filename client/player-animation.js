@@ -13,6 +13,8 @@ export const PLAYER_RENDER_SNAP_DISTANCE = PROJECTION.unitsPerTile * 2.5;
 export const PLAYER_FIDGET_DELAY_MS = 3800;
 export const PLAYER_FIDGET_PERIOD_MS = 9200;
 export const PLAYER_FIDGET_FRAME_MS = 150;
+// breathing: a slow ping-pong of subtle weight-shift frames while standing
+export const PLAYER_BREATH_FRAME_MS = 340;
 // direction changes crossfade briefly instead of hard-snapping the sprite
 export const PLAYER_TURN_FADE_MS = 110;
 
@@ -23,20 +25,23 @@ export function projectedMovementDelta(dx, dy) {
   };
 }
 
+// eight world-compass sectors, 45 degrees each: +x is east, +y is south
+const DIRECTION_SECTORS = [
+  "east",
+  "southeast",
+  "south",
+  "southwest",
+  "west",
+  "northwest",
+  "north",
+  "northeast",
+];
+
 export function directionFromWorldDelta(dx, dy, fallback = "south") {
   if (Math.hypot(dx, dy) <= PLAYER_MOVEMENT_EPSILON) return fallback;
-
-  const screen = projectedMovementDelta(dx, dy);
-  const absScreenX = Math.abs(screen.x);
-  const absScreenY = Math.abs(screen.y);
-  if (Math.abs(absScreenX - absScreenY) <= 0.000001) {
-    if (Math.abs(dx) > Math.abs(dy)) return dx > 0 ? "east" : "west";
-    if (Math.abs(dy) > Math.abs(dx)) return dy > 0 ? "south" : "north";
-    if (Math.sign(dx) !== Math.sign(dy)) return screen.x > 0 ? "east" : "west";
-    return screen.y > 0 ? "south" : "north";
-  }
-  if (absScreenX > absScreenY) return screen.x > 0 ? "east" : "west";
-  return screen.y > 0 ? "south" : "north";
+  const angle = Math.atan2(dy, dx);
+  const sector = (((Math.round(angle / (Math.PI / 4)) % 8) + 8) % 8);
+  return DIRECTION_SECTORS[sector];
 }
 
 export function walkAnimationSample({
@@ -49,12 +54,16 @@ export function walkAnimationSample({
   frameSequence = null,
   idleElapsedMs = null,
   fidgetFrames = null,
+  idleFrames = null,
 }) {
   const safeFrameCount = Math.max(1, frameCount);
   const idleFrameIndex = clampInteger(idleFrame, 0, safeFrameCount - 1);
   if (!moving) {
     return {
-      frameIndex: idleFidgetFrame(idleElapsedMs, fidgetFrames, stablePhase, safeFrameCount) ?? idleFrameIndex,
+      frameIndex:
+        idleFidgetFrame(idleElapsedMs, fidgetFrames, stablePhase, safeFrameCount) ??
+        idleBreathingFrame(idleElapsedMs, idleFrames, stablePhase, safeFrameCount) ??
+        idleFrameIndex,
       bodyOffsetX: 0,
       bodyOffsetY: 0,
       cycleRadians: 0,
@@ -94,6 +103,13 @@ function idleFidgetFrame(idleElapsedMs, fidgetFrames, stablePhase, frameCount) {
   if (phase >= clipMs) return null;
   const index = Math.min(fidgetFrames.length - 1, Math.floor(phase / PLAYER_FIDGET_FRAME_MS));
   return clampInteger(fidgetFrames[index], 0, frameCount - 1);
+}
+
+function idleBreathingFrame(idleElapsedMs, idleFrames, stablePhase, frameCount) {
+  if (!Array.isArray(idleFrames) || idleFrames.length === 0) return null;
+  if (!Number.isFinite(idleElapsedMs)) return null;
+  const phase = Math.floor(idleElapsedMs / PLAYER_BREATH_FRAME_MS + stablePhase * 10);
+  return clampInteger(idleFrames[phase % idleFrames.length], 0, frameCount - 1);
 }
 
 function normalizeFrameSequence(sequence, frameCount) {

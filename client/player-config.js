@@ -1,5 +1,14 @@
 export const PLAYER_RENDER_SCALE = 0.66;
-export const PLAYER_DIRECTION_NAMES = ["south", "east", "north", "west"];
+export const PLAYER_DIRECTION_NAMES = [
+  "south",
+  "east",
+  "north",
+  "west",
+  "southeast",
+  "northeast",
+  "northwest",
+  "southwest",
+];
 
 export const PREFERRED_PLAYER_SHEET_ID = "duskfell-wretch";
 export const PREFERRED_PLAYER_SHEET_IDS = [

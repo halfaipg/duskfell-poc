@@ -129,11 +129,25 @@ function normalizeShadow(shadow, frameGrid) {
   return { kind: "ellipse", x, y, width, height, opacity };
 }
 
+const DIAGONAL_DIRECTION_FALLBACKS = {
+  southeast: "south",
+  southwest: "west",
+  northeast: "east",
+  northwest: "north",
+};
+
 function selectDirection(directions, directionName, frameGrid) {
   if (!Array.isArray(directions)) {
     throw new Error("sprite sheet directions must be an array");
   }
-  const direction = directions.find((candidate) => candidate.name === directionName);
+  let direction = directions.find((candidate) => candidate.name === directionName);
+  if (!direction && DIAGONAL_DIRECTION_FALLBACKS[directionName]) {
+    // 4-direction sheets (paperdolls, placeholders) render diagonals with
+    // the nearest cardinal row instead of failing to load
+    direction = directions.find(
+      (candidate) => candidate.name === DIAGONAL_DIRECTION_FALLBACKS[directionName],
+    );
+  }
   if (!direction) {
     throw new Error(`sprite sheet direction ${directionName} was not found`);
   }
@@ -166,9 +180,21 @@ function normalizeAnimation(animation, direction) {
   const walkFrames = rawWalkFrames.map((frame, index) =>
     normalizeRelativeFrame(frame, direction.frameCount, `sprite sheet animation.walkFrames[${index}]`),
   );
+  const optionalFrames = {};
+  for (const key of ["fidgetFrames", "idleFrames"]) {
+    const raw = animation[key];
+    if (raw == null) continue;
+    if (!Array.isArray(raw) || raw.length === 0 || raw.length > 32) {
+      throw new Error(`sprite sheet animation.${key} must be a non-empty bounded array`);
+    }
+    optionalFrames[key] = raw.map((frame, index) =>
+      normalizeRelativeFrame(frame, direction.frameCount, `sprite sheet animation.${key}[${index}]`),
+    );
+  }
   return {
     idleFrame,
     walkFrames,
+    ...optionalFrames,
   };
 }
 

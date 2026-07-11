@@ -13,6 +13,7 @@ import { createPlayerDrawer } from "./player-draw.js";
 import { createPlayerRenderState } from "./player-render-state.js";
 import { createNetworkClient } from "./network-client.js";
 import { renderHud, renderPanel } from "./ui-panels.js";
+import { terrainHeightAtWorld } from "./terrain.js";
 
 const { canvas, screenCtx, ui } = getAppDom();
 let ctx = screenCtx;
@@ -169,14 +170,75 @@ window.addEventListener("resize", () => {
   fitCanvas();
 });
 
-function getInputState() {
+// click/tap-to-move: the pointer picks a world point, and until we arrive we
+// synthesize the same 8-way key input the server already understands
+let moveTarget = null;
+let moveTargetStalledSince = null;
+let moveStallKey = null;
+const MOVE_ARRIVE_UNITS = 14;
+const MOVE_STALL_MS = 900;
+
+canvas.addEventListener("pointerdown", (event) => {
+  if (event.button !== 0 || !snapshot) return;
+  const rect = canvas.getBoundingClientRect();
+  const screenX = (event.clientX - rect.left) / camera.scale + camera.x;
+  const screenY = (event.clientY - rect.top) / camera.scale + camera.y;
+  const origin = defaultOrigin(snapshot.map);
+  const units = PROJECTION.unitsPerTile;
+  // invert the plan-oblique projection, refining once with terrain height
+  let wx = 0;
+  let wy = 0;
+  let z = 0;
+  for (let pass = 0; pass < 2; pass += 1) {
+    const sx = ((screenX - origin.x) * units) / PROJECTION.halfW;
+    const sy = ((screenY + z * PROJECTION.zPx - origin.y) * units) / PROJECTION.halfH;
+    wx = (sx + sy) / 2;
+    wy = (sy - sx) / 2;
+    z = terrainHeightAtWorld(terrainCache.getTerrain(), wx, wy);
+  }
+  moveTarget = { x: wx, y: wy };
+  moveTargetStalledSince = null;
+  networkClient.sendInput();
+});
+
+function moveTargetInput() {
+  if (!moveTarget || !snapshot) return null;
+  const players = Array.isArray(snapshot.players) ? snapshot.players : [];
+  const me = players.find((player) => player.id === playerId);
+  if (!me) return null;
+  const dx = moveTarget.x - me.x;
+  const dy = moveTarget.y - me.y;
+  if (Math.hypot(dx, dy) <= MOVE_ARRIVE_UNITS) {
+    moveTarget = null;
+    return null;
+  }
+  // 8-way: press an axis when it holds a meaningful share of the remaining path
+  const ax = Math.abs(dx);
+  const ay = Math.abs(dy);
+  const diagonal = Math.min(ax, ay) > Math.max(ax, ay) * 0.41;
   return {
+    up: dy < 0 && (diagonal || ay >= ax),
+    down: dy > 0 && (diagonal || ay >= ax),
+    left: dx < 0 && (diagonal || ax > ay),
+    right: dx > 0 && (diagonal || ax > ay),
+    interact: false,
+  };
+}
+
+function getInputState() {
+  const keyState = {
     up: keys.has("ArrowUp") || keys.has("w") || keys.has("W"),
     down: keys.has("ArrowDown") || keys.has("s") || keys.has("S"),
     left: keys.has("ArrowLeft") || keys.has("a") || keys.has("A"),
     right: keys.has("ArrowRight") || keys.has("d") || keys.has("D"),
     interact: keys.has("e") || keys.has("E") || keys.has(" "),
   };
+  if (keyState.up || keyState.down || keyState.left || keyState.right) {
+    moveTarget = null;  // real keys always win over a pointer target
+    return keyState;
+  }
+  const synthesized = moveTargetInput();
+  return synthesized ? { ...synthesized, interact: keyState.interact } : keyState;
 }
 
 function fitCanvas() {
@@ -202,6 +264,23 @@ function draw(now = 0) {
     playerRenderState.updateRenderOffsets(players, snapshot.map, playerId, now);
     playerRenderState.updateVisualPositions(players, now);
     localPlayerRenderPosition = me ? playerRenderState.renderPosition(me) : null;
+    if (moveTarget && me) {
+      // re-evaluate the synthesized heading; sendInput dedupes so this only
+      // hits the wire when the 8-way keys actually change
+      networkClient.sendInput();
+      const stallKey = `${Math.round(me.x)},${Math.round(me.y)}`;
+      if (moveStallKey === stallKey) {
+        moveTargetStalledSince ??= now;
+        if (now - moveTargetStalledSince > MOVE_STALL_MS) {
+          moveTarget = null;  // blocked by water or a cliff: stop pushing
+          moveTargetStalledSince = null;
+          networkClient.sendInput();
+        }
+      } else {
+        moveStallKey = stallKey;
+        moveTargetStalledSince = null;
+      }
+    }
     const cameraFocus = viewOverride ?? (me ? { ...me, ...playerRenderState.renderPosition(me) } : me);
     const nextCamera = computeCamera({
       viewport: rect,
