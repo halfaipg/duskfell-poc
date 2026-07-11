@@ -49,7 +49,10 @@ export function createTerrainGlLayer(canvas) {
     gl.uniform3f(uniformCamera, camera.x, camera.y, camera.scale);
     gl.uniform2f(uniformViewport, cssWidth, cssHeight);
     gl.disable(gl.DEPTH_TEST);
-    gl.disable(gl.BLEND);
+    // chunk layers overlap via their transparent padding; premultiplied
+    // alpha blending composites them exactly like ctx.drawImage did
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
     gl.enableVertexAttribArray(attribPosition);
     gl.enableVertexAttribArray(attribUv);
@@ -69,6 +72,7 @@ export function createTerrainGlLayer(canvas) {
     const texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, layer.canvas);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
