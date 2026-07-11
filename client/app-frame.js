@@ -1,3 +1,5 @@
+import { RENDER_DPR_CAP } from "./device-profile.js";
+
 export function createCanvasFrame({ canvas, screenCtx }) {
   let canvasPixelWidth = 0;
   let canvasPixelHeight = 0;
@@ -8,7 +10,7 @@ export function createCanvasFrame({ canvas, screenCtx }) {
   return {
     fitCanvas() {
       const rect = canvas.getBoundingClientRect();
-      const dpr = window.devicePixelRatio || 1;
+      const dpr = Math.min(window.devicePixelRatio || 1, RENDER_DPR_CAP);
       const nextWidth = Math.floor(rect.width * dpr);
       const nextHeight = Math.floor(rect.height * dpr);
       if (canvasPixelWidth !== nextWidth || canvasPixelHeight !== nextHeight) {

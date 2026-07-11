@@ -1,3 +1,4 @@
+import { CONSTRAINED_DEVICE } from "./device-profile.js";
 import {
   VISUAL_BIOMES,
   activeVisualBiomesForPatch,
@@ -16,7 +17,7 @@ const PATCHED_MATERIALS = new Set([
   "water",
 ]);
 const PATCH_TILES = 16;
-const PLAN_PX_PER_TILE = 128;
+const PLAN_PX_PER_TILE = CONSTRAINED_DEVICE ? 64 : 128;
 const PATCH_SIZE = PATCH_TILES * PLAN_PX_PER_TILE;
 // composites render with a 1-tile world-space margin so inflated clip
 // diamonds at supertile borders sample real painting instead of leaking
@@ -27,7 +28,7 @@ const MARGIN_PX = MARGIN_TILES * PLAN_PX_PER_TILE;
 const CANVAS_TILES = PATCH_TILES + MARGIN_TILES * 2;
 const CANVAS_SIZE = CANVAS_TILES * PLAN_PX_PER_TILE;
 const MASK_SIZE = 216;
-const MAX_COMPOSITE_PATCHES = 16;
+const MAX_COMPOSITE_PATCHES = CONSTRAINED_DEVICE ? 10 : 16;
 
 const compositeCache = new Map();
 let activeGroundPatches = null;
