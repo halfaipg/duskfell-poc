@@ -39,6 +39,7 @@ const result = {
   playerId: parsedWelcome?.playerId ?? null,
   identityMatched: session.sessionId === parsedWelcome?.playerId,
   welcomePlayers: parsedWelcome?.snapshot.players.length ?? 0,
+  welcomeNpcs: parsedWelcome?.snapshot.npcs.length ?? 0,
   welcomeObjects: parsedWelcome?.snapshot.objects.length ?? 0,
   firstPlayerColor: parsedWelcome?.snapshot.players[0]?.color ?? null,
   snapshotTick: parsedSnapshot?.tick ?? null,
@@ -53,6 +54,7 @@ if (
   error ||
   !result.identityMatched ||
   result.welcomePlayers < 1 ||
+  result.welcomeNpcs < 1 ||
   result.welcomeObjects < 1 ||
   !/^#[0-9a-f]{6}$/i.test(result.firstPlayerColor) ||
   parsedSnapshot == null

@@ -1,3 +1,4 @@
+import { checkAnimusProvider } from "./deployment-preflight/animus.js";
 import { checkAccountAuth } from "./deployment-preflight/auth.js";
 import { checkNumericBudgets } from "./deployment-preflight/budgets.js";
 import {
@@ -51,6 +52,7 @@ checkBind(context);
 checkChainMode(context);
 checkProductionChainServices(context);
 checkNumericBudgets(env, add);
+checkAnimusProvider(env, profile, add);
 checkDurabilityMode(context);
 checkDrainMode(context);
 checkProductionBlockers(context);
