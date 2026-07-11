@@ -1,12 +1,19 @@
+import { decodeMsgpack } from "./msgpack-decode.js";
 import { normalizeSnapshot } from "./server-message-snapshot.js";
 import { isObject, normalizeNoticeLevel, normalizeText, normalizeUuid } from "./server-message-validators.js";
 
 export function parseServerMessage(raw) {
   let message;
   try {
-    message = JSON.parse(String(raw));
+    if (raw instanceof ArrayBuffer) {
+      message = decodeMsgpack(new Uint8Array(raw));
+    } else if (ArrayBuffer.isView(raw)) {
+      message = decodeMsgpack(new Uint8Array(raw.buffer, raw.byteOffset, raw.byteLength));
+    } else {
+      message = JSON.parse(String(raw));
+    }
   } catch {
-    throw new Error("server message is not valid JSON");
+    throw new Error("server message is not valid JSON or MessagePack");
   }
 
   if (!isObject(message) || typeof message.type !== "string") {

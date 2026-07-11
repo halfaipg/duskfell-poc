@@ -1,0 +1,51 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import { decodeMsgpack } from "./msgpack-decode.js";
+
+test("decodes the shapes rmp-serde emits for snapshots", () => {
+  // {"type":"snapshot","tick":7,"arr":[1,-2,3.5],"name":"wretch"}
+  const bytes = new Uint8Array([
+    0x84,
+    0xa4, 0x74, 0x79, 0x70, 0x65, 0xa8, 0x73, 0x6e, 0x61, 0x70, 0x73, 0x68, 0x6f, 0x74,
+    0xa4, 0x74, 0x69, 0x63, 0x6b, 0x07,
+    0xa3, 0x61, 0x72, 0x72, 0x93, 0x01, 0xfe, 0xcb, 0x40, 0x0c, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0xa4, 0x6e, 0x61, 0x6d, 0x65, 0xa6, 0x77, 0x72, 0x65, 0x74, 0x63, 0x68,
+  ]);
+  assert.deepEqual(decodeMsgpack(bytes), {
+    type: "snapshot",
+    tick: 7,
+    arr: [1, -2, 3.5],
+    name: "wretch",
+  });
+});
+
+test("decodes wide integers, nil, bools and str8", () => {
+  // [null, true, false, 300, -300, 70000, "abc"(str8)]
+  const bytes = new Uint8Array([
+    0x97,
+    0xc0, 0xc3, 0xc2,
+    0xcd, 0x01, 0x2c,
+    0xd1, 0xfe, 0xd4,
+    0xce, 0x00, 0x01, 0x11, 0x70,
+    0xd9, 0x03, 0x61, 0x62, 0x63,
+  ]);
+  assert.deepEqual(decodeMsgpack(bytes), [null, true, false, 300, -300, 70000, "abc"]);
+});
+
+test("rejects truncated and trailing payloads", () => {
+  assert.throws(() => decodeMsgpack(new Uint8Array([0x92, 0x01])));
+  assert.throws(() => decodeMsgpack(new Uint8Array([0x01, 0x02])));
+});
+
+test("drops prototype-polluting map keys", () => {
+  // {"__proto__": true, "ok": 1}
+  const bytes = new Uint8Array([
+    0x82,
+    0xa9, 0x5f, 0x5f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x5f, 0x5f, 0xc3,
+    0xa2, 0x6f, 0x6b, 0x01,
+  ]);
+  const decoded = decodeMsgpack(bytes);
+  assert.deepEqual(decoded, { ok: 1 });
+  assert.equal(Object.getPrototypeOf(decoded), Object.prototype);
+});

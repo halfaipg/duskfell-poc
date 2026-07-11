@@ -23,11 +23,13 @@ pub(super) async fn send_welcome(
         player_id,
         snapshot,
     };
-    let text = serde_json::to_string(&message)?;
+    // binary MessagePack frames: named serialization keeps camelCase field
+    // keys so the client normalizers are format-agnostic
+    let payload = rmp_serde::to_vec_named(&message)?;
     record_snapshot_visibility(state, &message);
-    ensure_snapshot_payload_size(state, text.len())?;
-    state.metrics.message_out(text.len());
-    socket.send(Message::Text(text)).await?;
+    ensure_snapshot_payload_size(state, payload.len())?;
+    state.metrics.message_out(payload.len());
+    socket.send(Message::Binary(payload)).await?;
     Ok(())
 }
 
@@ -49,13 +51,13 @@ pub(super) async fn send_snapshot(
     let visible_players = snapshot.players.len();
     let visible_objects = snapshot.objects.len();
     let message = ServerMessage::Snapshot(snapshot);
-    let text = serde_json::to_string(&message)?;
+    let payload = rmp_serde::to_vec_named(&message)?;
     state
         .metrics
         .snapshot_visibility_observed(visible_players, visible_objects);
-    ensure_snapshot_payload_size(state, text.len())?;
-    state.metrics.snapshot_out(text.len());
-    socket.send(Message::Text(text)).await?;
+    ensure_snapshot_payload_size(state, payload.len())?;
+    state.metrics.snapshot_out(payload.len());
+    socket.send(Message::Binary(payload)).await?;
     Ok(())
 }
 
