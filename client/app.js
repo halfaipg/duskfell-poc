@@ -34,11 +34,14 @@ const SUN_CYCLE_SECONDS = (() => {
   return Number.isFinite(raw) && raw >= 10 ? raw : 1200;
 })();
 
-function sunStateAt(nowMs) {
-  const phase = ((nowMs / 1000) % SUN_CYCLE_SECONDS) / SUN_CYCLE_SECONDS;
-  const angle = phase * Math.PI * 2 - Math.PI / 2; // dawn at phase 0.25
+function sunStateAt() {
+  // wall-clock anchored so every client shares the same sun; biased so
+  // roughly 70% of the cycle is daylight and night stays short
+  const raw = ((Date.now() / 1000 / SUN_CYCLE_SECONDS) + 0.35) % 1;
+  const phase = raw < 0.7 ? (raw / 0.7) * 0.5 : 0.5 + ((raw - 0.7) / 0.3) * 0.5;
+  const angle = phase * Math.PI * 2; // 0 = sunrise, 0.25 = noon, 0.5 = sunset
   const elevation = Math.sin(angle);
-  const azimuth = phase * Math.PI * 2;
+  const azimuth = phase * Math.PI * 2 + Math.PI / 3;
   const cosE = Math.cos(Math.asin(Math.max(-0.999, Math.min(0.999, elevation)))) || 0.001;
   return {
     elevation,
@@ -49,7 +52,7 @@ function sunStateAt(nowMs) {
     },
   };
 }
-let currentSun = sunStateAt(0);
+let currentSun = sunStateAt();
 console.info("Duskfell client build: painted-terrain v3 (2026-07-09)");
 
 const keys = new Set();
@@ -383,7 +386,7 @@ function draw(now = 0) {
 
     // day/night tint driven by the live sun (dayTint=dawn|dusk|night still
     // forces a fixed look for stills)
-    currentSun = sunStateAt(now);
+    currentSun = sunStateAt();
     if (DAY_TINT) {
       const tints = {
         dawn: ["rgba(255, 196, 140, 0.28)", "rgba(150, 120, 130, 0.55)"],
@@ -404,12 +407,12 @@ function draw(now = 0) {
     } else {
       const e = currentSun.elevation;
       const horizonBand = Math.max(0, 1 - Math.abs(e) * 5.5); // dawn/dusk warmth
-      const nightAlpha = Math.max(0, Math.min(0.72, -e * 2.1));
+      const nightAlpha = Math.max(0, Math.min(0.45, -e * 1.6));
       if (horizonBand > 0.01 || nightAlpha > 0.01) {
         ctx.save();
         if (nightAlpha > 0.01) {
           ctx.globalCompositeOperation = "multiply";
-          ctx.fillStyle = `rgba(56, 68, 110, ${nightAlpha.toFixed(3)})`;
+          ctx.fillStyle = `rgba(112, 124, 158, ${nightAlpha.toFixed(3)})`;
           ctx.fillRect(0, 0, rect.width, rect.height);
         }
         if (horizonBand > 0.01) {
