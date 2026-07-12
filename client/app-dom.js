@@ -6,6 +6,8 @@ export function getAppDom() {
     ui: {
       connection: document.getElementById("connection"),
       hud: document.getElementById("hud"),
+      nightShade: document.getElementById("nightShade"),
+      dawnGlow: document.getElementById("dawnGlow"),
       playerPanel: document.getElementById("playerPanel"),
       panelClose: document.getElementById("panelClose"),
       panelOpen: document.getElementById("panelOpen"),

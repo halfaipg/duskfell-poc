@@ -1,5 +1,6 @@
 import { DETAIL_SPRITE_FRAMES } from "./player-config.js";
 import { drawDetailShadow, treeDetailFrame } from "./terrain-detail-draw.js";
+import { drawCastShadow } from "./cast-shadow.js";
 
 export function drawObjectSprite(ctx, sprites, cueDrawer, object, point, now = 0) {
   if (object.kind === "fieldCoil") return drawFieldCoilObject(ctx, object, point, now);
@@ -26,17 +27,18 @@ function drawEcologyObjectSprite(ctx, sprites, cueDrawer, object, point) {
   const dw = Math.round(sprite.cellWidth * scale);
   const dh = Math.round(sprite.cellHeight * scale);
 
-  const shadow = sprite.render?.shadow;
-  if (shadow?.kind === "ellipse") {
-    drawDetailShadow(
+  if (sprite.render?.shadow?.kind === "ellipse") {
+    drawCastShadow(
       ctx,
-      {
-        x: point.x + (shadow.x - sprite.anchor.x) * scale,
-        y: point.y + (shadow.y - sprite.anchor.y) * scale,
-      },
-      (shadow.width * scale) / 2,
-      (shadow.height * scale) / 2,
-      shadow.opacity,
+      sprite.image,
+      sx,
+      0,
+      sprite.cellWidth,
+      sprite.cellHeight,
+      { x: point.x, y: point.y },
+      scale,
+      `details:${frame}`,
+      sprite.anchor.x,
     );
   }
 

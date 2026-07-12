@@ -19,6 +19,8 @@ import {
 import { PROJECTION } from "./projection.js";
 import { TERRAIN_MATERIALS } from "./terrain.js";
 import { RENDER_DPR_CAP } from "./device-profile.js";
+import { continuousVertexHeight } from "./terrain-height.js";
+import { getSun, shadowCast } from "./sun-state.js";
 
 export { normalizeTerrainDebugMode };
 
@@ -83,6 +85,17 @@ export function createTerrainDrawer({
     const glActive = Boolean(
       glLayer && viewport && glLayer.beginFrame(camera, viewport.width, viewport.height, glDpr()),
     );
+    if (glActive) {
+      const sun = getSun();
+      glLayer.setLighting({
+        heightsCanvas: heightsCanvasFor(worldTerrain),
+        cols: worldTerrain.cols,
+        rows: worldTerrain.rows,
+        origin,
+        sun: sun.direction,
+        daylight: shadowCast().daylight,
+      });
+    }
     const waterEntries = glActive ? new Map() : null;
     for (const chunk of renderGeometry.chunks) {
       if (!terrainLayerManager.boundsIntersect(chunk.bounds, visibleBounds)) continue;
@@ -140,6 +153,46 @@ export function createTerrainDrawer({
         CANVAS_TILES,
       );
     }
+  }
+
+  // vertex-height grid encoded into a tiny canvas (R = (h+1)/5) for the
+  // live hillshade; rebuilt only when the terrain cache key changes
+  let heightsCanvas = null;
+  let heightsKey = null;
+
+  function heightsCanvasFor(worldTerrain) {
+    const key = `${terrainCacheKey}:${worldTerrain.cols}x${worldTerrain.rows}`;
+    if (heightsCanvas && heightsKey === key) return heightsCanvas;
+    const cols = worldTerrain.cols;
+    const rows = worldTerrain.rows;
+    const canvas2 = document.createElement("canvas");
+    canvas2.width = cols + 1;
+    canvas2.height = rows + 1;
+    const context = canvas2.getContext("2d");
+    if (!context) return null;
+    const image = context.createImageData(cols + 1, rows + 1);
+    for (let y = 0; y <= rows; y += 1) {
+      for (let x = 0; x <= cols; x += 1) {
+        const height = continuousVertexHeight(
+          x,
+          y,
+          cols,
+          rows,
+          worldTerrain.safeRadiusTiles,
+          worldTerrain.profile,
+        );
+        const value = Math.max(0, Math.min(255, Math.round(((height + 1) / 5) * 255)));
+        const offset = (y * (cols + 1) + x) * 4;
+        image.data[offset] = value;
+        image.data[offset + 1] = value;
+        image.data[offset + 2] = value;
+        image.data[offset + 3] = 255;
+      }
+    }
+    context.putImageData(image, 0, 0);
+    heightsCanvas = canvas2;
+    heightsKey = key;
+    return heightsCanvas;
   }
 
   function glDpr() {

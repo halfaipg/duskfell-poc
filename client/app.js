@@ -16,6 +16,7 @@ import { createNetworkClient } from "./network-client.js";
 import { renderHud, renderPanel } from "./ui-panels.js";
 import { terrainHeightAtWorld } from "./terrain.js";
 import { drawWaterFish } from "./water-fish.js";
+import { setSun } from "./sun-state.js";
 
 const { canvas, screenCtx, ui } = getAppDom();
 let ctx = screenCtx;
@@ -384,47 +385,17 @@ function draw(now = 0) {
     }
     ctx.restore();
 
-    // day/night tint driven by the live sun (dayTint=dawn|dusk|night still
-    // forces a fixed look for stills)
+    // day/night: overlay divs with mix-blend-mode darken both canvases —
+    // canvas composite ops cannot reach the GL terrain layer below
     currentSun = sunStateAt();
-    if (DAY_TINT) {
-      const tints = {
-        dawn: ["rgba(255, 196, 140, 0.28)", "rgba(150, 120, 130, 0.55)"],
-        dusk: ["rgba(255, 158, 96, 0.30)", "rgba(140, 104, 120, 0.6)"],
-        night: ["rgba(70, 90, 150, 0.2)", "rgba(56, 68, 110, 0.75)"],
-      };
-      const [glow, shadow] = tints[DAY_TINT] ?? [];
-      if (glow) {
-        ctx.save();
-        ctx.globalCompositeOperation = "multiply";
-        ctx.fillStyle = shadow;
-        ctx.fillRect(0, 0, rect.width, rect.height);
-        ctx.globalCompositeOperation = "soft-light";
-        ctx.fillStyle = glow;
-        ctx.fillRect(0, 0, rect.width, rect.height);
-        ctx.restore();
-      }
-    } else {
-      const e = currentSun.elevation;
-      const horizonBand = Math.max(0, 1 - Math.abs(e) * 5.5); // dawn/dusk warmth
-      const nightAlpha = Math.max(0, Math.min(0.45, -e * 1.6));
-      if (horizonBand > 0.01 || nightAlpha > 0.01) {
-        ctx.save();
-        if (nightAlpha > 0.01) {
-          ctx.globalCompositeOperation = "multiply";
-          ctx.fillStyle = `rgba(112, 124, 158, ${nightAlpha.toFixed(3)})`;
-          ctx.fillRect(0, 0, rect.width, rect.height);
-        }
-        if (horizonBand > 0.01) {
-          ctx.globalCompositeOperation = "multiply";
-          ctx.fillStyle = `rgba(150, 116, 122, ${(horizonBand * 0.42).toFixed(3)})`;
-          ctx.fillRect(0, 0, rect.width, rect.height);
-          ctx.globalCompositeOperation = "soft-light";
-          ctx.fillStyle = `rgba(255, 168, 106, ${(horizonBand * 0.5).toFixed(3)})`;
-          ctx.fillRect(0, 0, rect.width, rect.height);
-        }
-        ctx.restore();
-      }
+    setSun(currentSun);
+    {
+      const forced = { dawn: 0.09, dusk: -0.02, night: -0.5 }[DAY_TINT];
+      const e = forced ?? currentSun.elevation;
+      const horizonBand = Math.max(0, 1 - Math.abs(e) * 5.5);
+      const nightAlpha = Math.max(0, Math.min(0.66, 0.1 - e * 1.35));
+      if (ui.nightShade) ui.nightShade.style.opacity = nightAlpha.toFixed(3);
+      if (ui.dawnGlow) ui.dawnGlow.style.opacity = (horizonBand * 0.55).toFixed(3);
     }
 
     drawOverlay(rect);

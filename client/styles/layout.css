@@ -252,3 +252,24 @@ canvas {
 .chat-input::placeholder {
   color: #8a7d63;
 }
+
+/* day/night overlays: mix-blend-mode crosses BOTH canvases, unlike canvas
+   composite ops which cannot see the GL layer below */
+#nightShade,
+#dawnGlow {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+}
+
+#nightShade {
+  mix-blend-mode: multiply;
+  background: rgb(96, 108, 148);
+}
+
+#dawnGlow {
+  mix-blend-mode: soft-light;
+  background: rgb(255, 168, 106);
+}

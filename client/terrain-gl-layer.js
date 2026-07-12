@@ -18,12 +18,20 @@ export function createTerrainGlLayer(canvas) {
   const waterProgram = buildWaterProgram(gl);
   const attribPosition = gl.getAttribLocation(program, "aPosition");
   const attribUv = gl.getAttribLocation(program, "aUv");
+  const attribPlan = gl.getAttribLocation(program, "aPlan");
   const uniformCamera = gl.getUniformLocation(program, "uCamera");
   const uniformViewport = gl.getUniformLocation(program, "uViewport");
   const uniformTexture = gl.getUniformLocation(program, "uTexture");
+  const uniformHeights = gl.getUniformLocation(program, "uHeights");
+  const uniformSunDir = gl.getUniformLocation(program, "uSunDir");
+  const uniformDaylight = gl.getUniformLocation(program, "uDaylight");
+  const uniformGridSize = gl.getUniformLocation(program, "uGridSize");
+  let heightsTexture = null;
+  let heightsSource = null;
+  let lightingState = { origin: { x: 0, y: 0 }, cols: 1, rows: 1 };
   const blitProgram = buildBlitProgram(gl);
   const vertexBuffer = gl.createBuffer();
-  const vertexData = new Float32Array(4 * 4);
+  const vertexData = new Float32Array(4 * 6);
   const textures = new Set();
   let contextLost = false;
   let sceneFbo = null;
@@ -89,9 +97,33 @@ export function createTerrainGlLayer(canvas) {
     gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
     gl.enableVertexAttribArray(attribPosition);
     gl.enableVertexAttribArray(attribUv);
-    gl.vertexAttribPointer(attribPosition, 2, gl.FLOAT, false, 16, 0);
-    gl.vertexAttribPointer(attribUv, 2, gl.FLOAT, false, 16, 8);
+    gl.enableVertexAttribArray(attribPlan);
+    gl.vertexAttribPointer(attribPosition, 2, gl.FLOAT, false, 24, 0);
+    gl.vertexAttribPointer(attribUv, 2, gl.FLOAT, false, 24, 8);
+    gl.vertexAttribPointer(attribPlan, 2, gl.FLOAT, false, 24, 16);
     return true;
+  }
+
+  // world lighting inputs: height grid canvas + live sun. The heights
+  // canvas uploads once (re-uploads if the source object changes).
+  function setLighting({ heightsCanvas, cols, rows, origin, sun, daylight }) {
+    if (contextLost) return;
+    lightingState = { origin, cols, rows };
+    gl.useProgram(program);
+    if (heightsCanvas && heightsSource !== heightsCanvas) {
+      if (heightsTexture) gl.deleteTexture(heightsTexture);
+      heightsTexture = textureForCanvasSource(heightsCanvas, false);
+      heightsSource = heightsCanvas;
+    }
+    if (heightsTexture) {
+      gl.activeTexture(gl.TEXTURE3);
+      gl.bindTexture(gl.TEXTURE_2D, heightsTexture);
+      gl.uniform1i(uniformHeights, 3);
+    }
+    const sunDir = sun ?? { x: -0.45, y: -0.55, z: 0.72 };
+    gl.uniform3f(uniformSunDir, sunDir.x, sunDir.y, Math.max(0.12, sunDir.z));
+    gl.uniform1f(uniformDaylight, daylight ?? 1);
+    gl.uniform2f(uniformGridSize, cols + 1, rows + 1);
   }
 
   function textureForLayer(layer) {
@@ -128,8 +160,27 @@ export function createTerrainGlLayer(canvas) {
     const y0 = layer.y;
     const x1 = layer.x + layer.width;
     const y1 = layer.y + layer.height;
+    // plan (tile) coords per corner: inverse iso of projected position,
+    // ignoring baked z displacement (shading offset of <0.5 tile on cliffs)
+    const { origin } = lightingState;
+    const HALF_W = 32;
+    const HALF_H = 32;
+    const plan = (px, py) => {
+      const dx = (px - origin.x) / HALF_W;
+      const dy = (py - origin.y) / HALF_H;
+      return { u: ((dx + dy) / 2) / 1, v: ((dy - dx) / 2) / 1 };
+    };
+    const p00 = plan(x0, y0);
+    const p10 = plan(x1, y0);
+    const p01 = plan(x0, y1);
+    const p11 = plan(x1, y1);
     // triangle strip: nw, ne, sw, se — canvas row 0 sits at v=0
-    vertexData.set([x0, y0, 0, 0, x1, y0, 1, 0, x0, y1, 0, 1, x1, y1, 1, 1]);
+    vertexData.set([
+      x0, y0, 0, 0, p00.u, p00.v,
+      x1, y0, 1, 0, p10.u, p10.v,
+      x0, y1, 0, 1, p01.u, p01.v,
+      x1, y1, 1, 1, p11.u, p11.v,
+    ]);
     gl.bufferData(gl.ARRAY_BUFFER, vertexData, gl.DYNAMIC_DRAW);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     return true;
@@ -175,8 +226,8 @@ export function createTerrainGlLayer(canvas) {
     const blitPosition = gl.getAttribLocation(blitProgram, "aPosition");
     gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
     gl.enableVertexAttribArray(blitPosition);
-    gl.vertexAttribPointer(blitPosition, 2, gl.FLOAT, false, 16, 0);
-    vertexData.set([-1, -1, 0, 0, 1, -1, 0, 0, -1, 1, 0, 0, 1, 1, 0, 0]);
+    gl.vertexAttribPointer(blitPosition, 2, gl.FLOAT, false, 24, 0);
+    vertexData.set([-1, -1, 0, 0, 0, 0, 1, -1, 0, 0, 0, 0, -1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0]);
     gl.bufferData(gl.ARRAY_BUFFER, vertexData, gl.DYNAMIC_DRAW);
     gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, sceneTexture);
@@ -202,8 +253,8 @@ export function createTerrainGlLayer(canvas) {
     const waterUv = gl.getAttribLocation(waterProgram, "aUv");
     gl.enableVertexAttribArray(waterPosition);
     gl.enableVertexAttribArray(waterUv);
-    gl.vertexAttribPointer(waterPosition, 2, gl.FLOAT, false, 16, 0);
-    gl.vertexAttribPointer(waterUv, 2, gl.FLOAT, false, 16, 8);
+    gl.vertexAttribPointer(waterPosition, 2, gl.FLOAT, false, 24, 0);
+    gl.vertexAttribPointer(waterUv, 2, gl.FLOAT, false, 24, 8);
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, waterTexture);
     gl.uniform1i(waterUniforms.water, 1);
@@ -231,10 +282,10 @@ export function createTerrainGlLayer(canvas) {
     gl.uniform2f(waterUniforms.flow, layer.flowX, layer.flowY);
     gl.uniform1f(waterUniforms.tiles, canvasTiles);
     vertexData.set([
-      corners[0].x, corners[0].y, 0, 0,
-      corners[1].x, corners[1].y, 1, 0,
-      corners[2].x, corners[2].y, 0, 1,
-      corners[3].x, corners[3].y, 1, 1,
+      corners[0].x, corners[0].y, 0, 0, 0, 0,
+      corners[1].x, corners[1].y, 1, 0, 0, 0,
+      corners[2].x, corners[2].y, 0, 1, 0, 0,
+      corners[3].x, corners[3].y, 1, 1, 0, 0,
     ]);
     gl.bufferData(gl.ARRAY_BUFFER, vertexData, gl.DYNAMIC_DRAW);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -247,6 +298,7 @@ export function createTerrainGlLayer(canvas) {
     finishTerrain,
     beginWater,
     drawWaterQuad,
+    setLighting,
     isLost: () => contextLost,
   };
 }
@@ -396,21 +448,43 @@ function buildProgram(gl) {
   const vertexSource = `
 attribute vec2 aPosition;
 attribute vec2 aUv;
+attribute vec2 aPlan;   // tile coords for height sampling
 uniform vec3 uCamera;   // x, y, scale (projected-world css px)
 uniform vec2 uViewport; // css px
 varying vec2 vUv;
+varying vec2 vPlan;
 void main() {
   vec2 screen = (aPosition - uCamera.xy) * uCamera.z;
   vec2 clip = vec2(screen.x / uViewport.x * 2.0 - 1.0, 1.0 - screen.y / uViewport.y * 2.0);
   gl_Position = vec4(clip, 0.0, 1.0);
   vUv = aUv;
+  vPlan = aPlan;
 }`;
   const fragmentSource = `
 precision mediump float;
 uniform sampler2D uTexture;
+uniform sampler2D uHeights;
+uniform vec3 uSunDir;
+uniform float uDaylight;
+uniform vec2 uGridSize;   // cols+1, rows+1 vertex grid
 varying vec2 vUv;
+varying vec2 vPlan;
+
+float heightAt(vec2 tile) {
+  vec2 uv = (tile + 0.5) / uGridSize;
+  return texture2D(uHeights, uv).r * 5.0 - 1.0;
+}
+
 void main() {
-  gl_FragColor = texture2D(uTexture, vUv);
+  vec4 texel = texture2D(uTexture, vUv);
+  // live hillshade: slope normal from the height grid, lit by the sun —
+  // the baked relief stays as detail, this sweeps light across the land
+  float hx = heightAt(vPlan + vec2(1.0, 0.0)) - heightAt(vPlan - vec2(1.0, 0.0));
+  float hy = heightAt(vPlan + vec2(0.0, 1.0)) - heightAt(vPlan - vec2(0.0, 1.0));
+  vec3 normal = normalize(vec3(-hx * 0.9, -hy * 0.9, 1.6));
+  float lambert = dot(normal, normalize(uSunDir));
+  float shade = clamp(0.72 + lambert * 0.42 * uDaylight, 0.4, 1.22);
+  gl_FragColor = vec4(texel.rgb * shade, texel.a);
 }`;
   const vertex = compile(gl, gl.VERTEX_SHADER, vertexSource);
   const fragment = compile(gl, gl.FRAGMENT_SHADER, fragmentSource);
