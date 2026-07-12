@@ -81,6 +81,7 @@ async function runNpcFlow(sessionToken, sessionId) {
   const target = new URL(wsUrl);
   target.searchParams.set("session", sessionToken);
   socket = new WebSocket(target);
+  socket.binaryType = "arraybuffer";
 
   const flow = {
     playerId: null,

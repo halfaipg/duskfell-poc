@@ -8,7 +8,10 @@
   </head>
   <body>
     <main class="app app-fullscreen">
+      <canvas id="worldgl" width="1280" height="720" aria-hidden="true"></canvas>
       <canvas id="world" width="1280" height="720" aria-label="Duskfell world"></canvas>
+      <div id="nightShade" aria-hidden="true"></div>
+      <div id="dawnGlow" aria-hidden="true"></div>
       <div class="hud" id="hud">Loading</div>
 
       <header class="topbar floating-strip">
@@ -76,6 +79,6 @@
       </footer>
     </main>
 
-    <script src="/app.js?v=duskfell-npc-merge-1" type="module"></script>
+    <script src="/app.js?v=duskfell-npc-merge-2" type="module"></script>
   </body>
 </html>

@@ -33,6 +33,7 @@ export async function runClient({ index, url, durationMs, inputHz, connectTimeou
   }
 
   const ws = new WebSocket(sessionUrl);
+  ws.binaryType = "arraybuffer";
 
   await new Promise((resolve) => {
     connectTimer = setTimeout(() => {

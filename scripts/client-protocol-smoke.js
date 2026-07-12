@@ -23,6 +23,7 @@ let error = null;
 
 try {
   socket = new WebSocket(wsUrl);
+  socket.binaryType = "arraybuffer";
   await runSmoke();
 } catch (err) {
   error = err;

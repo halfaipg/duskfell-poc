@@ -708,13 +708,24 @@ function animationFrameFor(layer, waterImage, nowMs) {
   }
   const scratch = layer.frame.getContext("2d");
   const pxPerTile = ANIM_SIZE / CANVAS_TILES;
-  scratch.save();
-  scratch.globalCompositeOperation = "source-over";
-  scratch.clearRect(0, 0, ANIM_SIZE, ANIM_SIZE);
-  scratch.imageSmoothingEnabled = true;
+  // flow buffer: layered currents + glints render here, then a per-strip
+  // sine ripple copies it into the frame so the surface undulates like
+  // fluid instead of sliding like a printed sheet
+  if (!layer.flowCanvas) {
+    layer.flowCanvas = document.createElement("canvas");
+    layer.flowCanvas.width = ANIM_SIZE;
+    layer.flowCanvas.height = ANIM_SIZE;
+  }
+  const flow = layer.flowCanvas.getContext("2d");
+  flow.save();
+  flow.globalCompositeOperation = "source-over";
+  flow.clearRect(0, 0, ANIM_SIZE, ANIM_SIZE);
+  flow.imageSmoothingEnabled = true;
   for (const pass of [
-    { speed: 1.1, alpha: 0.42, zoom: 1 },
-    { speed: -0.4, alpha: 0.22, zoom: 1.7 },
+    { speed: 1.1, alpha: 0.4, zoom: 1, op: "source-over" },
+    { speed: -0.4, alpha: 0.2, zoom: 1.7, op: "source-over" },
+    // sparse highlights rushing ahead of the body read as surface glints
+    { speed: 2.1, alpha: 0.1, zoom: 0.62, op: "lighter" },
   ]) {
     // canvas tiles sit at (n*span - offset), so a growing offset slides the
     // painting AGAINST the flow vector — negate so speed>0 marches
@@ -723,7 +734,8 @@ function animationFrameFor(layer, waterImage, nowMs) {
     const span = ANIM_SIZE * pass.zoom;
     const offX = ((layer.flowX * distance) % (span * 2) + span * 2) % (span * 2);
     const offY = ((layer.flowY * distance) % (span * 2) + span * 2) % (span * 2);
-    scratch.globalAlpha = pass.alpha;
+    flow.globalAlpha = pass.alpha;
+    flow.globalCompositeOperation = pass.op;
     // mirror-tiled so the non-seamless painting scrolls without seams
     for (let ny = -2; ny <= 1; ny += 1) {
       for (let nx = -2; nx <= 1; nx += 1) {
@@ -732,15 +744,30 @@ function animationFrameFor(layer, waterImage, nowMs) {
         if (baseX > ANIM_SIZE || baseY > ANIM_SIZE || baseX + span < 0 || baseY + span < 0) continue;
         const mirrorX = ((nx % 2) + 2) % 2 === 1;
         const mirrorY = ((ny % 2) + 2) % 2 === 1;
-        scratch.save();
-        scratch.translate(baseX + span / 2, baseY + span / 2);
-        scratch.scale(mirrorX ? -1 : 1, mirrorY ? -1 : 1);
-        scratch.drawImage(waterImage, -span / 2, -span / 2, span, span);
-        scratch.restore();
+        flow.save();
+        flow.translate(baseX + span / 2, baseY + span / 2);
+        flow.scale(mirrorX ? -1 : 1, mirrorY ? -1 : 1);
+        flow.drawImage(waterImage, -span / 2, -span / 2, span, span);
+        flow.restore();
       }
     }
   }
-  scratch.globalAlpha = 1;
+  flow.restore();
+
+  scratch.save();
+  scratch.globalCompositeOperation = "source-over";
+  scratch.clearRect(0, 0, ANIM_SIZE, ANIM_SIZE);
+  scratch.imageSmoothingEnabled = true;
+  // transverse ripple: two superposed sine waves shift each strip so wave
+  // crests travel at a different rate than the texture drift below them
+  const seconds = tick / 1000;
+  const STRIP = 6;
+  for (let y = 0; y < ANIM_SIZE; y += STRIP) {
+    const wobble =
+      Math.sin(y * 0.055 + seconds * 2.6) * 2.2 +
+      Math.sin(y * 0.021 - seconds * 1.7) * 1.6;
+    scratch.drawImage(layer.flowCanvas, 0, y, ANIM_SIZE, STRIP, wobble, y, ANIM_SIZE, STRIP);
+  }
   scratch.globalCompositeOperation = "destination-in";
   scratch.drawImage(layer.mask, 0, 0);
   scratch.restore();
@@ -756,6 +783,52 @@ const waterAnimDisabled =
 // paintings — a same-perspective debug view for judging the raw hillshade
 const reliefOnlyDebug =
   typeof globalThis.location !== "undefined" && /[?&]reliefOnly=1/.test(globalThis.location.search ?? "");
+
+// water supertile groups for a chunk — shared by the 2D animator and the
+// GL shader path. Each entry carries the cached mask/flow layer.
+export function waterGroupsForChunk(chunk, terrain, groundPatches) {
+  if (!terrain || !useGroundPatches(groundPatches)) return [];
+  const groups = collectWaterGroups(chunk, terrain);
+  const out = [];
+  for (const group of groups.values()) {
+    const layer = waterAnimationLayerFor(group.superX, group.superY, terrain);
+    if (layer) out.push({ ...group, layer });
+  }
+  return out;
+}
+
+export function waterAnimConstants() {
+  return {
+    ANIM_SIZE,
+    CANVAS_TILES,
+    PATCH_TILES,
+    MARGIN_TILES,
+  };
+}
+
+function collectWaterGroups(chunk, terrain) {
+  const groups = new Map();
+  let rowY = null;
+  let rowCenter = 0;
+  for (const tileView of chunk.tiles) {
+    const tile = tileView.tile;
+    let inChannel = tile.material === "water" || tile.material === "shore";
+    if (!inChannel && PATCHED_MATERIALS.has(tile.material)) {
+      if (rowY !== tile.y) {
+        rowY = tile.y;
+        rowCenter = streamCenterAt(tile.y, terrain.cols, terrain.rows, terrain.profile);
+      }
+      inChannel = Math.abs(tile.x + 0.5 - rowCenter) < STREAM_HALF_WIDTH_TILES + 1.2;
+    }
+    if (!inChannel) continue;
+    const superX = Math.floor(tile.x / PATCH_TILES);
+    const superY = Math.floor(tile.y / PATCH_TILES);
+    const key = `${superX}:${superY}`;
+    if (!groups.has(key)) groups.set(key, { superX, superY, tiles: [] });
+    groups.get(key).tiles.push(tile);
+  }
+  return groups;
+}
 
 export function drawChunkWaterAnimation(ctx, chunk, origin, terrain, groundPatches, nowMs) {
   if (waterAnimDisabled) return;

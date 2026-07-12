@@ -20,6 +20,12 @@ export function normalizeArray(value, field, maxLength) {
 
 export function normalizeUuid(value, field) {
   if (typeof value === "string" && UUID_RE.test(value)) return value;
+  // MessagePack frames carry UUIDs as 16 raw bytes (serde's uuid impl
+  // switches to bytes for non-human-readable formats) — format hyphenated
+  if (value instanceof Uint8Array && value.byteLength === 16) {
+    const hex = [...value].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  }
   throw new Error(`${field} must be a UUID`);
 }
 

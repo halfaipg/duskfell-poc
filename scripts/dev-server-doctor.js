@@ -186,6 +186,7 @@ async function checkWebSocket() {
     const welcome = await new Promise((resolve, reject) => {
       const timeout = setTimeout(() => reject(new Error("websocket timed out before welcome")), timeoutMs);
       socket = new WebSocket(wsUrl);
+      socket.binaryType = "arraybuffer";
       socket.addEventListener("message", (event) => {
         let message;
         try {

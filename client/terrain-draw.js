@@ -13,8 +13,14 @@ import {
   drawChunkGroundPatch,
   drawChunkWaterAnimation,
   tileUsesGroundPatch,
+  waterAnimConstants,
+  waterGroupsForChunk,
 } from "./terrain-ground-patches.js";
+import { PROJECTION } from "./projection.js";
 import { TERRAIN_MATERIALS } from "./terrain.js";
+import { RENDER_DPR_CAP } from "./device-profile.js";
+import { continuousVertexHeight } from "./terrain-height.js";
+import { getSun, shadowCast } from "./sun-state.js";
 
 export { normalizeTerrainDebugMode };
 
@@ -27,6 +33,8 @@ export function createTerrainDrawer({
   getTerrainAssets,
   getTerrainAssetVersion,
   getTerrainDebugMode,
+  getGlLayer = () => null,
+  getSun = () => null,
 }) {
   let ctx = getContext();
   let canvas = getCanvas();
@@ -71,9 +79,30 @@ export function createTerrainDrawer({
     if (!worldTerrain) return;
     const visibleBounds = terrainLayerManager.visibleWorldBounds(viewport);
     const renderGeometry = terrainLayerManager.terrainGeometryForMap(worldTerrain, origin);
+    // GPU path: static chunk canvases upload once and draw as quads on the
+    // GL canvas below; the 2D context keeps water shimmer, decals and debug
+    const glLayer = getGlLayer();
+    const glActive = Boolean(
+      glLayer && viewport && glLayer.beginFrame(camera, viewport.width, viewport.height, glDpr()),
+    );
+    if (glActive) {
+      const sun = getSun();
+      glLayer.setLighting({
+        heightsCanvas: heightsCanvasFor(worldTerrain),
+        cols: worldTerrain.cols,
+        rows: worldTerrain.rows,
+        origin,
+        sun: sun.direction,
+        daylight: shadowCast().daylight,
+      });
+    }
+    const waterEntries = glActive ? new Map() : null;
     for (const chunk of renderGeometry.chunks) {
       if (!terrainLayerManager.boundsIntersect(chunk.bounds, visibleBounds)) continue;
-      if (drawTerrainStaticChunk(chunk)) {
+      const staticDrawn = glActive
+        ? drawTerrainStaticChunkGl(glLayer, chunk)
+        : drawTerrainStaticChunk(chunk);
+      if (staticDrawn) {
         for (const tileView of chunk.tiles) {
           drawTerrainDynamicTile(tileView, state.tick, now, visibleBounds);
           terrainDebugDrawer.drawTerrainDebugTile(tileView.tile, tileView.corners, terrainDebugMode);
@@ -84,10 +113,136 @@ export function createTerrainDrawer({
           drawTerrainTile(tileView, state.tick, now, visibleBounds);
         }
       }
-      // flowing water shimmer: per-frame overlay on top of the cached ground
-      drawChunkWaterAnimation(ctx, chunk, origin, worldTerrain, terrainAssets.groundPatches, now);
+      if (waterEntries) {
+        for (const entry of waterGroupsForChunk(chunk, worldTerrain, terrainAssets.groundPatches)) {
+          waterEntries.set(`${entry.superX}:${entry.superY}`, entry);
+        }
+      } else {
+        // 2D fallback: per-frame canvas shimmer on top of the cached ground
+        drawChunkWaterAnimation(ctx, chunk, origin, worldTerrain, terrainAssets.groundPatches, now);
+      }
       terrainDebugDrawer.drawTerrainDebugChunk(chunk, terrainDebugMode);
     }
+    if (glActive) {
+      glLayer.finishTerrain();
+      if (waterEntries?.size) {
+        drawGlWater(glLayer, waterEntries, origin, now);
+      }
+    }
+    return glActive;
+  }
+
+  // shader water: one quad per water supertile, masked and animated on the
+  // GPU — per-pixel advection, ripple distortion, glints and bank foam
+  function drawGlWater(glLayer, waterEntries, origin, now) {
+    const waterImage = terrainAssets.groundPatches?.get?.("stream-water") ?? null;
+    if (!waterImage) return;
+    const { ANIM_SIZE, CANVAS_TILES, PATCH_TILES, MARGIN_TILES } = waterAnimConstants();
+    if (!glLayer.beginWater(camera, canvas.clientWidth, canvas.clientHeight, now, waterImage, getSun())) return;
+    const { halfW, halfH } = PROJECTION;
+    const animPxPerTile = ANIM_SIZE / CANVAS_TILES;
+    const a = halfW / animPxPerTile;
+    const b = halfH / animPxPerTile;
+    for (const entry of waterEntries.values()) {
+      const tx = origin.x + (entry.superX - entry.superY) * PATCH_TILES * halfW;
+      const ty = origin.y + ((entry.superX + entry.superY) * PATCH_TILES - 2 * MARGIN_TILES) * halfH;
+      const corner = (u, v) => ({ x: tx + a * u - a * v, y: ty + b * u + b * v });
+      glLayer.drawWaterQuad(
+        entry,
+        [corner(0, 0), corner(ANIM_SIZE, 0), corner(0, ANIM_SIZE), corner(ANIM_SIZE, ANIM_SIZE)],
+        CANVAS_TILES,
+      );
+    }
+  }
+
+  // vertex-height grid encoded into a tiny canvas (R = (h+1)/5) for the
+  // live hillshade; rebuilt only when the terrain cache key changes
+  let heightsCanvas = null;
+  let heightsKey = null;
+
+  function heightsCanvasFor(worldTerrain) {
+    const key = `${terrainCacheKey}:${worldTerrain.cols}x${worldTerrain.rows}`;
+    if (heightsCanvas && heightsKey === key) return heightsCanvas;
+    const cols = worldTerrain.cols;
+    const rows = worldTerrain.rows;
+    const canvas2 = document.createElement("canvas");
+    canvas2.width = cols + 1;
+    canvas2.height = rows + 1;
+    const context = canvas2.getContext("2d");
+    if (!context) return null;
+    const image = context.createImageData(cols + 1, rows + 1);
+    for (let y = 0; y <= rows; y += 1) {
+      for (let x = 0; x <= cols; x += 1) {
+        const height = continuousVertexHeight(
+          x,
+          y,
+          cols,
+          rows,
+          worldTerrain.safeRadiusTiles,
+          worldTerrain.profile,
+        );
+        const value = Math.max(0, Math.min(255, Math.round(((height + 1) / 5) * 255)));
+        const offset = (y * (cols + 1) + x) * 4;
+        image.data[offset] = value;
+        image.data[offset + 1] = value;
+        image.data[offset + 2] = value;
+        image.data[offset + 3] = 255;
+      }
+    }
+    context.putImageData(image, 0, 0);
+    heightsCanvas = canvas2;
+    heightsKey = key;
+    return heightsCanvas;
+  }
+
+  function glDpr() {
+    return Math.min(globalThis.devicePixelRatio || 1, RENDER_DPR_CAP);
+  }
+
+  function buildStaticLayer(chunk) {
+    return terrainLayerManager.staticLayerForChunk(chunk, (layerContext, staticChunk) => {
+      withRenderContext(layerContext, () => {
+        drawChunkGroundPatch(ctx, staticChunk, lastOrigin, terrain, terrainAssets.groundPatches);
+        for (const tileView of staticChunk.tiles) {
+          drawTerrainTile(tileView, 0, 0, null, {
+            drawDynamic: false,
+            drawDebug: false,
+          });
+        }
+      });
+    });
+  }
+
+  function drawTerrainStaticChunkGl(glLayer, chunk) {
+    const layer = buildStaticLayer(chunk);
+    if (!layer) return false;
+    return glLayer.drawChunkLayer(layer);
+  }
+
+  // incremental first-frame warmup: build ONE visible chunk layer (and its
+  // supertile composite) per call so the loading bar keeps moving instead of
+  // freezing at 100% while the whole viewport composites in one frame
+  let warmKey = null;
+  let warmIndex = 0;
+
+  function warmup(origin, viewport) {
+    refreshRendererState();
+    lastOrigin = origin;
+    if (!terrain) return { done: false, built: 0, total: 1 };
+    if (warmKey !== `${terrainCacheKey}:${terrainAssetVersion}`) {
+      warmKey = `${terrainCacheKey}:${terrainAssetVersion}`;
+      warmIndex = 0;
+    }
+    const visibleBounds = terrainLayerManager.visibleWorldBounds(viewport);
+    const geometry = terrainLayerManager.terrainGeometryForMap(terrain, origin);
+    const visible = geometry.chunks.filter((chunk) =>
+      terrainLayerManager.boundsIntersect(chunk.bounds, visibleBounds),
+    );
+    if (warmIndex < visible.length) {
+      buildStaticLayer(visible[warmIndex]);
+      warmIndex += 1;
+    }
+    return { done: warmIndex >= visible.length, built: warmIndex, total: visible.length };
   }
 
   function drawTerrainTile(tileView, tick, now, visibleBounds, options = {}) {
@@ -178,5 +333,6 @@ export function createTerrainDrawer({
 
   return {
     drawMap,
+    warmup,
   };
 }

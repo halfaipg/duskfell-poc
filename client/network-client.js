@@ -27,6 +27,7 @@ export function createNetworkClient({
     const wsUrl = new URL(`${scheme}://${window.location.host}/ws`);
     wsUrl.searchParams.set("session", session.sessionToken);
     socket = new WebSocket(wsUrl);
+    socket.binaryType = "arraybuffer";
 
     socket.addEventListener("open", () => {
       setConnection("Online", "online");

@@ -2,6 +2,7 @@ import { spawn } from "node:child_process";
 import { mkdir } from "node:fs/promises";
 import { performance } from "node:perf_hooks";
 import path from "node:path";
+import { decodeMsgpack } from "../client/msgpack-decode.js";
 
 const args = parseArgs(process.argv.slice(2));
 const port = Number(args.port ?? 4142);
@@ -27,6 +28,7 @@ try {
   const url = new URL(wsUrl);
   url.searchParams.set("session", session.body.sessionToken);
   socket = new WebSocket(url);
+  socket.binaryType = "arraybuffer";
   const observed = await observePayloads(socket);
   await closeSocket(socket);
   const metrics = parseMetrics(await fetchText("/metrics"), [
@@ -120,9 +122,14 @@ async function observePayloads(ws) {
     }, 5000);
 
     ws.addEventListener("message", (event) => {
-      const text = String(event.data);
-      const bytes = Buffer.byteLength(text, "utf8");
-      const message = JSON.parse(text);
+      const binary =
+        event.data instanceof ArrayBuffer
+          ? new Uint8Array(event.data)
+          : ArrayBuffer.isView(event.data)
+            ? new Uint8Array(event.data.buffer, event.data.byteOffset, event.data.byteLength)
+            : null;
+      const bytes = binary ? binary.byteLength : Buffer.byteLength(String(event.data), "utf8");
+      const message = binary ? decodeMsgpack(binary) : JSON.parse(String(event.data));
       messageBytes.push(bytes);
 
       if (message.type === "welcome") {

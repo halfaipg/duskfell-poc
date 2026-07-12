@@ -8,6 +8,7 @@ import { createEcologyRenderer } from "./ecology-renderer.js";
 import { createInteriorRenderer } from "./interior-renderer.js";
 import { createObjectDrawer, HIDE_WORLD_PROPS, VEGETATION_ONLY_ART_PASS } from "./object-draw.js";
 import { createTerrainDrawer, normalizeTerrainDebugMode } from "./terrain-draw.js";
+import { createTerrainGlLayer } from "./terrain-gl-layer.js";
 import { drawOverlay as drawOverlayPanel } from "./overlay.js";
 import { createPlayerDrawer } from "./player-draw.js";
 import { createPlayerRenderState } from "./player-render-state.js";
@@ -18,11 +19,44 @@ import { nearestNpc, npcPartyPrompt } from "./npc-interaction.js";
 import { createNpcSpeech } from "./npc-speech.js";
 import { renderHud, renderPanel } from "./ui-panels.js";
 import { terrainHeightAtWorld } from "./terrain.js";
+import { drawWaterFish } from "./water-fish.js";
+import { setSun } from "./sun-state.js";
 
 const { canvas, screenCtx, ui } = getAppDom();
 let ctx = screenCtx;
 const params = new URLSearchParams(window.location.search);
+// GPU terrain compositor on the canvas below; ?nogl=1 forces the 2D path
+const terrainGlLayer =
+  params.get("nogl") === "1" ? null : createTerrainGlLayer(document.getElementById("worldgl"));
 const DAY_TINT = params.get("dayTint");
+// NPCs are on by default; ?npcs=0 is a development escape hatch
+const SHOW_NPCS = params.get("npcs") !== "0";
+// live day/night: one full day per SUN_CYCLE seconds (?sunCycle=40 for a
+// fast demo arc); drives the water specular sun and the world tint
+const SUN_CYCLE_SECONDS = (() => {
+  const raw = Number(params.get("sunCycle"));
+  return Number.isFinite(raw) && raw >= 10 ? raw : 1200;
+})();
+
+function sunStateAt() {
+  // wall-clock anchored so every client shares the same sun; biased so
+  // roughly 70% of the cycle is daylight and night stays short
+  const raw = ((Date.now() / 1000 / SUN_CYCLE_SECONDS) + 0.35) % 1;
+  const phase = raw < 0.7 ? (raw / 0.7) * 0.5 : 0.5 + ((raw - 0.7) / 0.3) * 0.5;
+  const angle = phase * Math.PI * 2; // 0 = sunrise, 0.25 = noon, 0.5 = sunset
+  const elevation = Math.sin(angle);
+  const azimuth = phase * Math.PI * 2 + Math.PI / 3;
+  const cosE = Math.cos(Math.asin(Math.max(-0.999, Math.min(0.999, elevation)))) || 0.001;
+  return {
+    elevation,
+    direction: {
+      x: Math.cos(azimuth) * cosE,
+      y: Math.sin(azimuth) * cosE,
+      z: Math.max(-0.35, elevation),
+    },
+  };
+}
+let currentSun = sunStateAt();
 console.info("Duskfell client build: painted-terrain v3 (2026-07-09)");
 
 const keys = new Set();
@@ -34,6 +68,7 @@ const playerRenderState = createPlayerRenderState();
 const terrainCache = createTerrainCache();
 const frame = createCanvasFrame({ canvas, screenCtx });
 let localPlayerRenderPosition = null;
+let terrainWarmed = false;
 
 const camera = {
   x: 0,
@@ -64,6 +99,8 @@ const terrainDrawer = createTerrainDrawer({
   getTerrainAssets: () => terrainAssets,
   getTerrainAssetVersion: () => runtimeAssets.terrainAssetVersion(),
   getTerrainDebugMode: () => terrainDebugMode,
+  getGlLayer: () => terrainGlLayer,
+  getSun: () => currentSun.direction,
 });
 const ecologyRenderer = createEcologyRenderer({
   getContext: () => ctx,
@@ -339,19 +376,46 @@ function draw(now = 0) {
     const rect = fitCanvas();
     screenCtx.clearRect(0, 0, rect.width, rect.height);
 
-    if (!snapshot || !runtimeAssets.assetsReady()) {
-      drawLoading(ctx, rect, runtimeAssets.assetProgress());
+    if (!snapshot || !runtimeAssets.assetsReady() || !terrainWarmed) {
+      if (snapshot && runtimeAssets.assetsReady()) {
+        // stage 2: raise the land — build one visible chunk per frame so
+        // the bar moves instead of freezing while composites paint
+        terrainCache.terrainForMap(snapshot.map);
+        const origin = defaultOrigin(snapshot.map);
+        const players = Array.isArray(snapshot.players) ? snapshot.players : [];
+        const me = players.find((player) => player.id === playerId) || players[0];
+        const warmCamera = computeCamera({
+          viewport: rect,
+          map: snapshot.map,
+          focus: viewOverride ?? me,
+          origin,
+        });
+        camera.scale = warmCamera.scale * viewScaleOverride;
+        camera.x = warmCamera.x;
+        camera.y = warmCamera.y;
+        const warm = terrainDrawer.warmup(origin, rect);
+        drawLoading(ctx, rect, {
+          done: warm.built,
+          total: Math.max(1, warm.total),
+          label: "Raising the land…",
+        });
+        if (warm.done) terrainWarmed = true;
+      } else {
+        drawLoading(ctx, rect, runtimeAssets.assetProgress());
+      }
       updateHud();
       requestAnimationFrame(draw);
       return;
     }
 
     const players = Array.isArray(snapshot.players) ? snapshot.players : [];
-    const npcAdapters = (Array.isArray(snapshot.npcs) ? snapshot.npcs : []).map(toNpcAdapter);
+    // NPCs are part of the normal world; ?npcs=0 is a development escape
+    // hatch. They ride the player render pipeline via adapters so they get
+    // the same sprites, walk animation, smoothing, and crowd spreading.
+    const npcAdapters =
+      SHOW_NPCS && Array.isArray(snapshot.npcs) ? snapshot.npcs.map(toNpcAdapter) : [];
     const me = players.find((player) => player.id === playerId) || players[0];
     const origin = defaultOrigin(snapshot.map);
-    // NPCs share the player render state so they get the same position
-    // smoothing, walk animation sampling, and crowd spreading.
     playerRenderState.updateRenderOffsets([...players, ...npcAdapters], snapshot.map, playerId, now);
     playerRenderState.updateVisualPositions([...players, ...npcAdapters], now);
     localPlayerRenderPosition = me ? playerRenderState.renderPosition(me) : null;
@@ -383,17 +447,22 @@ function draw(now = 0) {
     camera.x = nextCamera.x;
     camera.y = nextCamera.y;
 
-    // reset the buffer each frame: stale paint (e.g. the parchment loading
-    // screen) must never show through coverage gaps at elevation steps —
-    // a dark base makes any residual gap read as crevice shadow
-    ctx.fillStyle = "#161d18";
-    ctx.fillRect(0, 0, rect.width, rect.height);
+    // reset the buffer each frame: with the GL terrain layer active the GL
+    // canvas below provides the dark base, so the 2D canvas clears to
+    // transparent; without GL, fill dark so coverage gaps read as crevices
+    if (terrainGlLayer) {
+      ctx.clearRect(0, 0, rect.width, rect.height);
+    } else {
+      ctx.fillStyle = "#161d18";
+      ctx.fillRect(0, 0, rect.width, rect.height);
+    }
     ctx.save();
     ctx.scale(camera.scale, camera.scale);
     ctx.translate(-camera.x, -camera.y);
     const objects = Array.isArray(snapshot.objects) ? snapshot.objects : [];
     terrainCache.terrainForMap(snapshot.map);
     terrainDrawer.drawMap(snapshot, origin, now, rect);
+    drawWaterFish(ctx, terrainCache.getTerrain(), origin, camera, rect, now);
     if (!HIDE_WORLD_PROPS && !VEGETATION_ONLY_ART_PASS) {
       ecologyRenderer.drawEcologyGroundEffects(objects, origin, now);
       ecologyRenderer.drawEcologyEnergyLinks(objects, origin, now);
@@ -405,25 +474,17 @@ function draw(now = 0) {
     }
     ctx.restore();
 
-    // ?dayTint=dawn|dusk|night: global tint over the world — the first
-    // stage of the day/night design, exposed for time-of-day demos
-    if (DAY_TINT) {
-      const tints = {
-        dawn: ["rgba(255, 196, 140, 0.28)", "rgba(150, 120, 130, 0.55)"],
-        dusk: ["rgba(255, 158, 96, 0.30)", "rgba(140, 104, 120, 0.6)"],
-        night: ["rgba(70, 90, 150, 0.2)", "rgba(56, 68, 110, 0.75)"],
-      };
-      const [glow, shadow] = tints[DAY_TINT] ?? [];
-      if (glow) {
-        ctx.save();
-        ctx.globalCompositeOperation = "multiply";
-        ctx.fillStyle = shadow;
-        ctx.fillRect(0, 0, rect.width, rect.height);
-        ctx.globalCompositeOperation = "soft-light";
-        ctx.fillStyle = glow;
-        ctx.fillRect(0, 0, rect.width, rect.height);
-        ctx.restore();
-      }
+    // day/night: overlay divs with mix-blend-mode darken both canvases —
+    // canvas composite ops cannot reach the GL terrain layer below
+    currentSun = sunStateAt();
+    setSun(currentSun);
+    {
+      const forced = { dawn: 0.09, dusk: -0.02, night: -0.5 }[DAY_TINT];
+      const e = forced ?? currentSun.elevation;
+      const horizonBand = Math.max(0, 1 - Math.abs(e) * 5.5);
+      const nightAlpha = Math.max(0, Math.min(0.66, 0.1 - e * 1.35));
+      if (ui.nightShade) ui.nightShade.style.opacity = nightAlpha.toFixed(3);
+      if (ui.dawnGlow) ui.dawnGlow.style.opacity = (horizonBand * 0.55).toFixed(3);
     }
 
     drawOverlay(rect);

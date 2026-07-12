@@ -3,6 +3,7 @@ import {
   DETAIL_SPRITE_SCALE,
 } from "./player-config.js";
 import { drawDetailShadow } from "./terrain-detail-procedural-draw.js";
+import { drawCastShadow } from "./cast-shadow.js";
 
 export function drawTerrainDetailSprite(ctx, sprites, cueDrawer, detail, point) {
   const sprite = sprites.details;
@@ -20,17 +21,20 @@ export function drawTerrainDetailSprite(ctx, sprites, cueDrawer, detail, point) 
   const dw = Math.round(sprite.cellWidth * scale);
   const dh = Math.round(sprite.cellHeight * scale);
 
-  const shadow = sprite.render?.shadow;
-  if (shadow?.kind === "ellipse") {
-    drawDetailShadow(
+  if (sprite.render?.shadow?.kind === "ellipse") {
+    // sun-cast silhouette shadow (with a soft contact patch) instead of the
+    // floating blob ellipse
+    drawCastShadow(
       ctx,
-      {
-        x: point.x + (shadow.x - sprite.anchor.x) * scale,
-        y: point.y + (shadow.y - sprite.anchor.y) * scale,
-      },
-      (shadow.width * scale) / 2,
-      (shadow.height * scale) / 2,
-      shadow.opacity,
+      sprite.image,
+      sx,
+      0,
+      sprite.cellWidth,
+      sprite.cellHeight,
+      { x: point.x, y: point.y },
+      scale,
+      `details:${frame}`,
+      sprite.anchor.x,
     );
   }
 
