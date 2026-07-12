@@ -1,4 +1,4 @@
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -14,6 +14,11 @@ const MODELS_PROBE_INTERVAL: Duration = Duration::from_secs(60);
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
 const RETRY_BACKOFF: Duration = Duration::from_millis(500);
 const MAX_ATTEMPTS: usize = 2;
+/// Consecutive chat failures before the provider demotes itself to degraded.
+/// The models endpoint can stay healthy while completions 500 (observed on
+/// AI Power Grid), so chat itself is part of the health signal. The next
+/// successful models probe re-promotes; a still-broken chat demotes again.
+const CHAT_FAILURE_DEMOTION_THRESHOLD: u32 = 3;
 
 /// Any OpenAI-compatible chat-completions backend, consumed as SSE.
 /// First-party target is AI Power Grid: a community GPU network whose models
@@ -28,6 +33,8 @@ pub struct OpenAiCompatibleProvider {
     configured_model: Option<String>,
     healthy: Arc<AtomicBool>,
     discovered_model: Arc<Mutex<Option<String>>>,
+    chat_failures: Arc<AtomicU32>,
+    status_tx: Arc<watch::Sender<EngineStatus>>,
     status_rx: watch::Receiver<EngineStatus>,
 }
 
@@ -43,6 +50,7 @@ impl OpenAiCompatibleProvider {
         let (status_tx, status_rx) = watch::channel(EngineStatus::Degraded {
             reason: "probing provider".to_string(),
         });
+        let status_tx = Arc::new(status_tx);
 
         {
             let client = client.clone();
@@ -50,6 +58,7 @@ impl OpenAiCompatibleProvider {
             let api_key = api_key.clone();
             let healthy = healthy.clone();
             let discovered_model = discovered_model.clone();
+            let status_tx = status_tx.clone();
             tokio::spawn(async move {
                 run_models_probe(
                     client,
@@ -70,6 +79,8 @@ impl OpenAiCompatibleProvider {
             configured_model: model,
             healthy,
             discovered_model,
+            chat_failures: Arc::new(AtomicU32::new(0)),
+            status_tx,
             status_rx,
         }
     }
@@ -115,7 +126,10 @@ impl OpenAiCompatibleProvider {
                 tokio::time::sleep(RETRY_BACKOFF * 2u32.pow(attempt as u32 - 1)).await;
             }
             match self.attempt(&body).await {
-                Ok(reply) => return Ok(reply),
+                Ok(reply) => {
+                    self.chat_failures.store(0, Ordering::Relaxed);
+                    return Ok(reply);
+                }
                 Err(err @ ProviderError::Failed { .. }) => return Err(err),
                 Err(err) => {
                     warn!(attempt, error = %err, "provider attempt failed");
@@ -123,7 +137,27 @@ impl OpenAiCompatibleProvider {
                 }
             }
         }
+        self.note_chat_failure(&last_error);
         Err(last_error)
+    }
+
+    /// A models endpoint that answers while completions fail must not keep
+    /// the provider "live": demote after repeated chat failures so readiness
+    /// and metrics tell the truth. The models probe re-promotes on its next
+    /// pass once chat recovers (or flips us back here if it hasn't).
+    fn note_chat_failure(&self, error: &ProviderError) {
+        let failures = self.chat_failures.fetch_add(1, Ordering::Relaxed) + 1;
+        if failures < CHAT_FAILURE_DEMOTION_THRESHOLD || !self.healthy.load(Ordering::Relaxed) {
+            return;
+        }
+        self.healthy.store(false, Ordering::Relaxed);
+        let status = EngineStatus::Degraded {
+            reason: format!("chat completions failing ({error})"),
+        };
+        if *self.status_tx.borrow() != status {
+            warn!(status = %status.detail(), "provider demoted after repeated chat failures");
+            let _ = self.status_tx.send(status);
+        }
     }
 
     async fn attempt(&self, body: &serde_json::Value) -> Result<CompletionReply, ProviderError> {
@@ -232,7 +266,7 @@ async fn run_models_probe(
     api_key: String,
     healthy: Arc<AtomicBool>,
     discovered_model: Arc<Mutex<Option<String>>>,
-    status_tx: watch::Sender<EngineStatus>,
+    status_tx: Arc<watch::Sender<EngineStatus>>,
 ) {
     loop {
         let status = match probe_models(&client, &base_url, &api_key).await {

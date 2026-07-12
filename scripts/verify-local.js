@@ -85,6 +85,7 @@ try {
   await step("npc-chat-smoke", () => run("npm", ["run", "smoke:npc-chat"]));
   await step("npc-chat-mock-smoke", () => run("npm", ["run", "smoke:npc-chat-mock"]));
   await step("cognition-fallback-smoke", () => run("npm", ["run", "smoke:cognition-fallback"]));
+  await step("cognition-chat-broken-smoke", () => run("npm", ["run", "smoke:cognition-chat-broken"]));
   await step("rename-validation-smoke", () => run("npm", ["run", "smoke:rename-validation"]));
   await step("snapshot-interval-smoke", () => run("npm", ["run", "smoke:snapshot-interval"]));
   await step("journal-anomaly-smoke", () => run("npm", ["run", "smoke:journal-anomaly"]));

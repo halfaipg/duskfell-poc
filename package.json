@@ -64,6 +64,7 @@
     "smoke:metrics": "node scripts/metrics-smoke.js",
     "smoke:movement-authority": "node scripts/movement-authority-smoke.js",
     "smoke:cognition-fallback": "node scripts/cognition-fallback-smoke.js",
+    "smoke:cognition-chat-broken": "node scripts/cognition-fallback-smoke.js --mode chat-broken",
     "smoke:npc-chat": "node scripts/npc-chat-smoke.js",
     "smoke:npc-chat-mock": "node scripts/npc-chat-smoke.js --mode mock",
     "smoke:npc-render": "node scripts/npc-render-smoke.js",

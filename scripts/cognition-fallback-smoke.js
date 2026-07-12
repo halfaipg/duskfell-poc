@@ -8,8 +8,15 @@ import { parseServerMessage } from "../client/server-messages.js";
 import { createSteeringState, inputTowardTarget } from "./lib/ws-smoke-steering.js";
 
 const args = parseArgs(process.argv.slice(2));
-const port = Number(args.port ?? 4137);
-const stubPort = Number(args.stubPort ?? 4138);
+// mode no-workers: empty model list, the probe degrades immediately.
+// mode chat-broken: models answer but completions 500 — the provider must
+// demote itself after repeated chat failures (observed AI Power Grid mode).
+const mode = args.mode ?? "no-workers";
+if (!["no-workers", "chat-broken"].includes(mode)) {
+  throw new Error("--mode must be no-workers or chat-broken");
+}
+const port = Number(args.port ?? (mode === "chat-broken" ? 4139 : 4137));
+const stubPort = Number(args.stubPort ?? (mode === "chat-broken" ? 4140 : 4138));
 const timeoutMs = Number(args.timeoutMs ?? 45000);
 const httpUrl = `http://127.0.0.1:${port}`;
 const wsUrl = `ws://127.0.0.1:${port}/ws`;
@@ -28,12 +35,14 @@ let chatRequests = 0;
 const stub = createServer((request, response) => {
   if (request.url?.startsWith("/v1/models")) {
     response.writeHead(200, { "content-type": "application/json" });
-    response.end(JSON.stringify({ data: [] }));
+    const models = mode === "chat-broken" ? [{ id: "stub-model" }] : [];
+    response.end(JSON.stringify({ data: models }));
     return;
   }
   chatRequests += 1;
-  response.writeHead(503, { "content-type": "application/json" });
-  response.end(JSON.stringify({ error: "no workers" }));
+  const status = mode === "chat-broken" ? 500 : 503;
+  response.writeHead(status, { "content-type": "application/json" });
+  response.end(JSON.stringify({ error: "stub failure" }));
 });
 await new Promise((resolve) => stub.listen(stubPort, "127.0.0.1", resolve));
 
@@ -61,6 +70,13 @@ try {
       event.kind?.type === "npcCognitionStatusChanged" &&
       event.kind.status?.includes("degraded"),
   );
+  const chatDemotionJournaled =
+    mode !== "chat-broken" ||
+    events.some(
+      (event) =>
+        event.kind?.type === "npcCognitionStatusChanged" &&
+        event.kind.status?.includes("chat completions failing"),
+    );
   const keyLeaked =
     JSON.stringify(readyz.body).includes(SENTINEL_KEY) ||
     metricsText.includes(SENTINEL_KEY) ||
@@ -68,6 +84,7 @@ try {
     JSON.stringify(events).includes(SENTINEL_KEY);
 
   result = {
+    mode,
     port,
     readyzStatus: readyz.status,
     ready: readyz.body.ready,
@@ -76,22 +93,29 @@ try {
     ...flow,
     declineJournaled,
     degradedStatusJournaled,
+    chatDemotionJournaled,
     stubChatRequests: chatRequests,
     metrics,
     keyLeaked,
     elapsedMs: round(performance.now() - startedAt),
   };
+  // In chat-broken mode the boot-time readiness is legitimately "live"
+  // (models answer); the truth arrives via the demotion after chat fails.
+  const readinessDetailOk =
+    mode === "chat-broken" || String(cognitionCheck?.detail).includes("degraded");
   result.ok =
     readyz.status === 200 &&
     readyz.body.ready === true &&
     cognitionCheck?.ok === true &&
-    String(cognitionCheck?.detail).includes("degraded") &&
+    readinessDetailOk &&
     flow.cannedReply.length > 0 &&
     flow.cannedReplySource === "canned" &&
     flow.inviteDeclined &&
     flow.bramRelocated &&
     declineJournaled &&
     degradedStatusJournaled &&
+    chatDemotionJournaled &&
+    (mode !== "chat-broken" || chatRequests >= 3) &&
     metrics.animus_fallbacks_total >= 1 &&
     metrics.animus_provider_degraded === 1 &&
     !keyLeaked;
@@ -160,10 +184,17 @@ async function runFallbackFlow(sessionToken) {
     const timeout = setTimeout(() => {
       reject(new Error(`cognition fallback smoke timed out in phase '${phase}'`));
     }, timeoutMs);
+    let finishing = false;
     const maybeFinish = () => {
-      if (flow.cannedReply && flow.inviteDeclined && flow.bramRelocated) {
-        clearTimeout(timeout);
-        resolve();
+      const enoughReplies = mode !== "chat-broken" || completedReplies >= 3;
+      if (flow.cannedReply && flow.inviteDeclined && flow.bramRelocated && enoughReplies) {
+        if (finishing) return;
+        finishing = true;
+        // Give the demotion StatusChanged a beat to reach the journal.
+        setTimeout(() => {
+          clearTimeout(timeout);
+          resolve();
+        }, 1500);
       }
     };
 
@@ -198,6 +229,9 @@ async function runFallbackFlow(sessionToken) {
             flow.cannedReplySource = entry.source;
             socket.send(JSON.stringify({ type: "partyInvite", npcId: "maren" }));
             phase = "awaitDecline";
+          } else if (completedReplies === 2 && mode === "chat-broken") {
+            // Third cognition decision pushes past the demotion threshold.
+            socket.send(JSON.stringify({ type: "say", npcId: "maren", text: "still there?" }));
           }
           maybeFinish();
         }
