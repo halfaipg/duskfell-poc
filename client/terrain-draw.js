@@ -32,6 +32,7 @@ export function createTerrainDrawer({
   getTerrainAssetVersion,
   getTerrainDebugMode,
   getGlLayer = () => null,
+  getSun = () => null,
 }) {
   let ctx = getContext();
   let canvas = getCanvas();
@@ -124,7 +125,7 @@ export function createTerrainDrawer({
     const waterImage = terrainAssets.groundPatches?.get?.("stream-water") ?? null;
     if (!waterImage) return;
     const { ANIM_SIZE, CANVAS_TILES, PATCH_TILES, MARGIN_TILES } = waterAnimConstants();
-    if (!glLayer.beginWater(camera, canvas.clientWidth, canvas.clientHeight, now, waterImage)) return;
+    if (!glLayer.beginWater(camera, canvas.clientWidth, canvas.clientHeight, now, waterImage, getSun())) return;
     const { halfW, halfH } = PROJECTION;
     const animPxPerTile = ANIM_SIZE / CANVAS_TILES;
     const a = halfW / animPxPerTile;

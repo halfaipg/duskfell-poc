@@ -186,7 +186,7 @@ export function createTerrainGlLayer(canvas) {
     return true;
   }
 
-  function beginWater(camera, cssWidth, cssHeight, nowMs, waterImage) {
+  function beginWater(camera, cssWidth, cssHeight, nowMs, waterImage, sun = null) {
     if (contextLost || !waterProgram || !waterImage) return false;
     if (waterTextureSource !== waterImage) {
       if (waterTexture) gl.deleteTexture(waterTexture);
@@ -213,6 +213,8 @@ export function createTerrainGlLayer(canvas) {
       gl.uniform1i(gl.getUniformLocation(waterProgram, "uScene"), 2);
     }
     gl.uniform2f(gl.getUniformLocation(waterProgram, "uResolution"), canvas.width, canvas.height);
+    const sunDir = sun ?? { x: -0.45, y: -0.55, z: 0.72 };
+    gl.uniform3f(gl.getUniformLocation(waterProgram, "uSun"), sunDir.x, sunDir.y, sunDir.z);
     return true;
   }
 
@@ -295,6 +297,9 @@ uniform sampler2D uWater;
 uniform vec2 uFlow;
 uniform float uTime;
 uniform float uCanvasTiles;
+uniform sampler2D uScene;
+uniform vec2 uResolution;
+uniform vec3 uSun;
 varying vec2 vUv;
 
 vec2 hash2(vec2 p) {
@@ -327,38 +332,51 @@ void main() {
   vec2 wc = vUv * uCanvasTiles;
   float t = uTime;
   vec2 drift = uFlow * t * 0.35;
+  float body = smoothstep(0.30, 0.85, mask);
 
-  // large slow swell warps the caustic domain — the fluid feel lives here
+  // animated surface normal field: large swell + travelling wavelets
   vec2 warp = vec2(
     sin(wc.y * 1.7 + t * 0.9) + sin(wc.x * 0.9 - t * 0.6),
     cos(wc.x * 1.3 + t * 0.7) + cos(wc.y * 2.1 + t * 0.5)
   ) * 0.22;
+  vec2 wave = vec2(
+    sin(wc.y * 5.5 + t * 2.2) + sin((wc.x + wc.y) * 3.1 - t * 1.4) * 0.6,
+    cos(wc.x * 4.7 - t * 1.9) + cos((wc.y - wc.x) * 3.7 + t * 1.2) * 0.6
+  );
+  vec3 normal = normalize(vec3(wave * 0.35 + warp * 0.4, 1.0));
 
-  // calm caustics: bigger cells, soft wide borders, slow morph — one main
-  // octave with a faint fine shimmer, so the surface glimmers without
-  // reading as a busy net of lines
+  // REFRACTION: bend the already-rendered riverbed through the surface
+  vec2 screenUv = gl_FragCoord.xy / uResolution;
+  vec2 refracted = screenUv + normal.xy * 0.011 * body;
+  vec3 bed = texture2D(uScene, refracted).rgb;
+
+  // depth tint over the bent bed
+  vec3 deep = vec3(0.16, 0.26, 0.24);
+  vec3 col = mix(bed, bed * deep * 3.2, body * 0.30);
+
+  // specular dance follows the live sun; low sun = long warm glints,
+  // after dark the water dims and goes quiet
+  vec3 sun = normalize(uSun);
+  float daylight = clamp(uSun.z * 2.4, 0.0, 1.0);
+  float lowSun = clamp(1.0 - uSun.z * 1.8, 0.0, 1.0);
+  float spec = pow(max(dot(normal, sun), 0.0), mix(34.0, 14.0, lowSun));
+  vec3 glintColor = mix(vec3(0.9, 0.94, 0.88), vec3(1.0, 0.78, 0.5), lowSun * 0.8);
+  col += glintColor * spec * body * mix(0.15, 0.62, daylight);
+  col *= mix(0.55, 1.0, max(daylight, 0.18));
+
+  // faint caustic glimmer under the refraction
   vec2 w1 = worley((wc - drift) * 1.15 + warp, t * 0.45);
-  vec2 w2 = worley((wc - drift * 1.6) * 2.6 - warp, t * 0.7 + 3.0);
-  float web1 = smoothstep(0.30, 0.02, w1.y);
-  float web2 = smoothstep(0.26, 0.0, w2.y);
-  float caustic = web1 * 0.42 + web2 * 0.10;
+  float caustic = smoothstep(0.30, 0.02, w1.y);
+  col += vec3(0.75, 0.85, 0.8) * caustic * body * 0.08 * daylight;
 
-  // the painted river stays the base — the shader only deepens the core
-  // slightly and lays moving light on top
-  float body = smoothstep(0.35, 0.9, mask);
-  float baseAlpha = body * 0.18;
-  vec3 deep = vec3(0.10, 0.16, 0.15);
-
-  // bank foam: cellular clumps inside the mask fade band
+  // bank foam: cellular clumps in the mask fade band
   float edge = smoothstep(0.03, 0.28, mask) * (1.0 - smoothstep(0.34, 0.72, mask));
   vec2 wf = worley(wc * 4.6 + warp * 1.4 - uFlow * t * 0.15, t * 0.6);
   float foam = edge * smoothstep(0.45, 0.05, wf.x);
+  col = mix(col, vec3(0.85, 0.9, 0.86), foam * 0.4);
 
-  vec3 rgb = deep * baseAlpha
-           + vec3(0.75, 0.85, 0.8) * caustic * body * 0.22
-           + vec3(0.85, 0.9, 0.86) * foam * 0.5;
-  float alpha = baseAlpha + foam * 0.35;
-  gl_FragColor = vec4(rgb, alpha);
+  float alpha = clamp(body + foam * 0.5, 0.0, 1.0) * mask;
+  gl_FragColor = vec4(col * alpha, alpha);
 }`;
   const vertex = compile(gl, gl.VERTEX_SHADER, vertexSource);
   const fragment = compile(gl, gl.FRAGMENT_SHADER, fragmentSource);

@@ -24,7 +24,32 @@ const params = new URLSearchParams(window.location.search);
 const terrainGlLayer =
   params.get("nogl") === "1" ? null : createTerrainGlLayer(document.getElementById("worldgl"));
 const DAY_TINT = params.get("dayTint");
+// hidden by default per user call until NPCs have real art: ?npcs=1 shows
+// the cognition-workstream pair
 const SHOW_NPCS = params.get("npcs") === "1";
+// live day/night: one full day per SUN_CYCLE seconds (?sunCycle=40 for a
+// fast demo arc); drives the water specular sun and the world tint
+const SUN_CYCLE_SECONDS = (() => {
+  const raw = Number(params.get("sunCycle"));
+  return Number.isFinite(raw) && raw >= 10 ? raw : 1200;
+})();
+
+function sunStateAt(nowMs) {
+  const phase = ((nowMs / 1000) % SUN_CYCLE_SECONDS) / SUN_CYCLE_SECONDS;
+  const angle = phase * Math.PI * 2 - Math.PI / 2; // dawn at phase 0.25
+  const elevation = Math.sin(angle);
+  const azimuth = phase * Math.PI * 2;
+  const cosE = Math.cos(Math.asin(Math.max(-0.999, Math.min(0.999, elevation)))) || 0.001;
+  return {
+    elevation,
+    direction: {
+      x: Math.cos(azimuth) * cosE,
+      y: Math.sin(azimuth) * cosE,
+      z: Math.max(-0.35, elevation),
+    },
+  };
+}
+let currentSun = sunStateAt(0);
 console.info("Duskfell client build: painted-terrain v3 (2026-07-09)");
 
 const keys = new Set();
@@ -68,6 +93,7 @@ const terrainDrawer = createTerrainDrawer({
   getTerrainAssetVersion: () => runtimeAssets.terrainAssetVersion(),
   getTerrainDebugMode: () => terrainDebugMode,
   getGlLayer: () => terrainGlLayer,
+  getSun: () => currentSun.direction,
 });
 const ecologyRenderer = createEcologyRenderer({
   getContext: () => ctx,
@@ -292,8 +318,7 @@ function draw(now = 0) {
     }
 
     const players = Array.isArray(snapshot.players) ? snapshot.players : [];
-    // NPCs are hidden until they have real art and behaviour — ?npcs=1
-    // shows the work-in-progress ones for development
+    // NPCs are part of the normal world; ?npcs=0 is a development escape hatch.
     const npcs = SHOW_NPCS && Array.isArray(snapshot.npcs) ? snapshot.npcs : [];
     const actors = [...players, ...npcs];
     const me = players.find((player) => player.id === playerId) || players[0];
@@ -356,8 +381,9 @@ function draw(now = 0) {
     }
     ctx.restore();
 
-    // ?dayTint=dawn|dusk|night: global tint over the world — the first
-    // stage of the day/night design, exposed for time-of-day demos
+    // day/night tint driven by the live sun (dayTint=dawn|dusk|night still
+    // forces a fixed look for stills)
+    currentSun = sunStateAt(now);
     if (DAY_TINT) {
       const tints = {
         dawn: ["rgba(255, 196, 140, 0.28)", "rgba(150, 120, 130, 0.55)"],
@@ -373,6 +399,27 @@ function draw(now = 0) {
         ctx.globalCompositeOperation = "soft-light";
         ctx.fillStyle = glow;
         ctx.fillRect(0, 0, rect.width, rect.height);
+        ctx.restore();
+      }
+    } else {
+      const e = currentSun.elevation;
+      const horizonBand = Math.max(0, 1 - Math.abs(e) * 5.5); // dawn/dusk warmth
+      const nightAlpha = Math.max(0, Math.min(0.72, -e * 2.1));
+      if (horizonBand > 0.01 || nightAlpha > 0.01) {
+        ctx.save();
+        if (nightAlpha > 0.01) {
+          ctx.globalCompositeOperation = "multiply";
+          ctx.fillStyle = `rgba(56, 68, 110, ${nightAlpha.toFixed(3)})`;
+          ctx.fillRect(0, 0, rect.width, rect.height);
+        }
+        if (horizonBand > 0.01) {
+          ctx.globalCompositeOperation = "multiply";
+          ctx.fillStyle = `rgba(150, 116, 122, ${(horizonBand * 0.42).toFixed(3)})`;
+          ctx.fillRect(0, 0, rect.width, rect.height);
+          ctx.globalCompositeOperation = "soft-light";
+          ctx.fillStyle = `rgba(255, 168, 106, ${(horizonBand * 0.5).toFixed(3)})`;
+          ctx.fillRect(0, 0, rect.width, rect.height);
+        }
         ctx.restore();
       }
     }
