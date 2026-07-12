@@ -78,6 +78,7 @@ impl SimWorld {
     }
 
     pub fn remove_player(&mut self, id: PlayerId) {
+        self.dissolve_parties_for_player(id);
         if let Some(entity) = self.players.remove(&id) {
             if let Some(player) = self.world.get::<Player>(entity) {
                 self.player_name_index
@@ -137,8 +138,8 @@ impl SimWorld {
         let Some(entity) = self.players.get(&id).copied() else {
             return false;
         };
-        let duration_ticks = (TICKS_PER_SECOND * 3 + (clean.chars().count() as u64) / 2)
-            .min(TICKS_PER_SECOND * 10);
+        let duration_ticks =
+            (TICKS_PER_SECOND * 3 + (clean.chars().count() as u64) / 2).min(TICKS_PER_SECOND * 10);
         let until_tick = self.tick + duration_ticks;
         let Some(mut player) = self.world.get_mut::<Player>(entity) else {
             return false;

@@ -64,7 +64,7 @@ pub(super) async fn send_snapshot(
 fn record_snapshot_visibility(state: &AppState, message: &ServerMessage) {
     let snapshot = match message {
         ServerMessage::Welcome { snapshot, .. } | ServerMessage::Snapshot(snapshot) => snapshot,
-        ServerMessage::Notice { .. } => return,
+        ServerMessage::Notice { .. } | ServerMessage::NpcSay { .. } => return,
     };
     state
         .metrics

@@ -34,6 +34,7 @@
             <div class="player-card-meta">
               <strong id="playerCardName">Wayfarer</strong>
               <span id="playerCardArchetype">Base paperdoll</span>
+              <span id="partyStatus" class="party-status">Traveling alone</span>
             </div>
           </div>
           <label class="name-row">
@@ -54,6 +55,11 @@
         </div>
 
         <div class="panel-block">
+          <h2>Dialogue</h2>
+          <div class="dialogue-log" id="dialogueLog">Walk up to an NPC and press Enter or T to talk.</div>
+        </div>
+
+        <div class="panel-block">
           <h2>Settlement</h2>
           <dl class="metrics">
             <div><dt>Mode</dt><dd id="chainMode">-</dd></div>
@@ -64,15 +70,15 @@
         </div>
       </aside>
 
-      <input id="chatInput" class="chat-input" maxlength="96" placeholder="Say something&hellip;" autocomplete="off" hidden />
+      <input id="chatInput" class="chat-input" maxlength="240" placeholder="Say something&hellip;" autocomplete="off" hidden />
 
       <footer class="statusbar floating-strip statusbar-floating">
         <span>Move with WASD or arrow keys.</span>
         <span>Press E near the Bank, groves, or ore veins.</span>
-        <span>Press Enter to speak.</span>
+        <span>Press Enter to speak — near an NPC it starts a conversation. P invites them to your party.</span>
       </footer>
     </main>
 
-    <script src="/app.js?v=duskfell-art-demo-47" type="module"></script>
+    <script src="/app.js?v=duskfell-npc-merge-2" type="module"></script>
   </body>
 </html>

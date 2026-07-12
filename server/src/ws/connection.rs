@@ -73,8 +73,24 @@ pub(super) async fn player_socket(
     let mut last_client_seen = Instant::now();
     let mut ingress = ClientIngress::new(state.ingress_config.clone());
     let mut rejected_messages = 0usize;
+    let mut npc_say_rx = crate::npc::egress::register_route(&state.npc_say_routes, player_id).await;
     loop {
         tokio::select! {
+            Some(frame) = npc_say_rx.recv() => {
+                match serde_json::to_string(&frame) {
+                    Ok(payload) => {
+                        state.metrics.message_out(payload.len());
+                        if let Err(err) = socket.send(Message::Text(payload)).await {
+                            state.metrics.send_error();
+                            error!(%err, "npc say send failed");
+                            break;
+                        }
+                    }
+                    Err(err) => {
+                        error!(%err, "failed to serialize npc say frame");
+                    }
+                }
+            }
             _ = send_interval.tick() => {
                 if let Err(err) = send_snapshot(&mut socket, &state, player_id).await {
                     state.metrics.send_error();
@@ -142,6 +158,7 @@ pub(super) async fn player_socket(
         }
     }
 
+    crate::npc::egress::unregister_route(&state.npc_say_routes, player_id).await;
     remove_player(&state, player_id).await;
     state.metrics.connection_closed();
     account_permit.release().await;

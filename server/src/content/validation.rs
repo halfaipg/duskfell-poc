@@ -97,6 +97,56 @@ impl WorldContent {
         self.require_object_kind("registrar", ObjectKind::Registrar)?;
         self.require_object_kind("field-forge", ObjectKind::Forge)?;
 
+        let mut npc_ids = HashSet::new();
+        for npc in &self.npcs {
+            if npc.id.is_empty()
+                || !npc
+                    .id
+                    .chars()
+                    .all(|ch| ch.is_ascii_lowercase() || ch.is_ascii_digit() || ch == '-')
+            {
+                return Err(anyhow!(
+                    "npc id '{}' must be lowercase ascii kebab-case",
+                    npc.id
+                ));
+            }
+            if !npc_ids.insert(npc.id.as_str()) {
+                return Err(anyhow!("duplicate npc id '{}'", npc.id));
+            }
+            if npc.persona.is_empty()
+                || !npc
+                    .persona
+                    .chars()
+                    .all(|ch| ch.is_ascii_lowercase() || ch.is_ascii_digit() || ch == '-')
+            {
+                return Err(anyhow!(
+                    "npc '{}' persona '{}' must be lowercase ascii kebab-case",
+                    npc.id,
+                    npc.persona
+                ));
+            }
+            if npc.name.trim().is_empty() || npc.name.len() > 40 {
+                return Err(anyhow!("npc '{}' name must be 1-40 characters", npc.id));
+            }
+            validate_positive("npc.radius", npc.radius)?;
+            if npc.x < 0.0 || npc.x > self.map.width || npc.y < 0.0 || npc.y > self.map.height {
+                return Err(anyhow!("npc '{}' must be inside map bounds", npc.id));
+            }
+            for (index, entry) in npc.schedule.iter().enumerate() {
+                if entry.x < 0.0
+                    || entry.x > self.map.width
+                    || entry.y < 0.0
+                    || entry.y > self.map.height
+                {
+                    return Err(anyhow!(
+                        "npc '{}' schedule entry {} destination must be inside map bounds",
+                        npc.id,
+                        index
+                    ));
+                }
+            }
+        }
+
         Ok(())
     }
 
@@ -126,7 +176,11 @@ fn validate_positive(field: &str, value: f32) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn validate_terrain(terrain: &TerrainContent, map_width: f32, map_height: f32) -> anyhow::Result<()> {
+fn validate_terrain(
+    terrain: &TerrainContent,
+    map_width: f32,
+    map_height: f32,
+) -> anyhow::Result<()> {
     if terrain.profile != TERRAIN_PROFILE {
         return Err(anyhow!(
             "map.terrain.profile '{}' is not supported; expected '{}'",
@@ -214,9 +268,9 @@ fn validate_terrain(terrain: &TerrainContent, map_width: f32, map_height: f32) -
                 ));
             }
             for ch in row.chars() {
-                let index = ch
-                    .to_digit(36)
-                    .ok_or_else(|| anyhow!("map.terrain.materialGrid contains non-base-36 '{ch}'"))?;
+                let index = ch.to_digit(36).ok_or_else(|| {
+                    anyhow!("map.terrain.materialGrid contains non-base-36 '{ch}'")
+                })?;
                 if index as usize >= terrain.materials.len() {
                     return Err(anyhow!(
                         "map.terrain.materialGrid index {index} is outside the material legend"

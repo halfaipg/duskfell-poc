@@ -2,7 +2,8 @@ use std::time::Duration;
 
 use crate::ingress::{
     ClientIngressConfig, DEFAULT_MAX_CLIENT_TEXT_BYTES, DEFAULT_MAX_INPUT_SEQUENCE_STEP,
-    DEFAULT_MESSAGE_BURST, DEFAULT_MESSAGE_REFILL_PER_SECOND,
+    DEFAULT_MESSAGE_BURST, DEFAULT_MESSAGE_REFILL_PER_SECOND, DEFAULT_SAY_BURST,
+    DEFAULT_SAY_REFILL_PER_MINUTE,
 };
 use crate::sim::INTEREST_RADIUS;
 use anyhow::anyhow;
@@ -151,6 +152,11 @@ pub(crate) fn client_ingress_config() -> anyhow::Result<ClientIngressConfig> {
         max_input_sequence_step: env_positive_u64(
             "WS_MAX_INPUT_SEQUENCE_STEP",
             DEFAULT_MAX_INPUT_SEQUENCE_STEP,
+        )?,
+        say_burst: env_positive_u32("WS_SAY_BURST", DEFAULT_SAY_BURST)?,
+        say_refill_per_minute: env_positive_u32(
+            "WS_SAY_REFILL_PER_MINUTE",
+            DEFAULT_SAY_REFILL_PER_MINUTE,
         )?,
     })
 }

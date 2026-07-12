@@ -63,8 +63,62 @@ pub(crate) async fn render_runtime_metrics(state: &AppState) -> String {
     session::append_session_metrics(&mut metrics, state, &values);
     connection_ws::append_connection_ws_metrics(&mut metrics, state, &values);
     deployment_auth::append_deployment_auth_metrics(&mut metrics, state, &values);
+    append_animus_metrics(&mut metrics, state).await;
 
     metrics
+}
+
+async fn append_animus_metrics(output: &mut String, state: &AppState) {
+    let Some(bridge) = &state.npc_engine else {
+        return;
+    };
+    let snapshot = bridge.metrics.snapshot();
+    let degraded = matches!(
+        &*bridge.status.lock().await,
+        animus::EngineStatus::Degraded { .. }
+    );
+    append_metric(
+        output,
+        "animus_requests_total",
+        "Provider completion requests issued by the NPC cognition engine.",
+        "counter",
+        snapshot.requests_total,
+    );
+    append_metric(
+        output,
+        "animus_tokens_total",
+        "Provider tokens consumed by NPC cognition (usage-reported or estimated).",
+        "counter",
+        snapshot.tokens_total,
+    );
+    append_metric(
+        output,
+        "animus_fallbacks_total",
+        "Cognition jobs answered with a deterministic fallback (timeout, budget, queue, provider down).",
+        "counter",
+        snapshot.fallbacks_total,
+    );
+    append_metric(
+        output,
+        "animus_dropped_jobs_total",
+        "Cognition jobs dropped before processing (queue overflow).",
+        "counter",
+        snapshot.dropped_jobs_total,
+    );
+    append_metric(
+        output,
+        "animus_schema_retries_total",
+        "Model responses that failed intent-schema validation and were retried once.",
+        "counter",
+        snapshot.schema_retries_total,
+    );
+    append_metric(
+        output,
+        "animus_provider_degraded",
+        "1 when the cognition provider is degraded (NPCs answer canned), else 0.",
+        "gauge",
+        u64::from(degraded),
+    );
 }
 
 #[derive(Debug, Clone, Copy)]

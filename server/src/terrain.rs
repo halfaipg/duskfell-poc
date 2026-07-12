@@ -78,16 +78,19 @@ impl BakedTerrainGrid {
         let mut materials = Vec::with_capacity(rows as usize);
         for (y, row) in material_grid.iter().enumerate() {
             if row.chars().count() != cols as usize {
-                return Err(format!("materialGrid row {y} has {} tiles, expected {cols}", row.len()));
+                return Err(format!(
+                    "materialGrid row {y} has {} tiles, expected {cols}",
+                    row.len()
+                ));
             }
             let mut tile_row = Vec::with_capacity(cols as usize);
             for (x, ch) in row.chars().enumerate() {
                 let index = ch
                     .to_digit(36)
                     .ok_or_else(|| format!("materialGrid[{y}][{x}] '{ch}' is not base-36"))?;
-                let name = legend
-                    .get(index as usize)
-                    .ok_or_else(|| format!("materialGrid[{y}][{x}] index {index} outside legend"))?;
+                let name = legend.get(index as usize).ok_or_else(|| {
+                    format!("materialGrid[{y}][{x}] index {index} outside legend")
+                })?;
                 let material = TerrainMaterial::from_name(name)
                     .ok_or_else(|| format!("unknown terrain material '{name}'"))?;
                 tile_row.push(material);

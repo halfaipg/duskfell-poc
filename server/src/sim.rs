@@ -18,6 +18,7 @@ mod inventory;
 mod lifecycle;
 mod model;
 mod movement;
+mod npcs;
 mod players;
 mod resources;
 mod snapshot;
@@ -41,10 +42,12 @@ use self::model::{
     SPAWN_SLOT_RING_STEP,
 };
 pub use self::model::{
-    ItemDecayedEvent, PlayerInput, ResourceNodeChangedEvent, SimTickOutcome, SimWorld,
-    INTEREST_RADIUS,
+    ItemDecayedEvent, NpcPartyEvent, PlayerInput, ResourceNodeChangedEvent, SimTickOutcome,
+    SimWorld, DEFAULT_WORLD_DAY_SECONDS, INTEREST_RADIUS,
 };
 use self::movement::*;
+use self::npcs::Npc;
+pub use self::npcs::{NpcPartyError, NpcTalkError};
 use self::resources::*;
 pub use self::terrain_authority::TerrainDetailAuthority;
 #[cfg(test)]
@@ -85,8 +88,20 @@ impl SimWorld {
             velocity.y = vertical * PLAYER_SPEED * scale;
         }
 
-        let mut movers = self.world.query::<(Entity, &mut Position, &Velocity)>();
-        for (entity, mut position, velocity) in movers.iter_mut(&mut self.world) {
+        outcome
+            .npc_relocation_events
+            .extend(self.steer_party_npcs());
+        outcome
+            .npc_party_events
+            .extend(self.auto_accept_pending_invites());
+        outcome
+            .npc_relocation_events
+            .extend(self.relocate_scheduled_npcs());
+
+        let mut movers = self
+            .world
+            .query::<(Entity, &mut Position, &Velocity, Option<&Npc>)>();
+        for (entity, mut position, velocity, npc) in movers.iter_mut(&mut self.world) {
             let candidate = Position {
                 x: (position.x + velocity.x * dt).clamp(28.0, self.map.width - 28.0),
                 y: (position.y + velocity.y * dt).clamp(28.0, self.map.height - 28.0),
@@ -115,13 +130,15 @@ impl SimWorld {
             ) {
                 position.y = candidate.y;
             }
-            self.player_index.insert_or_update(
-                entity,
-                Point {
-                    x: position.x,
-                    y: position.y,
-                },
-            );
+            let point = Point {
+                x: position.x,
+                y: position.y,
+            };
+            if npc.is_some() {
+                self.npc_index.insert_or_update(entity, point);
+            } else {
+                self.player_index.insert_or_update(entity, point);
+            }
         }
 
         let mut interaction_attempts = Vec::new();

@@ -7,12 +7,14 @@ use serde::Deserialize;
 use crate::protocol::{ObjectKind, TerrainSnapshot};
 
 mod hash;
+mod personas;
 mod validation;
 
 #[cfg(test)]
 mod tests;
 
 use self::hash::stable_content_hash;
+pub use self::personas::{load_personas, PersonaContent};
 
 pub const WORLD_SCHEMA_VERSION: &str = "sundermere-world-v1";
 pub const TERRAIN_PROFILE: &str = "duskfell-terrain-v1";
@@ -38,6 +40,9 @@ pub struct ContentManifest {
     pub schema_version: String,
     pub content_hash: String,
     pub object_count: usize,
+    pub npc_count: usize,
+    pub persona_count: usize,
+    pub personas_hash: String,
 }
 
 #[derive(Debug, Clone)]
@@ -53,6 +58,11 @@ pub struct WorldContent {
     pub map: MapContent,
     pub spawn: SpawnContent,
     pub objects: Vec<ObjectContent>,
+    #[serde(default)]
+    pub npcs: Vec<NpcContent>,
+    /// One paragraph of world context for NPC cognition prompts (prefix-stable).
+    #[serde(default)]
+    pub lore: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -105,6 +115,32 @@ pub struct ObjectContent {
     pub radius: f32,
 }
 
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NpcContent {
+    pub id: String,
+    pub persona: String,
+    pub name: String,
+    pub x: f32,
+    pub y: f32,
+    #[serde(default = "default_npc_radius")]
+    pub radius: f32,
+    #[serde(default)]
+    pub schedule: Vec<NpcScheduleContent>,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NpcScheduleContent {
+    pub at_seconds: u32,
+    pub x: f32,
+    pub y: f32,
+}
+
+fn default_npc_radius() -> f32 {
+    20.0
+}
+
 impl WorldContent {
     #[cfg(test)]
     pub fn demo() -> Self {
@@ -128,6 +164,10 @@ impl WorldContent {
             schema_version: content.schema_version.clone(),
             content_hash: stable_content_hash(&raw),
             object_count: content.objects.len(),
+            npc_count: content.npcs.len(),
+            // Filled in after the persona directory loads (runtime.rs).
+            persona_count: 0,
+            personas_hash: String::new(),
         };
         Ok(LoadedWorldContent { content, manifest })
     }

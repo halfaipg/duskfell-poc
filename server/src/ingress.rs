@@ -4,6 +4,8 @@ pub const DEFAULT_MAX_CLIENT_TEXT_BYTES: usize = 4096;
 pub const DEFAULT_MESSAGE_BURST: u32 = 20;
 pub const DEFAULT_MESSAGE_REFILL_PER_SECOND: u32 = 30;
 pub const DEFAULT_MAX_INPUT_SEQUENCE_STEP: u64 = 120;
+pub const DEFAULT_SAY_BURST: u32 = 4;
+pub const DEFAULT_SAY_REFILL_PER_MINUTE: u32 = 30;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ClientIngressConfig {
@@ -11,6 +13,8 @@ pub struct ClientIngressConfig {
     pub message_burst: u32,
     pub message_refill_per_second: u32,
     pub max_input_sequence_step: u64,
+    pub say_burst: u32,
+    pub say_refill_per_minute: u32,
 }
 
 impl Default for ClientIngressConfig {
@@ -20,6 +24,8 @@ impl Default for ClientIngressConfig {
             message_burst: DEFAULT_MESSAGE_BURST,
             message_refill_per_second: DEFAULT_MESSAGE_REFILL_PER_SECOND,
             max_input_sequence_step: DEFAULT_MAX_INPUT_SEQUENCE_STEP,
+            say_burst: DEFAULT_SAY_BURST,
+            say_refill_per_minute: DEFAULT_SAY_REFILL_PER_MINUTE,
         }
     }
 }
@@ -31,6 +37,7 @@ pub enum IngressRejectReason {
         max: usize,
     },
     RateLimited,
+    SayRateLimited,
     StaleInputSequence {
         seq: u64,
         last: u64,
@@ -52,6 +59,7 @@ impl IngressRejectReason {
                 format!("message-too-large bytes={bytes} max={max}")
             }
             Self::RateLimited => "rate-limited".to_string(),
+            Self::SayRateLimited => "say-rate-limited".to_string(),
             Self::StaleInputSequence { seq, last } => {
                 format!("stale-input-sequence seq={seq} last={last}")
             }
@@ -77,15 +85,20 @@ pub struct ClientIngress {
     config: ClientIngressConfig,
     tokens: f32,
     last_refill: Instant,
+    say_tokens: f32,
+    last_say_refill: Instant,
     last_input_seq: Option<u64>,
 }
 
 impl ClientIngress {
     pub fn new(config: ClientIngressConfig) -> Self {
+        let now = Instant::now();
         Self {
             tokens: config.message_burst as f32,
+            say_tokens: config.say_burst as f32,
             config,
-            last_refill: Instant::now(),
+            last_refill: now,
+            last_say_refill: now,
             last_input_seq: None,
         }
     }
@@ -104,6 +117,23 @@ impl ClientIngress {
         }
 
         self.tokens -= 1.0;
+        Ok(())
+    }
+
+    /// Second, much tighter token bucket for `say` messages: speech costs
+    /// tokens on the provider side, so it is budgeted separately from the
+    /// general message rate (design D12).
+    pub fn allow_say(&mut self) -> Result<(), IngressRejectReason> {
+        let now = Instant::now();
+        let elapsed = now.duration_since(self.last_say_refill).as_secs_f32();
+        self.last_say_refill = now;
+        self.say_tokens = (self.say_tokens
+            + elapsed * self.config.say_refill_per_minute as f32 / 60.0)
+            .min(self.config.say_burst as f32);
+        if self.say_tokens < 1.0 {
+            return Err(IngressRejectReason::SayRateLimited);
+        }
+        self.say_tokens -= 1.0;
         Ok(())
     }
 
@@ -181,10 +211,8 @@ mod tests {
     #[test]
     fn rate_limits_large_bursts() {
         let config = ClientIngressConfig {
-            max_text_bytes: DEFAULT_MAX_CLIENT_TEXT_BYTES,
             message_burst: 3,
-            message_refill_per_second: DEFAULT_MESSAGE_REFILL_PER_SECOND,
-            max_input_sequence_step: DEFAULT_MAX_INPUT_SEQUENCE_STEP,
+            ..ClientIngressConfig::default()
         };
         let mut ingress = ClientIngress::new(config);
         for _ in 0..3 {
@@ -195,6 +223,20 @@ mod tests {
             ingress.allow_text_frame(16),
             Err(IngressRejectReason::RateLimited)
         );
+    }
+
+    #[test]
+    fn say_bucket_is_tighter_than_the_message_bucket() {
+        let mut ingress = ClientIngress::new(ClientIngressConfig::default());
+        for _ in 0..DEFAULT_SAY_BURST {
+            assert!(ingress.allow_say().is_ok());
+        }
+        assert_eq!(
+            ingress.allow_say(),
+            Err(IngressRejectReason::SayRateLimited)
+        );
+        // The general message bucket is unaffected by say spends.
+        assert!(ingress.allow_text_frame(16).is_ok());
     }
 
     #[test]

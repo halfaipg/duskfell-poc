@@ -28,6 +28,8 @@ pub struct AppMetrics {
     ws_message_bytes_max: AtomicU64,
     ws_snapshot_bytes_last: AtomicU64,
     ws_snapshot_bytes_max: AtomicU64,
+    npc_say_frames_total: AtomicU64,
+    npc_say_dropped_total: AtomicU64,
     ws_send_errors_total: AtomicU64,
     ws_heartbeat_pings_total: AtomicU64,
     ws_idle_timeouts_total: AtomicU64,

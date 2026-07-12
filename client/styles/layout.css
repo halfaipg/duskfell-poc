@@ -251,6 +251,31 @@ canvas {
 
 .chat-input::placeholder {
   color: #8a7d63;
+
+.dialogue-log {
+  display: grid;
+  gap: 6px;
+  max-height: 160px;
+  overflow-y: auto;
+  color: #3f4645;
+  line-height: 1.35;
+}
+
+.dialogue-log .dialogue-line strong {
+  color: #6b5416;
+}
+
+.dialogue-log .dialogue-system {
+  color: #66706f;
+  font-style: italic;
+}
+
+.dialogue-log .dialogue-warn {
+  color: #914c3c;
+}
+
+.dialogue-log .dialogue-player strong {
+  color: #3e5a41;
 }
 
 /* day/night overlays: mix-blend-mode crosses BOTH canvases, unlike canvas

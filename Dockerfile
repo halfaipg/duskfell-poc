@@ -10,6 +10,8 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 COPY Cargo.toml Cargo.lock ./
+COPY animus/Cargo.toml animus/Cargo.toml
+COPY animus/src animus/src
 COPY server/Cargo.toml server/Cargo.toml
 COPY server/src server/src
 COPY server/data server/data
@@ -41,6 +43,7 @@ COPY server/data ./server/data
 ENV CLIENT_DIR=/app/client \
   ASSETS_DIR=/app/assets \
   CONTENT_PATH=/app/server/data/world.json \
+  PERSONAS_PATH=/app/server/data/personas \
   JOURNAL_PATH=/data/journal.jsonl \
   SETTLEMENT_OUTBOX_PATH=/data/settlement-outbox.jsonl \
   BIND_ADDR=0.0.0.0:4107 \

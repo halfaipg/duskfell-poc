@@ -22,6 +22,16 @@ pub fn content_path() -> PathBuf {
         })
 }
 
+pub fn personas_dir() -> PathBuf {
+    std::env::var("PERSONAS_PATH")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| {
+            PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("data")
+                .join("personas")
+        })
+}
+
 pub fn journal_path() -> PathBuf {
     std::env::var("JOURNAL_PATH")
         .map(PathBuf::from)

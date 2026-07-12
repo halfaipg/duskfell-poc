@@ -1,6 +1,16 @@
 import { decodeMsgpack } from "./msgpack-decode.js";
 import { normalizeSnapshot } from "./server-message-snapshot.js";
-import { isObject, normalizeNoticeLevel, normalizeText, normalizeUuid } from "./server-message-validators.js";
+import {
+  isObject,
+  normalizeBoolean,
+  normalizeNonNegativeInteger,
+  normalizeNoticeLevel,
+  normalizeText,
+  normalizeUuid,
+} from "./server-message-validators.js";
+
+const NPC_SAY_SOURCES = new Set(["canned", "live"]);
+const MAX_NPC_SAY_FRAME_CHARS = 256;
 
 export function parseServerMessage(raw) {
   let message;
@@ -38,6 +48,23 @@ export function parseServerMessage(raw) {
       type: "notice",
       level: normalizeNoticeLevel(message.level),
       message: normalizeText(message.message, "notice.message"),
+    };
+  }
+  if (message.type === "npcSay") {
+    if (typeof message.text !== "string" || message.text.length > MAX_NPC_SAY_FRAME_CHARS) {
+      throw new Error("npcSay.text must be a bounded string");
+    }
+    if (!NPC_SAY_SOURCES.has(message.source)) {
+      throw new Error("npcSay.source must be canned or live");
+    }
+    return {
+      type: "npcSay",
+      npcId: normalizeText(message.npcId, "npcSay.npcId"),
+      sayId: normalizeUuid(message.sayId, "npcSay.sayId"),
+      seq: normalizeNonNegativeInteger(message.seq, "npcSay.seq"),
+      text: message.text,
+      done: normalizeBoolean(message.done, "npcSay.done"),
+      source: message.source,
     };
   }
 

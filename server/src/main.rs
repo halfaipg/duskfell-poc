@@ -8,6 +8,7 @@ mod ingress;
 mod journal;
 mod metrics;
 mod metrics_routes;
+mod npc;
 mod persistence;
 mod player_identity;
 mod protocol;
@@ -41,12 +42,22 @@ async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
         .with_env_filter(
             std::env::var("RUST_LOG")
-                .unwrap_or_else(|_| "sundermere_server=info,tower_http=info".into()),
+                .unwrap_or_else(|_| "sundermere_server=info,tower_http=info,animus=info".into()),
         )
         .init();
 
     let runtime = initialize_runtime().await?;
     tokio::spawn(run_tick_loop(runtime.state.clone()));
+    tokio::spawn(npc::dialogue::journal_spoken_replies(
+        runtime.state.clone(),
+        runtime.npc_reply_rx,
+    ));
+    if let Some(outputs) = runtime.npc_engine_outputs {
+        tokio::spawn(npc::intent_pump::run_intent_pump(
+            runtime.state.clone(),
+            outputs,
+        ));
+    }
 
     let app = build_router(runtime.state, runtime.assets_dir, runtime.client_dir);
 

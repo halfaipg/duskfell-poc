@@ -2,6 +2,31 @@ import { spawn } from "node:child_process";
 import { mkdir } from "node:fs/promises";
 import { performance } from "node:perf_hooks";
 import path from "node:path";
+import { decodeMsgpack } from "../client/msgpack-decode.js";
+
+function decodeServerFrame(data) {
+  if (data instanceof ArrayBuffer) return hydrateUuids(decodeMsgpack(new Uint8Array(data)));
+  if (ArrayBuffer.isView(data)) {
+    return hydrateUuids(decodeMsgpack(new Uint8Array(data.buffer, data.byteOffset, data.byteLength)));
+  }
+  return JSON.parse(String(data));
+}
+
+// MessagePack frames carry UUIDs as 16 raw bytes; smokes compare ids as
+// strings, so format them like the JSON protocol did.
+function hydrateUuids(value) {
+  if (value instanceof Uint8Array && value.byteLength === 16) {
+    const hex = [...value].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  }
+  if (Array.isArray(value)) return value.map(hydrateUuids);
+  if (value && typeof value === "object" && !(value instanceof Uint8Array)) {
+    for (const key of Object.keys(value)) {
+      value[key] = hydrateUuids(value[key]);
+    }
+  }
+  return value;
+}
 
 const args = parseArgs(process.argv.slice(2));
 const port = Number(args.port ?? 4128);
@@ -29,6 +54,7 @@ try {
   const url = new URL(wsUrl);
   url.searchParams.set("session", session.body.sessionToken);
   socket = new WebSocket(url);
+  socket.binaryType = "arraybuffer";
   const observed = await observeSnapshots(socket);
   const summary = await fetchJson("/admin/summary");
   const metrics = parseMetrics(await fetchText("/metrics"), [
@@ -116,7 +142,7 @@ async function observeSnapshots(ws) {
       clearTimeout(startup);
     });
     ws.addEventListener("message", (event) => {
-      const message = JSON.parse(String(event.data));
+      const message = decodeServerFrame(event.data);
       if (message.type === "welcome") {
         welcome = true;
       } else if (message.type === "snapshot") {

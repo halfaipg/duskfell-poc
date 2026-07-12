@@ -6577,5 +6577,27 @@
       "y": 896,
       "radius": 68
     }
+  ],
+  "npcs": [
+    {
+      "id": "maren",
+      "persona": "maren",
+      "name": "Maren",
+      "x": 3000.0,
+      "y": 2052.0,
+      "radius": 20.0
+    },
+    {
+      "id": "bram",
+      "persona": "bram",
+      "name": "Bram",
+      "x": 3376.0,
+      "y": 2224.0,
+      "radius": 20.0,
+      "schedule": [
+        { "atSeconds": 0, "x": 3376.0, "y": 2224.0 },
+        { "atSeconds": 300, "x": 2980.0, "y": 2120.0 }
+      ]
+    }
   ]
 }

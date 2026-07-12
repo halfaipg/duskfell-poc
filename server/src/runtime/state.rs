@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -9,10 +10,13 @@ use crate::config::{
     AccountAuthConfig, AdmissionBackend, DeploymentProfile, OriginAllowlistConfig,
     PersistenceBackend, WebSocketConfig,
 };
-use crate::content::ContentManifest;
+use crate::content::{ContentManifest, PersonaContent};
 use crate::ingress::ClientIngressConfig;
 use crate::journal::EventJournal;
 use crate::metrics::AppMetrics;
+use crate::npc::dialogue::{SpeechRequest, SpokenReply};
+use crate::npc::egress::NpcSayRoutes;
+use crate::npc::engine_bridge::EngineBridge;
 use crate::persistence::{DurableFileLock, JsonlEventWriter};
 use crate::runtime_assets::RuntimeManifest;
 use crate::session::{
@@ -29,6 +33,8 @@ pub(crate) struct RuntimeServer {
     pub(crate) addr: SocketAddr,
     pub(crate) assets_dir: PathBuf,
     pub(crate) client_dir: PathBuf,
+    pub(crate) npc_reply_rx: mpsc::Receiver<SpokenReply>,
+    pub(crate) npc_engine_outputs: Option<mpsc::Receiver<animus::EngineOutput>>,
 }
 
 #[derive(Clone)]
@@ -80,4 +86,18 @@ pub(crate) struct AppState {
     pub(crate) http_body_limit_bytes: usize,
     pub(crate) admin_event_limit_cap: usize,
     pub(crate) runtime_manifest: RuntimeManifest,
+    // Kept for ops introspection and future reflection jobs; the canned
+    // responder and engine hold their own clones.
+    #[allow(dead_code)]
+    pub(crate) personas: Arc<HashMap<String, PersonaContent>>,
+    /// npc id -> persona id, from world content.
+    pub(crate) npc_personas: Arc<HashMap<String, String>>,
+    /// npc id -> display name, from world content (for player-facing notices).
+    pub(crate) npc_names: Arc<HashMap<String, String>>,
+    /// NPC ids whose personas opt into proactive greetings (D17).
+    pub(crate) greeting_npc_ids: Arc<std::collections::HashSet<String>>,
+    pub(crate) npc_say_routes: NpcSayRoutes,
+    pub(crate) npc_speech_tx: mpsc::Sender<SpeechRequest>,
+    /// Present when the cognition engine is running (mock or live provider).
+    pub(crate) npc_engine: Option<EngineBridge>,
 }

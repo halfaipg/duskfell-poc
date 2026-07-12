@@ -27,6 +27,7 @@ try {
   const url = new URL(wsUrl);
   url.searchParams.set("session", session.body.sessionToken);
   socket = new WebSocket(url);
+  socket.binaryType = "arraybuffer";
   const closeObserved = await sendBadMessagesUntilClose(socket);
   await sleep(150);
 
@@ -150,10 +151,10 @@ async function sendBadMessagesUntilClose(ws) {
       clearTimeout(timeout);
       resolve(true);
     });
-    ws.addEventListener("error", () => {
-      clearTimeout(timeout);
-      reject(new Error("websocket error"));
-    });
+    // The server drops the socket without a close handshake once the reject
+    // limit trips; Node surfaces that as an error event followed by close.
+    // Either way the connection ended, which is what this smoke asserts.
+    ws.addEventListener("error", () => {});
   });
 }
 

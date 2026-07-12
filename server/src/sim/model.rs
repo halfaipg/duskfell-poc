@@ -12,6 +12,7 @@ use super::crafting::ItemCraftedEvent;
 use super::interactions::{ItemFedEvent, ResourceFedEvent, ResourceGatheredEvent};
 use super::inventory::PlayerInventory;
 use super::movement::MovementBlocker;
+use super::npcs::NpcPartyState;
 use super::resources::ResourceNode;
 use super::terrain_authority::ResourceRequirement;
 
@@ -19,6 +20,10 @@ pub(super) const PLAYER_SPEED: f32 = 220.0;
 pub(super) const PLAYER_COLLISION_RADIUS: f32 = 18.0;
 pub(super) const OBJECT_SOLID_RADIUS_SCALE: f32 = 0.45;
 pub(super) const INTERACT_RADIUS: f32 = 64.0;
+pub const TALK_RADIUS: f32 = 96.0;
+pub(super) const FOLLOW_DISTANCE: f32 = 90.0;
+pub(super) const NPC_SPEED: f32 = 200.0;
+pub const DEFAULT_WORLD_DAY_SECONDS: u64 = 600;
 pub(super) const RESOURCE_GATHER_AMOUNT: u32 = 1;
 pub(super) const MAX_LIFECYCLE_AGE_YEARS: u32 = 1_000_000;
 pub const INTEREST_RADIUS: f32 = 520.0;
@@ -87,6 +92,28 @@ pub struct SimTickOutcome {
     pub item_decay_events: Vec<ItemDecayedEvent>,
     pub resource_node_events: Vec<ResourceNodeChangedEvent>,
     pub crafting_events: Vec<ItemCraftedEvent>,
+    pub npc_relocation_events: Vec<NpcRelocatedEvent>,
+    pub npc_party_events: Vec<NpcPartyEvent>,
+}
+
+#[derive(Debug, Clone)]
+pub struct NpcRelocatedEvent {
+    pub npc_id: String,
+    pub x: f32,
+    pub y: f32,
+}
+
+#[derive(Debug, Clone)]
+pub enum NpcPartyEvent {
+    Joined {
+        player_id: PlayerId,
+        npc_id: String,
+    },
+    Declined {
+        player_id: PlayerId,
+        npc_id: String,
+        invite_id: uuid::Uuid,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -128,6 +155,12 @@ pub struct SimWorld {
     pub(super) interact_latches: HashMap<PlayerId, bool>,
     pub(super) player_name_index: HashMap<String, PlayerId>,
     pub(super) player_index: SpatialIndex<Entity>,
+    pub(super) npc_entities: HashMap<String, Entity>,
+    pub(super) npc_index: SpatialIndex<Entity>,
+    pub(super) npc_parties: HashMap<String, NpcPartyState>,
+    pub(super) player_party: HashMap<PlayerId, String>,
+    pub(super) world_day_seconds: u64,
+    pub(super) npc_invites_deterministic: bool,
     pub(super) object_entities: HashMap<String, Entity>,
     pub(super) object_index: SpatialIndex<Entity>,
     pub(super) max_object_radius: f32,

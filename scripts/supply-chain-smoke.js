@@ -28,9 +28,14 @@ try {
   const missingChecksums = registryPackages.filter((pkg) => !pkg.checksum);
   const workspacePackages = metadata.packages.filter((pkg) => pkg.source == null);
   const nonMitWorkspacePackages = workspacePackages.filter((pkg) => pkg.license !== "MIT");
+  // Path dependencies on sibling workspace members (e.g. server -> animus)
+  // are first-party code under the same gates; only external non-registry
+  // sources are supply-chain findings.
+  const workspacePackageNames = new Set(workspacePackages.map((pkg) => pkg.name));
   const nonRegistryDirectDependencies = workspacePackages.flatMap((pkg) =>
     pkg.dependencies
       .filter((dep) => dep.source !== "registry+https://github.com/rust-lang/crates.io-index")
+      .filter((dep) => !(dep.source == null && workspacePackageNames.has(dep.name)))
       .map((dep) => `${pkg.name}:${dep.name}:${dep.source ?? "workspace/path"}`),
   );
   const duplicateLocks = duplicatePackageVersions(lockPackages);

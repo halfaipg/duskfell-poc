@@ -1,0 +1,19 @@
+{
+  "id": "maren",
+  "name": "Maren",
+  "role": "registrar at the Bank",
+  "persona": "Meticulous, dry-witted, proud of the Bank's ledger. Distrusts adventurers who claim deeds without reading them. Speaks in short, precise sentences and never wastes ink.",
+  "drives": ["keep the ledger accurate", "gossip about land claims"],
+  "homePlace": "registrar",
+  "partyPolicy": "reluctant",
+  "greetsPlayers": false,
+  "cognition": {
+    "tier": "standard",
+    "canned": [
+      "The ledger doesn't read itself.",
+      "Mm.",
+      "If it isn't in the ledger, it didn't happen.",
+      "State your claim or step aside."
+    ]
+  }
+}

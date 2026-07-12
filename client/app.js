@@ -12,7 +12,11 @@ import { createTerrainGlLayer } from "./terrain-gl-layer.js";
 import { drawOverlay as drawOverlayPanel } from "./overlay.js";
 import { createPlayerDrawer } from "./player-draw.js";
 import { createPlayerRenderState } from "./player-render-state.js";
+import { createChatUi } from "./chat-ui.js";
 import { createNetworkClient } from "./network-client.js";
+import { createNpcDrawer, toNpcAdapter } from "./npc-draw.js";
+import { nearestNpc, npcPartyPrompt } from "./npc-interaction.js";
+import { createNpcSpeech } from "./npc-speech.js";
 import { renderHud, renderPanel } from "./ui-panels.js";
 import { terrainHeightAtWorld } from "./terrain.js";
 import { drawWaterFish } from "./water-fish.js";
@@ -25,9 +29,8 @@ const params = new URLSearchParams(window.location.search);
 const terrainGlLayer =
   params.get("nogl") === "1" ? null : createTerrainGlLayer(document.getElementById("worldgl"));
 const DAY_TINT = params.get("dayTint");
-// hidden by default per user call until NPCs have real art: ?npcs=1 shows
-// the cognition-workstream pair
-const SHOW_NPCS = params.get("npcs") === "1";
+// NPCs are on by default; ?npcs=0 is a development escape hatch
+const SHOW_NPCS = params.get("npcs") !== "0";
 // live day/night: one full day per SUN_CYCLE seconds (?sunCycle=40 for a
 // fast demo arc); drives the water specular sun and the world tint
 const SUN_CYCLE_SECONDS = (() => {
@@ -117,6 +120,15 @@ const playerDrawer = createPlayerDrawer({
   getTerrainDebugMode: () => terrainDebugMode,
   playerRenderState,
 });
+const npcSpeech = createNpcSpeech();
+const npcDrawer = createNpcDrawer({
+  getContext: () => ctx,
+  getTerrain: () => terrainCache.getTerrain(),
+  getLocalPlayerId: () => playerId,
+  getBubbleFor: (npcId) => npcSpeech.bubbleFor(npcId),
+  playerDrawer,
+  playerRenderState,
+});
 const objectDrawer = createObjectDrawer({
   getContext: () => ctx,
   getTerrain: () => terrainCache.getTerrain(),
@@ -124,6 +136,7 @@ const objectDrawer = createObjectDrawer({
   getTerrainDebugMode: () => terrainDebugMode,
   getLocalPlayerRenderPosition: () => localPlayerRenderPosition,
   playerDrawer,
+  npcDrawer,
 });
 const networkClient = createNetworkClient({
   getRequestedName: () => ui.nameInput.value,
@@ -136,8 +149,76 @@ const networkClient = createNetworkClient({
   onSnapshot: (message) => {
     snapshot = message;
   },
+  onNpcSay: (frame) => {
+    const completed = npcSpeech.handleFrame(frame);
+    if (completed) {
+      appendDialogueLine(completed.npcId, completed.completed);
+    }
+  },
+  onNotice: (notice) => {
+    appendSystemLine(notice.message, notice.level);
+  },
   onServerStateChange: updatePanel,
 });
+
+const chatUi = createChatUi({
+  input: ui.chatInput,
+  send: (payload) => {
+    networkClient.send(payload);
+    if (payload.type === "say") {
+      appendPlayerLine(payload.text);
+      if (payload.npcId) {
+        npcSpeech.noteAwaitingReply(payload.npcId);
+      }
+    }
+  },
+  onOpenStateChange: (open) => {
+    if (open) {
+      keys.clear();
+      networkClient.sendInput(true);
+    }
+  },
+});
+
+function appendDialogueLine(npcId, text) {
+  const npcs = Array.isArray(snapshot?.npcs) ? snapshot.npcs : [];
+  const name = npcs.find((npc) => npc.id === npcId)?.name ?? npcId;
+  const line = document.createElement("div");
+  line.className = "dialogue-line";
+  const speaker = document.createElement("strong");
+  speaker.textContent = `${name}: `;
+  line.append(speaker, document.createTextNode(text));
+  appendToDialogueLog(line);
+}
+
+function appendPlayerLine(text) {
+  const line = document.createElement("div");
+  line.className = "dialogue-line dialogue-player";
+  const speaker = document.createElement("strong");
+  speaker.textContent = "You: ";
+  line.append(speaker, document.createTextNode(text));
+  appendToDialogueLog(line);
+}
+
+function appendSystemLine(text, level = "info") {
+  const line = document.createElement("div");
+  line.className = `dialogue-line dialogue-system dialogue-${level}`;
+  line.textContent = text;
+  appendToDialogueLog(line);
+}
+
+function appendToDialogueLog(line) {
+  if (!ui.dialogueLog) return;
+  if (ui.dialogueLog.dataset.hasLines !== "true") {
+    ui.dialogueLog.textContent = "";
+    ui.dialogueLog.dataset.hasLines = "true";
+  }
+  ui.dialogueLog.append(line);
+  while (ui.dialogueLog.children.length > 30) {
+    ui.dialogueLog.firstChild.remove();
+  }
+  ui.dialogueLog.scrollTop = ui.dialogueLog.scrollHeight;
+}
 
 runtimeAssets.loadSpriteAssets();
 runtimeAssets.loadTerrainAssets();
@@ -161,48 +242,54 @@ ui.panelOpen?.addEventListener("click", () => {
   ui.panelOpen?.setAttribute("hidden", "");
 });
 
-// UO-style speech: Enter opens the say box, Enter again sends and the words
-// float above your head; Escape backs out
-const chatInput = document.getElementById("chatInput");
-chatInput?.addEventListener("keydown", (event) => {
-  event.stopPropagation();
-  if (event.key === "Enter") {
-    const text = chatInput.value.trim();
-    if (text) networkClient.send({ type: "say", text });
-    chatInput.value = "";
-    chatInput.hidden = true;
-    chatInput.blur();
-  } else if (event.key === "Escape") {
-    chatInput.value = "";
-    chatInput.hidden = true;
-    chatInput.blur();
-  }
-});
-
 window.addEventListener("keydown", (event) => {
-  if (isTextEntryTarget(event.target)) return;
-  if (event.key === "Enter" && chatInput) {
+  if (isTypingTarget(event.target)) return;
+  if (event.key === "Enter" && !event.repeat) {
     event.preventDefault();
-    chatInput.hidden = false;
-    chatInput.focus();
+    const npcs = Array.isArray(snapshot?.npcs) ? snapshot.npcs : [];
+    chatUi.openChat(nearestNpc(npcs, localPlayerRenderPosition));
     return;
   }
   if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " ", "e", "E"].includes(event.key)) {
     event.preventDefault();
   }
+  if ((event.key === "p" || event.key === "P") && !event.repeat) {
+    sendPartyAction();
+    return;
+  }
+  if ((event.key === "t" || event.key === "T") && !event.repeat) {
+    const npcs = Array.isArray(snapshot?.npcs) ? snapshot.npcs : [];
+    const npc = nearestNpc(npcs, localPlayerRenderPosition);
+    if (npc) {
+      event.preventDefault();
+      chatUi.openChat(npc);
+    }
+    return;
+  }
   keys.add(event.key);
   networkClient.sendInput();
 });
 
+function isTypingTarget(target) {
+  return target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement;
+}
+
+function sendPartyAction() {
+  const npcs = Array.isArray(snapshot?.npcs) ? snapshot.npcs : [];
+  const npc = nearestNpc(npcs, localPlayerRenderPosition);
+  const prompt = npcPartyPrompt(npc, playerId);
+  if (!prompt?.action) return;
+  networkClient.send({
+    type: prompt.action,
+    npcId: prompt.npcId,
+  });
+}
+
 window.addEventListener("keyup", (event) => {
-  if (isTextEntryTarget(event.target)) return;
+  if (isTypingTarget(event.target)) return;
   keys.delete(event.key);
   networkClient.sendInput();
 });
-
-function isTextEntryTarget(target) {
-  return target instanceof HTMLElement && ["INPUT", "TEXTAREA"].includes(target.tagName);
-}
 
 window.addEventListener("resize", () => {
   fitCanvas();
@@ -322,13 +409,15 @@ function draw(now = 0) {
     }
 
     const players = Array.isArray(snapshot.players) ? snapshot.players : [];
-    // NPCs are part of the normal world; ?npcs=0 is a development escape hatch.
-    const npcs = SHOW_NPCS && Array.isArray(snapshot.npcs) ? snapshot.npcs : [];
-    const actors = [...players, ...npcs];
+    // NPCs are part of the normal world; ?npcs=0 is a development escape
+    // hatch. They ride the player render pipeline via adapters so they get
+    // the same sprites, walk animation, smoothing, and crowd spreading.
+    const npcAdapters =
+      SHOW_NPCS && Array.isArray(snapshot.npcs) ? snapshot.npcs.map(toNpcAdapter) : [];
     const me = players.find((player) => player.id === playerId) || players[0];
     const origin = defaultOrigin(snapshot.map);
-    playerRenderState.updateRenderOffsets(players, snapshot.map, playerId, now);
-    playerRenderState.updateVisualPositions(actors, now);
+    playerRenderState.updateRenderOffsets([...players, ...npcAdapters], snapshot.map, playerId, now);
+    playerRenderState.updateVisualPositions([...players, ...npcAdapters], now);
     localPlayerRenderPosition = me ? playerRenderState.renderPosition(me) : null;
     if (moveTarget && me) {
       // re-evaluate the synthesized heading; sendInput dedupes so this only
@@ -379,7 +468,7 @@ function draw(now = 0) {
       ecologyRenderer.drawEcologyEnergyLinks(objects, origin, now);
       ecologyRenderer.drawEcologyFeedLinks(objects, origin, now);
     }
-    objectDrawer.drawSceneEntities(actors, objects, origin, now);
+    objectDrawer.drawSceneEntities(players, objects, origin, now, npcAdapters);
     if (!HIDE_WORLD_PROPS && !VEGETATION_ONLY_ART_PASS) {
       interiorRenderer.drawInteriorRoofs(origin, localPlayerRenderPosition, now);
     }
@@ -416,6 +505,7 @@ function drawOverlay(rect) {
     terrain: terrainCache.getTerrain(),
     terrainDebugMode,
     localPlayerRenderPosition,
+    playerId,
   });
 }
 

@@ -28,6 +28,7 @@ export function createObjectDrawer({
   getTerrainDebugMode,
   getLocalPlayerRenderPosition,
   playerDrawer,
+  npcDrawer,
 }) {
   let ctx = getContext();
   let terrain = getTerrain();
@@ -53,7 +54,7 @@ export function createObjectDrawer({
     localPlayerRenderPosition = getLocalPlayerRenderPosition();
   }
 
-  function drawSceneEntities(players, objects, origin, now) {
+  function drawSceneEntities(players, objects, origin, now, npcs = []) {
     refreshRendererState();
     const terrainDetailObjectIds = terrainDetailAuthorityObjectIds(terrain?.details);
     const entities = [
@@ -75,6 +76,13 @@ export function createObjectDrawer({
               sort: objectRenderSortKey(object, origin),
               value: object,
             }))),
+      ...(npcDrawer
+        ? npcs.map((npc) => ({
+            type: "npc",
+            sort: npcDrawer.renderSortKey(npc, origin),
+            value: npc,
+          }))
+        : []),
       ...players.map((player) => ({
         type: "player",
         sort: playerDrawer.renderSortKey(player, origin),
@@ -87,6 +95,8 @@ export function createObjectDrawer({
         terrainDetailDrawer.drawTerrainDetail(entity.value, origin);
       } else if (entity.type === "object") {
         drawObject(entity.value, origin, now, terrainDetailObjectIds);
+      } else if (entity.type === "npc") {
+        npcDrawer.drawNpc(entity.value, origin, now);
       } else {
         playerDrawer.drawPlayer(entity.value, origin, now, players);
       }

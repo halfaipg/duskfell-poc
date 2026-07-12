@@ -37,7 +37,7 @@ impl AppMetrics {
             IngressRejectReason::MessageTooLarge { .. } => self
                 .ws_messages_rejected_message_too_large_total
                 .fetch_add(1, Ordering::Relaxed),
-            IngressRejectReason::RateLimited => self
+            IngressRejectReason::RateLimited | IngressRejectReason::SayRateLimited => self
                 .ws_messages_rejected_rate_limited_total
                 .fetch_add(1, Ordering::Relaxed),
             IngressRejectReason::StaleInputSequence { .. } => self
@@ -50,6 +50,14 @@ impl AppMetrics {
                 .ws_messages_rejected_unsupported_binary_total
                 .fetch_add(1, Ordering::Relaxed),
         };
+    }
+
+    pub fn npc_say_frame_sent(&self) {
+        self.npc_say_frames_total.fetch_add(1, Ordering::Relaxed);
+    }
+
+    pub fn npc_say_dropped(&self) {
+        self.npc_say_dropped_total.fetch_add(1, Ordering::Relaxed);
     }
 
     pub fn message_out(&self, bytes: usize) {

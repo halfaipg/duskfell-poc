@@ -41,16 +41,14 @@ export function createPlayerDrawer({
     const motion = playerRenderState.motionFor(player, getSnapshotTick() ?? 0, now);
     const sprite = playerSpriteFor(player);
     const grounding = playerGroundingAtWorld(terrain, renderPosition, motion);
-    const showLabel = shouldDrawPlayerNameLabel(
-      player,
-      renderPosition,
-      getLocalPlayerRenderPosition(),
-      {
+    // Entities with their own label treatment (NPC nameplates) opt out here.
+    const showLabel =
+      !player.hideNameLabel &&
+      shouldDrawPlayerNameLabel(player, renderPosition, getLocalPlayerRenderPosition(), {
         isLocal: isMe,
         debug: Boolean(getTerrainDebugMode()),
         nearbyPlayerCount: playerRenderState.nearbyPlayerCount(players, player),
-      },
-    );
+      });
 
     drawPlayerShadow(ctx, point, isMe, sprite, grounding);
     drawPlayerFootfall(ctx, terrain, point, motion, renderPosition, grounding, player.id);
