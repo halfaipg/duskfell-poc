@@ -1,4 +1,5 @@
 import { PROJECTION } from "./projection.js";
+import { buildWorldData } from "./world-data.js";
 import { interiorHeightAt, interiorPortalAt } from "./interior-occlusion.js";
 import { terrainChunks, elevationEdgesForTile } from "./terrain-chunks.js";
 import { terrainCompositionForTile } from "./terrain-composition.js";
@@ -73,6 +74,7 @@ export function buildTerrain(map) {
   for (const tile of tiles) {
     tile.elevationEdges = elevationEdgesForTile(tile, tiles, cols, rows);
   }
+  const worldData = buildWorldData(tiles, cols, rows, safeRadiusTiles, profile);
   const details = terrainDetails(tiles, cols, rows, safeRadiusTiles, profile, compositionKits);
   const detailAuthority = terrainDetailAuthority(details, profile);
   const chunks = terrainChunks(tiles, cols, rows);
@@ -81,6 +83,7 @@ export function buildTerrain(map) {
   return {
     cols,
     rows,
+    worldData,
     width: map.width,
     height: map.height,
     safeRadiusTiles,

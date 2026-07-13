@@ -1,11 +1,6 @@
 import { CONSTRAINED_DEVICE } from "./device-profile.js";
-import {
-  VISUAL_BIOMES,
-  activeVisualBiomesForPatch,
-  visualBiomeWeightsAt,
-} from "./terrain-visual-biomes.js";
-import { roadPressuresAt, streamCenterAt } from "./terrain-biome.js";
-import { continuousVertexHeight } from "./terrain-height.js";
+import { VISUAL_BIOMES } from "./terrain-visual-biomes.js";
+
 import { projectTerrainTile } from "./terrain-geometry.js";
 import { TERRAIN_MATERIALS, terrainTileAt } from "./terrain.js";
 import { PROJECTION } from "./projection.js";
@@ -162,21 +157,14 @@ function compositePatchForTile(tile, terrain, groundPatches) {
     return canvas;
   }
 
-  const activeBiomes = activeVisualBiomesForPatch(
-    superX,
-    superY,
-    PATCH_TILES,
-    terrain.cols,
-    terrain.rows,
-    seed,
-  );
+  const activeBiomes = terrain.worldData.activeBiomesForPatch(superX, superY, PATCH_TILES);
   for (const [biomeIndex, biome] of activeBiomes.entries()) {
     const image = biomeImageForSupertile(groundPatches, biome);
     if (!image) continue;
     layer.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
     layer.globalCompositeOperation = "source-over";
     drawBombedPatchImage(layer, image, superX, superY, seed + VISUAL_BIOMES.indexOf(biome) * 7919);
-    writeBiomeMask(maskContext, biome, activeBiomes, superX, superY, terrain.cols, terrain.rows, seed);
+    writeBiomeMask(maskContext, biome, activeBiomes, superX, superY, terrain.worldData);
     layer.globalCompositeOperation = "destination-in";
     layer.imageSmoothingEnabled = true;
     layer.drawImage(maskCanvas, 0, 0, CANVAS_SIZE, CANVAS_SIZE);
@@ -338,7 +326,7 @@ function drawReliefShade(composite, maskContext, maskCanvas, superX, superY, ter
     const mapY = superY * PATCH_TILES + ly - MARGIN_TILES - 1;
     for (let lx = 0; lx < latticeSize; lx += 1) {
       const mapX = superX * PATCH_TILES + lx - MARGIN_TILES - 1;
-      heights[ly * latticeSize + lx] = continuousVertexHeight(mapX, mapY, cols, rows, safeRadiusTiles, profile);
+      heights[ly * latticeSize + lx] = terrain.worldData.heightAt(mapX, mapY);
     }
   }
   const h = (lx, ly) =>
@@ -439,7 +427,7 @@ function drawEcotoneBand(composite, maskContext, maskCanvas, superX, superY, ter
     for (let x = 0; x < MASK_SIZE; x += 1) {
       const mapX = superX * PATCH_TILES + ((x + 0.5) / MASK_SIZE) * CANVAS_TILES - MARGIN_TILES;
       const mapY = superY * PATCH_TILES + ((y + 0.5) / MASK_SIZE) * CANVAS_TILES - MARGIN_TILES;
-      const weights = visualBiomeWeightsAt(mapX, mapY, terrain.cols, terrain.rows, seed);
+      const weights = terrain.worldData.weightsAt(mapX, mapY);
       const heath = weights.heath ?? 0;
       // bump centered on the 50/50 line, ragged at both edges
       const rag =
@@ -565,19 +553,20 @@ function streamFieldsForPatch(superX, superY, terrain) {
   const deep = new Float32Array(size * size);
   const wetline = new Float32Array(size * size);
   let any = false;
-  // per-row centerline (the centerline is x(y), constant across a row)
+  // channel distance field (from the tile material grid via WorldData) —
+  // the half-width offset maps tile-center distance onto the old
+  // centerline-distance convention
+  const channel = terrain.worldData.channel;
   for (let y = 0; y < size; y += 1) {
     const mapY = superY * PATCH_TILES + ((y + 0.5) / size) * CANVAS_TILES - MARGIN_TILES;
-    const center = streamCenterAt(mapY, terrain.cols, terrain.rows, profile);
     for (let x = 0; x < size; x += 1) {
       const mapX = superX * PATCH_TILES + ((x + 0.5) / size) * CANVAS_TILES - MARGIN_TILES;
       const rag = (wearNoise(mapX * 1.1, mapY * 1.1, 313) - 0.5) * 0.36;
-      const d = Math.abs(mapX - center) + rag;
+      const d = channel.distanceAt(mapX, mapY) + STREAM_HALF_WIDTH_TILES - 0.5 + rag;
       if (d > STREAM_HALF_WIDTH_TILES + STREAM_RIM_TILES + 0.3) continue;
       any = true;
       const i = y * size + x;
-      const ford = roadPressuresAt(mapX, mapY, terrain.cols, terrain.rows, profile);
-      const fordness = clamp01((Math.max(ford.northSouth, ford.eastWest) - 0.25) / 0.45);
+      const fordness = clamp01(channel.fordnessAt(mapX, mapY));
       water[i] = clamp01((STREAM_HALF_WIDTH_TILES - d) / 0.22);
       rim[i] = clamp01((STREAM_HALF_WIDTH_TILES + STREAM_RIM_TILES - d) / 0.16) - water[i] * 0.72;
       // the ford turns the channel floor to gravel: deep vanishes, body thins
@@ -681,12 +670,12 @@ function waterAnimationLayerFor(superX, superY, terrain) {
     const maskCtx = mask.getContext("2d");
     maskCtx.imageSmoothingEnabled = true;
     maskCtx.drawImage(full, 0, 0, ANIM_SIZE, ANIM_SIZE);
-    // flow tangent across this supertile, in plan-tile space
-    const y0 = superY * PATCH_TILES;
-    const x0 = streamCenterAt(y0, terrain.cols, terrain.rows, terrain.profile);
-    const x1 = streamCenterAt(y0 + PATCH_TILES, terrain.cols, terrain.rows, terrain.profile);
-    const length = Math.hypot(x1 - x0, PATCH_TILES);
-    entry = { mask, flowX: (x1 - x0) / length, flowY: PATCH_TILES / length };
+    // flow tangent across this supertile from the channel flow field
+    const flow = terrain.worldData.channel.flowAt(
+      superX * PATCH_TILES + PATCH_TILES / 2,
+      superY * PATCH_TILES + PATCH_TILES / 2,
+    );
+    entry = { mask, flowX: flow.x, flowY: flow.y };
   }
   waterAnimCache.set(key, entry);
   while (waterAnimCache.size > MAX_COMPOSITE_PATCHES) {
@@ -808,17 +797,12 @@ export function waterAnimConstants() {
 
 function collectWaterGroups(chunk, terrain) {
   const groups = new Map();
-  let rowY = null;
-  let rowCenter = 0;
   for (const tileView of chunk.tiles) {
     const tile = tileView.tile;
     let inChannel = tile.material === "water" || tile.material === "shore";
     if (!inChannel && PATCHED_MATERIALS.has(tile.material)) {
-      if (rowY !== tile.y) {
-        rowY = tile.y;
-        rowCenter = streamCenterAt(tile.y, terrain.cols, terrain.rows, terrain.profile);
-      }
-      inChannel = Math.abs(tile.x + 0.5 - rowCenter) < STREAM_HALF_WIDTH_TILES + 1.2;
+      inChannel =
+        terrain.worldData.channel.distanceAt(tile.x + 0.5, tile.y + 0.5) < 1.7;
     }
     if (!inChannel) continue;
     const superX = Math.floor(tile.x / PATCH_TILES);
@@ -836,8 +820,6 @@ export function drawChunkWaterAnimation(ctx, chunk, origin, terrain, groundPatch
   const waterImage = groundPatches.get("stream-water") ?? null;
   if (!waterImage) return;
   const groups = new Map();
-  let rowY = null;
-  let rowCenter = 0;
   for (const tileView of chunk.tiles) {
     const tile = tileView.tile;
     // the painted channel bleeds past strict water tiles (ragged edges,
@@ -845,11 +827,8 @@ export function drawChunkWaterAnimation(ctx, chunk, origin, terrain, groundPatch
     // material, or the bank wedges stay frozen while the body animates
     let inChannel = tile.material === "water" || tile.material === "shore";
     if (!inChannel && PATCHED_MATERIALS.has(tile.material)) {
-      if (rowY !== tile.y) {
-        rowY = tile.y;
-        rowCenter = streamCenterAt(tile.y, terrain.cols, terrain.rows, terrain.profile);
-      }
-      inChannel = Math.abs(tile.x + 0.5 - rowCenter) < STREAM_HALF_WIDTH_TILES + 1.2;
+      inChannel =
+        terrain.worldData.channel.distanceAt(tile.x + 0.5, tile.y + 0.5) < 1.7;
     }
     if (!inChannel) continue;
     const superX = Math.floor(tile.x / PATCH_TILES);
@@ -988,14 +967,14 @@ function stampHash01(x, y, seed) {
   return ((value ^ (value >>> 16)) >>> 0) / 0xffffffff;
 }
 
-function writeBiomeMask(ctx, biome, activeBiomes, superX, superY, cols, rows, seed) {
+function writeBiomeMask(ctx, biome, activeBiomes, superX, superY, worldDataRef) {
   const imageData = ctx.createImageData(MASK_SIZE, MASK_SIZE);
   const data = imageData.data;
   for (let y = 0; y < MASK_SIZE; y += 1) {
     for (let x = 0; x < MASK_SIZE; x += 1) {
       const mapX = superX * PATCH_TILES + ((x + 0.5) / MASK_SIZE) * CANVAS_TILES - MARGIN_TILES;
       const mapY = superY * PATCH_TILES + ((y + 0.5) / MASK_SIZE) * CANVAS_TILES - MARGIN_TILES;
-      const weights = visualBiomeWeightsAt(mapX, mapY, cols, rows, seed);
+      const weights = worldDataRef.weightsAt(mapX, mapY);
       const activeTotal = activeBiomes.reduce((sum, activeBiome) => sum + weights[activeBiome], 0) || 1;
       const weight = (weights[biome] ?? 0) / activeTotal;
       // banded transition: posterize the smooth weight into discrete steps
