@@ -245,7 +245,8 @@ export function createTerrainDrawer({
         const height = 5 + hash01(index, tile.x + tile.y) * 8;
         const halfWidth = 0.9 + hash01(index * 5, tile.y) * 0.9;
         const lean = (hash01(tile.x + index, tile.y * 3) - 0.5) * 3;
-        const phase = hash01(tile.x * 7, tile.y * 11 + index) * Math.PI * 2;
+        // gust phase travels with world position; small per-blade jitter
+        const phase = (tile.x + tile.y) * 0.29 + hash01(tile.x * 7, tile.y * 11 + index) * 1.1;
         const shade = hash01(index * 11, tile.x * 3 + tile.y);
         // one triangle: base-left, base-right, tip
         blades.push(

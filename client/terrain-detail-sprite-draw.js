@@ -44,9 +44,14 @@ export function drawTerrainDetailSprite(ctx, sprites, cueDrawer, detail, point) 
   if (sway > 0) {
     // wind: shear the sprite around its foot anchor — tips move, roots stay
     const seconds = performance.now() / 1000;
-    const phase = detail.x * 0.13 + detail.y * 0.29;
+    // coherent wind field: long spatial wavelength (~20 tiles) so the gust
+    // rolls across the map and neighbours sway together, plus a whisper of
+    // per-plant jitter so it never looks mechanical
+    const gustPhase = (detail.x + detail.y) * 0.0045;
+    const jitter = Math.sin(detail.x * 12.9898 + detail.y * 78.233) * 0.35;
     const shear =
-      (Math.sin(seconds * 1.6 + phase) + Math.sin(seconds * 2.9 + phase * 1.7) * 0.45) * sway;
+      (Math.sin(seconds * 1.6 + gustPhase + jitter) +
+        Math.sin(seconds * 2.9 + gustPhase * 1.6) * 0.45) * sway;
     ctx.save();
     ctx.translate(point.x, point.y);
     ctx.transform(1, 0, shear, 1, 0, 0);
