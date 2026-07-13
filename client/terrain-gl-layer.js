@@ -292,6 +292,83 @@ export function createTerrainGlLayer(canvas) {
     return true;
   }
 
+  // ---- GL grass: one triangle per blade, wind in the vertex shader, and
+  // a second flattened pass casting each blade's shadow along the sun ----
+  const grassProgram = buildGrassProgram(gl);
+  const grassBuffers = new Map(); // chunkKey -> {buffer, vertexCount}
+  const grassUniforms = grassProgram
+    ? {
+        camera: gl.getUniformLocation(grassProgram, "uCamera"),
+        viewport: gl.getUniformLocation(grassProgram, "uViewport"),
+        time: gl.getUniformLocation(grassProgram, "uTime"),
+        mode: gl.getUniformLocation(grassProgram, "uMode"),
+        shadow: gl.getUniformLocation(grassProgram, "uShadow"),
+        daylight: gl.getUniformLocation(grassProgram, "uDaylight"),
+      }
+    : null;
+
+  function grassBufferFor(chunkKey, buildBlades) {
+    let entry = grassBuffers.get(chunkKey);
+    if (entry) return entry;
+    const data = buildBlades();
+    if (!data || data.length === 0) {
+      entry = { buffer: null, vertexCount: 0 };
+    } else {
+      const buffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+      entry = { buffer, vertexCount: data.length / 7 };
+    }
+    if (grassBuffers.size > 160) {
+      for (const stale of grassBuffers.values()) {
+        if (stale.buffer) gl.deleteBuffer(stale.buffer);
+      }
+      grassBuffers.clear();
+    }
+    grassBuffers.set(chunkKey, entry);
+    return entry;
+  }
+
+  function beginGrass(camera, cssWidth, cssHeight, nowMs, shadow, daylight) {
+    if (contextLost || !grassProgram) return false;
+    gl.useProgram(grassProgram);
+    gl.uniform3f(grassUniforms.camera, camera.x, camera.y, camera.scale);
+    gl.uniform2f(grassUniforms.viewport, cssWidth, cssHeight);
+    gl.uniform1f(grassUniforms.time, (nowMs % 1000000) / 1000);
+    gl.uniform3f(grassUniforms.shadow, shadow.dirX, shadow.dirY, shadow.length);
+    gl.uniform1f(grassUniforms.daylight, daylight);
+    return true;
+  }
+
+  function drawGrassChunk(chunkKey, buildBlades) {
+    if (contextLost || !grassProgram) return;
+    const entry = grassBufferFor(chunkKey, buildBlades);
+    if (!entry.buffer || entry.vertexCount === 0) return;
+    gl.bindBuffer(gl.ARRAY_BUFFER, entry.buffer);
+    const aPos = gl.getAttribLocation(grassProgram, "aPos");
+    const aCorner = gl.getAttribLocation(grassProgram, "aCorner");
+    const aParams = gl.getAttribLocation(grassProgram, "aParams");
+    gl.enableVertexAttribArray(aPos);
+    gl.enableVertexAttribArray(aCorner);
+    gl.enableVertexAttribArray(aParams);
+    gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 28, 0);
+    gl.vertexAttribPointer(aCorner, 2, gl.FLOAT, false, 28, 8);
+    gl.vertexAttribPointer(aParams, 3, gl.FLOAT, false, 28, 16);
+    // shadow pass first (under the blades), then the blades
+    const mode = gl.getUniformLocation(grassProgram, "uMode");
+    gl.uniform1f(mode, 1.0);
+    gl.drawArrays(gl.TRIANGLES, 0, entry.vertexCount);
+    gl.uniform1f(mode, 0.0);
+    gl.drawArrays(gl.TRIANGLES, 0, entry.vertexCount);
+  }
+
+  function clearGrass() {
+    for (const entry of grassBuffers.values()) {
+      if (entry.buffer) gl.deleteBuffer(entry.buffer);
+    }
+    grassBuffers.clear();
+  }
+
   return {
     beginFrame,
     drawChunkLayer,
@@ -299,8 +376,73 @@ export function createTerrainGlLayer(canvas) {
     beginWater,
     drawWaterQuad,
     setLighting,
+    beginGrass,
+    drawGrassChunk,
+    clearGrass,
     isLost: () => contextLost,
   };
+}
+
+function buildGrassProgram(gl) {
+  const vertexSource = `
+attribute vec2 aPos;      // projected base position (world px)
+attribute vec2 aCorner;   // offset from base: x spread, y = -height at tip
+attribute vec3 aParams;   // phase, heightFrac (0 base, 1 tip), shade
+uniform vec3 uCamera;
+uniform vec2 uViewport;
+uniform float uTime;
+uniform float uMode;      // 0 = blade, 1 = ground shadow
+uniform vec3 uShadow;     // dirX, dirY, length
+varying float vFrac;
+varying float vShade;
+void main() {
+  float sway = (sin(uTime * 1.9 + aParams.x) + sin(uTime * 3.3 + aParams.x * 1.7) * 0.45)
+             * 1.7 * aParams.y;
+  vec2 world;
+  if (uMode < 0.5) {
+    world = aPos + vec2(aCorner.x + sway, aCorner.y);
+  } else {
+    // flatten the blade onto the ground along the sun's cast direction
+    float rise = -aCorner.y;
+    world = aPos + vec2(aCorner.x + sway * 0.6, 0.0)
+          + vec2(uShadow.x, uShadow.y * 0.55) * rise * uShadow.z;
+  }
+  vec2 screen = (world - uCamera.xy) * uCamera.z;
+  vec2 clip = vec2(screen.x / uViewport.x * 2.0 - 1.0, 1.0 - screen.y / uViewport.y * 2.0);
+  gl_Position = vec4(clip, 0.0, 1.0);
+  vFrac = aParams.y;
+  vShade = aParams.z;
+}`;
+  const fragmentSource = `
+precision mediump float;
+uniform float uMode;
+uniform float uDaylight;
+varying float vFrac;
+varying float vShade;
+void main() {
+  if (uMode < 0.5) {
+    vec3 base = vec3(0.24, 0.30, 0.19);
+    vec3 tip = vec3(0.45, 0.54, 0.31);
+    vec3 col = mix(base, tip, vFrac) * (0.82 + vShade * 0.36);
+    col *= mix(0.62, 1.0, max(uDaylight, 0.25));
+    gl_FragColor = vec4(col, 1.0);
+  } else {
+    float a = 0.20 * uDaylight;
+    gl_FragColor = vec4(vec3(0.06, 0.08, 0.06) * a, a);
+  }
+}`;
+  const vertex = compile(gl, gl.VERTEX_SHADER, vertexSource);
+  const fragment = compile(gl, gl.FRAGMENT_SHADER, fragmentSource);
+  if (!vertex || !fragment) return null;
+  const program = gl.createProgram();
+  gl.attachShader(program, vertex);
+  gl.attachShader(program, fragment);
+  gl.linkProgram(program);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    console.warn("grass GL program link failed:", gl.getProgramInfoLog(program));
+    return null;
+  }
+  return program;
 }
 
 function buildBlitProgram(gl) {

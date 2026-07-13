@@ -21,6 +21,7 @@ import { TERRAIN_MATERIALS } from "./terrain.js";
 import { RENDER_DPR_CAP } from "./device-profile.js";
 import { continuousVertexHeight } from "./terrain-height.js";
 import { getSun, shadowCast } from "./sun-state.js";
+import { CONSTRAINED_DEVICE } from "./device-profile.js";
 
 export { normalizeTerrainDebugMode };
 
@@ -128,6 +129,7 @@ export function createTerrainDrawer({
       if (waterEntries?.size) {
         drawGlWater(glLayer, waterEntries, origin, now);
       }
+      drawGlGrass(glLayer, renderGeometry, visibleBounds, origin, now, viewport);
     }
     return glActive;
   }
@@ -193,6 +195,63 @@ export function createTerrainDrawer({
     heightsCanvas = canvas2;
     heightsKey = key;
     return heightsCanvas;
+  }
+
+  // grass blades: deterministic scatter on grassy tiles, wind + shadows on
+  // the GPU. Blade geometry lives in cached per-chunk buffers.
+  const GRASS_BLADES_PER_TILE = CONSTRAINED_DEVICE ? 5 : 11;
+
+  function drawGlGrass(glLayer, renderGeometry, visibleBounds, origin, now, viewport) {
+    const cast = shadowCast();
+    if (!glLayer.beginGrass(camera, viewport.width, viewport.height, now, cast, cast.daylight)) {
+      return;
+    }
+    for (const chunk of renderGeometry.chunks) {
+      if (!terrainLayerManager.boundsIntersect(chunk.bounds, visibleBounds)) continue;
+      const chunkKey = `${terrainCacheKey}:${chunk.x}:${chunk.y}`;
+      glLayer.drawGrassChunk(chunkKey, () => buildChunkBlades(chunk));
+    }
+  }
+
+  function buildChunkBlades(chunk) {
+    const blades = [];
+    for (const tileView of chunk.tiles) {
+      const tile = tileView.tile;
+      if (tile.material !== "grass") continue;
+      const vegetation = tile.biome?.vegetation ?? 0;
+      if (vegetation < 0.3) continue;
+      const count = Math.round(vegetation * GRASS_BLADES_PER_TILE);
+      const { corners } = tileView;
+      for (let index = 0; index < count; index += 1) {
+        const u = hash01(tile.x * 31 + index, tile.y * 17 + index * 7);
+        const v = hash01(tile.x * 13 + index * 3, tile.y * 41 + index);
+        // bilinear across the projected diamond keeps blades on the tile
+        const topX = corners.nw.x + (corners.ne.x - corners.nw.x) * u;
+        const topY = corners.nw.y + (corners.ne.y - corners.nw.y) * u;
+        const botX = corners.sw.x + (corners.se.x - corners.sw.x) * u;
+        const botY = corners.sw.y + (corners.se.y - corners.sw.y) * u;
+        const x = topX + (botX - topX) * v;
+        const y = topY + (botY - topY) * v;
+        const height = 5 + hash01(index, tile.x + tile.y) * 8;
+        const halfWidth = 0.9 + hash01(index * 5, tile.y) * 0.9;
+        const lean = (hash01(tile.x + index, tile.y * 3) - 0.5) * 3;
+        const phase = hash01(tile.x * 7, tile.y * 11 + index) * Math.PI * 2;
+        const shade = hash01(index * 11, tile.x * 3 + tile.y);
+        // one triangle: base-left, base-right, tip
+        blades.push(
+          x, y, -halfWidth, 0, phase, 0, shade,
+          x, y, halfWidth, 0, phase, 0, shade,
+          x, y, lean, -height, phase, 1, shade,
+        );
+      }
+    }
+    return blades.length ? new Float32Array(blades) : null;
+  }
+
+  function hash01(a, b) {
+    let h = (Math.imul(a + 101, 374761393) ^ Math.imul(b + 181, 668265263)) >>> 0;
+    h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0;
+    return ((h ^ (h >>> 16)) >>> 0) / 0xffffffff;
   }
 
   function glDpr() {
