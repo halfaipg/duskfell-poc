@@ -4,6 +4,7 @@ import {
 } from "./player-config.js";
 import { drawDetailShadow } from "./terrain-detail-procedural-draw.js";
 import { drawCastShadow } from "./cast-shadow.js";
+import { windStrength } from "./sun-state.js";
 
 export function drawTerrainDetailSprite(ctx, sprites, cueDrawer, detail, point) {
   const sprite = sprites.details;
@@ -51,7 +52,7 @@ export function drawTerrainDetailSprite(ctx, sprites, cueDrawer, detail, point) 
     const jitter = Math.sin(detail.x * 12.9898 + detail.y * 78.233) * 0.35;
     const shear =
       (Math.sin(seconds * 1.6 + gustPhase + jitter) +
-        Math.sin(seconds * 2.9 + gustPhase * 1.6) * 0.45) * sway;
+        Math.sin(seconds * 2.9 + gustPhase * 1.6) * 0.45) * sway * windStrength();
     ctx.save();
     ctx.translate(point.x, point.y);
     ctx.transform(1, 0, shear, 1, 0, 0);
