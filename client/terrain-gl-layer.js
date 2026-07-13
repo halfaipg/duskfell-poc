@@ -339,7 +339,7 @@ export function createTerrainGlLayer(canvas) {
   const grassDebug =
     typeof globalThis.location !== "undefined" && /[?&]grassDebug=1/.test(globalThis.location.search ?? "");
 
-  function beginGrass(camera, cssWidth, cssHeight, nowMs, shadow, daylight) {
+  function beginGrass(camera, cssWidth, cssHeight, nowMs, shadow, daylight, wind = 1) {
     if (contextLost || !grassProgram) {
       if (!grassDiagnosed) {
         grassDiagnosed = true;
@@ -353,6 +353,7 @@ export function createTerrainGlLayer(canvas) {
     gl.uniform1f(grassUniforms.time, (nowMs % 1000000) / 1000);
     gl.uniform3f(grassUniforms.shadow, shadow.dirX, shadow.dirY, shadow.length);
     gl.uniform1f(grassUniforms.daylight, daylight);
+    gl.uniform1f(gl.getUniformLocation(grassProgram, "uWind"), wind);
     return true;
   }
 
@@ -419,11 +420,12 @@ uniform float uTime;
 uniform float uMode;      // 0 = blade, 1 = ground shadow
 uniform vec3 uShadow;     // dirX, dirY, length
 uniform float uDebug;
+uniform float uWind;
 varying float vFrac;
 varying float vShade;
 void main() {
   float sway = (sin(uTime * 1.9 + aParams.x) + sin(uTime * 3.3 + aParams.x * 1.7) * 0.45)
-             * 1.7 * aParams.y;
+             * 1.7 * aParams.y * uWind;
   vec2 corner = aCorner * mix(1.0, 4.0, uDebug);
   vec2 world;
   if (uMode < 0.5) {

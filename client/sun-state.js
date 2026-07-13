@@ -27,3 +27,14 @@ export function shadowCast() {
     daylight,
   };
 }
+
+// living wind: slow envelope with genuine calm spells, building breezes and
+// the odd gust — shared by sprite sway and the GL grass field
+export function windStrength(nowMs = performance.now()) {
+  const t = nowMs / 1000;
+  const weather = Math.sin(t * 0.021 + 1.7) * 0.5 + 0.5;   // ~5 min front
+  const gust = Math.sin(t * 0.11) * 0.5 + 0.5;             // ~1 min swells
+  const flutter = Math.sin(t * 0.31 + 0.9) * 0.5 + 0.5;
+  const strength = weather * 0.7 + gust * 0.5 * weather + flutter * 0.12 - 0.22;
+  return Math.max(0, Math.min(1.25, strength * 1.5));
+}

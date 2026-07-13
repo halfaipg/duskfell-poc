@@ -20,7 +20,7 @@ import { PROJECTION } from "./projection.js";
 import { TERRAIN_MATERIALS } from "./terrain.js";
 import { RENDER_DPR_CAP } from "./device-profile.js";
 import { continuousVertexHeight } from "./terrain-height.js";
-import { getSun, shadowCast } from "./sun-state.js";
+import { getSun, shadowCast, windStrength } from "./sun-state.js";
 import { CONSTRAINED_DEVICE } from "./device-profile.js";
 
 export { normalizeTerrainDebugMode };
@@ -213,7 +213,7 @@ export function createTerrainDrawer({
 
   function drawGlGrass(glLayer, renderGeometry, visibleBounds, origin, now, viewport) {
     const cast = shadowCast();
-    if (!glLayer.beginGrass(camera, viewport.width, viewport.height, now, cast, cast.daylight)) {
+    if (!glLayer.beginGrass(camera, viewport.width, viewport.height, now, cast, cast.daylight, windStrength(now))) {
       return;
     }
     for (const chunk of renderGeometry.chunks) {
