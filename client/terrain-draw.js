@@ -19,7 +19,6 @@ import {
 import { PROJECTION } from "./projection.js";
 import { TERRAIN_MATERIALS } from "./terrain.js";
 import { RENDER_DPR_CAP } from "./device-profile.js";
-import { continuousVertexHeight } from "./terrain-height.js";
 import { getSun, shadowCast, windStrength } from "./sun-state.js";
 import { CONSTRAINED_DEVICE } from "./device-profile.js";
 
@@ -185,14 +184,7 @@ export function createTerrainDrawer({
     const image = context.createImageData(cols + 1, rows + 1);
     for (let y = 0; y <= rows; y += 1) {
       for (let x = 0; x <= cols; x += 1) {
-        const height = continuousVertexHeight(
-          x,
-          y,
-          cols,
-          rows,
-          worldTerrain.safeRadiusTiles,
-          worldTerrain.profile,
-        );
+        const height = worldTerrain.worldData.heightAt(x, y);
         const value = Math.max(0, Math.min(255, Math.round(((height + 1) / 5) * 255)));
         const offset = (y * (cols + 1) + x) * 4;
         image.data[offset] = value;
