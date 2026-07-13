@@ -40,21 +40,53 @@ export function drawTerrainDetailSprite(ctx, sprites, cueDrawer, detail, point) 
 
   const previousSmoothing = ctx.imageSmoothingEnabled;
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(
-    sprite.image,
-    sx,
-    0,
-    sprite.cellWidth,
-    sprite.cellHeight,
-    dx,
-    dy,
-    dw,
-    dh,
-  );
+  const sway = WIND_SWAY[detail.kind] ?? 0;
+  if (sway > 0) {
+    // wind: shear the sprite around its foot anchor — tips move, roots stay
+    const seconds = performance.now() / 1000;
+    const phase = detail.x * 0.13 + detail.y * 0.29;
+    const shear =
+      (Math.sin(seconds * 1.6 + phase) + Math.sin(seconds * 2.9 + phase * 1.7) * 0.45) * sway;
+    ctx.save();
+    ctx.translate(point.x, point.y);
+    ctx.transform(1, 0, shear, 1, 0, 0);
+    ctx.drawImage(
+      sprite.image,
+      sx,
+      0,
+      sprite.cellWidth,
+      sprite.cellHeight,
+      dx - point.x,
+      dy - point.y,
+      dw,
+      dh,
+    );
+    ctx.restore();
+  } else {
+    ctx.drawImage(
+      sprite.image,
+      sx,
+      0,
+      sprite.cellWidth,
+      sprite.cellHeight,
+      dx,
+      dy,
+      dw,
+      dh,
+    );
+  }
   ctx.imageSmoothingEnabled = previousSmoothing;
   cueDrawer.drawTerrainDetailLifecycleCues(detail, point, scale);
   return true;
 }
+
+// wind sway strength per detail kind: shear at the canopy, still at the root
+const WIND_SWAY = {
+  scrub: 0.05,
+  tree: 0.016,
+  tuft: 0.09,
+  reeds: 0.07,
+};
 
 export function drawTerrainRockDetail(ctx, sprites, detail, point) {
   const scale = Math.max(0.22, detail.scale * (detail.kind === "boulder" ? 1.05 : 0.74));
