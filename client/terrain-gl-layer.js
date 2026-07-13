@@ -417,9 +417,9 @@ attribute vec3 aParams;   // phase, heightFrac (0 base, 1 tip), shade
 uniform vec3 uCamera;
 uniform vec2 uViewport;
 uniform float uTime;
-uniform float uMode;      // 0 = blade, 1 = ground shadow
-uniform vec3 uShadow;     // dirX, dirY, length
-uniform float uDebug;
+uniform mediump float uMode;      // 0 = blade, 1 = ground shadow
+uniform vec3 uShadow;             // dirX, dirY, length
+uniform mediump float uDebug;
 uniform float uWind;
 varying float vFrac;
 varying float vShade;
@@ -444,9 +444,9 @@ void main() {
 }`;
   const fragmentSource = `
 precision mediump float;
-uniform float uMode;
+uniform mediump float uMode;
 uniform float uDaylight;
-uniform float uDebug;
+uniform mediump float uDebug;
 varying float vFrac;
 varying float vShade;
 void main() {
