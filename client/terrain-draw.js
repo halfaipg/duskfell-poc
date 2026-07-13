@@ -145,14 +145,24 @@ export function createTerrainDrawer({
     const animPxPerTile = ANIM_SIZE / CANVAS_TILES;
     const a = halfW / animPxPerTile;
     const b = halfH / animPxPerTile;
+    // core-region quads: adjacent supertiles butt exactly instead of
+    // overlapping their margin bands (the overlap double-composited into
+    // visible cuts); world origin keeps the wave field continuous across
+    const coreMin = (ANIM_SIZE * MARGIN_TILES) / CANVAS_TILES;
+    const coreMax = ANIM_SIZE - coreMin;
+    const uvMin = coreMin / ANIM_SIZE;
+    const uvMax = coreMax / ANIM_SIZE;
     for (const entry of waterEntries.values()) {
       const tx = origin.x + (entry.superX - entry.superY) * PATCH_TILES * halfW;
       const ty = origin.y + ((entry.superX + entry.superY) * PATCH_TILES - 2 * MARGIN_TILES) * halfH;
       const corner = (u, v) => ({ x: tx + a * u - a * v, y: ty + b * u + b * v });
+      entry.worldOriginX = entry.superX * PATCH_TILES - MARGIN_TILES;
+      entry.worldOriginY = entry.superY * PATCH_TILES - MARGIN_TILES;
       glLayer.drawWaterQuad(
         entry,
-        [corner(0, 0), corner(ANIM_SIZE, 0), corner(0, ANIM_SIZE), corner(ANIM_SIZE, ANIM_SIZE)],
+        [corner(coreMin, coreMin), corner(coreMax, coreMin), corner(coreMin, coreMax), corner(coreMax, coreMax)],
         CANVAS_TILES,
+        [uvMin, uvMax],
       );
     }
   }

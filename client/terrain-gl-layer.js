@@ -269,7 +269,7 @@ export function createTerrainGlLayer(canvas) {
     return true;
   }
 
-  function drawWaterQuad(entry, corners, canvasTiles) {
+  function drawWaterQuad(entry, corners, canvasTiles, uvRange = [0, 1]) {
     if (contextLost || !waterProgram) return false;
     const layer = entry.layer;
     if (!layer.glMaskTexture) {
@@ -281,11 +281,17 @@ export function createTerrainGlLayer(canvas) {
     gl.uniform1i(waterUniforms.mask, 0);
     gl.uniform2f(waterUniforms.flow, layer.flowX, layer.flowY);
     gl.uniform1f(waterUniforms.tiles, canvasTiles);
+    gl.uniform2f(
+      gl.getUniformLocation(waterProgram, "uWorldOrigin"),
+      entry.worldOriginX ?? 0,
+      entry.worldOriginY ?? 0,
+    );
+    const [u0, u1] = uvRange;
     vertexData.set([
-      corners[0].x, corners[0].y, 0, 0, 0, 0,
-      corners[1].x, corners[1].y, 1, 0, 0, 0,
-      corners[2].x, corners[2].y, 0, 1, 0, 0,
-      corners[3].x, corners[3].y, 1, 1, 0, 0,
+      corners[0].x, corners[0].y, u0, u0, 0, 0,
+      corners[1].x, corners[1].y, u1, u0, 0, 0,
+      corners[2].x, corners[2].y, u0, u1, 0, 0,
+      corners[3].x, corners[3].y, u1, u1, 0, 0,
     ]);
     gl.bufferData(gl.ARRAY_BUFFER, vertexData, gl.DYNAMIC_DRAW);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -329,8 +335,18 @@ export function createTerrainGlLayer(canvas) {
     return entry;
   }
 
+  let grassDiagnosed = false;
+  const grassDebug =
+    typeof globalThis.location !== "undefined" && /[?&]grassDebug=1/.test(globalThis.location.search ?? "");
+
   function beginGrass(camera, cssWidth, cssHeight, nowMs, shadow, daylight) {
-    if (contextLost || !grassProgram) return false;
+    if (contextLost || !grassProgram) {
+      if (!grassDiagnosed) {
+        grassDiagnosed = true;
+        console.warn("grass: program unavailable", { contextLost, program: Boolean(grassProgram) });
+      }
+      return false;
+    }
     gl.useProgram(grassProgram);
     gl.uniform3f(grassUniforms.camera, camera.x, camera.y, camera.scale);
     gl.uniform2f(grassUniforms.viewport, cssWidth, cssHeight);
@@ -356,10 +372,19 @@ export function createTerrainGlLayer(canvas) {
     gl.vertexAttribPointer(aParams, 3, gl.FLOAT, false, 28, 16);
     // shadow pass first (under the blades), then the blades
     const mode = gl.getUniformLocation(grassProgram, "uMode");
+    gl.uniform1f(gl.getUniformLocation(grassProgram, "uDebug"), grassDebug ? 1.0 : 0.0);
     gl.uniform1f(mode, 1.0);
     gl.drawArrays(gl.TRIANGLES, 0, entry.vertexCount);
     gl.uniform1f(mode, 0.0);
     gl.drawArrays(gl.TRIANGLES, 0, entry.vertexCount);
+    if (!grassDiagnosed) {
+      grassDiagnosed = true;
+      console.info("grass: first chunk drawn", {
+        vertices: entry.vertexCount,
+        glError: gl.getError(),
+        debug: grassDebug,
+      });
+    }
   }
 
   function clearGrass() {
@@ -393,18 +418,20 @@ uniform vec2 uViewport;
 uniform float uTime;
 uniform float uMode;      // 0 = blade, 1 = ground shadow
 uniform vec3 uShadow;     // dirX, dirY, length
+uniform float uDebug;
 varying float vFrac;
 varying float vShade;
 void main() {
   float sway = (sin(uTime * 1.9 + aParams.x) + sin(uTime * 3.3 + aParams.x * 1.7) * 0.45)
              * 1.7 * aParams.y;
+  vec2 corner = aCorner * mix(1.0, 4.0, uDebug);
   vec2 world;
   if (uMode < 0.5) {
-    world = aPos + vec2(aCorner.x + sway, aCorner.y);
+    world = aPos + vec2(corner.x + sway, corner.y);
   } else {
     // flatten the blade onto the ground along the sun's cast direction
-    float rise = -aCorner.y;
-    world = aPos + vec2(aCorner.x + sway * 0.6, 0.0)
+    float rise = -corner.y;
+    world = aPos + vec2(corner.x + sway * 0.6, 0.0)
           + vec2(uShadow.x, uShadow.y * 0.55) * rise * uShadow.z;
   }
   vec2 screen = (world - uCamera.xy) * uCamera.z;
@@ -417,6 +444,7 @@ void main() {
 precision mediump float;
 uniform float uMode;
 uniform float uDaylight;
+uniform float uDebug;
 varying float vFrac;
 varying float vShade;
 void main() {
@@ -425,6 +453,7 @@ void main() {
     vec3 tip = vec3(0.45, 0.54, 0.31);
     vec3 col = mix(base, tip, vFrac) * (0.82 + vShade * 0.36);
     col *= mix(0.62, 1.0, max(uDaylight, 0.25));
+    col = mix(col, vec3(1.0, 0.1, 0.1), uDebug);
     gl_FragColor = vec4(col, 1.0);
   } else {
     float a = 0.20 * uDaylight;
@@ -494,6 +523,7 @@ uniform float uCanvasTiles;
 uniform sampler2D uScene;
 uniform vec2 uResolution;
 uniform vec3 uSun;
+uniform vec2 uWorldOrigin;
 varying vec2 vUv;
 
 vec2 hash2(vec2 p) {
@@ -523,7 +553,9 @@ vec2 worley(vec2 p, float t) {
 void main() {
   float mask = texture2D(uMask, vUv).a;
   if (mask < 0.02) discard;
-  vec2 wc = vUv * uCanvasTiles;
+  // GLOBAL tile coords: waves, caustics and refraction offsets must be
+  // continuous across supertile quads or the seams read as cuts
+  vec2 wc = vUv * uCanvasTiles + uWorldOrigin;
   float t = uTime;
   vec2 drift = uFlow * t * 0.35;
   float body = smoothstep(0.30, 0.85, mask);
@@ -553,9 +585,9 @@ void main() {
   vec3 sun = normalize(uSun);
   float daylight = clamp(uSun.z * 2.4, 0.0, 1.0);
   float lowSun = clamp(1.0 - uSun.z * 1.8, 0.0, 1.0);
-  float spec = pow(max(dot(normal, sun), 0.0), mix(34.0, 14.0, lowSun));
+  float spec = pow(max(dot(normal, sun), 0.0), mix(42.0, 22.0, lowSun));
   vec3 glintColor = mix(vec3(0.9, 0.94, 0.88), vec3(1.0, 0.78, 0.5), lowSun * 0.8);
-  col += glintColor * spec * body * mix(0.15, 0.62, daylight);
+  col += glintColor * spec * body * mix(0.10, 0.34, daylight);
   col *= mix(0.55, 1.0, max(daylight, 0.18));
 
   // faint caustic glimmer under the refraction
