@@ -53,9 +53,42 @@ async function loadPainting(name) {
   c.getContext("2d").drawImage(bmp, 0, 0);
   return c;
 }
-const [meadow, heath, scree, cliff] = await Promise.all(
+const [meadow, heath, scree, cliffRaw] = await Promise.all(
   ["biome-meadow.webp", "biome-heath.webp", "biome-scree.webp", "biome-cliff.webp"].map(loadPainting),
 );
+
+// the cliff plate has dark fissure lines painted into it; at terrain scale
+// they read as black grid wires — inpaint them with the surrounding rock
+// tone (heavily blurred copy) so they become soft shading instead
+function healCracks(src) {
+  const w = src.width, h = src.height;
+  const blur = document.createElement("canvas");
+  blur.width = w; blur.height = h;
+  const bctx = blur.getContext("2d");
+  bctx.imageSmoothingEnabled = true;
+  bctx.drawImage(src, 0, 0, w / 12, h / 12);
+  bctx.drawImage(blur, 0, 0, w / 12, h / 12, 0, 0, w, h);
+  const bdata = bctx.getImageData(0, 0, w, h).data;
+  const out = document.createElement("canvas");
+  out.width = w; out.height = h;
+  const octx = out.getContext("2d");
+  octx.drawImage(src, 0, 0);
+  const img = octx.getImageData(0, 0, w, h);
+  const d = img.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const lum = d[i] * 0.3 + d[i + 1] * 0.55 + d[i + 2] * 0.15;
+    if (lum < 88) {
+      // dark crack: mostly replace with local rock tone, keep a whisper
+      const k = Math.max(0, lum / 88) * 0.35 + 0.08;
+      d[i] = d[i] * k + bdata[i] * (1 - k) * 0.92;
+      d[i + 1] = d[i + 1] * k + bdata[i + 1] * (1 - k) * 0.92;
+      d[i + 2] = d[i + 2] * k + bdata[i + 2] * (1 - k) * 0.92;
+    }
+  }
+  octx.putImageData(img, 0, 0);
+  return out;
+}
+const cliff = healCracks(cliffRaw);
 
 // ---- albedo bake: layered like the game compositor, soft boundaries ----
 // each material class paints through a mask rendered at 1px/tile and scaled
@@ -66,7 +99,6 @@ const albedoCanvas = document.createElement("canvas");
 albedoCanvas.width = cols * TPX; albedoCanvas.height = rows * TPX;
 const actx = albedoCanvas.getContext("2d");
 
-const tri = (v, m) => m - Math.abs((v % (2 * m)) - m); // mirrored tiling
 function paintLayer(src, maskFn, tint) {
   const mask = document.createElement("canvas");
   mask.width = cols; mask.height = rows;
@@ -81,11 +113,18 @@ function paintLayer(src, maskFn, tint) {
   const layer = document.createElement("canvas");
   layer.width = albedoCanvas.width; layer.height = albedoCanvas.height;
   const lctx = layer.getContext("2d");
-  for (let y = 0; y < rows; y += 1) {
-    for (let x = 0; x < cols; x += 1) {
-      const su = tri(x * 48, src.width - 48);
-      const sv = tri(y * 48, src.height - 48);
-      lctx.drawImage(src, su, sv, 48, 48, x * TPX, y * TPX, TPX, TPX);
+  // one continuous mirror-tiled sheet — per-tile crops leave dark bilinear
+  // bleed at every crop border, which reads as a black grid
+  const bw = src.width * (TPX / 48);
+  const bh = src.height * (TPX / 48);
+  lctx.imageSmoothingEnabled = true;
+  for (let by = 0; by * bh < layer.height; by += 1) {
+    for (let bx = 0; bx * bw < layer.width; bx += 1) {
+      lctx.save();
+      lctx.translate(bx * bw + (bx % 2 ? bw : 0), by * bh + (by % 2 ? bh : 0));
+      lctx.scale(bx % 2 ? -1 : 1, by % 2 ? -1 : 1);
+      lctx.drawImage(src, 0, 0, bw, bh);
+      lctx.restore();
     }
   }
   if (tint) {
