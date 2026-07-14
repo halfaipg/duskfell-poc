@@ -16,6 +16,7 @@ import { createNetworkClient } from "./network-client.js";
 import { renderHud, renderPanel } from "./ui-panels.js";
 import { terrainHeightAtWorld } from "./terrain.js";
 import { drawWaterFish } from "./water-fish.js";
+import { drawWorldMap, toggleWorldMap } from "./world-map.js";
 import { setSun } from "./sun-state.js";
 
 const { canvas, screenCtx, ui } = getAppDom();
@@ -180,6 +181,11 @@ chatInput?.addEventListener("keydown", (event) => {
 
 window.addEventListener("keydown", (event) => {
   if (isTextEntryTarget(event.target)) return;
+  if (event.key === "m" || event.key === "M") {
+    event.preventDefault();
+    toggleWorldMap();
+    return;
+  }
   if (event.key === "Enter" && chatInput) {
     event.preventDefault();
     chatInput.hidden = false;
@@ -406,6 +412,7 @@ function draw(now = 0) {
     }
 
     drawOverlay(rect);
+    drawWorldMap(ctx, rect, terrainCache.getTerrain(), players, playerId);
     updateHud();
   } catch (error) {
     if (ui.hud) {
