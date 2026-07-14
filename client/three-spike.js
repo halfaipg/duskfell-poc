@@ -261,8 +261,8 @@ function hBil(x, z) {
 // fluffy instanced grass (Codrops technique: instanced blades, dark base ->
 // light tip gradient as fake AO, sine wind + per-blade phase noise)
 const GRASS_RADIUS = 46;
-const bladeGeo = new THREE.PlaneGeometry(0.024, 0.26, 1, 3);
-bladeGeo.translate(0, 0.13, 0);
+const bladeGeo = new THREE.PlaneGeometry(0.02, 0.2, 1, 3);
+bladeGeo.translate(0, 0.1, 0);
 const grassUniforms = { uTime: { value: 0 } };
 const grassMat = new THREE.ShaderMaterial({
   uniforms: grassUniforms,
@@ -353,23 +353,38 @@ const treeMat = new THREE.MeshStandardMaterial({
   map: treeTexture(), transparent: true, alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.9,
   emissive: 0x1c2a18, emissiveIntensity: 0.8,
 });
-const treeGeo = new THREE.PlaneGeometry(1.6, 2.2);
+const treeGeo = new THREE.PlaneGeometry(4.6, 6.6);
 const trees = new THREE.Group();
 for (let y = 0; y < rows; y += 1) {
   for (let x = 0; x < cols; x += 1) {
-    if (materialAt(x, y) !== "grass" || vegAt(x, y) < 0.5 || hash01(x + 3, y + 11) < 0.72) continue;
+    if (materialAt(x, y) !== "grass" || vegAt(x, y) < 0.5 || hash01(x + 3, y + 11) < 0.86) continue;
     const t = new THREE.Mesh(treeGeo, treeMat);
     const wx = x + 0.2 + hash01(x, y) * 0.6;
     const wz = y + 0.2 + hash01(x + 9, y) * 0.6;
     const h = (hAt(Math.round(wx), Math.round(wz)) + 0.05) * HSCALE;
-    const s = 0.8 + hash01(x + 5, y + 5) * 0.7;
+    const s = 0.75 + hash01(x + 5, y + 5) * 0.55;
     t.scale.setScalar(s);
-    t.position.set(wx, h + 1.1 * s, wz);
+    t.position.set(wx, h + 3.3 * s, wz);
     t.castShadow = true;
     trees.add(t);
   }
 }
 scene.add(trees);
+
+// human-scale reference: a 1.8m figure at the focus point
+{
+  const fig = new THREE.Group();
+  const bodyMat = new THREE.MeshStandardMaterial({ color: 0x7a5c40, roughness: 0.8 });
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.13, 0.62, 8), bodyMat);
+  body.position.y = 0.31;
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.11, 10, 8), new THREE.MeshStandardMaterial({ color: 0xc9a184, roughness: 0.7 }));
+  head.position.y = 0.74;
+  fig.add(body, head);
+  fig.scale.setScalar(0.9 / 0.85);
+  fig.position.set(FOCUS_X + 0.5, hBil(FOCUS_X + 0.5, FOCUS_Y + 0.5) * HSCALE, FOCUS_Y + 0.5);
+  fig.traverse((o) => { o.castShadow = true; });
+  scene.add(fig);
+}
 
 // sun + sky light
 const sun = new THREE.DirectionalLight(0xfff2d8, 3.4);
