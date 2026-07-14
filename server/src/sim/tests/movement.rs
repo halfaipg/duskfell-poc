@@ -13,8 +13,8 @@ fn diagonal_movement_is_not_faster_than_cardinal_movement() {
         &mut cardinal,
         cardinal_player,
         Position {
-            x: 1000.0,
-            y: 700.0,
+            x: 11800.0,
+            y: 500.0,
         },
     );
     cardinal.set_input(
@@ -34,8 +34,8 @@ fn diagonal_movement_is_not_faster_than_cardinal_movement() {
         &mut diagonal,
         diagonal_player,
         Position {
-            x: 1000.0,
-            y: 700.0,
+            x: 11800.0,
+            y: 500.0,
         },
     );
     diagonal.set_input(
@@ -112,8 +112,8 @@ fn terrain_detail_authority_blocks_authoritative_movement() {
     let player_id = Uuid::new_v4();
     let authority = test_terrain_detail_authority(TerrainDetailAuthorityBlocker {
         id: "test-tree-blocker".to_string(),
-        x: 1000.0,
-        y: 700.0,
+        x: 11800.0,
+        y: 500.0,
         collision: TerrainDetailAuthorityCollision {
             blocks_movement: true,
             shape: "aabb".to_string(),
@@ -126,8 +126,8 @@ fn terrain_detail_authority_blocks_authoritative_movement() {
             .expect("test terrain detail authority should load");
     sim.add_player(player_id);
     let start = Position {
-        x: 1000.0 + 32.0 + PLAYER_COLLISION_RADIUS + 4.0,
-        y: 700.0,
+        x: 11800.0 + 32.0 + PLAYER_COLLISION_RADIUS + 4.0,
+        y: 500.0,
     };
     move_player_to_position(&mut sim, player_id, start);
 
@@ -150,8 +150,8 @@ fn overlapped_terrain_detail_authority_allows_movement_away() {
     let player_id = Uuid::new_v4();
     let authority = test_terrain_detail_authority(TerrainDetailAuthorityBlocker {
         id: "test-tree-blocker".to_string(),
-        x: 1000.0,
-        y: 700.0,
+        x: 11800.0,
+        y: 500.0,
         collision: TerrainDetailAuthorityCollision {
             blocks_movement: true,
             shape: "aabb".to_string(),
@@ -163,7 +163,7 @@ fn overlapped_terrain_detail_authority_allows_movement_away() {
         SimWorld::from_content_with_terrain_detail_authority(WorldContent::demo(), Some(authority))
             .expect("test terrain detail authority should load");
     sim.add_player(player_id);
-    let start = Position { x: 988.0, y: 700.0 };
+    let start = Position { x: 11788.0, y: 500.0 };
     move_player_to_position(&mut sim, player_id, start);
 
     sim.set_input(

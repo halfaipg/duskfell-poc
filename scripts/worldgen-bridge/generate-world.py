@@ -175,6 +175,41 @@ def main():
             heights_i = np.where((d > 1.6) & (d <= 3.4) & (heights_i < 3) & (heights_i >= 0), 2, heights_i)
         print(f"passes carved at: {passes}")
 
+    # PEAK SCULPT: rock is impassable by material on the server, so the
+    # massif interior height is pure visuals — BFS depth from the rim lifts
+    # interior vertices into terraced peaks with hashed jitter for a jagged
+    # skyline (rim stays at the terrace height so lowland tiles don't tilt)
+    from collections import deque
+    def _vhash01(x, y):
+        v = ((x + 37) * 374761393 ^ (y + 91) * 668265263) & 0xffffffff
+        v = ((v ^ (v >> 13)) * 1274126177) & 0xffffffff
+        return (v % 1000) / 1000
+    rock_tile = (materials == "rock") | (materials == "stone")
+    def _is_rock(x, y):
+        if x < 0 or y < 0 or x >= TILES_X or y >= TILES_Y:
+            return True
+        return bool(rock_tile[y, x])
+    depth = np.full((TILES_Y + 1, TILES_X + 1), -1, np.int32)
+    queue = deque()
+    for vy in range(TILES_Y + 1):
+        for vx in range(TILES_X + 1):
+            if not all(_is_rock(ax, ay) for ax, ay in ((vx-1,vy-1),(vx,vy-1),(vx-1,vy),(vx,vy))):
+                depth[vy, vx] = 0
+                queue.append((vx, vy))
+    while queue:
+        x, y = queue.popleft()
+        for dx, dy in ((1,0),(-1,0),(0,1),(0,-1)):
+            nx, ny = x+dx, y+dy
+            if 0 <= nx <= TILES_X and 0 <= ny <= TILES_Y and depth[ny, nx] == -1:
+                depth[ny, nx] = depth[y, x] + 1
+                queue.append((nx, ny))
+    for vy in range(TILES_Y + 1):
+        for vx in range(TILES_X + 1):
+            d = depth[vy, vx]
+            if d > 0 and heights_i[vy, vx] >= 4:
+                jitter = 1 if (d >= 2 and _vhash01(vx, vy) > 0.55) else 0
+                heights_i[vy, vx] = min(9, 4 + min(d, 4) + jitter)
+
     # client floats mirror the terraces with a whisper of residual relief
     residual = np.clip(vertex_norm * 3.2 - np.round(np.clip(vertex_norm * 3.2, 0, 2)), -0.4, 0.4)
     heights_f = heights_i.astype(np.float32) + residual * 0.3
@@ -203,6 +238,7 @@ def main():
         grid_rows.append("".join(np.base_repr(legend.index(materials[y, x]), 36).lower() for x in range(TILES_X)))
     world["map"]["terrain"]["materialGrid"] = grid_rows
     world["map"]["terrain"]["vertexHeights"] = heights_i.tolist()
+    world["map"]["terrain"]["maxElevation"] = int(heights_i.max())
     world["map"]["width"] = TILES_X * 64
     world["map"]["height"] = TILES_Y * 64
     world["spawn"] = {"x": (TILES_X / 2) * 64, "y": (TILES_Y / 2) * 64}

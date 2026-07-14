@@ -53,7 +53,7 @@ export function elevationEdgesForTile(tile, tiles, cols, rows) {
     if (drop < 0.75) continue;
     edges.push({
       edge,
-      drop: Math.min(3.5, drop),
+      drop: Math.min(8.0, drop),
       neighborMaterial: neighbor.material,
     });
   }

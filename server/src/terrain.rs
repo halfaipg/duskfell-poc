@@ -78,16 +78,19 @@ impl BakedTerrainGrid {
         let mut materials = Vec::with_capacity(rows as usize);
         for (y, row) in material_grid.iter().enumerate() {
             if row.chars().count() != cols as usize {
-                return Err(format!("materialGrid row {y} has {} tiles, expected {cols}", row.len()));
+                return Err(format!(
+                    "materialGrid row {y} has {} tiles, expected {cols}",
+                    row.len()
+                ));
             }
             let mut tile_row = Vec::with_capacity(cols as usize);
             for (x, ch) in row.chars().enumerate() {
                 let index = ch
                     .to_digit(36)
                     .ok_or_else(|| format!("materialGrid[{y}][{x}] '{ch}' is not base-36"))?;
-                let name = legend
-                    .get(index as usize)
-                    .ok_or_else(|| format!("materialGrid[{y}][{x}] index {index} outside legend"))?;
+                let name = legend.get(index as usize).ok_or_else(|| {
+                    format!("materialGrid[{y}][{x}] index {index} outside legend")
+                })?;
                 let material = TerrainMaterial::from_name(name)
                     .ok_or_else(|| format!("unknown terrain material '{name}'"))?;
                 tile_row.push(material);
@@ -149,7 +152,11 @@ impl TerrainAuthority {
     }
 
     pub fn is_walkable_at_world(&self, world_x: f32, world_y: f32) -> bool {
-        self.material_at_world(world_x, world_y) != TerrainMaterial::Water
+        // mountains are solid: rock is the massif body and never walkable,
+        // like water — impassability comes from material, not step height,
+        // so bilerped boundary tiles cannot form accidental ramps
+        let material = self.material_at_world(world_x, world_y);
+        material != TerrainMaterial::Water && material != TerrainMaterial::Rock
     }
 
     pub fn allows_step(&self, from_x: f32, from_y: f32, to_x: f32, to_y: f32) -> bool {
