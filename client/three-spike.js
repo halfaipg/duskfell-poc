@@ -53,9 +53,20 @@ async function loadPainting(name) {
   c.getContext("2d").drawImage(bmp, 0, 0);
   return c;
 }
-const [meadow, heath, scree, cliffRaw] = await Promise.all(
-  ["biome-meadow.webp", "biome-heath.webp", "biome-scree.webp", "biome-cliff.webp"].map(loadPainting),
-);
+async function loadMaterial(name) {
+  const blob = await (await fetch(`/assets/terrain/materials/${name}`)).blob();
+  const bmp = await createImageBitmap(blob);
+  const c = document.createElement("canvas");
+  c.width = bmp.width; c.height = bmp.height;
+  c.getContext("2d").drawImage(bmp, 0, 0);
+  return c;
+}
+const [meadow, heatherTex, oakTex, cliffRaw] = await Promise.all([
+  loadMaterial("meadow-sward.png"),
+  loadMaterial("heather-mat.png"),
+  loadMaterial("leaf-litter-loam.png"),
+  loadMaterial("granite-cliff.png"),
+]);
 
 // the cliff plate has dark fissure lines painted into it; at terrain scale
 // they read as black grid wires — inpaint them with the surrounding rock
@@ -88,7 +99,7 @@ function healCracks(src) {
   octx.putImageData(img, 0, 0);
   return out;
 }
-const cliff = healCracks(cliffRaw);
+const cliff = cliffRaw;
 
 // ---- albedo bake: layered like the game compositor, soft boundaries ----
 // each material class paints through a mask rendered at 1px/tile and scaled
@@ -141,20 +152,26 @@ const slopeAt = (x, y) => {
   const c = [hAt(x, y), hAt(x + 1, y), hAt(x, y + 1), hAt(x + 1, y + 1)];
   return Math.max(...c) - Math.min(...c);
 };
-// base coat: meadow everywhere
+// base coat: meadow sward everywhere
 paintLayer(meadow, () => 1, null);
-// dirt & shore
-paintLayer(heath, (x, y) => {
+// heather moor where the climate says heath — real Whittaker-style placement
+const heathW = bundle.heathWeights ?? null;
+if (heathW) {
+  paintLayer(heatherTex, (x, y) =>
+    Math.max(0, Math.min(1, (((heathW[y]?.[x] ?? 0)) - 0.5) / 0.22)), null);
+}
+// leaf litter / bare loam on dirt, shore and settlement ground
+paintLayer(oakTex, (x, y) => {
   const m = materialAt(x, y);
   return m === "dirt" || m === "shore" || m === "settlement" ? 1 : 0;
 }, null);
-// rock body, slate-toned
-paintLayer(scree, (x, y) => {
+// granite on the massif body
+paintLayer(cliff, (x, y) => {
   const m = materialAt(x, y);
   return m === "rock" || m === "stone" ? 1 : 0;
-}, "rgba(140, 143, 150, 0.75)");
-// cliff paint on genuinely steep ground, wherever it is
-paintLayer(cliff, (x, y) => Math.max(0, Math.min(1, (slopeAt(x, y) - 0.45) / 0.2)), "rgba(168, 170, 178, 0.85)");
+}, "rgba(155, 157, 163, 0.8)");
+// and on genuinely steep ground, wherever it is
+paintLayer(cliff, (x, y) => Math.max(0, Math.min(1, (slopeAt(x, y) - 0.45) / 0.2)), null);
 // water: dark pool tint with a soft shoreline
 paintLayer(meadow, (x, y) => (materialAt(x, y) === "water" ? 1 : 0), "rgba(30, 58, 66, 0.92)");
 
