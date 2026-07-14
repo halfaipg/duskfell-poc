@@ -36,13 +36,9 @@ for (let y = 0; y <= rows; y += 1) {
     smooth[y][x] = sum / wsum;
   }
 }
-// keep a share of the raw steps back: pure smoothing turns mountains into
-// gentle hills — the blend gives natural slopes with rocky ledge character
-const hAt = (x, y) => {
-  const cy = Math.max(0, Math.min(rows, y));
-  const cx = Math.max(0, Math.min(cols, x));
-  return smooth[cy][cx] + (rawH(cx, cy) - smooth[cy][cx]) * 0.3;
-};
+// pure smooth heights: the terrace steps are a 2D-era artifact — smooth
+// slopes render as one continuous mountainside with no panel seams
+const hAt = (x, y) => smooth[Math.max(0, Math.min(rows, y))][Math.max(0, Math.min(cols, x))];
 
 const hash01 = (a, b) => {
   let v = (Math.imul(a + 37, 374761393) ^ Math.imul(b + 91, 668265263)) >>> 0;
@@ -119,7 +115,7 @@ paintLayer(scree, (x, y) => {
   return m === "rock" || m === "stone" ? 1 : 0;
 }, "rgba(140, 143, 150, 0.75)");
 // cliff paint on genuinely steep ground, wherever it is
-paintLayer(cliff, (x, y) => Math.max(0, Math.min(1, (slopeAt(x, y) - 0.55) / 0.5)), null);
+paintLayer(cliff, (x, y) => Math.max(0, Math.min(1, (slopeAt(x, y) - 0.45) / 0.2)), "rgba(168, 170, 178, 0.85)");
 // water: dark pool tint with a soft shoreline
 paintLayer(meadow, (x, y) => (materialAt(x, y) === "water" ? 1 : 0), "rgba(30, 58, 66, 0.92)");
 
@@ -238,6 +234,8 @@ sun.position.set(FOCUS_X - 26, 34, FOCUS_Y + 18);
 sun.target.position.set(FOCUS_X, 0, FOCUS_Y);
 sun.castShadow = true;
 sun.shadow.mapSize.set(4096, 4096);
+sun.shadow.bias = -0.0004;
+sun.shadow.normalBias = 0.6;
 const sc = sun.shadow.camera;
 sc.left = -SPAN; sc.right = SPAN; sc.top = SPAN; sc.bottom = -SPAN; sc.far = 160;
 scene.add(sun, sun.target);
