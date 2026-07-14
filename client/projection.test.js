@@ -39,5 +39,5 @@ test("height only changes screen y", () => {
   const raised = projectMap(2, 2, 3);
 
   assert.equal(flat.x, raised.x);
-  assert.equal(flat.y - raised.y, 18);
+  assert.equal(flat.y - raised.y, 3 * PROJECTION.zPx);
 });

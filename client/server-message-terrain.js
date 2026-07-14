@@ -1,3 +1,4 @@
+import { PROJECTION } from "./projection.js";
 import { TERRAIN_MATERIALS, TERRAIN_PROFILE } from "./server-message-constants.js";
 import {
   isObject,
@@ -35,7 +36,7 @@ function normalizeTerrain(terrain, prefix) {
     throw new Error(`${prefix} projection does not match the client`);
   }
   const heightScale = normalizePositiveNumber(terrain.heightScale, `${prefix}.heightScale`);
-  if (heightScale !== 6) {
+  if (heightScale !== PROJECTION.zPx) {
     throw new Error(`${prefix}.heightScale does not match the client`);
   }
   const minElevation = normalizeInteger(terrain.minElevation, `${prefix}.minElevation`);

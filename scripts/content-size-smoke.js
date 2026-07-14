@@ -29,7 +29,7 @@ await writeFile(
           unitsPerTile: 64,
           tileWidth: 64,
           tileHeight: 64,
-          heightScale: 6,
+          heightScale: 14,
           minElevation: -1,
           maxElevation: 4,
           waterLevel: -1,

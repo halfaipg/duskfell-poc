@@ -7,7 +7,7 @@ export const PROJECTION = {
   tileAspectRatio: 1,
   axisAngleDegrees: 45,
   heightAxis: "screen-y",
-  zPx: 6,
+  zPx: 14,
   unitsPerTile: 64,
 };
 

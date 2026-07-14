@@ -19,6 +19,10 @@ const MATERIAL_COLORS = {
 let mapCanvas = null;
 let mapKey = null;
 let visible = false;
+// hand-inked art version baked per world by the img2img pipeline; the data
+// render below remains the always-correct fallback
+const mapArt = new Image();
+mapArt.src = "/assets/terrain/world-map-art.png";
 
 export function toggleWorldMap() {
   visible = !visible;
@@ -95,7 +99,11 @@ export function drawWorldMap(ctx, rect, terrain, players, localPlayerId) {
   ctx.lineWidth = 2;
   ctx.strokeRect(x0 - 9, y0 - 9, drawW + 18, drawH + 18);
   ctx.imageSmoothingEnabled = true;
-  ctx.drawImage(map, x0, y0, drawW, drawH);
+  if (mapArt.complete && mapArt.naturalWidth > 0) {
+    ctx.drawImage(mapArt, x0, y0, drawW, drawH);
+  } else {
+    ctx.drawImage(map, x0, y0, drawW, drawH);
+  }
   // soft vignette
   const grad = ctx.createRadialGradient(
     x0 + drawW / 2, y0 + drawH / 2, Math.min(drawW, drawH) * 0.42,
