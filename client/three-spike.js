@@ -61,11 +61,12 @@ async function loadMaterial(name) {
   c.getContext("2d").drawImage(bmp, 0, 0);
   return c;
 }
-const [meadow, heatherTex, oakTex, cliffRaw] = await Promise.all([
+const [meadow, heatherTex, oakTex, cliffRaw, fellTex] = await Promise.all([
   loadMaterial("meadow-sward.png"),
   loadMaterial("heather-mat.png"),
   loadMaterial("leaf-litter-loam.png"),
   loadMaterial("granite-cliff.png"),
+  loadMaterial("granite-fell.png"),
 ]);
 
 // the cliff plate has dark fissure lines painted into it; at terrain scale
@@ -101,83 +102,31 @@ function healCracks(src) {
 }
 const cliff = cliffRaw;
 
-// ---- albedo bake: layered like the game compositor, soft boundaries ----
-// each material class paints through a mask rendered at 1px/tile and scaled
-// up with bilinear smoothing, so regions blend over ~a tile instead of
-// meeting at hard square edges; mirrored mapping never wrap-jumps
-const TPX = 24; // albedo px per tile
-const albedoCanvas = document.createElement("canvas");
-albedoCanvas.width = cols * TPX; albedoCanvas.height = rows * TPX;
-const actx = albedoCanvas.getContext("2d");
-
-function paintLayer(src, maskFn, tint) {
-  const mask = document.createElement("canvas");
-  mask.width = cols; mask.height = rows;
-  const mctx = mask.getContext("2d");
-  const img = mctx.createImageData(cols, rows);
-  for (let y = 0; y < rows; y += 1) {
-    for (let x = 0; x < cols; x += 1) {
-      img.data[(y * cols + x) * 4 + 3] = Math.round(255 * Math.max(0, Math.min(1, maskFn(x, y))));
-    }
-  }
-  mctx.putImageData(img, 0, 0);
-  const layer = document.createElement("canvas");
-  layer.width = albedoCanvas.width; layer.height = albedoCanvas.height;
-  const lctx = layer.getContext("2d");
-  // one continuous mirror-tiled sheet — per-tile crops leave dark bilinear
-  // bleed at every crop border, which reads as a black grid
-  const bw = src.width * (TPX / 48);
-  const bh = src.height * (TPX / 48);
-  lctx.imageSmoothingEnabled = true;
-  for (let by = 0; by * bh < layer.height; by += 1) {
-    for (let bx = 0; bx * bw < layer.width; bx += 1) {
-      lctx.save();
-      lctx.translate(bx * bw + (bx % 2 ? bw : 0), by * bh + (by % 2 ? bh : 0));
-      lctx.scale(bx % 2 ? -1 : 1, by % 2 ? -1 : 1);
-      lctx.drawImage(src, 0, 0, bw, bh);
-      lctx.restore();
-    }
-  }
-  if (tint) {
-    lctx.globalCompositeOperation = "multiply";
-    lctx.fillStyle = tint;
-    lctx.fillRect(0, 0, layer.width, layer.height);
-  }
-  lctx.globalCompositeOperation = "destination-in";
-  lctx.imageSmoothingEnabled = true;
-  lctx.drawImage(mask, 0, 0, layer.width, layer.height);
-  actx.drawImage(layer, 0, 0);
-}
+// ---- splat mask bake: low-res weights only — textures sample at their
+// own real-world scale in the shader, so proportions stay true ----
+const heathW = bundle.heathWeights ?? null;
 const slopeAt = (x, y) => {
   const c = [hAt(x, y), hAt(x + 1, y), hAt(x, y + 1), hAt(x + 1, y + 1)];
   return Math.max(...c) - Math.min(...c);
 };
-// base coat: meadow sward everywhere
-paintLayer(meadow, () => 1, null);
-// heather moor where the climate says heath — real Whittaker-style placement
-const heathW = bundle.heathWeights ?? null;
-if (heathW) {
-  paintLayer(heatherTex, (x, y) =>
-    Math.max(0, Math.min(1, (((heathW[y]?.[x] ?? 0)) - 0.5) / 0.22)), null);
+const MPX = 4; // mask px per tile, bilinear-smoothed by sampling
+const maskCanvas = document.createElement("canvas");
+maskCanvas.width = cols * MPX; maskCanvas.height = rows * MPX;
+const mctx = maskCanvas.getContext("2d");
+const maskImg = mctx.createImageData(maskCanvas.width, maskCanvas.height);
+for (let py = 0; py < maskCanvas.height; py += 1) {
+  for (let px = 0; px < maskCanvas.width; px += 1) {
+    const x = Math.floor(px / MPX), y = Math.floor(py / MPX);
+    const m = materialAt(x, y);
+    const o = (py * maskCanvas.width + px) * 4;
+    maskImg.data[o] = Math.round(255 * Math.max(0, Math.min(1, (((heathW?.[y]?.[x] ?? 0)) - 0.5) / 0.22)));
+    maskImg.data[o + 1] = (m === "dirt" || m === "shore" || m === "settlement") ? 255 : 0;
+    maskImg.data[o + 2] = (m === "rock" || m === "stone") ? 255 : 0;
+    maskImg.data[o + 3] = m === "water" ? 255 : 0;
+  }
 }
-// leaf litter / bare loam on dirt, shore and settlement ground
-paintLayer(oakTex, (x, y) => {
-  const m = materialAt(x, y);
-  return m === "dirt" || m === "shore" || m === "settlement" ? 1 : 0;
-}, null);
-// granite on the massif body
-paintLayer(cliff, (x, y) => {
-  const m = materialAt(x, y);
-  return m === "rock" || m === "stone" ? 1 : 0;
-}, "rgba(155, 157, 163, 0.8)");
-// and on genuinely steep ground, wherever it is
-paintLayer(cliff, (x, y) => Math.max(0, Math.min(1, (slopeAt(x, y) - 0.45) / 0.2)), null);
-// water: dark pool tint with a soft shoreline
-paintLayer(meadow, (x, y) => (materialAt(x, y) === "water" ? 1 : 0), "rgba(30, 58, 66, 0.92)");
-
-const albedo = new THREE.CanvasTexture(albedoCanvas);
-albedo.colorSpace = THREE.SRGBColorSpace;
-albedo.anisotropy = 8;
+mctx.putImageData(maskImg, 0, 0);
+const albedo = new THREE.CanvasTexture(maskCanvas);
 
 // ---- scene ----
 const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById("gl"), antialias: true });
@@ -216,17 +165,28 @@ for (let vy = 0; vy <= rows; vy += 1) {
   }
 }
 geo.computeVertexNormals();
-// triplanar rock on steep ground: the baked albedo is projected top-down,
-// so steep curvy faces stretch it into smears that read as gaps — sample
-// the rock texture from the side on those faces instead
-const rockTex = new THREE.CanvasTexture(cliff);
-rockTex.colorSpace = THREE.SRGBColorSpace;
-rockTex.wrapS = rockTex.wrapT = THREE.MirroredRepeatWrapping;
-rockTex.anisotropy = 8;
+// world-scale material samplers: repeat distance in tiles is chosen per
+// material so a leaf stays leaf-sized and granite grain stays grain-sized
+function matTex(canvas) {
+  const t = new THREE.CanvasTexture(canvas);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.MirroredRepeatWrapping;
+  t.anisotropy = 8;
+  return t;
+}
+const rockTex = matTex(cliff);
+const meadowT = matTex(meadow);
+const heatherT = matTex(heatherTex);
+const litterT = matTex(oakTex);
+const fellT = matTex(fellTex);
 const terrainMat = new THREE.MeshStandardMaterial({ map: albedo, roughness: 0.95, metalness: 0 });
 terrainMat.onBeforeCompile = (shader) => {
   shader.uniforms.uRock = { value: rockTex };
-  shader.uniforms.uRockScale = { value: 0.16 };
+  shader.uniforms.uRockScale = { value: 0.24 };
+  shader.uniforms.uMeadow = { value: meadowT };
+  shader.uniforms.uHeather = { value: heatherT };
+  shader.uniforms.uLitter = { value: litterT };
+  shader.uniforms.uFell = { value: fellT };
   shader.vertexShader = shader.vertexShader
     .replace("#include <common>", "#include <common>\nvarying vec3 vWPos;\nvarying vec3 vWNormal;")
     .replace(
@@ -236,22 +196,34 @@ terrainMat.onBeforeCompile = (shader) => {
   shader.fragmentShader = shader.fragmentShader
     .replace(
       "#include <common>",
-      "#include <common>\nuniform sampler2D uRock;\nuniform float uRockScale;\nvarying vec3 vWPos;\nvarying vec3 vWNormal;",
+      "#include <common>\nuniform sampler2D uRock;\nuniform float uRockScale;\nuniform sampler2D uMeadow;\nuniform sampler2D uHeather;\nuniform sampler2D uLitter;\nuniform sampler2D uFell;\nvarying vec3 vWPos;\nvarying vec3 vWNormal;",
     )
     .replace(
       "#include <map_fragment>",
-      `#include <map_fragment>
-{
+      `{
+  vec4 splat = texture2D(map, vMapUv); // R heather, G litter, B fell, A water
+  vec2 wuv = vWPos.xz;
+  // anti-tiling: blend two incommensurate scales, then modulate with a very
+  // low-frequency macro sample so no repeat survives at any distance
+  #define DUAL(tex, s) mix(texture2D(tex, wuv / (s)).rgb, texture2D(tex, wuv / ((s) * 3.73) + vec2(0.37, 0.71)).rgb, 0.42)
+  vec3 col = DUAL(uMeadow, 3.2);
+  col = mix(col, DUAL(uHeather, 4.0), splat.r);
+  col = mix(col, DUAL(uLitter, 2.4), splat.g);
+  col = mix(col, DUAL(uFell, 5.5) * vec3(0.92, 0.93, 0.96), splat.b);
+  float macro = texture2D(uMeadow, wuv / 41.0).g;
+  col *= 0.82 + macro * 0.36;
   vec3 wn = normalize(vWNormal);
-  float steep = 1.0 - smoothstep(0.62, 0.82, wn.y);
+  float steep = 1.0 - smoothstep(0.6, 0.8, wn.y);
   if (steep > 0.001) {
     vec3 an = abs(wn);
     float wx = an.x / max(0.0001, an.x + an.z);
-    vec4 rockX = texture2D(uRock, vWPos.zy * uRockScale);
-    vec4 rockZ = texture2D(uRock, vWPos.xy * uRockScale);
-    vec3 rock = mix(rockZ.rgb, rockX.rgb, wx) * vec3(0.82, 0.83, 0.87);
-    diffuseColor.rgb = mix(diffuseColor.rgb, rock, steep);
+    vec3 rockX = texture2D(uRock, vWPos.zy * uRockScale).rgb;
+    vec3 rockZ = texture2D(uRock, vWPos.xy * uRockScale).rgb;
+    col = mix(col, mix(rockZ, rockX, wx) * vec3(0.85, 0.86, 0.9), steep);
   }
+  // water: darken toward peaty pool tone with a soft shoreline
+  col = mix(col, col * vec3(0.2, 0.32, 0.34) + vec3(0.02, 0.08, 0.1), splat.a);
+  diffuseColor.rgb = col;
 }`,
     );
 };
