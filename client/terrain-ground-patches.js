@@ -183,6 +183,7 @@ function compositePatchForTile(tile, terrain, groundPatches) {
   }
 
   drawEcotoneBand(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches);
+  drawRockBody(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches);
   drawReliefShade(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches);
   drawRoadWear(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches);
   drawWaterBodies(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches);
@@ -196,6 +197,47 @@ function compositePatchForTile(tile, terrain, groundPatches) {
 
 function biomeImageForSupertile(groundPatches, biome) {
   return groundPatches.get(biome) ?? null;
+}
+
+// mountain body: the massif is painted as rock, not grassland at altitude —
+// cliff painting through the rock-material field, with a scree skirt where
+// the stone meets soil so the boundary rags naturally
+function drawRockBody(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches) {
+  const worldData = terrain.worldData;
+  if (!worldData?.rockAt) return;
+  const size = MASK_SIZE;
+  const body = new Float32Array(size * size);
+  const skirt = new Float32Array(size * size);
+  let any = false;
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      const mapX = superX * PATCH_TILES + ((x + 0.5) / size) * CANVAS_TILES - MARGIN_TILES;
+      const mapY = superY * PATCH_TILES + ((y + 0.5) / size) * CANVAS_TILES - MARGIN_TILES;
+      const rock = worldData.rockAt(mapX, mapY);
+      if (rock <= 0.02) continue;
+      const rag =
+        wearNoise(mapX * 0.8, mapY * 0.8, 613) * 0.65 +
+        wearNoise(mapX * 2.6, mapY * 2.6, 617) * 0.35;
+      const i = y * size + x;
+      body[i] = clamp01((rock - 0.42 + (rag - 0.5) * 0.34) / 0.2);
+      skirt[i] = clamp01((rock - 0.16 + (rag - 0.5) * 0.42) / 0.2) * (1 - body[i]);
+      if (body[i] > 0 || skirt[i] > 0) any = true;
+    }
+  }
+  if (!any) return;
+  const cliffImage = groundPatches?.get("cliff") ?? null;
+  const screeImage = groundPatches?.get("scree") ?? null;
+  composite.save();
+  composite.imageSmoothingEnabled = true;
+  if (screeImage) {
+    writeFieldMask(maskContext, skirt, 0.85);
+    applyMaskedImage(composite, maskCanvas, screeImage, superX, superY);
+  }
+  if (cliffImage) {
+    writeFieldMask(maskContext, body);
+    applyMaskedImage(composite, maskCanvas, cliffImage, superX, superY);
+  }
+  composite.restore();
 }
 
 // Texture bombing: the painting is scattered as feathered stamps on a
