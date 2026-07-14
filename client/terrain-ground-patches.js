@@ -18,12 +18,15 @@ const PATCH_SIZE = PATCH_TILES * PLAN_PX_PER_TILE;
 // diamonds at supertile borders sample real painting instead of leaking
 // the flat underpaint (bombing is world-deterministic, so margin content
 // matches what the neighbouring supertile draws)
-const MARGIN_TILES = 1;
+// margin must cover the tallest height displacement: peak 9 x zPx 20 =
+// 180px = 2.8 plan tiles, else displaced clip diamonds sample off-canvas
+// and the flat underpaint shows as wide bands across the massif
+const MARGIN_TILES = 3;
 const MARGIN_PX = MARGIN_TILES * PLAN_PX_PER_TILE;
 const CANVAS_TILES = PATCH_TILES + MARGIN_TILES * 2;
 const CANVAS_SIZE = CANVAS_TILES * PLAN_PX_PER_TILE;
 const MASK_SIZE = 216;
-const MAX_COMPOSITE_PATCHES = CONSTRAINED_DEVICE ? 10 : 28;
+const MAX_COMPOSITE_PATCHES = CONSTRAINED_DEVICE ? 10 : 20;
 
 const compositeCache = new Map();
 let activeGroundPatches = null;
@@ -242,17 +245,21 @@ function drawRockBody(composite, maskContext, maskCanvas, superX, superY, terrai
     }
   }
   if (!any) return;
-  const cliffImage = groundPatches?.get("cliff") ?? null;
+  // tops are matte dark scree so the bright cliff-painted wall faces read
+  // as the lit surfaces — chalky cliff paint up top made the massif look
+  // like static instead of rock
   const screeImage = groundPatches?.get("scree") ?? null;
   composite.save();
   composite.imageSmoothingEnabled = true;
   if (screeImage) {
-    writeFieldMask(maskContext, skirt, 0.85);
+    writeFieldMask(maskContext, skirt, 0.7);
     applyMaskedImage(composite, maskCanvas, screeImage, superX, superY);
-  }
-  if (cliffImage) {
     writeFieldMask(maskContext, body);
-    applyMaskedImage(composite, maskCanvas, cliffImage, superX, superY);
+    applyMaskedImage(composite, maskCanvas, screeImage, superX, superY);
+    composite.globalCompositeOperation = "multiply";
+    composite.fillStyle = "rgba(132, 134, 140, 0.42)";
+    applyMaskedFill(composite, maskCanvas);
+    composite.globalCompositeOperation = "source-over";
   }
   composite.restore();
 }

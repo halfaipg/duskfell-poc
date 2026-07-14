@@ -14,8 +14,11 @@ export function drawTerrainSideWalls(ctx, tile, corners, palette, cliffImage = n
 
   for (const edge of tile.elevationEdges) {
     // Only real cliffs get a wall; scattered single-tile steps read better
-    // from the top painting and the material undercoat beneath it.
-    if (edge.drop < 2) continue;
+    // from the top painting and the material undercoat beneath it — except
+    // on rock, where every bench step is a small cliff band: unpainted
+    // 1-step gaps expose 20px of flat undercoat across the whole massif
+    const rocky = tile.material === "rock" || tile.material === "stone";
+    if (edge.drop < 2 && !rocky) continue;
     const [from, to] = edgePoints(corners, edge.edge);
     const dropPx = Math.max(2, edge.drop * PROJECTION.zPx);
     const lowerFrom = { x: from.x, y: from.y + dropPx };
@@ -38,8 +41,15 @@ export function drawTerrainSideWalls(ctx, tile, corners, palette, cliffImage = n
       wallPath();
       ctx.clip();
       const windowSize = 280;
-      const su = (((tile.x * 53 + tile.y * 97) % 7) / 7) * (cliffImage.width - windowSize);
-      const sv = (((tile.x * 31 + tile.y * 61) % 5) / 5) * (cliffImage.height - windowSize);
+      // continuous striations: the window slides along the wall run (half a
+      // window per tile) and holds its row constant, so neighbouring wall
+      // tiles read as one rock face instead of a patchwork of random crops
+      const horizontal = edge.edge === "north" || edge.edge === "south";
+      const along = horizontal ? tile.x : tile.y;
+      const cross = horizontal ? tile.y : tile.x;
+      const uRange = Math.max(1, cliffImage.width - windowSize);
+      const su = ((along * windowSize * 0.5) % uRange + uRange) % uRange;
+      const sv = (((cross * 53) % 4) / 4) * Math.max(0, cliffImage.height - windowSize * 0.6);
       ctx.imageSmoothingEnabled = true;
       const left = Math.min(from.x, to.x, lowerFrom.x, lowerTo.x);
       const top = Math.min(from.y, to.y);
@@ -68,8 +78,8 @@ export function drawTerrainSideWalls(ctx, tile, corners, palette, cliffImage = n
     ctx.beginPath();
     ctx.moveTo(from.x, from.y);
     ctx.lineTo(to.x, to.y);
-    ctx.strokeStyle = "rgba(242, 224, 166, 0.06)";
-    ctx.lineWidth = 0.8;
+    ctx.strokeStyle = "rgba(242, 224, 166, 0.16)";
+    ctx.lineWidth = 1.2;
     ctx.stroke();
   }
 }
