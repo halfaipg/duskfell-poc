@@ -184,7 +184,7 @@ const scene = new THREE.Scene();
   skyTex.colorSpace = THREE.SRGBColorSpace;
   scene.background = skyTex;
 }
-scene.fog = new THREE.Fog(0x39443a, SPAN * 1.5, SPAN * 4.2);
+scene.fog = new THREE.Fog(0x39443a, SPAN * 2.4, SPAN * 7.0);
 
 // terrain: one vertex per world vertex, Y up
 const geo = new THREE.PlaneGeometry(cols, rows, cols, rows);
@@ -199,10 +199,46 @@ for (let vy = 0; vy <= rows; vy += 1) {
   }
 }
 geo.computeVertexNormals();
-const terrain = new THREE.Mesh(
-  geo,
-  new THREE.MeshStandardMaterial({ map: albedo, roughness: 0.95, metalness: 0 }),
-);
+// triplanar rock on steep ground: the baked albedo is projected top-down,
+// so steep curvy faces stretch it into smears that read as gaps — sample
+// the rock texture from the side on those faces instead
+const rockTex = new THREE.CanvasTexture(cliff);
+rockTex.colorSpace = THREE.SRGBColorSpace;
+rockTex.wrapS = rockTex.wrapT = THREE.MirroredRepeatWrapping;
+rockTex.anisotropy = 8;
+const terrainMat = new THREE.MeshStandardMaterial({ map: albedo, roughness: 0.95, metalness: 0 });
+terrainMat.onBeforeCompile = (shader) => {
+  shader.uniforms.uRock = { value: rockTex };
+  shader.uniforms.uRockScale = { value: 0.16 };
+  shader.vertexShader = shader.vertexShader
+    .replace("#include <common>", "#include <common>\nvarying vec3 vWPos;\nvarying vec3 vWNormal;")
+    .replace(
+      "#include <begin_vertex>",
+      "#include <begin_vertex>\nvWPos = (modelMatrix * vec4(transformed, 1.0)).xyz;\nvWNormal = normalize(mat3(modelMatrix) * objectNormal);",
+    );
+  shader.fragmentShader = shader.fragmentShader
+    .replace(
+      "#include <common>",
+      "#include <common>\nuniform sampler2D uRock;\nuniform float uRockScale;\nvarying vec3 vWPos;\nvarying vec3 vWNormal;",
+    )
+    .replace(
+      "#include <map_fragment>",
+      `#include <map_fragment>
+{
+  vec3 wn = normalize(vWNormal);
+  float steep = 1.0 - smoothstep(0.62, 0.82, wn.y);
+  if (steep > 0.001) {
+    vec3 an = abs(wn);
+    float wx = an.x / max(0.0001, an.x + an.z);
+    vec4 rockX = texture2D(uRock, vWPos.zy * uRockScale);
+    vec4 rockZ = texture2D(uRock, vWPos.xy * uRockScale);
+    vec3 rock = mix(rockZ.rgb, rockX.rgb, wx) * vec3(0.82, 0.83, 0.87);
+    diffuseColor.rgb = mix(diffuseColor.rgb, rock, steep);
+  }
+}`,
+    );
+};
+const terrain = new THREE.Mesh(geo, terrainMat);
 terrain.receiveShadow = true;
 terrain.castShadow = true;
 scene.add(terrain);
