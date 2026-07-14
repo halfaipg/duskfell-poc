@@ -206,7 +206,8 @@ terrainMat.onBeforeCompile = (shader) => {
   // anti-tiling: blend two incommensurate scales, then modulate with a very
   // low-frequency macro sample so no repeat survives at any distance
   #define DUAL(tex, s) mix(texture2D(tex, wuv / (s)).rgb, texture2D(tex, wuv / ((s) * 3.73) + vec2(0.37, 0.71)).rgb, 0.42)
-  vec3 col = DUAL(uMeadow, 3.2);
+  // soil shows through beneath the instanced grass — blades carry the green
+  vec3 col = mix(DUAL(uMeadow, 3.2), DUAL(uLitter, 2.4) * vec3(0.86, 0.8, 0.74), 0.5);
   col = mix(col, DUAL(uHeather, 4.0), splat.r);
   col = mix(col, DUAL(uLitter, 2.4), splat.g);
   col = mix(col, DUAL(uFell, 5.5) * vec3(0.92, 0.93, 0.96), splat.b);
@@ -248,6 +249,82 @@ const water = new THREE.Mesh(
 water.rotation.x = -Math.PI / 2;
 water.position.set(cols / 2, -0.28 * HSCALE, rows / 2);
 scene.add(water);
+
+// bilinear height for smooth object placement
+function hBil(x, z) {
+  const x0 = Math.floor(x), z0 = Math.floor(z);
+  const fx = x - x0, fz = z - z0;
+  const h00 = hAt(x0, z0), h10 = hAt(x0 + 1, z0), h01 = hAt(x0, z0 + 1), h11 = hAt(x0 + 1, z0 + 1);
+  return (h00 * (1 - fx) + h10 * fx) * (1 - fz) + (h01 * (1 - fx) + h11 * fx) * fz;
+}
+
+// fluffy instanced grass (Codrops technique: instanced blades, dark base ->
+// light tip gradient as fake AO, sine wind + per-blade phase noise)
+const GRASS_RADIUS = 46;
+const bladeGeo = new THREE.PlaneGeometry(0.05, 0.5, 1, 3);
+bladeGeo.translate(0, 0.25, 0);
+const grassUniforms = { uTime: { value: 0 } };
+const grassMat = new THREE.ShaderMaterial({
+  uniforms: grassUniforms,
+  side: THREE.DoubleSide,
+  vertexShader: `
+    uniform float uTime;
+    varying float vH;
+    varying float vTint;
+    void main() {
+      vH = position.y / 0.5;
+      float phase = fract(sin(dot(vec2(instanceMatrix[3][0], instanceMatrix[3][2]), vec2(127.1, 311.7))) * 43758.5453);
+      vTint = phase;
+      vec4 wpos = instanceMatrix * vec4(position, 1.0);
+      float sway = sin(uTime * 1.7 + wpos.x * 0.4 + wpos.z * 0.55 + phase * 6.28318) * 0.11
+                 + sin(uTime * 3.1 + phase * 12.0) * 0.03;
+      wpos.x += sway * vH * vH;
+      wpos.z += sway * 0.6 * vH * vH;
+      gl_Position = projectionMatrix * viewMatrix * wpos;
+    }`,
+  fragmentShader: `
+    varying float vH;
+    varying float vTint;
+    void main() {
+      vec3 base = vec3(0.10, 0.16, 0.06);
+      vec3 tip = mix(vec3(0.42, 0.58, 0.22), vec3(0.55, 0.63, 0.26), vTint);
+      gl_FragColor = vec4(mix(base, tip, vH * vH), 1.0);
+    }`,
+});
+{
+  const spots = [];
+  const x0 = Math.max(1, FOCUS_X - GRASS_RADIUS), x1 = Math.min(cols - 2, FOCUS_X + GRASS_RADIUS);
+  const y0 = Math.max(1, FOCUS_Y - GRASS_RADIUS), y1 = Math.min(rows - 2, FOCUS_Y + GRASS_RADIUS);
+  for (let ty = y0; ty <= y1; ty += 1) {
+    for (let tx = x0; tx <= x1; tx += 1) {
+      const m = materialAt(tx, ty);
+      if (m !== "grass" && m !== "dirt" && m !== "field") continue;
+      const veg = Math.max(vegAt(tx, ty), m === "grass" ? 0.45 : 0.15);
+      const c = [hAt(tx, ty), hAt(tx + 1, ty), hAt(tx, ty + 1), hAt(tx + 1, ty + 1)];
+      if (Math.max(...c) - Math.min(...c) > 0.9) continue; // not on cliffs
+      const n = Math.round(8 + veg * 34);
+      for (let i = 0; i < n; i += 1) {
+        const wx = tx + hash01(tx * 31 + i, ty * 17 + i);
+        const wz = ty + hash01(tx * 13 + i * 7, ty * 41 + i);
+        spots.push([wx, wz]);
+      }
+    }
+  }
+  const grass = new THREE.InstancedMesh(bladeGeo, grassMat, spots.length);
+  const dummy = new THREE.Object3D();
+  for (let i = 0; i < spots.length; i += 1) {
+    const [wx, wz] = spots[i];
+    dummy.position.set(wx, hBil(wx, wz) * HSCALE, wz);
+    dummy.rotation.y = hash01(i, 7) * Math.PI * 2;
+    const sc = 0.7 + hash01(i, 13) * 0.9;
+    dummy.scale.set(sc, sc * (0.75 + hash01(i, 29) * 0.6), sc);
+    dummy.updateMatrix();
+    grass.setMatrixAt(i, dummy.matrix);
+  }
+  grass.instanceMatrix.needsUpdate = true;
+  grass.frustumCulled = false;
+  scene.add(grass);
+}
 
 // painterly billboard tree texture (procedural for the spike)
 function treeTexture() {
@@ -317,9 +394,11 @@ const camDir = new THREE.Vector3().subVectors(cam.position, target);
 const yaw = Math.atan2(camDir.x, camDir.z);
 trees.children.forEach((t) => { t.rotation.y = yaw; });
 
-renderer.render(scene, cam);
+renderer.setAnimationLoop((t) => {
+  grassUniforms.uTime.value = t / 1000;
+  renderer.render(scene, cam);
+});
 addEventListener("resize", () => {
   renderer.setSize(innerWidth, innerHeight);
-  renderer.render(scene, cam);
 });
 document.title = "Duskfell 3D spike — ready";
