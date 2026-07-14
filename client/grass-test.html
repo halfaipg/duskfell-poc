@@ -1,0 +1,50 @@
+<!doctype html><html><body style="margin:0;background:#222">
+<canvas id="c" width="400" height="300"></canvas>
+<pre id="s" style="color:#0f0;font-size:14px">boot</pre>
+<script>
+var S = document.getElementById("s");
+try {
+  var gl = document.getElementById("c").getContext("webgl2") || document.getElementById("c").getContext("webgl");
+  S.textContent = "gl:" + Boolean(gl);
+  var VS = "attribute vec2 aPos;      // projected base position (world px)\nattribute vec2 aCorner;   // offset from base: x spread, y = -height at tip\nattribute vec3 aParams;   // phase, heightFrac (0 base, 1 tip), shade\nuniform vec3 uCamera;\nuniform vec2 uViewport;\nuniform float uTime;\nuniform float uMode;      // 0 = blade, 1 = ground shadow\nuniform vec3 uShadow;     // dirX, dirY, length\nvarying float vFrac;\nvarying float vShade;\nvoid main() {\n  float sway = (sin(uTime * 1.9 + aParams.x) + sin(uTime * 3.3 + aParams.x * 1.7) * 0.45)\n             * 1.7 * aParams.y;\n  vec2 world;\n  if (uMode < 0.5) {\n    world = aPos + vec2(aCorner.x + sway, aCorner.y);\n  } else {\n    // flatten the blade onto the ground along the sun's cast direction\n    float rise = -aCorner.y;\n    world = aPos + vec2(aCorner.x + sway * 0.6, 0.0)\n          + vec2(uShadow.x, uShadow.y * 0.55) * rise * uShadow.z;\n  }\n  vec2 screen = (world - uCamera.xy) * uCamera.z;\n  vec2 clip = vec2(screen.x / uViewport.x * 2.0 - 1.0, 1.0 - screen.y / uViewport.y * 2.0);\n  gl_Position = vec4(clip, 0.0, 1.0);\n  vFrac = aParams.y;\n  vShade = aParams.z;\n}";
+  var FS = 'precision mediump float;\nuniform float uMode;\nuniform float uDaylight;\nvarying float vFrac;\nvarying float vShade;\nvoid main() {\n  if (uMode < 0.5) {\n    vec3 base = vec3(0.24, 0.30, 0.19);\n    vec3 tip = vec3(0.45, 0.54, 0.31);\n    vec3 col = mix(base, tip, vFrac) * (0.82 + vShade * 0.36);\n    col *= mix(0.62, 1.0, max(uDaylight, 0.25));\n    gl_FragColor = vec4(col, 1.0);\n  } else {\n    float a = 0.20 * uDaylight;\n    gl_FragColor = vec4(vec3(0.06, 0.08, 0.06) * a, a);\n  }\n}';
+  function comp(t, src) {
+    var sh = gl.createShader(t); gl.shaderSource(sh, src); gl.compileShader(sh);
+    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) throw new Error("compile: " + gl.getShaderInfoLog(sh));
+    return sh;
+  }
+  var p = gl.createProgram();
+  gl.attachShader(p, comp(gl.VERTEX_SHADER, VS));
+  gl.attachShader(p, comp(gl.FRAGMENT_SHADER, FS));
+  gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error("link: " + gl.getProgramInfoLog(p));
+  S.textContent = "shader OK";
+  gl.viewport(0,0,400,300); gl.clearColor(0.1,0.12,0.1,1); gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.useProgram(p);
+  gl.uniform3f(gl.getUniformLocation(p,"uCamera"), 0, 0, 1);
+  gl.uniform2f(gl.getUniformLocation(p,"uViewport"), 400, 300);
+  gl.uniform1f(gl.getUniformLocation(p,"uTime"), 2.0);
+  gl.uniform3f(gl.getUniformLocation(p,"uShadow"), 0.7, 0.5, 1.2);
+  gl.uniform1f(gl.getUniformLocation(p,"uDaylight"), 1.0);
+  var blades = [];
+  for (var i = 0; i < 200; i++) {
+    var x = 20 + (i % 20) * 19, y = 40 + Math.floor(i / 20) * 26;
+    blades.push(x,y,-2,0,i,0,0.5,  x,y,2,0,i,0,0.5,  x,y,1,-14,i,1,0.5);
+  }
+  var buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(blades), gl.STATIC_DRAW);
+  var aPos = gl.getAttribLocation(p,"aPos"), aCorner = gl.getAttribLocation(p,"aCorner"), aParams = gl.getAttribLocation(p,"aParams");
+  S.textContent += " | locs " + aPos + "," + aCorner + "," + aParams;
+  gl.enableVertexAttribArray(aPos); gl.enableVertexAttribArray(aCorner); gl.enableVertexAttribArray(aParams);
+  gl.vertexAttribPointer(aPos,2,gl.FLOAT,false,28,0);
+  gl.vertexAttribPointer(aCorner,2,gl.FLOAT,false,28,8);
+  gl.vertexAttribPointer(aParams,3,gl.FLOAT,false,28,16);
+  gl.uniform1f(gl.getUniformLocation(p,"uMode"), 1.0);
+  gl.drawArrays(gl.TRIANGLES, 0, 600);
+  gl.uniform1f(gl.getUniformLocation(p,"uMode"), 0.0);
+  gl.drawArrays(gl.TRIANGLES, 0, 600);
+  var err = gl.getError();
+  S.textContent += " | drew 600 verts, glError=" + err;
+} catch(e) { S.textContent += "\nFAIL: " + e.message; }
+</script></body></html>
