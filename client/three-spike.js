@@ -135,7 +135,7 @@ renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.35;
+renderer.toneMappingExposure = 1.5;
 const scene = new THREE.Scene();
 {
   const sky = document.createElement("canvas");
@@ -258,74 +258,125 @@ function hBil(x, z) {
   return (h00 * (1 - fx) + h10 * fx) * (1 - fz) + (h01 * (1 - fx) + h11 * fx) * fz;
 }
 
-// fluffy instanced grass (Codrops technique: instanced blades, dark base ->
-// light tip gradient as fake AO, sine wind + per-blade phase noise)
+// lush field layer: instanced TUFT CARDS — each card is ~34 overlapping
+// curved blades painted to a texture (the Codrops fluffiness trick), with
+// a flowering meadow variant; far denser look per instance than lone quads
 const GRASS_RADIUS = 46;
-const bladeGeo = new THREE.PlaneGeometry(0.02, 0.2, 1, 3);
-bladeGeo.translate(0, 0.1, 0);
+function tuftTexture(withFlowers, seedBase) {
+  const c = document.createElement("canvas");
+  c.width = 160; c.height = 128;
+  const g = c.getContext("2d");
+  let rs = seedBase;
+  const rnd = () => { rs = (rs * 1664525 + 1013904223) >>> 0; return rs / 4294967296; };
+  g.lineCap = "round";
+  for (let i = 0; i < 34; i += 1) {
+    const bx = 14 + rnd() * 132;
+    const lean = (rnd() - 0.5) * 52;
+    const h = 52 + rnd() * 64;
+    const grad = g.createLinearGradient(bx, 128, bx + lean, 128 - h);
+    grad.addColorStop(0, "rgba(28, 50, 16, 0.95)");
+    const tips = ["rgba(112, 158, 58, 0.95)", "rgba(132, 172, 66, 0.95)", "rgba(94, 142, 50, 0.95)", "rgba(150, 178, 80, 0.9)"];
+    grad.addColorStop(1, tips[i % 4]);
+    g.strokeStyle = grad;
+    g.lineWidth = 2.2 + rnd() * 1.6;
+    g.beginPath();
+    g.moveTo(bx, 128);
+    g.quadraticCurveTo(bx + lean * 0.35, 128 - h * 0.62, bx + lean, 128 - h);
+    g.stroke();
+  }
+  if (withFlowers) {
+    for (let i = 0; i < 7; i += 1) {
+      const fx = 16 + rnd() * 128, fy = 22 + rnd() * 46;
+      const palette = [["#f2ede0", "#e8d9b8"], ["#efe45a", "#d9c840"], ["#cfc4ec", "#b7a8dd"]][i % 3];
+      g.fillStyle = palette[i % 2];
+      for (let pt = 0; pt < 5; pt += 1) {
+        const a = (pt / 5) * Math.PI * 2;
+        g.beginPath();
+        g.arc(fx + Math.cos(a) * 2.4, fy + Math.sin(a) * 2.4, 1.7, 0, Math.PI * 2);
+        g.fill();
+      }
+      g.fillStyle = "#caa93c";
+      g.beginPath(); g.arc(fx, fy, 1.5, 0, Math.PI * 2); g.fill();
+    }
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
 const grassUniforms = { uTime: { value: 0 } };
-const grassMat = new THREE.ShaderMaterial({
-  uniforms: grassUniforms,
-  side: THREE.DoubleSide,
-  vertexShader: `
-    uniform float uTime;
-    varying float vH;
-    varying float vTint;
-    void main() {
-      vH = position.y / 0.5;
-      float phase = fract(sin(dot(vec2(instanceMatrix[3][0], instanceMatrix[3][2]), vec2(127.1, 311.7))) * 43758.5453);
-      vTint = phase;
-      vec4 wpos = instanceMatrix * vec4(position, 1.0);
-      float sway = sin(uTime * 1.7 + wpos.x * 0.4 + wpos.z * 0.55 + phase * 6.28318) * 0.11
-                 + sin(uTime * 3.1 + phase * 12.0) * 0.03;
-      wpos.x += sway * vH * vH;
-      wpos.z += sway * 0.6 * vH * vH;
-      gl_Position = projectionMatrix * viewMatrix * wpos;
-    }`,
-  fragmentShader: `
-    varying float vH;
-    varying float vTint;
-    void main() {
-      vec3 base = vec3(0.16, 0.24, 0.09);
-      vec3 tip = mix(vec3(0.5, 0.66, 0.26), vec3(0.62, 0.7, 0.3), vTint);
-      vec3 col = mix(base, tip, vH * vH);
-      col *= 0.85 + vTint * 0.3; // per-blade sun variation stand-in
-      gl_FragColor = vec4(col, 1.0);
-    }`,
-});
+function tuftMaterial(tex) {
+  return new THREE.ShaderMaterial({
+    uniforms: { uTime: grassUniforms.uTime ? grassUniforms : grassUniforms, uMap: { value: tex } },
+    side: THREE.DoubleSide,
+    transparent: false,
+    vertexShader: `
+      uniform float uTime;
+      varying vec2 vUvv;
+      varying float vTint;
+      void main() {
+        vUvv = uv;
+        float phase = fract(sin(dot(vec2(instanceMatrix[3][0], instanceMatrix[3][2]), vec2(127.1, 311.7))) * 43758.5453);
+        vTint = phase;
+        vec4 wpos = instanceMatrix * vec4(position, 1.0);
+        float bend = uv.y * uv.y;
+        float sway = sin(uTime * 1.6 + wpos.x * 0.38 + wpos.z * 0.5 + phase * 6.28318) * 0.09
+                   + sin(uTime * 2.9 + phase * 11.0) * 0.025;
+        wpos.x += sway * bend;
+        wpos.z += sway * 0.6 * bend;
+        gl_Position = projectionMatrix * viewMatrix * wpos;
+      }`,
+    fragmentShader: `
+      uniform sampler2D uMap;
+      varying vec2 vUvv;
+      varying float vTint;
+      void main() {
+        vec4 tex = texture2D(uMap, vUvv);
+        if (tex.a < 0.5) discard;
+        // compensate sRGB->linear decode + ACES: lift toward painted values
+        vec3 col = tex.rgb * (1.8 + vUvv.y * 1.1) * (0.9 + vTint * 0.2);
+        gl_FragColor = vec4(col, 1.0);
+      }`,
+  });
+}
 {
-  const spots = [];
+  const cardGeo = new THREE.PlaneGeometry(0.62, 0.34);
+  cardGeo.translate(0, 0.17, 0);
+  const plainMat = tuftMaterial(tuftTexture(false, 12345));
+  const flowerMat = tuftMaterial(tuftTexture(true, 67890));
+  const plain = [], flowered = [];
   const x0 = Math.max(1, FOCUS_X - GRASS_RADIUS), x1 = Math.min(cols - 2, FOCUS_X + GRASS_RADIUS);
   const y0 = Math.max(1, FOCUS_Y - GRASS_RADIUS), y1 = Math.min(rows - 2, FOCUS_Y + GRASS_RADIUS);
   for (let ty = y0; ty <= y1; ty += 1) {
     for (let tx = x0; tx <= x1; tx += 1) {
       const m = materialAt(tx, ty);
       if (m !== "grass" && m !== "dirt" && m !== "field") continue;
-      const veg = Math.max(vegAt(tx, ty), m === "grass" ? 0.5 : 0.2);
+      const veg = Math.max(vegAt(tx, ty), m === "grass" ? 0.55 : 0.25);
       const c = [hAt(tx, ty), hAt(tx + 1, ty), hAt(tx, ty + 1), hAt(tx + 1, ty + 1)];
-      if (Math.max(...c) - Math.min(...c) > 1.3) continue; // only true cliffs bare
-      const n = Math.round(26 + veg * 60);
+      if (Math.max(...c) - Math.min(...c) > 1.3) continue;
+      const n = Math.round(11 + veg * 20);
       for (let i = 0; i < n; i += 1) {
         const wx = tx + hash01(tx * 31 + i, ty * 17 + i);
         const wz = ty + hash01(tx * 13 + i * 7, ty * 41 + i);
-        spots.push([wx, wz]);
+        (hash01(tx * 7 + i, ty * 23) < 0.14 ? flowered : plain).push([wx, wz, i]);
       }
     }
   }
-  const grass = new THREE.InstancedMesh(bladeGeo, grassMat, spots.length);
   const dummy = new THREE.Object3D();
-  for (let i = 0; i < spots.length; i += 1) {
-    const [wx, wz] = spots[i];
-    dummy.position.set(wx, hBil(wx, wz) * HSCALE, wz);
-    dummy.rotation.y = hash01(i, 7) * Math.PI * 2;
-    const sc = 0.75 + hash01(i, 13) * 0.6;
-    dummy.scale.set(sc, sc * (0.75 + hash01(i, 29) * 0.6), sc);
-    dummy.updateMatrix();
-    grass.setMatrixAt(i, dummy.matrix);
+  for (const [list, mat] of [[plain, plainMat], [flowered, flowerMat]]) {
+    const mesh = new THREE.InstancedMesh(cardGeo, mat, list.length);
+    for (let i = 0; i < list.length; i += 1) {
+      const [wx, wz, k] = list[i];
+      dummy.position.set(wx, hBil(wx, wz) * HSCALE, wz);
+      dummy.rotation.y = hash01(i, 7) * Math.PI * 2;
+      const sc = 0.8 + hash01(i, 13 + k) * 0.7;
+      dummy.scale.set(sc, sc * (0.8 + hash01(i, 29) * 0.5), sc);
+      dummy.updateMatrix();
+      mesh.setMatrixAt(i, dummy.matrix);
+    }
+    mesh.instanceMatrix.needsUpdate = true;
+    mesh.frustumCulled = false;
+    scene.add(mesh);
   }
-  grass.instanceMatrix.needsUpdate = true;
-  grass.frustumCulled = false;
-  scene.add(grass);
 }
 
 // painterly billboard tree texture (procedural for the spike)
@@ -387,7 +438,7 @@ scene.add(trees);
 }
 
 // sun + sky light
-const sun = new THREE.DirectionalLight(0xfff2d8, 3.4);
+const sun = new THREE.DirectionalLight(0xffedc4, 3.8);
 sun.position.set(FOCUS_X - 26, 34, FOCUS_Y + 18);
 sun.target.position.set(FOCUS_X, 0, FOCUS_Y);
 sun.castShadow = true;
