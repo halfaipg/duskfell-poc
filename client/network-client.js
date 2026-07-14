@@ -53,20 +53,40 @@ export function createNetworkClient({
     });
   }
 
+  // server ingress allows ~30 msgs/s (burst 20) and kicks after 8 rejects;
+  // throttle to well under that with a trailing send so the final state
+  // always lands. Click-to-move re-evaluates every frame and used to flood.
+  const INPUT_MIN_INTERVAL_MS = 70;
+  let lastInputSentAt = 0;
+  let trailingInputTimer = null;
+
   function sendInput(force = false) {
     const state = getInputState();
     const input = {
       type: "input",
-      seq: ++inputSeq,
+      seq: 0,
       up: Boolean(state.up),
       down: Boolean(state.down),
       left: Boolean(state.left),
       right: Boolean(state.right),
       interact: Boolean(state.interact),
     };
-    const comparable = JSON.stringify({ ...input, seq: 0 });
+    const comparable = JSON.stringify(input);
     if (!force && comparable === lastInputSent) return;
+    const now = Date.now();
+    const wait = lastInputSentAt + INPUT_MIN_INTERVAL_MS - now;
+    if (!force && wait > 0) {
+      if (!trailingInputTimer) {
+        trailingInputTimer = setTimeout(() => {
+          trailingInputTimer = null;
+          sendInput();
+        }, wait);
+      }
+      return;
+    }
     lastInputSent = comparable;
+    lastInputSentAt = now;
+    input.seq = ++inputSeq;
     send(input);
   }
 

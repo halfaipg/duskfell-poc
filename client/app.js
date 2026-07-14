@@ -234,12 +234,18 @@ canvas.addEventListener("pointerdown", (event) => {
     z = terrainHeightAtWorld(terrainCache.getTerrain(), wx, wy);
   }
   moveTarget = { x: wx, y: wy };
+  moveKeysCache = null;
   moveTargetStalledSince = null;
   networkClient.sendInput();
 });
 
+let moveKeysCache = null;
+let moveKeysCachedAt = 0;
+
 function moveTargetInput() {
   if (!moveTarget || !snapshot) return null;
+  const nowMs = Date.now();
+  if (moveKeysCache && nowMs - moveKeysCachedAt < 160) return moveKeysCache;
   const players = Array.isArray(snapshot.players) ? snapshot.players : [];
   const me = players.find((player) => player.id === playerId);
   if (!me) return null;
@@ -253,13 +259,15 @@ function moveTargetInput() {
   const ax = Math.abs(dx);
   const ay = Math.abs(dy);
   const diagonal = Math.min(ax, ay) > Math.max(ax, ay) * 0.41;
-  return {
+  moveKeysCache = {
     up: dy < 0 && (diagonal || ay >= ax),
     down: dy > 0 && (diagonal || ay >= ax),
     left: dx < 0 && (diagonal || ax > ay),
     right: dx > 0 && (diagonal || ax > ay),
     interact: false,
   };
+  moveKeysCachedAt = nowMs;
+  return moveKeysCache;
 }
 
 function getInputState() {
