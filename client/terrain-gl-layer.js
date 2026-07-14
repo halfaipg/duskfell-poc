@@ -669,7 +669,7 @@ varying vec2 vPlan;
 
 float heightAt(vec2 tile) {
   vec2 uv = (tile + 0.5) / uGridSize;
-  return texture2D(uHeights, uv).r * 5.0 - 1.0;
+  return texture2D(uHeights, uv).r * 10.0 - 1.0;
 }
 
 void main() {

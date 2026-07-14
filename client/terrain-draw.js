@@ -185,7 +185,7 @@ export function createTerrainDrawer({
     for (let y = 0; y <= rows; y += 1) {
       for (let x = 0; x <= cols; x += 1) {
         const height = worldTerrain.worldData.heightAt(x, y);
-        const value = Math.max(0, Math.min(255, Math.round(((height + 1) / 5) * 255)));
+        const value = Math.max(0, Math.min(255, Math.round(((height + 1) / 10) * 255)));
         const offset = (y * (cols + 1) + x) * 4;
         image.data[offset] = value;
         image.data[offset + 1] = value;
