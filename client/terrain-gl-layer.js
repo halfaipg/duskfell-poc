@@ -4,7 +4,6 @@
 // the 2D canvas above. Returns null when WebGL is unavailable — callers
 // fall back to the 2D blit path transparently.
 const CLEAR_COLOR = [0x16 / 255, 0x1d / 255, 0x18 / 255];
-const MAX_TEXTURES = 96;
 
 export function createTerrainGlLayer(canvas) {
   if (!canvas?.getContext) return null;
@@ -32,8 +31,30 @@ export function createTerrainGlLayer(canvas) {
   const blitProgram = buildBlitProgram(gl);
   const vertexBuffer = gl.createBuffer();
   const vertexData = new Float32Array(4 * 6);
-  const textures = new Set();
+  // texture pool: LRU-evicted, with owner back-references cleared on evict
+  // so an evicted texture re-uploads instead of dangling (dangling handles
+  // rendered garbage — the "big squares" bug on large worlds)
+  const texturePool = new Map(); // texture -> {owner, prop, lastUsed}
+  let poolClock = 0;
+  const MAX_POOL = 120;
   let contextLost = false;
+
+  function poolAdd(texture, owner, prop) {
+    texturePool.set(texture, { owner, prop, lastUsed: poolClock });
+    if (texturePool.size > MAX_POOL) {
+      const entries = [...texturePool.entries()].sort((a, b) => a[1].lastUsed - b[1].lastUsed);
+      for (const [tex, meta] of entries.slice(0, Math.ceil(MAX_POOL / 4))) {
+        gl.deleteTexture(tex);
+        if (meta.owner && meta.owner[meta.prop] === tex) meta.owner[meta.prop] = null;
+        texturePool.delete(tex);
+      }
+    }
+  }
+
+  function poolTouch(texture) {
+    const meta = texturePool.get(texture);
+    if (meta) meta.lastUsed = poolClock;
+  }
   let sceneFbo = null;
   let sceneTexture = null;
   let sceneWidth = 0;
@@ -79,6 +100,7 @@ export function createTerrainGlLayer(canvas) {
 
   function beginFrame(camera, cssWidth, cssHeight, dpr) {
     if (contextLost) return false;
+    poolClock += 1;
     resize(cssWidth, cssHeight, dpr);
     // terrain renders into the scene texture; the water pass refracts it
     const useFbo = Boolean(blitProgram) && ensureSceneTarget();
@@ -127,12 +149,9 @@ export function createTerrainGlLayer(canvas) {
   }
 
   function textureForLayer(layer) {
-    if (layer.glTexture && !layer.glTextureStale) return layer.glTexture;
-    if (textures.size >= MAX_TEXTURES) {
-      // rebuild storms replace every chunk at once; dropping the whole pool
-      // is simpler than tracking ownership and costs one re-upload each
-      for (const texture of textures) gl.deleteTexture(texture);
-      textures.clear();
+    if (layer.glTexture && !layer.glTextureStale) {
+      poolTouch(layer.glTexture);
+      return layer.glTexture;
     }
     const texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -143,7 +162,7 @@ export function createTerrainGlLayer(canvas) {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-    textures.add(texture);
+    poolAdd(texture, layer, "glTexture");
     layer.glTexture = texture;
     layer.glTextureStale = false;
     return texture;
@@ -274,7 +293,9 @@ export function createTerrainGlLayer(canvas) {
     const layer = entry.layer;
     if (!layer.glMaskTexture) {
       layer.glMaskTexture = textureForCanvasSource(layer.mask, true);
-      textures.add(layer.glMaskTexture);
+      poolAdd(layer.glMaskTexture, layer, "glMaskTexture");
+    } else {
+      poolTouch(layer.glMaskTexture);
     }
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, layer.glMaskTexture);
