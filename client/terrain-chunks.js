@@ -38,7 +38,15 @@ export function elevationEdgesForTile(tile, tiles, cols, rows) {
   const edges = [];
 
   for (const [edge, nx, ny] of neighbors) {
-    if (nx < 0 || ny < 0 || nx >= cols || ny >= rows) continue;
+    if (nx < 0 || ny < 0 || nx >= cols || ny >= rows) {
+      // world rim: the land breaks off into the void — emit a cliff face
+      // deep enough to cover the tile's full displacement so no black gap
+      // shows below raised border tiles (drop uncapped on purpose)
+      if (currentHeight > 0.5) {
+        edges.push({ edge, drop: currentHeight + 1.5, neighborMaterial: "rock" });
+      }
+      continue;
+    }
     const neighbor = tiles[ny * cols + nx];
     if (!neighbor || neighbor.material === "water") continue;
     const drop = currentHeight - averageHeight(neighbor);

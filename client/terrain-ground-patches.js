@@ -23,7 +23,7 @@ const MARGIN_PX = MARGIN_TILES * PLAN_PX_PER_TILE;
 const CANVAS_TILES = PATCH_TILES + MARGIN_TILES * 2;
 const CANVAS_SIZE = CANVAS_TILES * PLAN_PX_PER_TILE;
 const MASK_SIZE = 216;
-const MAX_COMPOSITE_PATCHES = CONSTRAINED_DEVICE ? 10 : 16;
+const MAX_COMPOSITE_PATCHES = CONSTRAINED_DEVICE ? 10 : 28;
 
 const compositeCache = new Map();
 let activeGroundPatches = null;
@@ -205,6 +205,23 @@ function biomeImageForSupertile(groundPatches, biome) {
 function drawRockBody(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches) {
   const worldData = terrain.worldData;
   if (!worldData?.rockAt) return;
+  // cheap tile-level precheck: most patches have no rock at all — skip the
+  // per-pixel field build entirely so chunk builds stay fast off the massif
+  const x0 = Math.max(0, superX * PATCH_TILES - MARGIN_TILES - 1);
+  const y0 = Math.max(0, superY * PATCH_TILES - MARGIN_TILES - 1);
+  const x1 = Math.min(terrain.cols - 1, (superX + 1) * PATCH_TILES + MARGIN_TILES);
+  const y1 = Math.min(terrain.rows - 1, (superY + 1) * PATCH_TILES + MARGIN_TILES);
+  let present = false;
+  for (let ty = y0; ty <= y1 && !present; ty += 1) {
+    for (let tx = x0; tx <= x1; tx += 1) {
+      const material = terrain.tiles[ty * terrain.cols + tx]?.material;
+      if (material === "rock" || material === "stone") {
+        present = true;
+        break;
+      }
+    }
+  }
+  if (!present) return;
   const size = MASK_SIZE;
   const body = new Float32Array(size * size);
   const skirt = new Float32Array(size * size);
