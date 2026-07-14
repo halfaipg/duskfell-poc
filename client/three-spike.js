@@ -210,7 +210,7 @@ terrainMat.onBeforeCompile = (shader) => {
   vec3 col = mix(DUAL(uMeadow, 3.2), DUAL(uLitter, 2.4) * vec3(0.86, 0.8, 0.74), 0.5);
   col = mix(col, DUAL(uHeather, 4.0), splat.r);
   col = mix(col, DUAL(uLitter, 2.4), splat.g);
-  col = mix(col, DUAL(uFell, 5.5) * vec3(0.92, 0.93, 0.96), splat.b);
+  col = mix(col, DUAL(uFell, 5.5) * vec3(0.92, 0.93, 0.96), smoothstep(0.3, 0.62, splat.b));
   float macro = texture2D(uMeadow, wuv / 41.0).g;
   col *= 0.82 + macro * 0.36;
   vec3 wn = normalize(vWNormal);
@@ -261,8 +261,8 @@ function hBil(x, z) {
 // fluffy instanced grass (Codrops technique: instanced blades, dark base ->
 // light tip gradient as fake AO, sine wind + per-blade phase noise)
 const GRASS_RADIUS = 46;
-const bladeGeo = new THREE.PlaneGeometry(0.05, 0.5, 1, 3);
-bladeGeo.translate(0, 0.25, 0);
+const bladeGeo = new THREE.PlaneGeometry(0.024, 0.26, 1, 3);
+bladeGeo.translate(0, 0.13, 0);
 const grassUniforms = { uTime: { value: 0 } };
 const grassMat = new THREE.ShaderMaterial({
   uniforms: grassUniforms,
@@ -286,9 +286,11 @@ const grassMat = new THREE.ShaderMaterial({
     varying float vH;
     varying float vTint;
     void main() {
-      vec3 base = vec3(0.10, 0.16, 0.06);
-      vec3 tip = mix(vec3(0.42, 0.58, 0.22), vec3(0.55, 0.63, 0.26), vTint);
-      gl_FragColor = vec4(mix(base, tip, vH * vH), 1.0);
+      vec3 base = vec3(0.16, 0.24, 0.09);
+      vec3 tip = mix(vec3(0.5, 0.66, 0.26), vec3(0.62, 0.7, 0.3), vTint);
+      vec3 col = mix(base, tip, vH * vH);
+      col *= 0.85 + vTint * 0.3; // per-blade sun variation stand-in
+      gl_FragColor = vec4(col, 1.0);
     }`,
 });
 {
@@ -299,10 +301,10 @@ const grassMat = new THREE.ShaderMaterial({
     for (let tx = x0; tx <= x1; tx += 1) {
       const m = materialAt(tx, ty);
       if (m !== "grass" && m !== "dirt" && m !== "field") continue;
-      const veg = Math.max(vegAt(tx, ty), m === "grass" ? 0.45 : 0.15);
+      const veg = Math.max(vegAt(tx, ty), m === "grass" ? 0.5 : 0.2);
       const c = [hAt(tx, ty), hAt(tx + 1, ty), hAt(tx, ty + 1), hAt(tx + 1, ty + 1)];
-      if (Math.max(...c) - Math.min(...c) > 0.9) continue; // not on cliffs
-      const n = Math.round(8 + veg * 34);
+      if (Math.max(...c) - Math.min(...c) > 1.3) continue; // only true cliffs bare
+      const n = Math.round(26 + veg * 60);
       for (let i = 0; i < n; i += 1) {
         const wx = tx + hash01(tx * 31 + i, ty * 17 + i);
         const wz = ty + hash01(tx * 13 + i * 7, ty * 41 + i);
@@ -316,7 +318,7 @@ const grassMat = new THREE.ShaderMaterial({
     const [wx, wz] = spots[i];
     dummy.position.set(wx, hBil(wx, wz) * HSCALE, wz);
     dummy.rotation.y = hash01(i, 7) * Math.PI * 2;
-    const sc = 0.7 + hash01(i, 13) * 0.9;
+    const sc = 0.75 + hash01(i, 13) * 0.6;
     dummy.scale.set(sc, sc * (0.75 + hash01(i, 29) * 0.6), sc);
     dummy.updateMatrix();
     grass.setMatrixAt(i, dummy.matrix);
