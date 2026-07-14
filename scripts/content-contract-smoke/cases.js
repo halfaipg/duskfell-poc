@@ -191,7 +191,7 @@ function validTerrain() {
     unitsPerTile: 64,
     tileWidth: 64,
     tileHeight: 64,
-    heightScale: 14,
+    heightScale: 20,
     minElevation: -1,
     maxElevation: 4,
     waterLevel: -1,

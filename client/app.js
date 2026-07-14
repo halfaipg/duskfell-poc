@@ -403,7 +403,7 @@ function draw(now = 0) {
     currentSun = sunStateAt();
     setSun(currentSun);
     {
-      const forced = { dawn: 0.09, dusk: -0.02, night: -0.5 }[DAY_TINT];
+      const forced = { day: 0.85, dawn: 0.09, dusk: -0.02, night: -0.5 }[DAY_TINT];
       const e = forced ?? currentSun.elevation;
       const horizonBand = Math.max(0, 1 - Math.abs(e) * 5.5);
       const nightAlpha = Math.max(0, Math.min(0.66, 0.1 - e * 1.35));
