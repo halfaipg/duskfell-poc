@@ -1,0 +1,152 @@
+{
+  "schemaVersion": "duskfell-biomes-v1",
+  "notes": "Ecologically genuine dark-age NW-European biomes. Placement is climate-driven (Whittaker axes: temperature x moisture from terrain-diffusion) plus terrain rules (elevation, slope, water distance, drainage). Every biome lists ground + plants + trees that genuinely co-occur in nature. Prompts are the generation manifest for the tiling-material pipeline.",
+  "placementAxes": {
+    "temperature": "climate channel 0, normalized 0 cold .. 1 warm",
+    "moisture": "climate channel 2 (annual precip), normalized 0 dry .. 1 wet",
+    "modifiers": ["elevationNorm", "slope", "waterDistance", "drainage (flow accumulation)"]
+  },
+  "biomes": [
+    {
+      "id": "fell",
+      "name": "High Fell",
+      "place": { "temperature": [0.0, 0.35], "moisture": [0.0, 1.0], "elevationNorm": [0.62, 1.0] },
+      "ground": {
+        "primary": "granite-fell",
+        "secondary": "lichen-scree",
+        "prompts": {
+          "granite-fell": "weathered grey granite bedrock seen from directly above, patches of black and chartreuse map lichen, thin gravel, no vegetation, overcast northern light, photorealistic ground texture, top-down orthographic, seamless natural rock",
+          "lichen-scree": "loose angular granite scree from directly above, frost-shattered stones fist to boulder sized, crustose lichen spots, sparse cushion moss between stones, photorealistic top-down ground texture"
+        }
+      },
+      "plants": ["cushion-moss", "dwarf-willow", "alpine-saxifrage"],
+      "trees": [],
+      "rockTint": "cool grey granite"
+    },
+    {
+      "id": "heather-moor",
+      "name": "Heather Moor",
+      "place": { "temperature": [0.15, 0.55], "moisture": [0.55, 1.0], "elevationNorm": [0.35, 0.75], "drainage": "poor-to-moderate" },
+      "ground": {
+        "primary": "heather-mat",
+        "secondary": "peat-hag",
+        "prompts": {
+          "heather-mat": "dense flowering heather moorland from directly above, purple calluna and green shoots, patches of dark peaty soil, scattered small granite stones, sprigs of dry grass, photorealistic top-down ground texture, overcast light",
+          "peat-hag": "eroded black peat surface from directly above, exposed dark organic soil, dry heather stems, tufts of moor grass at edges, photorealistic top-down ground texture"
+        }
+      },
+      "plants": ["heather-clump", "gorse-bush", "bracken-patch", "moor-grass-tussock"],
+      "trees": [{ "species": "rowan", "density": 0.02, "form": "stunted, wind-bent" }],
+      "rockTint": "dark gritstone"
+    },
+    {
+      "id": "blanket-bog",
+      "name": "Blanket Bog",
+      "place": { "temperature": [0.0, 0.45], "moisture": [0.7, 1.0], "slope": [0.0, 0.15], "drainage": "waterlogged" },
+      "ground": {
+        "primary": "sphagnum-carpet",
+        "secondary": "bog-pool-margin",
+        "prompts": {
+          "sphagnum-carpet": "waterlogged sphagnum moss bog from directly above, red green and ochre moss mounds, white cotton grass heads, small dark water-filled hollows, photorealistic top-down ground texture",
+          "bog-pool-margin": "black peaty bog pool margin from directly above, dark tannin water, sedge tufts, sphagnum edge, photorealistic top-down ground texture"
+        }
+      },
+      "plants": ["cotton-grass", "sedge-tussock", "bog-myrtle", "sundew-patch"],
+      "trees": [],
+      "rockTint": "none (deep peat)"
+    },
+    {
+      "id": "oak-woodland",
+      "name": "Oak-Ash Woodland",
+      "place": { "temperature": [0.45, 0.85], "moisture": [0.45, 0.85], "elevationNorm": [0.0, 0.55] },
+      "ground": {
+        "primary": "leaf-litter-loam",
+        "secondary": "mossy-woodland-floor",
+        "prompts": {
+          "leaf-litter-loam": "temperate oak woodland floor from directly above, brown oak and ash leaf litter, dark loam showing through, acorns and twigs, patches of green moss, a fern frond, photorealistic top-down ground texture, dappled shade",
+          "mossy-woodland-floor": "deep green moss carpet over woodland floor from directly above, moss-covered stones and a rotting log fragment, leaf litter at edges, photorealistic top-down ground texture"
+        }
+      },
+      "plants": ["bluebell-drift", "male-fern", "bramble-tangle", "wood-anemone", "holly-sapling"],
+      "trees": [
+        { "species": "oak", "density": 0.22, "form": "broad sessile oak" },
+        { "species": "ash", "density": 0.1 },
+        { "species": "holly", "density": 0.05, "form": "understory" }
+      ],
+      "rockTint": "moss-covered sandstone"
+    },
+    {
+      "id": "pine-birch",
+      "name": "Pine-Birch Wood",
+      "place": { "temperature": [0.25, 0.6], "moisture": [0.25, 0.6], "elevationNorm": [0.3, 0.7] },
+      "ground": {
+        "primary": "needle-litter",
+        "secondary": "bilberry-understory",
+        "prompts": {
+          "needle-litter": "scots pine forest floor from directly above, rust-brown pine needle litter, fallen cones, patches of pale sandy podzol soil, sparse grass, photorealistic top-down ground texture",
+          "bilberry-understory": "bilberry shrub layer from directly above, small dark-green oval leaves, purple berries, needle litter and moss between, one red fly agaric mushroom, photorealistic top-down ground texture"
+        }
+      },
+      "plants": ["bilberry-clump", "fly-agaric", "wavy-hair-grass", "juniper-shrub"],
+      "trees": [
+        { "species": "scots-pine", "density": 0.18 },
+        { "species": "birch", "density": 0.12, "form": "silver birch" }
+      ],
+      "rockTint": "pale granite outcrop"
+    },
+    {
+      "id": "meadow",
+      "name": "Lowland Meadow",
+      "place": { "temperature": [0.5, 1.0], "moisture": [0.35, 0.7], "elevationNorm": [0.0, 0.4], "slope": [0.0, 0.3] },
+      "ground": {
+        "primary": "meadow-sward",
+        "secondary": "grazed-turf",
+        "prompts": {
+          "meadow-sward": "species-rich hay meadow from directly above, mixed green grasses with yarrow white heads, purple knapweed, ox-eye daisies, buttercups, photorealistic top-down ground texture, summer light",
+          "grazed-turf": "close-grazed pasture turf from directly above, short mixed grass, small bare-earth patches, a few daisy rosettes, scattered sheep-cropped thistle, photorealistic top-down ground texture"
+        }
+      },
+      "plants": ["yarrow-patch", "knapweed-clump", "thistle", "hawthorn-shrub"],
+      "trees": [{ "species": "hawthorn", "density": 0.03, "form": "open-grown, may blossom" }],
+      "rockTint": "lichened field boulder"
+    },
+    {
+      "id": "riparian",
+      "name": "River Margin",
+      "place": { "waterDistance": [0, 2.5], "excludes": ["fell", "blanket-bog"] },
+      "ground": {
+        "primary": "silt-bank",
+        "secondary": "gravel-bar",
+        "prompts": {
+          "silt-bank": "muddy river bank from directly above, wet brown silt with ripple marks, flattened reeds, willow leaves, wader footprints, photorealistic top-down ground texture",
+          "gravel-bar": "river gravel bar from directly above, water-rounded pebbles mixed sizes, wet sheen on lower stones, sparse pioneer plants, photorealistic top-down ground texture"
+        }
+      },
+      "plants": ["reed-stand", "rush-clump", "meadowsweet", "water-mint"],
+      "trees": [
+        { "species": "willow", "density": 0.14, "form": "leaning over water" },
+        { "species": "alder", "density": 0.08 }
+      ],
+      "rockTint": "wet water-worn stone"
+    },
+    {
+      "id": "shore",
+      "name": "Cold Shore",
+      "place": { "coastal": true },
+      "ground": {
+        "primary": "shingle",
+        "secondary": "dune-grass-sand",
+        "prompts": {
+          "shingle": "storm beach shingle from directly above, grey and rust water-rounded cobbles, dried bladderwrack seaweed strands, a white shell fragment, photorealistic top-down ground texture",
+          "dune-grass-sand": "coastal dune from directly above, pale wind-rippled sand, tufts of marram grass, sea thrift cushion with pink flowers, photorealistic top-down ground texture"
+        }
+      },
+      "plants": ["marram-tussock", "sea-thrift", "driftwood"],
+      "trees": [],
+      "rockTint": "salt-bleached ledge"
+    }
+  ],
+  "cliffMaterials": {
+    "prompt": "sheer weathered granite cliff face seen straight on, horizontal bedding fractures, grey stone with rust staining and black lichen streaks, small ledges with tufts of grass, photorealistic rock texture, even overcast light, no sky no horizon"
+  }
+}
