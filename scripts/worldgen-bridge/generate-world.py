@@ -19,8 +19,8 @@ import urllib.request
 
 import numpy as np
 
-TILES_X, TILES_Y = 96, 64
 SUPER = 2
+TILES_X, TILES_Y = 96, 64  # overridden by --tiles
 MATERIALS = ["grass", "field", "dirt", "stone", "water", "settlement", "cobble", "rock", "ruin", "shore"]
 
 
@@ -62,7 +62,10 @@ def main():
     parser.add_argument("--offset", required=True)
     parser.add_argument("--world", required=True)
     parser.add_argument("--bundle", required=True)
+    parser.add_argument("--tiles", default="96x64", help="WxH in tiles")
     args = parser.parse_args()
+    global TILES_X, TILES_Y
+    TILES_X, TILES_Y = [int(v) for v in args.tiles.split("x")]
     oi, oj = [int(v) for v in args.offset.split(":")]
 
     elev, climate = fetch_region(args.api, (oi, oj))
@@ -99,7 +102,7 @@ def main():
     precip = tile_reduce(climate[..., 2], np.mean)
 
     land = ~tile_water
-    e_lo, e_hi = np.percentile(tile_elev[land], 8), np.percentile(tile_elev[land], 97)
+    e_lo, e_hi = np.percentile(tile_elev[land], 8), np.percentile(tile_elev[land], 88)
     elev_n = np.clip((tile_elev - e_lo) / max(1e-6, e_hi - e_lo), 0, 1)
     slope_n = np.clip(tile_slope / max(1e-6, np.percentile(tile_slope, 96)), 0, 1)
     tn = (temp - temp.min()) / max(1e-6, temp.max() - temp.min())
@@ -109,6 +112,10 @@ def main():
     materials = np.full((TILES_Y, TILES_X), "grass", dtype=object)
     materials[tile_water] = "water"
     materials[land & (slope_n > 0.72) & (elev_n > 0.45)] = "rock"
+    # the terraced high country IS mountain: rock body, not farmland at
+    # altitude (tile is highland when its mean elevation crosses the
+    # terrace threshold used for vertex snapping)
+    materials[land & (elev_n > 0.62)] = "rock"
     materials[land & (materials == "grass") & ((pn < 0.22) | (slope_n > 0.5))] = "dirt"
     # settlement disc (tile space)
     ty, tx = np.mgrid[0:TILES_Y, 0:TILES_X]
@@ -133,14 +140,51 @@ def main():
     vy = np.clip(np.arange(TILES_Y + 1) * SUPER, 0, elev.shape[0] - 1)
     vx = np.clip(np.arange(TILES_X + 1) * SUPER, 0, elev.shape[1] - 1)
     vertex_elev = elev[np.ix_(vy, vx)]
-    heights_f = np.clip((vertex_elev - e_lo) / max(1e-6, e_hi - e_lo), 0, 1) * 4.0
-    heights_f = np.where(vertex_elev <= sea_level, -1.0, heights_f)
-    heights_i = np.clip(np.round(heights_f), -1, 4).astype(int)
+    # TERRACED mountains: real terrain slopes quantize into polite 1-step
+    # staircases (fully climbable, visually mild), so instead: highlands
+    # snap to the height cap, lowlands compress to 0..2, and the boundary
+    # becomes a genuine 2+ step wall the server refuses. A handful of
+    # passes are carved back so the high country stays reachable.
+    vertex_norm = np.clip((vertex_elev - e_lo) / max(1e-6, e_hi - e_lo), 0, 2)
+    highland = vertex_norm > 0.62
+    low_f = np.clip(vertex_norm * 3.2, 0, 2.0)
+    heights_i = np.where(highland, 4, np.round(low_f)).astype(int)
+    heights_i = np.where(vertex_elev <= sea_level, -1, heights_i)
+
+    # carve passes: lowest points of the highland boundary become 3-high
+    # saddles ramped from a 2-high approach (1-step chain: 2 -> 3 -> 4)
+    boundary = highland & (
+        ~np.roll(highland, 1, 0) | ~np.roll(highland, -1, 0)
+        | ~np.roll(highland, 1, 1) | ~np.roll(highland, -1, 1)
+    )
+    by, bx = np.where(boundary)
+    if len(by) > 0:
+        order = np.argsort(vertex_elev[by, bx])
+        passes = []
+        for idx in order:
+            py, px = int(by[idx]), int(bx[idx])
+            if all(abs(py - qy) + abs(px - qx) > 22 for qy, qx in passes):
+                passes.append((py, px))
+            if len(passes) >= 6:
+                break
+        vy2, vx2 = np.mgrid[0 : heights_i.shape[0], 0 : heights_i.shape[1]]
+        for py, px in passes:
+            d = np.hypot(vy2 - py, vx2 - px)
+            heights_i = np.where((d <= 1.6) & (heights_i == 4), 3, heights_i)
+            heights_i = np.where((d > 1.6) & (d <= 3.4) & (heights_i >= 3) & (heights_i < 4), 3, heights_i)
+            heights_i = np.where((d > 1.6) & (d <= 3.4) & (heights_i < 3) & (heights_i >= 0), 2, heights_i)
+        print(f"passes carved at: {passes}")
+
+    # client floats mirror the terraces with a whisper of residual relief
+    residual = np.clip(vertex_norm * 3.2 - np.round(np.clip(vertex_norm * 3.2, 0, 2)), -0.4, 0.4)
+    heights_f = heights_i.astype(np.float32) + residual * 0.3
+    heights_f = np.where(heights_i == -1, -1.0, heights_f)
 
     heath_v = np.clip(1.2 - (tn * 0.6 + pn * 0.9), 0, 1)
     # vegetation: warm+wet, none in settlement, thin on rock
     vegetation = np.clip(0.25 + pn * 0.6 + tn * 0.25 - slope_n * 0.4, 0, 1)
     vegetation[materials == "settlement"] = 0.0
+    vegetation[materials == "rock"] = np.minimum(vegetation[materials == "rock"], 0.12)
     vegetation[t_centre < 5] *= 0.25
     vegetation[tile_water] = 0.0
 
@@ -159,6 +203,8 @@ def main():
         grid_rows.append("".join(np.base_repr(legend.index(materials[y, x]), 36).lower() for x in range(TILES_X)))
     world["map"]["terrain"]["materialGrid"] = grid_rows
     world["map"]["terrain"]["vertexHeights"] = heights_i.tolist()
+    world["map"]["width"] = TILES_X * 64
+    world["map"]["height"] = TILES_Y * 64
     world["spawn"] = {"x": (TILES_X / 2) * 64, "y": (TILES_Y / 2) * 64}
     for obj in world.get("objects", []):
         if obj["kind"] == "registrar":

@@ -30,6 +30,14 @@ export function buildWorldDataFromGrids(tiles, cols, rows, heightsGrid, heathGri
 
 function assembleWorldData(tiles, cols, rows, heights, heath) {
   const channel = buildChannelFields(tiles, cols, rows);
+  // rock body field: 1 on mountain/stone tiles, sampled bilinear for the
+  // painter — grid-derived, so generated worlds carry their massifs
+  const rock = new Float32Array(cols * rows);
+  for (const tile of tiles) {
+    if (tile.material === "rock" || tile.material === "stone") {
+      rock[tile.y * cols + tile.x] = 1;
+    }
+  }
 
   const sampleVertexGrid = (grid, mapX, mapY) => {
     const x = clamp(mapX, 0, cols);
@@ -94,6 +102,7 @@ function assembleWorldData(tiles, cols, rows, heights, heath) {
       if (active.length === 2 && max > 1 - min) active.reverse();
       return active;
     },
+    rockAt: (mapX, mapY) => sampleTileGrid(rock, mapX, mapY),
     channel: {
       distanceAt: (mapX, mapY) => sampleTileGrid(channel.distance, mapX, mapY),
       fordnessAt: (mapX, mapY) => sampleTileGrid(channel.fordness, mapX, mapY),
