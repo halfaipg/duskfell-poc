@@ -28,9 +28,23 @@ export async function loadRuntimeTerrainAssets(onProgress = null) {
     }),
   );
 
+  // optional generated-world bundle (terrain-diffusion bridge); absent on
+  // formula worlds. TODO: SHA-pin once the wipe pipeline settles.
+  let worldBundle = null;
+  try {
+    const bundleResponse = await fetch("/assets/terrain/world-bundle.json", { cache: "no-store" });
+    if (bundleResponse.ok) {
+      const parsed = await bundleResponse.json();
+      if (parsed?.version === "duskfell-world-bundle-v1") worldBundle = parsed;
+    }
+  } catch {
+    worldBundle = null;
+  }
+
   return {
     atlas,
     image,
+    worldBundle,
     groundPatches,
     patternSources: terrainPatternFrames(image, atlas.tileSheet),
     patternContexts: new WeakMap(),

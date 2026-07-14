@@ -5,10 +5,10 @@ export function createTerrainCache() {
   let terrainCacheKey = "";
 
   return {
-    terrainForMap(map) {
-      const key = terrainKey(map);
+    terrainForMap(map, bundle = null) {
+      const key = `${terrainKey(map)}:${bundle?.version ?? "formula"}:${bundle?.cols ?? 0}x${bundle?.rows ?? 0}`;
       if (terrainCacheKey !== key) {
-        terrain = buildTerrain(map);
+        terrain = buildTerrain(map, bundle);
         terrainCacheKey = key;
       }
       return terrain;

@@ -18,6 +18,17 @@ export function buildWorldData(tiles, cols, rows, safeRadiusTiles, profile) {
   const heath = buildVertexGrid(cols, rows, (x, y) =>
     visualBiomeWeightsAt(x, y, cols, rows, profile.seed).heath,
   );
+  return assembleWorldData(tiles, cols, rows, heights, heath);
+}
+
+// bundle worlds: grids come straight from the bake, no formulas anywhere
+export function buildWorldDataFromGrids(tiles, cols, rows, heightsGrid, heathGrid) {
+  const heights = Float32Array.from(heightsGrid.flat());
+  const heath = Float32Array.from(heathGrid.flat());
+  return assembleWorldData(tiles, cols, rows, heights, heath);
+}
+
+function assembleWorldData(tiles, cols, rows, heights, heath) {
   const channel = buildChannelFields(tiles, cols, rows);
 
   const sampleVertexGrid = (grid, mapX, mapY) => {

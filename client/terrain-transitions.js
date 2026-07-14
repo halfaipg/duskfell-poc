@@ -6,7 +6,7 @@ import {
 } from "./terrain-primitives.js";
 import { materialForCompositionKit } from "./terrain-composition-kit.js";
 
-export function transitionsForTile(x, y, material, cols, rows, safeRadiusTiles, profile, compositionKits = []) {
+export function transitionsForTile(x, y, material, cols, rows, safeRadiusTiles, profile, compositionKits = [], materialAt = null) {
   const edges = [
     ["north", x, y - 1],
     ["east", x + 1, y],
@@ -17,7 +17,7 @@ export function transitionsForTile(x, y, material, cols, rows, safeRadiusTiles, 
 
   for (const [edge, nx, ny] of edges) {
     if (nx < 0 || ny < 0 || nx >= cols || ny >= rows) continue;
-    const nextMaterial = materialForTileWithCompositionKits(nx, ny, cols, rows, safeRadiusTiles, profile, compositionKits);
+    const nextMaterial = materialForTileWithCompositionKits(nx, ny, cols, rows, safeRadiusTiles, profile, compositionKits, materialAt);
     if (nextMaterial === material) continue;
     if (materialPriority(nextMaterial) < materialPriority(material)) continue;
     transitions.push({
@@ -36,13 +36,13 @@ export function transitionsForTile(x, y, material, cols, rows, safeRadiusTiles, 
       },
     });
   }
-  for (const corner of cornerTransitionsForTile(x, y, material, cols, rows, safeRadiusTiles, profile, compositionKits)) {
+  for (const corner of cornerTransitionsForTile(x, y, material, cols, rows, safeRadiusTiles, profile, compositionKits, materialAt)) {
     transitions.push(corner);
   }
   return transitions;
 }
 
-function cornerTransitionsForTile(x, y, material, cols, rows, safeRadiusTiles, profile, compositionKits = []) {
+function cornerTransitionsForTile(x, y, material, cols, rows, safeRadiusTiles, profile, compositionKits = [], materialAt = null) {
   const corners = [
     ["northEast", x + 1, y - 1, ["north", "east"]],
     ["southEast", x + 1, y + 1, ["east", "south"]],
@@ -53,11 +53,11 @@ function cornerTransitionsForTile(x, y, material, cols, rows, safeRadiusTiles, p
 
   for (const [corner, nx, ny, adjacentEdges] of corners) {
     if (nx < 0 || ny < 0 || nx >= cols || ny >= rows) continue;
-    const nextMaterial = materialForTileWithCompositionKits(nx, ny, cols, rows, safeRadiusTiles, profile, compositionKits);
+    const nextMaterial = materialForTileWithCompositionKits(nx, ny, cols, rows, safeRadiusTiles, profile, compositionKits, materialAt);
     if (nextMaterial === material) continue;
     if (materialPriority(nextMaterial) < materialPriority(material)) continue;
     const adjacentHasSameTransition = adjacentEdges.some((edge) =>
-      transitionsForNeighborMaterial(x, y, edge, nextMaterial, cols, rows, safeRadiusTiles, profile, compositionKits),
+      transitionsForNeighborMaterial(x, y, edge, nextMaterial, cols, rows, safeRadiusTiles, profile, compositionKits, materialAt),
     );
     if (adjacentHasSameTransition) continue;
     transitions.push({
@@ -80,7 +80,7 @@ function cornerTransitionsForTile(x, y, material, cols, rows, safeRadiusTiles, p
   return transitions;
 }
 
-function transitionsForNeighborMaterial(x, y, edge, material, cols, rows, safeRadiusTiles, profile, compositionKits = []) {
+function transitionsForNeighborMaterial(x, y, edge, material, cols, rows, safeRadiusTiles, profile, compositionKits = [], materialAt = null) {
   const offset = {
     north: [0, -1],
     east: [1, 0],
@@ -91,10 +91,11 @@ function transitionsForNeighborMaterial(x, y, edge, material, cols, rows, safeRa
   const nx = x + offset[0];
   const ny = y + offset[1];
   if (nx < 0 || ny < 0 || nx >= cols || ny >= rows) return false;
-  return materialForTileWithCompositionKits(nx, ny, cols, rows, safeRadiusTiles, profile, compositionKits) === material;
+  return materialForTileWithCompositionKits(nx, ny, cols, rows, safeRadiusTiles, profile, compositionKits, materialAt) === material;
 }
 
-function materialForTileWithCompositionKits(x, y, cols, rows, safeRadiusTiles, profile, compositionKits) {
+function materialForTileWithCompositionKits(x, y, cols, rows, safeRadiusTiles, profile, compositionKits, materialAt = null) {
+  if (materialAt) return materialAt(x, y);
   if (x < 0 || y < 0 || x >= cols || y >= rows) return "grass";
   const biome = biomeForTile(x, y, cols, rows, safeRadiusTiles, profile);
   return materialForCompositionKit(x, y, materialForBiome(biome), biome, compositionKits);

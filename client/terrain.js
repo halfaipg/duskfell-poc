@@ -1,5 +1,5 @@
 import { PROJECTION } from "./projection.js";
-import { buildWorldData } from "./world-data.js";
+import { buildWorldData, buildWorldDataFromGrids } from "./world-data.js";
 import { interiorHeightAt, interiorPortalAt } from "./interior-occlusion.js";
 import { terrainChunks, elevationEdgesForTile } from "./terrain-chunks.js";
 import { terrainCompositionForTile } from "./terrain-composition.js";
@@ -28,7 +28,10 @@ import { terrainFamilyForTile } from "./terrain-family.js";
 export { TERRAIN_MATERIALS, biomeForTile, materialForTile, terrainHeightMetadata };
 export { projectTerrainTile, terrainFacets } from "./terrain-geometry.js";
 
-export function buildTerrain(map) {
+export function buildTerrain(map, bundle = null) {
+  if (bundle && Array.isArray(bundle.materialGrid)) {
+    return buildTerrainFromBundle(map, bundle);
+  }
   const profile = terrainProfile(map);
   const cols = Math.ceil(map.width / profile.unitsPerTile);
   const rows = Math.ceil(map.height / profile.unitsPerTile);
@@ -75,6 +78,136 @@ export function buildTerrain(map) {
     tile.elevationEdges = elevationEdgesForTile(tile, tiles, cols, rows);
   }
   const worldData = buildWorldData(tiles, cols, rows, safeRadiusTiles, profile);
+  const details = terrainDetails(tiles, cols, rows, safeRadiusTiles, profile, compositionKits);
+  const detailAuthority = terrainDetailAuthority(details, profile);
+  const chunks = terrainChunks(tiles, cols, rows);
+  const interiorSpaces = terrainInteriorSpaces(compositionKits, profile);
+
+  return {
+    cols,
+    rows,
+    worldData,
+    width: map.width,
+    height: map.height,
+    safeRadiusTiles,
+    profile,
+    compositionKits,
+    tiles,
+    chunks,
+    details,
+    detailAuthority,
+    interiorSpaces,
+  };
+}
+
+// Bundle worlds: tiles come from baked grids (terrain-diffusion bridge)
+// instead of the island formulas. Composition kits, transitions, decals,
+// details and chunks run unchanged on top of grid-sourced tiles.
+function buildTerrainFromBundle(map, bundle) {
+  const profile = terrainProfile(map);
+  const cols = bundle.cols;
+  const rows = bundle.rows;
+  const safeRadiusTiles = map.safeZoneRadius / profile.unitsPerTile;
+  const materialRow = (y) => bundle.materialGrid[Math.max(0, Math.min(rows - 1, y))];
+  const legend = profile.materials;
+  const materialAt = (x, y) => {
+    if (x < 0 || y < 0 || x >= cols || y >= rows) return "grass";
+    return legend[parseInt(materialRow(y)[x], 36)] ?? "grass";
+  };
+  const heightAtVertex = (x, y) =>
+    bundle.heights[Math.max(0, Math.min(rows, y))][Math.max(0, Math.min(cols, x))];
+  const intHeight = (x, y) =>
+    clamp(Math.round(heightAtVertex(x, y)), profile.minElevation, profile.maxElevation);
+  const vegetationAt = (x, y) =>
+    bundle.vegetation?.[Math.max(0, Math.min(rows - 1, y))]?.[Math.max(0, Math.min(cols - 1, x))] ?? 0.4;
+
+  const centerX = cols / 2;
+  const centerY = rows / 2;
+  const compositionKits = createTerrainCompositionKits(cols, rows, safeRadiusTiles, profile);
+  const tiles = [];
+  for (let y = 0; y < rows; y += 1) {
+    for (let x = 0; x < cols; x += 1) {
+      const gridMaterial = materialAt(x, y);
+      const centerDistance = Math.hypot(x + 0.5 - centerX, y + 0.5 - centerY);
+      const vegetation = vegetationAt(x, y);
+      const elevation = clamp((intHeight(x, y) + 1) / 5, 0, 1);
+      const biome = {
+        elevation,
+        moisture: clamp(vegetation * 1.1, 0, 1),
+        rockiness: gridMaterial === "rock" ? 0.92 : gridMaterial === "dirt" ? 0.5 : 0.2,
+        dryness: clamp(1 - vegetation, 0, 1),
+        settlementPressure: clamp(1 - centerDistance / Math.max(0.001, safeRadiusTiles * 0.58), 0, 1),
+        plazaPressure: clamp(1 - centerDistance / Math.max(0.001, safeRadiusTiles * 0.42), 0, 1),
+        pathPressure: 0,
+        northSouthPathPressure: 0,
+        eastWestPathPressure: 0,
+        shorePathPressure: 0,
+        waterPressure: gridMaterial === "water" ? 1 : 0,
+        shorePressure: gridMaterial === "water" || gridMaterial === "shore" ? 0.8 : 0,
+        vegetation,
+        detailDensity: clamp(0.06 + vegetation * 0.3, 0, 1),
+      };
+      const material = materialForCompositionKit(x, y, gridMaterial, biome, compositionKits);
+      const heights =
+        material === "water"
+          ? { nw: profile.waterLevel, ne: profile.waterLevel, se: profile.waterLevel, sw: profile.waterLevel }
+          : material === "settlement"
+            ? {
+                nw: clamp(intHeight(x, y), 0, 1),
+                ne: clamp(intHeight(x + 1, y), 0, 1),
+                se: clamp(intHeight(x + 1, y + 1), 0, 1),
+                sw: clamp(intHeight(x, y + 1), 0, 1),
+              }
+            : {
+                nw: intHeight(x, y),
+                ne: intHeight(x + 1, y),
+                se: intHeight(x + 1, y + 1),
+                sw: intHeight(x, y + 1),
+              };
+      const height = terrainHeightMetadata(heights);
+      const composition = terrainCompositionForTile(
+        x,
+        y,
+        material,
+        biome,
+        cols,
+        rows,
+        safeRadiusTiles,
+        profile,
+        height,
+        compositionKits,
+      );
+      const family = terrainFamilyForTile({ x, y, material, biome, composition, heights, height });
+      tiles.push({
+        x,
+        y,
+        material,
+        biome,
+        composition,
+        family,
+        heights,
+        height,
+        sloped: height.range > 0,
+        transitions: transitionsForTile(
+          x,
+          y,
+          material,
+          cols,
+          rows,
+          safeRadiusTiles,
+          profile,
+          compositionKits,
+          materialAt,
+        ),
+        decals: decalsForTile(x, y, material, profile, biome, composition),
+        elevationEdges: [],
+      });
+    }
+  }
+  for (const tile of tiles) {
+    tile.elevationEdges = elevationEdgesForTile(tile, tiles, cols, rows);
+  }
+  const worldData = buildWorldDataFromGrids(tiles, cols, rows, bundle.heights, bundle.heathWeights);
   const details = terrainDetails(tiles, cols, rows, safeRadiusTiles, profile, compositionKits);
   const detailAuthority = terrainDetailAuthority(details, profile);
   const chunks = terrainChunks(tiles, cols, rows);
