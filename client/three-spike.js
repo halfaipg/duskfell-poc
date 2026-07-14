@@ -61,39 +61,68 @@ const [meadow, heath, scree, cliff] = await Promise.all(
   ["biome-meadow.webp", "biome-heath.webp", "biome-scree.webp", "biome-cliff.webp"].map(loadPainting),
 );
 
-// ---- albedo bake: per-tile crops from the real paintings, slope-aware ----
+// ---- albedo bake: layered like the game compositor, soft boundaries ----
+// each material class paints through a mask rendered at 1px/tile and scaled
+// up with bilinear smoothing, so regions blend over ~a tile instead of
+// meeting at hard square edges; mirrored mapping never wrap-jumps
 const TPX = 24; // albedo px per tile
 const albedoCanvas = document.createElement("canvas");
 albedoCanvas.width = cols * TPX; albedoCanvas.height = rows * TPX;
 const actx = albedoCanvas.getContext("2d");
-for (let y = 0; y < rows; y += 1) {
-  for (let x = 0; x < cols; x += 1) {
-    const m = materialAt(x, y);
-    const corner = [hAt(x, y), hAt(x + 1, y), hAt(x, y + 1), hAt(x + 1, y + 1)];
-    const slope = Math.max(...corner) - Math.min(...corner);
-    let src = meadow;
-    if (m === "water") src = null;
-    else if (slope >= 1.2 || (m === "rock" && slope >= 0.8)) src = cliff;
-    else if (m === "rock" || m === "stone") src = scree;
-    else if (m === "dirt" || m === "shore") src = heath;
-    if (src) {
-      // continuous mapping: adjacent tiles sample adjacent painting texels,
-      // so same-material regions read as one surface, not patchwork squares
-      const su = (x * 48) % Math.max(1, src.width - 48);
-      const sv = (y * 48) % Math.max(1, src.height - 48);
-      actx.drawImage(src, su, sv, 48, 48, x * TPX, y * TPX, TPX, TPX);
-      if (m === "rock" || m === "stone") {
-        actx.globalCompositeOperation = "multiply";
-        actx.fillStyle = "rgba(140, 143, 150, 0.35)";
-        actx.fillRect(x * TPX, y * TPX, TPX, TPX);
-        actx.globalCompositeOperation = "source-over";
-      }
-    } else {
-      actx.fillStyle = "#2e4a52";
-      actx.fillRect(x * TPX, y * TPX, TPX, TPX);
+
+const tri = (v, m) => m - Math.abs((v % (2 * m)) - m); // mirrored tiling
+function paintLayer(src, maskFn, tint) {
+  const mask = document.createElement("canvas");
+  mask.width = cols; mask.height = rows;
+  const mctx = mask.getContext("2d");
+  const img = mctx.createImageData(cols, rows);
+  for (let y = 0; y < rows; y += 1) {
+    for (let x = 0; x < cols; x += 1) {
+      img.data[(y * cols + x) * 4 + 3] = Math.round(255 * Math.max(0, Math.min(1, maskFn(x, y))));
     }
   }
+  mctx.putImageData(img, 0, 0);
+  const layer = document.createElement("canvas");
+  layer.width = albedoCanvas.width; layer.height = albedoCanvas.height;
+  const lctx = layer.getContext("2d");
+  for (let y = 0; y < rows; y += 1) {
+    for (let x = 0; x < cols; x += 1) {
+      const su = tri(x * 48, src.width - 48);
+      const sv = tri(y * 48, src.height - 48);
+      lctx.drawImage(src, su, sv, 48, 48, x * TPX, y * TPX, TPX, TPX);
+    }
+  }
+  if (tint) {
+    lctx.globalCompositeOperation = "multiply";
+    lctx.fillStyle = tint;
+    lctx.fillRect(0, 0, layer.width, layer.height);
+  }
+  lctx.globalCompositeOperation = "destination-in";
+  lctx.imageSmoothingEnabled = true;
+  lctx.drawImage(mask, 0, 0, layer.width, layer.height);
+  actx.drawImage(layer, 0, 0);
 }
+const slopeAt = (x, y) => {
+  const c = [hAt(x, y), hAt(x + 1, y), hAt(x, y + 1), hAt(x + 1, y + 1)];
+  return Math.max(...c) - Math.min(...c);
+};
+// base coat: meadow everywhere
+paintLayer(meadow, () => 1, null);
+// dirt & shore
+paintLayer(heath, (x, y) => {
+  const m = materialAt(x, y);
+  return m === "dirt" || m === "shore" || m === "settlement" ? 1 : 0;
+}, null);
+// rock body, slate-toned
+paintLayer(scree, (x, y) => {
+  const m = materialAt(x, y);
+  return m === "rock" || m === "stone" ? 1 : 0;
+}, "rgba(140, 143, 150, 0.75)");
+// cliff paint on genuinely steep ground, wherever it is
+paintLayer(cliff, (x, y) => Math.max(0, Math.min(1, (slopeAt(x, y) - 0.55) / 0.5)), null);
+// water: dark pool tint with a soft shoreline
+paintLayer(meadow, (x, y) => (materialAt(x, y) === "water" ? 1 : 0), "rgba(30, 58, 66, 0.92)");
+
 const albedo = new THREE.CanvasTexture(albedoCanvas);
 albedo.colorSpace = THREE.SRGBColorSpace;
 albedo.anisotropy = 8;
@@ -107,8 +136,20 @@ renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.35;
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x10140f);
-scene.fog = new THREE.Fog(0x2a3328, SPAN * 1.6, SPAN * 4.5);
+{
+  const sky = document.createElement("canvas");
+  sky.width = 4; sky.height = 256;
+  const g = sky.getContext("2d");
+  const grad = g.createLinearGradient(0, 0, 0, 256);
+  grad.addColorStop(0, "#20282e");
+  grad.addColorStop(0.55, "#3a4438");
+  grad.addColorStop(1, "#141a14");
+  g.fillStyle = grad; g.fillRect(0, 0, 4, 256);
+  const skyTex = new THREE.CanvasTexture(sky);
+  skyTex.colorSpace = THREE.SRGBColorSpace;
+  scene.background = skyTex;
+}
+scene.fog = new THREE.Fog(0x39443a, SPAN * 1.5, SPAN * 4.2);
 
 // terrain: one vertex per world vertex, Y up
 const geo = new THREE.PlaneGeometry(cols, rows, cols, rows);
@@ -130,6 +171,14 @@ const terrain = new THREE.Mesh(
 terrain.receiveShadow = true;
 terrain.castShadow = true;
 scene.add(terrain);
+
+// diorama pedestal: the world edge reads as a deliberate cut, not a void
+const pedestal = new THREE.Mesh(
+  new THREE.BoxGeometry(cols, 6, rows),
+  new THREE.MeshStandardMaterial({ color: 0x1b1f22, roughness: 1 }),
+);
+pedestal.position.set(cols / 2, -3 - 0.6 * HSCALE, rows / 2);
+scene.add(pedestal);
 
 // water plane at sea level
 const water = new THREE.Mesh(
@@ -163,6 +212,7 @@ function treeTexture() {
 }
 const treeMat = new THREE.MeshStandardMaterial({
   map: treeTexture(), transparent: true, alphaTest: 0.45, side: THREE.DoubleSide, roughness: 0.9,
+  emissive: 0x1c2a18, emissiveIntensity: 0.8,
 });
 const treeGeo = new THREE.PlaneGeometry(1.6, 2.2);
 const trees = new THREE.Group();
