@@ -25,9 +25,8 @@ const params = new URLSearchParams(window.location.search);
 const terrainGlLayer =
   params.get("nogl") === "1" ? null : createTerrainGlLayer(document.getElementById("worldgl"));
 const DAY_TINT = params.get("dayTint");
-// hidden by default per user call until NPCs have real art: ?npcs=1 shows
-// the cognition-workstream pair
-const SHOW_NPCS = params.get("npcs") === "1";
+// NPCs are visible by default; ?npcs=0 is a development escape hatch.
+const SHOW_NPCS = params.get("npcs") !== "0";
 // live day/night: one full day per SUN_CYCLE seconds (?sunCycle=40 for a
 // fast demo arc); drives the water specular sun and the world tint
 const SUN_CYCLE_SECONDS = (() => {
@@ -293,7 +292,7 @@ function draw(now = 0) {
       if (snapshot && runtimeAssets.assetsReady()) {
         // stage 2: raise the land — build one visible chunk per frame so
         // the bar moves instead of freezing while composites paint
-        terrainCache.terrainForMap(snapshot.map);
+        terrainCache.terrainForMap(snapshot.map, terrainAssets.worldBundle);
         const origin = defaultOrigin(snapshot.map);
         const players = Array.isArray(snapshot.players) ? snapshot.players : [];
         const me = players.find((player) => player.id === playerId) || players[0];
@@ -371,7 +370,7 @@ function draw(now = 0) {
     ctx.scale(camera.scale, camera.scale);
     ctx.translate(-camera.x, -camera.y);
     const objects = Array.isArray(snapshot.objects) ? snapshot.objects : [];
-    terrainCache.terrainForMap(snapshot.map);
+    terrainCache.terrainForMap(snapshot.map, terrainAssets.worldBundle);
     terrainDrawer.drawMap(snapshot, origin, now, rect);
     drawWaterFish(ctx, terrainCache.getTerrain(), origin, camera, rect, now);
     if (!HIDE_WORLD_PROPS && !VEGETATION_ONLY_ART_PASS) {

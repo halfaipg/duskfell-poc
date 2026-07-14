@@ -10,7 +10,15 @@ export async function buildTerrainDetailAuthorityFromWorld(worldPath = "server/d
   if (!world?.map?.terrain) {
     throw new Error(`${worldPath} must include map.terrain`);
   }
-  const terrain = buildTerrain(world.map);
+  // generated worlds carry a client bundle; build from it when present
+  let bundle = null;
+  try {
+    bundle = JSON.parse(await readFile("assets/terrain/world-bundle.json", "utf8"));
+    if (bundle?.version !== "duskfell-world-bundle-v1") bundle = null;
+  } catch {
+    bundle = null;
+  }
+  const terrain = buildTerrain(world.map, bundle);
   return normalizeTerrainDetailAuthority({
     ...terrain.detailAuthority,
     sourceWorld: {

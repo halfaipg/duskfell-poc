@@ -13,6 +13,7 @@ export function createRuntimeAssets() {
   const terrainAssets = {
     atlas: null,
     image: null,
+    worldBundle: null,
     groundPatches: new Map(),
     patternSources: [],
     patternContexts: new WeakMap(),
