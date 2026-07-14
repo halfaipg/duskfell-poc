@@ -184,6 +184,59 @@ def main():
         v = ((x + 37) * 374761393 ^ (y + 91) * 668265263) & 0xffffffff
         v = ((v ^ (v >> 13)) * 1274126177) & 0xffffffff
         return (v % 1000) / 1000
+    # drown tarns fully enclosed by the massif — teal water stickers at
+    # altitude read as broken graphics, not mountain lakes
+    for wy in range(TILES_Y):
+        for wx in range(TILES_X):
+            if materials[wy, wx] != "water":
+                continue
+            y0, y1 = max(0, wy - 2), min(TILES_Y, wy + 3)
+            x0, x1 = max(0, wx - 2), min(TILES_X, wx + 3)
+            box = materials[y0:y1, x0:x1]
+            if np.all((box == "water") | (box == "rock") | (box == "stone")):
+                materials[wy, wx] = "rock"
+    # water stranded above the terrace line reads as teal glitches on the
+    # mountainside — no water above height 3
+    high_vertex = heights_i >= 3
+    high_tile = high_vertex[:-1, :-1] & high_vertex[:-1, 1:] & high_vertex[1:, :-1] & high_vertex[1:, 1:]
+    materials[(materials == "water") & high_tile] = "rock"
+    # single pass: water crowded by rock (4+ of 8 real neighbours) is a
+    # glitchy sliver against a cliff, not a stream — no fixpoint iteration
+    # and no off-map counting, which would eat the sea from the coast in
+    squeezed = []
+    for wy in range(TILES_Y):
+        for wx in range(TILES_X):
+            if materials[wy, wx] != "water":
+                continue
+            rocky = sum(
+                1
+                for dy in (-1, 0, 1) for dx in (-1, 0, 1)
+                if (dx or dy)
+                and 0 <= wx + dx < TILES_X and 0 <= wy + dy < TILES_Y
+                and materials[wy + dy, wx + dx] in ("rock", "stone")
+            )
+            if rocky >= 4:
+                squeezed.append((wx, wy))
+    for wx, wy in squeezed:
+        materials[wy, wx] = "rock"
+    # finally, kill orphan water bodies under 8 tiles — leftover slivers of
+    # rerouted streams read as teal glitches, real lakes are far larger
+    seen = set()
+    from collections import deque as _dq
+    for wy in range(TILES_Y):
+        for wx in range(TILES_X):
+            if materials[wy, wx] != "water" or (wx, wy) in seen:
+                continue
+            comp = [(wx, wy)]; seen.add((wx, wy)); bfs = _dq([(wx, wy)])
+            while bfs:
+                cx, cy = bfs.popleft()
+                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    nx, ny = cx + dx, cy + dy
+                    if 0 <= nx < TILES_X and 0 <= ny < TILES_Y and materials[ny, nx] == "water" and (nx, ny) not in seen:
+                        seen.add((nx, ny)); comp.append((nx, ny)); bfs.append((nx, ny))
+            if len(comp) < 8:
+                for cx, cy in comp:
+                    materials[cy, cx] = "rock"
     rock_tile = (materials == "rock") | (materials == "stone")
     def _is_rock(x, y):
         if x < 0 or y < 0 or x >= TILES_X or y >= TILES_Y:
@@ -207,8 +260,9 @@ def main():
         for vx in range(TILES_X + 1):
             d = depth[vy, vx]
             if d > 0 and heights_i[vy, vx] >= 4:
-                jitter = 1 if (d >= 2 and _vhash01(vx, vy) > 0.55) else 0
-                heights_i[vy, vx] = min(9, 4 + min(d, 4) + jitter)
+                # two rings per bench: wide flat terraces read as coherent
+                # cliff bands instead of per-tile salt-and-pepper steps
+                heights_i[vy, vx] = min(9, 4 + min((d + 1) // 2, 5))
 
     # client floats mirror the terraces with a whisper of residual relief
     residual = np.clip(vertex_norm * 3.2 - np.round(np.clip(vertex_norm * 3.2, 0, 2)), -0.4, 0.4)

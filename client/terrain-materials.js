@@ -49,7 +49,9 @@ export const TERRAIN_MATERIALS = {
     transition: "#6d6354",
   },
   rock: {
-    fill: "#555b57",
+    // dark slate: this fill is the underpaint safety coat that peeks out
+    // below displaced bench edges — light gray read as smeared bands
+    fill: "#31363a",
     light: "#8c8e7d",
     dark: "#252b2a",
     stroke: "rgba(27, 31, 30, 0.12)",
