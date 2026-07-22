@@ -1,5 +1,10 @@
 # Wretch Sprite Animation Pipeline
 
+For generated motion beyond the original CC0 clip library, see
+[`kimodo-animation-pipeline.md`](kimodo-animation-pipeline.md). Kimodo feeds this
+same Blender/action/render/anchor path; it does not replace client playback or
+server-authoritative movement.
+
 How the player character goes from CC0 mocap to a smooth 8-direction sprite
 sheet, and how the client plays it back without artifacts. This is the
 definitive reference — every method here replaced an earlier one that failed,
@@ -219,3 +224,43 @@ reference pose.
 4. Render 8 × 27 into `/tmp/wsheet8/` (§3), in two 4-direction batches.
 5. Assemble + manifest + `npm run sprites:verify` (§4).
 6. `npm run test:client`, restart `./target/debug/sundermere-server`.
+
+## Locomotion V2 Structure Review
+
+`scripts/blender-duskfell-locomotion.py` is the reproducible replacement for
+the historical manual render instructions above. It uses the CC0 Quaternius
+actions already embedded in `var/blender/wretch-factory.blend`, preserves the
+full source actions at 30 fps inside a new Blender file, and samples only the
+runtime review sheet. AI is not involved in pose, timing, direction, camera, or
+registration.
+
+```sh
+npm run sprites:locomotion:structure
+npm run sprites:locomotion:validate
+```
+
+The review contract is:
+
+- `16` idle frames followed by `20` walk frames in every row;
+- row order `south, southeast, east, northeast, north, northwest, west, southwest`;
+- fixed root yaws `-45, 0, 45, 90, 135, 180, -135, -90`;
+- `128x160` transparent cells and footprint anchor `(64,110)`;
+- one relaxed minimally clothed body, with detachable hair hidden;
+- no alpha touching a cell border and no disconnected meaningful components;
+- measurable pose change and complete foot-spread motion in all eight rows;
+- no walk frame shorter than `0.82x` its direction's idle body height;
+- no walk silhouette wider than `0.78x` its idle body height.
+
+Imported action rotations are measured around the averaged looping action pose,
+not the source armature rest pose. This removes the large static rig-space
+correction that previously produced crouched frames and impossible stride
+silhouettes. Leg amplitudes and the compact opposing arm swing are deterministic
+Blender corrections; the source action still owns cadence and contact order.
+
+The current candidate passes those structural gates and remained registered to
+the footprint through live direction changes in `valley-v2`. Browser review
+measured roughly `93-120 fps` on high while moving and `120 fps` on low, with no
+warnings or errors. This accepts the motion structure for controlled finishing,
+not the raw render as final art or a default-manifest promotion. Img2img may
+stylize accepted frames later, but must not alter their silhouette, limbs,
+timing, direction rows, or anchor.

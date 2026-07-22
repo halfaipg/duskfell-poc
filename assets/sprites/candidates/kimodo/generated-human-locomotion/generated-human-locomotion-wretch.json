@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "duskfell-kimodo-character-sheet-v1",
+  "approvalState": "review",
+  "idleSheet": "assets/sprites/candidates/kimodo/generated-idle-seed91-cycle/generated-idle-seed91-cycle-wretch-8x16.png",
+  "runSheet": "assets/sprites/candidates/kimodo/generated-run-seed17-cycle/generated-run-seed17-cycle-wretch-8x20.png",
+  "sheet": "assets/sprites/candidates/kimodo/generated-human-locomotion/generated-human-locomotion-wretch-8x36.png",
+  "sheetSha256": "b0c43354590eece9c60f1fb9fc9cf81c1f8d46f72a8de82d397815d0be4a28ec",
+  "rows": 8,
+  "idleFrames": 16,
+  "runFrames": 20,
+  "columns": 36,
+  "cellWidth": 128,
+  "cellHeight": 160,
+  "width": 4608,
+  "height": 1280,
+  "idleFrameRange": [
+    0,
+    15
+  ],
+  "runFrameRange": [
+    16,
+    35
+  ]
+}

@@ -88,6 +88,47 @@ test("walk animation can use an authored gait sequence and idle frame", () => {
   assert.equal(next.frameIndex, 2);
 });
 
+test("authored frame timing preserves a slow review motion", () => {
+  const frameMs = 4033 / 12;
+  const first = walkAnimationSample({
+    moving: true,
+    elapsedMs: frameMs * 0.9,
+    frameCount: 12,
+    authoredFrameMs: frameMs,
+  });
+  const second = walkAnimationSample({
+    moving: true,
+    elapsedMs: frameMs * 1.1,
+    frameCount: 12,
+    authoredFrameMs: frameMs,
+  });
+  assert.equal(first.frameIndex, 0);
+  assert.equal(second.frameIndex, 1);
+});
+
+test("authored idle timing is independent from movement cadence", () => {
+  const idleFrames = [0, 1, 2, 3];
+  const before = walkAnimationSample({
+    moving: false,
+    elapsedMs: 399,
+    idleElapsedMs: 399,
+    frameCount: 8,
+    idleFrames,
+    idleFrameMs: 400,
+  });
+  const after = walkAnimationSample({
+    moving: false,
+    elapsedMs: 401,
+    idleElapsedMs: 401,
+    frameCount: 8,
+    idleFrames,
+    idleFrameMs: 400,
+  });
+
+  assert.equal(before.frameIndex, 0);
+  assert.equal(after.frameIndex, 1);
+});
+
 test("walk animation exposes alternating footfall pulses for terrain feedback", () => {
   const firstPlant = walkAnimationSample({
     moving: true,

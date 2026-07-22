@@ -1581,6 +1581,19 @@
       }
     }
   ],
+  "worldMap": {
+    "id": "duskfell-world-map-day-v2",
+    "image": "world-map/duskfell-world-map-day-v2.webp",
+    "sha256": "81a1570df77e0655b6a9d74e5563803ede7a2e8e86fa54507a6e6a769b56a800",
+    "width": 1536,
+    "height": 1024,
+    "worldCols": 192,
+    "worldRows": 128,
+    "tilePixelWidth": 8,
+    "tilePixelHeight": 8,
+    "provenance": "world-map/duskfell-world-map-day-v2.json",
+    "status": "runtime-review"
+  },
   "groundPatches": [
     {
       "id": "biome-meadow",
@@ -1673,16 +1686,16 @@
     {
       "id": "biome-cliff",
       "biome": "cliff",
-      "image": "ground-patches/biome-cliff.webp",
-      "sha256": "49931560148a8f7e22c4e3bf3a4fad86857b3d88be6dbdbb5a2ef37ee846b37f",
+      "image": "ground-patches/biome-cliff-v2.webp",
+      "sha256": "55eb5e1d73873d6b308316eebca3208419f32985a13a81b8cf2f4543d0f591e0",
       "width": 2048,
       "height": 2048
     },
     {
       "id": "biome-scree",
       "biome": "scree",
-      "image": "ground-patches/biome-scree.webp",
-      "sha256": "9fb59c93902eb0f9980764e14d355a9172c99d3c581432f10f0795c3dbaebc38",
+      "image": "ground-patches/biome-scree-v2.webp",
+      "sha256": "cab53c2bc1c0be769fb56764d25d9a5efebf7542c912ec9483f2fd17af346d28",
       "width": 2048,
       "height": 2048
     }

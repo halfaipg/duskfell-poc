@@ -1,11 +1,20 @@
 export const TERRAIN_DETAIL_OBJECT_PREFIX = "terrain-detail:";
 
-// Vegetation-only art pass: everything on screen must be current-generation
-// art (terrain, stream, the tree/bush/tuft kit, players). Placeholder-era
-// props, items, ecology decals and procedural cue overlays stay hidden until
-// each gets its own art pass.
+// Scenic detail art pass: these kinds have current clean-room sprite frames.
+// Placeholder-era world props and procedural cue overlays stay hidden until
+// each receives the same art review.
 export const VEGETATION_ONLY_ART_PASS = true;
-export const VISIBLE_DETAIL_KINDS = new Set(["tree", "scrub", "tuft"]);
+export const VISIBLE_DETAIL_KINDS = new Set([
+  "tree",
+  "scrub",
+  "tuft",
+  "flower",
+  "reeds",
+  "rock",
+  "boulder",
+  "fallen-log",
+  "stump",
+]);
 export const VISIBLE_OBJECT_KINDS = new Set(["saplingTree"]);
 
 export function isTerrainDetailAuthorityObject(object) {
@@ -13,6 +22,7 @@ export function isTerrainDetailAuthorityObject(object) {
 }
 
 export function terrainDetailAuthorityObjectId(detail) {
+  if (detail?.scenicOnly) return null;
   const resourceNodeId = detail?.authority?.resourceNodeId;
   if (typeof resourceNodeId === "string" && resourceNodeId.startsWith(TERRAIN_DETAIL_OBJECT_PREFIX)) {
     return resourceNodeId;
@@ -60,10 +70,10 @@ export function shouldDrawPlayerNameLabel(player, playerPosition, localPlayerPos
   if (!player) return false;
   if (options.isLocal || options.debug) return true;
   if (!playerPosition || !localPlayerPosition) return false;
-  const radius = options.radius ?? 90;
+  const radius = options.radius ?? (options.isNpc ? 150 : 90);
   const crowdedRadius = options.crowdedRadius ?? 96;
   const nearbyPlayerCount = options.nearbyPlayerCount ?? 0;
-  if (nearbyPlayerCount >= 3 && distanceSquared(playerPosition, localPlayerPosition) <= crowdedRadius * crowdedRadius) {
+  if (!options.isNpc && nearbyPlayerCount >= 3 && distanceSquared(playerPosition, localPlayerPosition) <= crowdedRadius * crowdedRadius) {
     return false;
   }
   return distanceSquared(playerPosition, localPlayerPosition) <= radius * radius;

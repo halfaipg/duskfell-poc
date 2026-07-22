@@ -119,6 +119,38 @@ test("verifies every declared biome ground patch", async () => {
   assert.match(result.errors.join("\n"), /groundPatches\[4\]\.image dimensions 2048x2048/);
 });
 
+test("verifies the optional runtime world map", async () => {
+  const dir = await makeTempDir();
+  await writeFile(path.join(dir, "terrain.png"), makePngHeader(640, 704));
+  const mapBytes = makeWebpHeader(1536, 1024);
+  await writeFile(path.join(dir, "world-map.webp"), mapBytes);
+  const manifestPath = path.join(dir, "manifest.json");
+  const manifest = validAtlas();
+  manifest.worldMap = {
+    id: "world-map-test",
+    image: "world-map.webp",
+    sha256: sha256Hex(mapBytes),
+    width: 1536,
+    height: 1024,
+    worldCols: 192,
+    worldRows: 128,
+    tilePixelWidth: 8,
+    tilePixelHeight: 8,
+  };
+  await writeFile(manifestPath, JSON.stringify(manifest, null, 2));
+
+  let result = await verifyTerrainAtlas(manifestPath);
+  assert.equal(result.ok, true, result.errors.join("\n"));
+
+  manifest.worldMap.sha256 = "0".repeat(64);
+  manifest.worldMap.height = 512;
+  await writeFile(manifestPath, JSON.stringify(manifest, null, 2));
+  result = await verifyTerrainAtlas(manifestPath);
+  assert.equal(result.ok, false);
+  assert.match(result.errors.join("\n"), /worldMap\.sha256/);
+  assert.match(result.errors.join("\n"), /worldMap.image dimensions 1536x1024/);
+});
+
 function validAtlas() {
   const materials = ["grass", "field", "dirt", "stone", "water", "settlement", "cobble", "rock", "ruin", "shore"];
   const edges = ["north", "east", "south", "west"];

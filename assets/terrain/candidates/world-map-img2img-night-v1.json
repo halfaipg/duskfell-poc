@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "duskfell-generated-asset-v1",
+  "id": "world-map-img2img-night-v1",
+  "status": "concept-review",
+  "kind": "authoritative-world-map-enrichment",
+  "createdAt": "2026-07-14",
+  "tool": "OpenAI built-in image generation",
+  "model": "built-in image generation",
+  "sourceImages": [
+    {
+      "path": "world-map-structure-authoritative.png",
+      "sha256": "3dcff7f950d71b40f57b4893092811087dfceae792db59a015e88396558124e8",
+      "role": "authoritative structure control"
+    },
+    {
+      "path": "world-map-img2img-day-v1.png",
+      "sha256": "f1f9de52424c8dfbedb88bb4c0b131a536d4a83c3a59d2f6dca74433874efd43",
+      "role": "day-night visual continuity reference"
+    }
+  ],
+  "sourceEncodingNote": "The control was deterministically re-encoded after generation; decoded source pixels are unchanged.",
+  "outputImage": "world-map-img2img-night-v1.png",
+  "outputSha256": "b043c89b104a6a39fe740964bb25476d19466f46a6b811968c798725c2d831bc",
+  "structureSources": "See world-map-structure-authoritative.json for pinned world, bundle, and authority hashes.",
+  "promptSummary": "Moonlit night enrichment of the authoritative Duskfell map with the same mountain silhouette, water footprint, biome boundaries, settlement, paths, cliffs, blockers, and landmark positions as the day map.",
+  "acceptance": "concept only; runtime use requires boundary-drift measurement and mask recomposition",
+  "license": "project-original-ai-assisted-review"
+}

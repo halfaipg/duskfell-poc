@@ -6,7 +6,7 @@ export function createTerrainCache() {
 
   return {
     terrainForMap(map, bundle = null) {
-      const key = `${terrainKey(map)}:${bundle?.version ?? "formula"}:${bundle?.cols ?? 0}x${bundle?.rows ?? 0}`;
+      const key = `${terrainKey(map)}:${bundleKey(bundle)}`;
       if (terrainCacheKey !== key) {
         terrain = buildTerrain(map, bundle);
         terrainCacheKey = key;
@@ -20,6 +20,31 @@ export function createTerrainCache() {
       return terrainCacheKey;
     },
   };
+}
+
+function bundleKey(bundle) {
+  if (!bundle) return "formula";
+  const dimensions = bundle.dimensions ?? { cols: bundle.cols ?? 0, rows: bundle.rows ?? 0 };
+  const stream = bundle.streamingWindow;
+  if (stream) {
+    const region = bundle.sourceRegion ?? {};
+    return [
+      bundle.schema,
+      stream.sourceBundleContentSha256,
+      region.offsetX,
+      region.offsetY,
+      dimensions.cols,
+      dimensions.rows,
+      stream.chunkIds?.join(","),
+    ].join(":");
+  }
+  return [
+    bundle.schema ?? bundle.version,
+    bundle.id ?? bundle.world ?? "anonymous",
+    bundle.contentSha256 ?? bundle.sourceBundleContentSha256 ?? "unhashed",
+    dimensions.cols,
+    dimensions.rows,
+  ].join(":");
 }
 
 function terrainKey(map) {

@@ -65,6 +65,26 @@ Plain HTTP request bodies are capped by `HTTP_BODY_LIMIT_BYTES`, defaulting to `
 
 Runtime art manifests pin their loaded PNG and WebP bytes with SHA-256 digests. The server caps sprite and terrain manifest JSON files with `MAX_RUNTIME_MANIFEST_BYTES`, verifies every referenced image against those pins at startup before binding a listener, and caps each checked image with `MAX_RUNTIME_ASSET_BYTES` before it is read. The generated terrain-detail authority artifact is also capped and loaded at startup; its blocker entries are consumed by the simulation as authoritative movement blockers, its checked primary resource-node entries are promoted into server-owned gatherable objects with bounded resource amounts and lifecycle snapshots, and its checked `decayConsumers` recipes now constrain passive terrain-detail mycelium feeding. Multi-resource yields remain deployment-auditable metadata until a later authority pass. `npm run assets:verify` checks the on-disk bytes against those manifest hashes and verifies the generated terrain-detail authority artifact, `scripts/assets-smoke.js` repeats the comparison against bytes served by HTTP, and the browser client verifies fetched image bytes with Web Crypto before decoding sprite or terrain images. This catches accidental asset drift and keeps generated/commissioned art review tied to exact files, not just filenames.
 
+Approved chunked server worlds pin their terrain chunk index in server content.
+Startup requires `TERRAIN_CHUNK_INDEX_PATH`, caps index, per-chunk, total-byte,
+chunk-count, geometry, and regional tile sizes, verifies every SHA-256, and
+rejects incomplete core coverage or mismatched shared fixed-point vertices
+before the listener binds. Setting the chunk path for legacy content, or omitting
+it for chunked content, also fails closed.
+
+Approved illustrated clients separately pin the visual chunk index and every
+PNG byte count, SHA-256, dimension, authority sample, and core crop. Package
+validation decodes neighboring aprons and rejects pixel drift even when the
+altered image and containing index were both rehashed. The browser requests
+only a bounded nearby window, de-duplicates in-flight reads, and evicts through
+a fixed LRU instead of trusting or allocating a continent-sized gameplay image.
+
+Multi-region generation uses an atomic filesystem batch journal with bounded
+rectangle, concurrency, and retry limits. Resume pins the atlas manifest,
+continent authority, recipe template, selection, and each completed region
+manifest. Completed outputs are revalidated before they are skipped. Any source
+or output drift stops the batch rather than silently mixing world generations.
+
 The server also loads sprite, terrain, and terrain-detail authority manifest metadata at startup and exposes it at `/admin/runtime`: schema version, projection, manifest fingerprint, manifest byte cap, image SHA-256 pins, hash verification status, per-image byte cap, approval state, image byte sizes, and terrain authority blocker/resource/decay counts. When built with `GIT_SHA`, the same endpoint exposes the compile-time source revision so operators can match a running shard to an image label and Git commit. `scripts/runtime-manifest-smoke.js` verifies the endpoint is admin-token protected, matches the checked manifests, and can report expected build provenance. `scripts/runtime-asset-integrity-smoke.js` corrupts a copied terrain PNG and verifies startup fails before health when asset bytes do not match the manifest pin, asset images exceed the configured byte cap, or manifest JSON files exceed their configured byte cap.
 
 Implemented ingress protections:
@@ -99,6 +119,7 @@ Implemented ingress protections:
 - Client WebSocket JSON messages reject unknown fields, so protocol drift or privilege-looking extras are recorded as bad client messages instead of being silently ignored.
 - Input messages must use strictly increasing sequence numbers, and `WS_MAX_INPUT_SEQUENCE_STEP` bounds how far a sequence can jump within one connection. Stale and jump rejects are visible through reason-specific WebSocket rejection counters.
 - Movement is computed from client intent on the server, with map bounds clamping, diagonal speed normalization, terrain material checks, terrain step-height checks, server-owned object footprint checks, and checked terrain-detail authority blocker checks. Water, excessive terrain-height deltas, movement into solid world objects, and movement into generated terrain-detail blockers are rejected in the sim; the browser's terrain renderer is visual only.
+- Player speech, model-backed NPC speech, and deterministic NPC fallback share one typed simulation intent boundary. The boundary rejects unknown actors, missing or unknown audiences, delayed replies outside the server-owned talk radius, and empty speech; it strips control characters and applies actor-specific length limits before mutation. The cognition provider cannot call inventory, movement, settlement, or journal mutation APIs.
 - Player-submitted rename messages are trimmed, capped at 20 characters, restricted to ASCII letters, digits, `-`, and `_`, and rejected without mutation when invalid.
 - Pending and active player display names are unique case-insensitively within the running shard; active names are tracked by authoritative simulation state instead of render-snapshot scans. This prevents same-shard impersonation and duplicate pending tickets but is not a substitute for durable account or character-name reservations.
 - `REQUIRE_ACCOUNT=true` requires valid `Authorization: Bearer ...` account authentication before `/api/session` mints a WebSocket ticket. `ACCOUNT_AUTH_MODE=dev-token` is the temporary shared-secret mode and does not provide a durable account subject. `ACCOUNT_AUTH_MODE=jwt-hs256` validates signed JWTs with required `sub` and `exp`, optional issuer/audience checks, and binds the accepted bounded printable subject into the issued ticket as `accountSubject`. Bearer token inputs over 4096 bytes are rejected before shared-secret comparison or JWT decode. Ticketed spawns carry that subject into player snapshots, ownership journal events, settlement receipts, and `/admin/ownership`. This is still a PoC boundary, but it proves session issuance can fail closed behind account authentication and carry account identity forward. Rejections are exposed through `sundermere_account_auth_rejected_total`, and `scripts/account-settlement-smoke.js` verifies the end-to-end account-to-ownership path.
@@ -138,11 +159,15 @@ Implemented ingress protections:
 - `scripts/account-settlement-smoke.js` verifies a JWT-authenticated player can claim a deed and the same `accountSubject` reaches the snapshot, receipt, ownership endpoint, and journal.
 - `scripts/durable-corruption-smoke.js` verifies malformed journal JSONL, oversized durable JSONL lines, and malformed or semantically invalid settlement outbox JSONL fails startup before serving clients.
 - `scripts/durable-sync-smoke.js` verifies synced durable appends work through a real deed claim and are visible in admin summary plus metrics.
+- Ignored world-generation review packages are exposed read-only at `/worlds/generated` only while `PUBLIC_DEPLOYMENT=false`. Public deployment never mounts that route, and hidden path segments remain blocked by the shared HTTP middleware.
+- Approved generated worlds use hash-bound human approval, an immutable runtime-world ID, and a registry written only after runtime assets and standalone server content are installed. `worldgen:serve` isolates `CONTENT_PATH`, `TERRAIN_DETAIL_AUTHORITY_PATH`, journal, and settlement outbox paths by world ID; it is a local shard workflow, not a production deployment shortcut. `worldgen:preview` revalidates a generated package into a hash-addressed `review` runtime under `var/`, uses a separate asset registry and durable paths, and never writes approved runtime directories. Review manifests are rejected by the normal browser loader unless the local URL explicitly carries `preview=1`; this is testing access, not visual approval.
+- Cross-region transfer primitives are fail-closed and bounded. Player transfer state accepts only known inventory item IDs, bounded unique stacks and deeds, valid account/name identity, reciprocal atlas neighbors, the exact parent atlas hash, and an in-bounds destination. HS256 tickets require a 32-byte-or-longer secret, expire within at most five minutes, bind source/destination/player/atlas claims to the signed state, cap token bytes, and reject nonce replay. They are not exposed by the live server yet: an in-process replay map is insufficient for multi-process exactly-once admission, and source removal must not occur before a durable destination acknowledgement.
 
 ## Production Requirements
 
 - Replace local session tickets with authenticated account sessions before spawning players.
 - Store sessions in Redis or another shared low-latency store when more than one sim process is running.
+- Store consumed cross-region transfer nonces and transfer transaction state in a shared durable coordinator before enabling live region handoff.
 - Enforce admission limits at the shard/router boundary in addition to per-process limits.
 - Move in-process IP and account session-issue rate-limit buckets to Redis or the account/router layer so limits apply across sim processes.
 - Move JSONL audit persistence to Postgres append-only tables before public testing.

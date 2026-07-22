@@ -39,7 +39,7 @@ export function createPlayerDrawer({
     const playerZ = terrainHeightAtWorld(terrain, renderPosition.x, renderPosition.y);
     const point = projectWorld(renderPosition.x, renderPosition.y, playerZ, origin);
     const motion = playerRenderState.motionFor(player, getSnapshotTick() ?? 0, now);
-    const sprite = playerSpriteFor(player);
+    const sprite = playerSpriteFor(player, motion);
     const grounding = playerGroundingAtWorld(terrain, renderPosition, motion);
     const showLabel = shouldDrawPlayerNameLabel(
       player,
@@ -47,12 +47,13 @@ export function createPlayerDrawer({
       getLocalPlayerRenderPosition(),
       {
         isLocal: isMe,
+        isNpc: player.npc === true,
         debug: Boolean(getTerrainDebugMode()),
         nearbyPlayerCount: playerRenderState.nearbyPlayerCount(players, player),
       },
     );
 
-    drawPlayerShadow(ctx, point, isMe, sprite, grounding);
+    drawPlayerShadow(ctx, point, isMe, sprite, grounding, player, motion, now);
     drawPlayerFootfall(ctx, terrain, point, motion, renderPosition, grounding, player.id);
 
     if (drawPlayerSprite(ctx, player, point, motion, now, sprite, grounding)) {
@@ -83,8 +84,11 @@ export function createPlayerDrawer({
     );
   }
 
-  function playerSpriteFor(player) {
+  function playerSpriteFor(player, motion = null) {
     const sprites = getSprites();
+    if (player.id === getLocalPlayerId() && sprites.reviewPlayer) {
+      return sprites.reviewPlayer;
+    }
     if (sprites.players.length === 0) return sprites.player;
     const variantIndex = playerRenderState.variantIndexFor(player, stableIndex(player.id));
     return sprites.players[variantIndex % sprites.players.length] ?? sprites.player;

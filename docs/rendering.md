@@ -1,8 +1,19 @@
 # Rendering Direction
 
-Checked July 6, 2026 and live-reviewed again on July 7, 2026. The visual target should be a clean-room military/plan-oblique 2D tile renderer, not true isometric and not the common `64x32` dimetric pixel-art style.
+Checked July 6, 2026 and live-reviewed again on July 22, 2026. The visual target should be a clean-room military/plan-oblique 2D tile renderer, not true isometric and not the common `64x32` dimetric pixel-art style.
 
-The running PoC camera is aligned with that target: the screen reads as square `64x64` diamond tiles in plan-oblique projection. The remaining visual weakness is the placeholder art direction: flat repeated terrain, weak transition/edge families, limited elevation character, and simple props/actors. The next graphics work should replace the placeholder terrain and prop atlas through the checked manifest pipeline before investing heavily in final character polish.
+The running PoC camera is aligned with that target: the screen reads as square `64x64` diamond tiles in plan-oblique projection. Duskfell keeps its illustrated runtime identity while adopting the physical coherence of a strong 3D world pipeline. Erosion, water, cliffs, roads, material weights, climate, object anchors, shadows, and rooms are structural authority; illustration enriches that structure without moving it. Characters use rigged 3D motion as their source of truth and deterministic sprite renders as the runtime asset.
+
+## Hybrid Graphics Method
+
+1. Generate continuous physical structure before art: erosion, drainage, water surfaces, relief, roads, footprints, rooms, and prop anchors.
+2. Blend visual material families instead of replacing whole biome tiles. Hard material IDs remain collision compatibility, not the visible transition system.
+3. Render rigged characters and registered equipment in Blender at the checked plan-oblique camera, then assemble anchored 8-direction sheets.
+4. Use img2img only as a controlled surface pass. Reapply authority masks and reject geography, silhouette, pose, equipment, or anchor drift.
+5. Drive lighting, water response, shadows, vegetation, and atmosphere from the same runtime authority fields.
+6. Scale effects by measured graphics budget while preserving painted terrain, major props, actors, and readable water on low-end hardware.
+
+OpenMMO informed these architectural requirements, but its PolyForm Noncommercial code and mixed-provenance assets are not inputs. Duskfell implementations and art remain original and clean-room.
 
 ## Projection
 
@@ -23,7 +34,7 @@ const axisAngleDegrees = 45;
 const heightAxis = "screen-y";
 const halfW = tileW / 2;
 const halfH = tileH / 2;
-const zPx = 6;
+const zPx = 20;
 ```
 
 Those values are part of the checked asset contract, not only renderer implementation details. Sprite and terrain manifests must declare the same `military-plan-oblique` kind, `1` tile aspect ratio, `45` degree plan axes, `screen-y` vertical-height axis, `64x64` tiles, and `64` world units per tile before the client will load their sheets.
@@ -79,9 +90,15 @@ Clean-room takeaways to preserve without copying UO data or formulas:
   buffers share one measured height contract.
 - Keep a terrain composition layer above raw biome noise. Tiles should expose a
   named zone, road axis, elevation/moisture bands, detail family, object band,
-  and optional composition-kit membership so roads, plazas, groves, ridges,
+  deterministic habitat kind/band/strength, and optional composition-kit membership so roads, plazas, groves, ridges,
   shorelines, decals, and detail statics stay coherent across rendering,
   debugging, and future gameplay.
+- Ambient props must follow broad habitat fields, not independent per-tile dice.
+  Woodland, wetland, scrub, and rocky patches preserve open negative space and
+  reject water, steep faces, plazas, and high-pressure travel corridors before
+  selecting individual sprite anchors. Generated-world ambient placement is
+  bounded to the authored source footprint so a clamped world apron cannot
+  multiply decorative work.
 - Use composition kits for authored-feeling scene structure. Kits should define
   anchors and roles for features like crossroads, viaduct ruins, groves,
   reedbeds, walls, stairs, courtyards, and gardens; renderers can then layer
@@ -95,6 +112,10 @@ Clean-room takeaways to preserve without copying UO data or formulas:
   boulders, ruins, reeds, and equivalent environment objects should reserve
   tile-space during generation and sort by their projected anchor on the shared
   height field.
+- Keep visual composition separately switchable from collision/resource
+  authority. A scenic-only detail may render approved art, but it must carry no
+  authority id, blocker, resource yield, or lifecycle cue. Low quality keeps the
+  same anchors while disabling vegetation animation work.
 - Give tall statics explicit occlusion metadata. The current renderer fades
   nearby ruin and masonry details when the local player is behind their
   footprint, keeping old-school vertical depth readable without permanently
@@ -144,15 +165,38 @@ when the controlled player is tucked behind it.
 The first indoor-space contract is now terrain-owned too. Composition kits can
 emit `interiorSpaces` with world bounds, reveal padding, floor levels, and roof
 opacity metadata. They can also emit stair/portal bounds connecting floor
-levels. The renderer draws the upper shell/roof as a top-layer occluder, then
-fades it when the local player's footprint enters the space and reveals the
-sunken floor, upper-gallery outline, and active stair connector. The same
+levels. The renderer draws named roof sections as top-layer occluders, then
+fades only the sections belonging to the local player's room. Adjacent rooms
+remain covered; a stair portal temporarily activates both connected rooms. The
+reveal exposes the sunken floor, upper-gallery outline, and active stair
+connector. The same
 portal metadata contributes a ramped height offset through
 `terrainHeightAtWorld(...)`, so actor feet climb the connector instead of merely
 seeing a highlighted stair decal. This matches the old-school readable-interior
 behavior without switching scenes or copying any UO building data.
 Canvas fallback drawings remain only as a resilience path when a frame or sheet
 is unavailable.
+
+Three named graphics budgets keep performance behavior reviewable. `low` caps
+DPR at 1.25, keeps water static, disables terrain-cast shadows and GPU grass,
+retains eight visual chunks, draws at most three footfall particles, and omits
+local fog banks while preserving the painted terrain and global day/night grade.
+`balanced` is the desktop default with DPR 2, full water, terrain shadows,
+six particles, sixteen visual chunks, and painted vegetation without GPU
+grass. It allows thirty-six slowly drifting fog ribbons. `high` raises DPR,
+overscan, texture/chunk residency, particles, and atmospheric density and
+enables optional GPU grass. Select explicitly with `?quality=low`,
+`?quality=balanced`, or `?quality=high`; the HUD reports the active budget next
+to measured FPS.
+
+World-generation humidity, fog potential, wind exposure, elevation, and water
+pressure now reach the live renderer instead of stopping at the editor.
+`terrain-atmosphere.js` selects sparse local climate maxima and draws elongated
+mist ribbons tangent to terrain contours. Fog settles over sheltered humid
+lowlands, thins on exposed slopes and at midday, drifts only when the active
+quality budget permits it, and remains deterministic across streamed windows.
+This is atmosphere derived from world state, not a screen-wide decorative
+filter or randomly placed particle field.
 
 Authoritative ecology cues are rendered as ground-plane effects, not UI-only
 badges. The client derives deadwood-to-mycelium feed links from nearby server
@@ -165,8 +209,10 @@ coils and faint spent wiring once a coil has discharged.
 While the browser client remains Canvas-based, static terrain now follows the
 same architectural direction as old-school chunk renderers: projected 8x8 chunk
 geometry is prepared once, and static ground/cliff/transition layers are cached
-into offscreen chunk bitmaps. Per-frame drawing keeps only camera culling, water
-shimmer, debug overlays, terrain details, props, actors, and UI dynamic. If the
+into offscreen chunk bitmaps. The initial loading pass warms a larger offscreen
+chunk ring, then normal frames prepare at most one newly approaching chunk at a
+time before it reaches the draw overscan. Per-frame drawing keeps only camera
+culling, water shimmer, debug overlays, terrain details, props, actors, and UI dynamic. If the
 renderer moves to PixiJS/WebGL later, preserve this chunk-layer contract as
 texture-backed terrain containers instead of returning to per-tile redraws.
 

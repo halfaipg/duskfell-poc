@@ -1,0 +1,96 @@
+{
+  "schema": "duskfell-world-recipe-v3",
+  "id": "duskfell-valley",
+  "seed": 74291,
+  "dimensions": { "cols": 64, "rows": 64, "unitsPerTile": 64 },
+  "source": {
+    "type": "synthetic-v2",
+    "repository": "https://github.com/halfaipg/duskfell-poc",
+    "license": "project-original",
+    "model": "duskfell-synthetic-v2"
+  },
+  "placement": { "targetCols": 192, "targetRows": 128, "offsetX": 64, "offsetY": 32 },
+  "macro": {
+    "tiles": 32,
+    "apronTiles": 4,
+    "gameplayPixelsPerTile": 32,
+    "travelPixelsPerTile": 16,
+    "worldMapPixelsPerTile": 8
+  },
+  "terrain": {
+    "valleyCenterX": 31.5,
+    "valleyHalfWidth": 17,
+    "lake": { "x": 34, "y": 43, "radiusX": 7.5, "radiusY": 5.5 },
+    "snowline": 0.88,
+    "riverWidth": 1.45
+  },
+  "erosion": {
+    "enabled": true,
+    "iterations": 6,
+    "rainfall": 0.012,
+    "evaporation": 0.34,
+    "flowRate": 0.62,
+    "sedimentCapacity": 3.2,
+    "erosionRate": 0.13,
+    "depositionRate": 0.21,
+    "minimumSlope": 0.001,
+    "talus": 0.028,
+    "thermalRate": 0
+  },
+  "hydrology": {
+    "maxTributaries": 4,
+    "minTributaryLengthTiles": 6,
+    "watershedOutletBucketTiles": 8,
+    "shorelineThreshold": 0.45
+  },
+  "climate": {
+    "latitudeSouthDegrees": 43,
+    "latitudeNorthDegrees": 49,
+    "prevailingWind": "west-to-east",
+    "annualTemperature": 0.76,
+    "latitudeCooling": 0.12,
+    "elevationLapse": 0.48,
+    "seasonalAmplitude": 0.24,
+    "oceanMoisture": 0.58,
+    "orographicLift": 1.35,
+    "waterHumidityRadiusTiles": 10,
+    "fogHumidityThreshold": 0.7
+  },
+  "planning": {
+    "settlements": 3,
+    "minSettlementSpacing": 16,
+    "maxTrailSlope": 0.78,
+    "trailWidth": 1.15
+  },
+  "ecology": {
+    "maxResourceNodes": 96,
+    "minResourceSpacingTiles": 1.45,
+    "minHabitatPatchTiles": 6,
+    "landmarkCount": 4,
+    "minLandmarkSpacingTiles": 10
+  },
+  "palette": {
+    "meadow": "#65794a",
+    "loam": "#715f47",
+    "rock": "#696a64",
+    "snow": "#d9dedb",
+    "wetland": "#465f4f",
+    "water": "#315e66"
+  },
+  "illustration": {
+    "enabled": false,
+    "execution": "chunked-v1",
+    "provider": "aipowergrid",
+    "model": "FLUX.2 Klein 4B FP8",
+    "controlRenderer": "structural-raster-v1",
+    "controlSamplesPerTile": 4,
+    "strength": 0.6,
+    "steps": 8,
+    "cfgScale": 1,
+    "sampler": "euler",
+    "maxLongEdge": 1536,
+    "promptVersion": "duskfell-terrain-enrichment-v1",
+    "prompt": "Original hand-painted dark-age RPG terrain. Preserve the supplied elevation, water, mountain, snow, trail, and settlement geography exactly. Enrich surface materials only; no characters, structures, text, tile seams, mirrored patterns, or invented landmarks.",
+    "gates": { "waterF1": 0.72, "snowF1": 0.58, "riverCenterOffsetTiles": 1.5, "trailRecall": 0.24, "settlementRecall": 0.35, "minEntropy": 0.79, "minEdgeEnergy": 0.02 }
+  }
+}

@@ -3,6 +3,7 @@ import { carriedChargeEffect, carriedDecayEffect } from "./carried-decay-effects
 import { playerFootstepEffect } from "./player-footstep-effects.js";
 import { terrainTileAt } from "./terrain.js";
 import { stableIndex } from "./player-draw-utils.js";
+import { GRAPHICS_BUDGET } from "./device-profile.js";
 
 export function drawPlayerFootfall(
   ctx,
@@ -119,7 +120,7 @@ export function drawCarriedDecayEffect(ctx, player, point, now) {
 function drawPlayerFootstepParticles(ctx, point, effect) {
   ctx.save();
   ctx.globalCompositeOperation = effect.composite;
-  for (const particle of effect.particles) {
+  for (const particle of effect.particles.slice(0, GRAPHICS_BUDGET.maxFootstepParticles)) {
     ctx.globalAlpha = particle.alpha;
     ctx.strokeStyle = particle.color;
     ctx.fillStyle = particle.color;

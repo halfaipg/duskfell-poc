@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use tracing::error;
+use tracing::{error, info};
 
 use crate::journal::JournalEventKind;
 use crate::protocol::PlayerId;
@@ -16,6 +16,19 @@ pub(crate) async fn run_tick_loop(state: AppState) {
             let outcome = sim.tick(0.05);
             (sim.tick_count(), outcome)
         };
+        for intent in outcome.region_handoff_intents {
+            info!(
+                player_id = %intent.player_id,
+                from_region = %intent.from_region,
+                to_region = %intent.to_region,
+                exit = intent.exit.as_str(),
+                global_x = intent.global_x,
+                global_y = intent.global_y,
+                destination_x = intent.destination_x,
+                destination_y = intent.destination_y,
+                "region handoff intent awaits transfer router"
+            );
+        }
         for event in outcome.resource_events {
             record_journal(
                 &state,

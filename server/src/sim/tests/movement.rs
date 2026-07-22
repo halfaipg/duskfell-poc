@@ -1,4 +1,5 @@
 use super::*;
+use crate::protocol::{RegionCoordSnapshot, RegionNeighborsSnapshot, RegionRoutingSnapshot};
 use crate::terrain::TerrainMaterial;
 use uuid::Uuid;
 
@@ -52,6 +53,61 @@ fn diagonal_movement_is_not_faster_than_cardinal_movement() {
 
     assert!((travel_distance(cardinal_start, cardinal_end) - PLAYER_SPEED).abs() < 0.01);
     assert!((travel_distance(diagonal_start, diagonal_end) - PLAYER_SPEED).abs() < 0.01);
+}
+
+#[test]
+fn regional_edge_pressure_emits_one_latched_handoff_intent() {
+    let player_id = Uuid::new_v4();
+    let mut sim = SimWorld::new();
+    sim.map.region = Some(RegionRoutingSnapshot {
+        schema_version: "duskfell-region-routing-v1".to_string(),
+        atlas_id: "duskfell-continent".to_string(),
+        atlas_content_sha256: "a".repeat(64),
+        region_id: "duskfell-continent-r5-7".to_string(),
+        coord: RegionCoordSnapshot { x: 5, y: 7 },
+        tile_origin: RegionCoordSnapshot { x: 960, y: 896 },
+        neighbors: RegionNeighborsSnapshot {
+            north: Some("duskfell-continent-r5-6".to_string()),
+            east: Some("duskfell-continent-r6-7".to_string()),
+            south: Some("duskfell-continent-r5-8".to_string()),
+            west: Some("duskfell-continent-r4-7".to_string()),
+        },
+    });
+    sim.add_player(player_id);
+    let east_edge = sim.map.width - 28.0;
+    move_player_to_position(
+        &mut sim,
+        player_id,
+        Position {
+            x: east_edge,
+            y: 500.0,
+        },
+    );
+    sim.set_input(
+        player_id,
+        PlayerInput {
+            right: true,
+            ..PlayerInput::default()
+        },
+    );
+    let first = sim.tick(0.05);
+    assert_eq!(first.region_handoff_intents.len(), 1);
+    assert_eq!(
+        first.region_handoff_intents[0].to_region,
+        "duskfell-continent-r6-7"
+    );
+    assert!(sim.tick(0.05).region_handoff_intents.is_empty());
+
+    sim.set_input(player_id, PlayerInput::default());
+    sim.tick(0.05);
+    sim.set_input(
+        player_id,
+        PlayerInput {
+            right: true,
+            ..PlayerInput::default()
+        },
+    );
+    assert_eq!(sim.tick(0.05).region_handoff_intents.len(), 1);
 }
 
 #[test]
@@ -163,7 +219,10 @@ fn overlapped_terrain_detail_authority_allows_movement_away() {
         SimWorld::from_content_with_terrain_detail_authority(WorldContent::demo(), Some(authority))
             .expect("test terrain detail authority should load");
     sim.add_player(player_id);
-    let start = Position { x: 11788.0, y: 500.0 };
+    let start = Position {
+        x: 11788.0,
+        y: 500.0,
+    };
     move_player_to_position(&mut sim, player_id, start);
 
     sim.set_input(

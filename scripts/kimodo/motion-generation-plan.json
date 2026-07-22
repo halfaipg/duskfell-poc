@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "duskfell-kimodo-generation-plan-v1",
+  "model": "Kimodo-SOMA-RP-v1.1",
+  "diffusionSteps": 100,
+  "cfg": {
+    "type": "separated",
+    "textWeight": 2.0,
+    "constraintWeight": 2.0
+  },
+  "requiredSkeleton": "somaskel77",
+  "requiredArrays": [
+    "foot_contacts",
+    "global_rot_mats",
+    "local_rot_mats",
+    "posed_joints",
+    "root_positions"
+  ],
+  "motions": [
+    {
+      "id": "neutral-breathing-idle",
+      "prompt": "A person stands still in a relaxed neutral posture with an upright spine, level head, feet planted shoulder-width apart, arms resting naturally at their sides, and slow subtle breathing.",
+      "durationSeconds": 4.0,
+      "seeds": [17, 42, 91]
+    },
+    {
+      "id": "restrained-upright-run",
+      "prompt": "A person runs straight forward at a steady moderate pace with an upright torso, level head, compact natural arm swing, controlled even strides, and no exaggerated sprinting or jumping.",
+      "durationSeconds": 3.0,
+      "seeds": [17, 42, 91]
+    }
+  ]
+}

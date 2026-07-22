@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "duskfell-generated-asset-v1",
+  "id": "biome-proof-loam-grass-v1",
+  "status": "concept-review",
+  "kind": "painted-ground-with-dimensional-grass-proof",
+  "createdAt": "2026-07-16",
+  "tool": "OpenAI built-in image generation",
+  "model": "built-in image generation",
+  "sourceDimensions": { "width": 1254, "height": 1254 },
+  "sourceSha256": "61a1e6f8c2561b25b50991267068c93a679791481baa55b8c6546d4562508045",
+  "runtimeImage": "biome-proof-loam-grass-v1.webp",
+  "runtimeDimensions": { "width": 2048, "height": 2048 },
+  "runtimeSha256": "ac981cd8749e6d2adc6a1bf3838188b1adfa90c2498736359fee3c8ff22db5a7",
+  "promptSummary": "High-fidelity dark loam, composed flat slate clusters, and sparse dimensional olive grass with quiet gameplay-readable ground.",
+  "runtimeUse": "Temporary exact-texture review; production grass remains a separate runtime geometry layer.",
+  "license": "project-original-ai-assisted-review"
+}

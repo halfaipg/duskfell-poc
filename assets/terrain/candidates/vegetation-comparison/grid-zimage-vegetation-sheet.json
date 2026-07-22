@@ -1,0 +1,15 @@
+{
+  "created": 1784230055,
+  "data": [
+    {
+      "revised_prompt": "Original clean-room Duskfell vegetation sprite asset sheet for a dark-age northern European fantasy world. Exactly eight isolated assets in a strict 4 columns by 2 rows layout on one uniform pure magenta chroma background (#ff00ff), generous empty space between every asset, no ground plane and no rectangular panels. Military-plan-oblique orthographic camera, square-plan 45 degree oblique view, every plant seen from the same elevated gameplay angle, coherent warm upper-left sunlight, bottom-center foot anchors, consistent world scale. Hand-painted high-definition 2D game sprites with purposeful clustered silhouettes and fine natural texture, painterly rather than photoreal and not cartoon vector art. Top row left to right: one lush dense short meadow-grass clump with many overlapping blades; one broad grass-and-sedge tuft with a few subtle seed heads; one mature irregular hawthorn-like leafy bush with visible dark branch structure; one smaller young hawthorn-like bush. Bottom row left to right: one compact purple-flowering heath bush; one asymmetrical dying yellow-green bush with sparse leaves; one intricate dead thorn bush with fine branching; one low harvested bush vigorously regrowing from an old stump. Each asset must be a single coherent clump, not scattered individual sprouts. Crisp silhouette, no text, no labels, no people, no trees, no pots, no cast shadow baked into a floor, no copied game assets, no checkerboard pattern.",
+      "seed": 8973826578819433
+    }
+  ],
+  "grid": {
+    "worker": "half5090beast1",
+    "gen_time": 8.76,
+    "model": "z-image-turbo",
+    "recipe_root": null
+  }
+}

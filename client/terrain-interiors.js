@@ -7,6 +7,17 @@ export function terrainInteriorSpaces(compositionKits, profile) {
       const halfHeight = (kit.halfHeight + 0.42) * units;
       const x = kit.x * units;
       const y = kit.y * units;
+      const bounds = {
+        minX: x - halfWidth,
+        maxX: x + halfWidth,
+        minY: y - halfHeight,
+        maxY: y + halfHeight,
+      };
+      const rooms = splitRoomsAlongY(`${kit.id}-room`, bounds, [
+        { id: "north-parapet", label: "north parapet", floorLevel: 1, share: 0.3 },
+        { id: "passage", label: "gate passage", floorLevel: 0, share: 0.4 },
+        { id: "south-parapet", label: "south parapet", floorLevel: 1, share: 0.3 },
+      ]);
       spaces.push({
         id: `${kit.id}-interior`,
         kitId: kit.id,
@@ -15,13 +26,9 @@ export function terrainInteriorSpaces(compositionKits, profile) {
         kind: "gatehouse-passage",
         x,
         y,
-        bounds: {
-          minX: x - halfWidth,
-          maxX: x + halfWidth,
-          minY: y - halfHeight,
-          maxY: y + halfHeight,
-        },
+        bounds,
         revealPadding: units * 0.28,
+        rooms,
         floors: [
           { level: 0, label: "gate passage", z: 0 },
           { level: 1, label: "broken parapet", z: 1.05 },
@@ -33,6 +40,8 @@ export function terrainInteriorSpaces(compositionKits, profile) {
             label: "charged threshold ramp",
             fromFloor: 0,
             toFloor: 1,
+            fromRoom: `${kit.id}-room-passage`,
+            toRoom: `${kit.id}-room-south-parapet`,
             fromZ: 0,
             toZ: 0.48,
             axis: "y",
@@ -50,6 +59,7 @@ export function terrainInteriorSpaces(compositionKits, profile) {
           revealedAlpha: 0.12,
           material: "weathered-gate-stone",
         },
+        occluders: roofOccluders(`${kit.id}-roof`, rooms, 1.72, 0.78, 0.06, "weathered-gate-stone"),
       });
       continue;
     }
@@ -60,6 +70,17 @@ export function terrainInteriorSpaces(compositionKits, profile) {
     const y = kit.y * units;
     const stairWidth = Math.min(halfWidth * 0.58, units * 1.35);
     const stairDepth = Math.min(halfHeight * 0.5, units * 1.3);
+    const bounds = {
+      minX: x - halfWidth,
+      maxX: x + halfWidth,
+      minY: y - halfHeight,
+      maxY: y + halfHeight,
+    };
+    const rooms = splitRoomsAlongY(`${kit.id}-room`, bounds, [
+      { id: "north-gallery", label: "north upper gallery", floorLevel: 1, share: 0.25 },
+      { id: "sunken-hall", label: "sunken hall", floorLevel: 0, share: 0.5 },
+      { id: "south-gallery", label: "south upper gallery", floorLevel: 1, share: 0.25 },
+    ]);
     spaces.push({
       id: `${kit.id}-interior`,
       kitId: kit.id,
@@ -68,13 +89,9 @@ export function terrainInteriorSpaces(compositionKits, profile) {
       kind: "multi-floor-ruin",
       x,
       y,
-      bounds: {
-        minX: x - halfWidth,
-        maxX: x + halfWidth,
-        minY: y - halfHeight,
-        maxY: y + halfHeight,
-      },
+      bounds,
       revealPadding: units * 0.38,
+      rooms,
       floors: [
         { level: 0, label: "sunken floor", z: -0.1 },
         { level: 1, label: "upper gallery", z: 1.15 },
@@ -86,6 +103,8 @@ export function terrainInteriorSpaces(compositionKits, profile) {
           label: "eroded gallery stairs",
           fromFloor: 0,
           toFloor: 1,
+          fromRoom: `${kit.id}-room-sunken-hall`,
+          toRoom: `${kit.id}-room-south-gallery`,
           fromZ: -0.1,
           toZ: 1.15,
           axis: "y",
@@ -103,7 +122,39 @@ export function terrainInteriorSpaces(compositionKits, profile) {
         revealedAlpha: 0.16,
         material: "weathered-stone",
       },
+      occluders: roofOccluders(`${kit.id}-roof`, rooms, 2.15, 0.84, 0.05, "weathered-stone"),
     });
   }
   return spaces;
+}
+
+function splitRoomsAlongY(prefix, bounds, definitions) {
+  const height = bounds.maxY - bounds.minY;
+  let cursor = bounds.minY;
+  return definitions.map((definition, index) => {
+    const last = index === definitions.length - 1;
+    const maxY = last ? bounds.maxY : cursor + height * definition.share;
+    const room = {
+      id: `${prefix}-${definition.id}`,
+      label: definition.label,
+      floorLevel: definition.floorLevel,
+      bounds: { minX: bounds.minX, maxX: bounds.maxX, minY: cursor, maxY },
+    };
+    cursor = maxY;
+    return room;
+  });
+}
+
+function roofOccluders(prefix, rooms, z, alpha, revealedAlpha, material) {
+  return rooms.map((room) => ({
+    id: `${prefix}-${room.id.split("-").slice(-2).join("-")}`,
+    kind: "roof",
+    floorLevel: room.floorLevel + 1,
+    roomIds: [room.id],
+    bounds: room.bounds,
+    z,
+    alpha,
+    revealedAlpha,
+    material,
+  }));
 }

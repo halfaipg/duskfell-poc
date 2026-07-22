@@ -3,6 +3,8 @@
 // world canvas. Dynamic overlays (water shimmer, entities, labels) stay on
 // the 2D canvas above. Returns null when WebGL is unavailable — callers
 // fall back to the 2D blit path transparently.
+import { GRAPHICS_BUDGET } from "./device-profile.js";
+
 const CLEAR_COLOR = [0x16 / 255, 0x1d / 255, 0x18 / 255];
 
 export function createTerrainGlLayer(canvas) {
@@ -15,6 +17,7 @@ export function createTerrainGlLayer(canvas) {
   const program = buildProgram(gl);
   if (!program) return null;
   const waterProgram = buildWaterProgram(gl);
+  const grassProgram = buildGrassProgram(gl);
   const attribPosition = gl.getAttribLocation(program, "aPosition");
   const attribUv = gl.getAttribLocation(program, "aUv");
   const attribPlan = gl.getAttribLocation(program, "aPlan");
@@ -24,19 +27,21 @@ export function createTerrainGlLayer(canvas) {
   const uniformHeights = gl.getUniformLocation(program, "uHeights");
   const uniformSunDir = gl.getUniformLocation(program, "uSunDir");
   const uniformDaylight = gl.getUniformLocation(program, "uDaylight");
+  const uniformCastShadows = gl.getUniformLocation(program, "uCastShadows");
   const uniformGridSize = gl.getUniformLocation(program, "uGridSize");
   let heightsTexture = null;
   let heightsSource = null;
   let lightingState = { origin: { x: 0, y: 0 }, cols: 1, rows: 1 };
   const blitProgram = buildBlitProgram(gl);
   const vertexBuffer = gl.createBuffer();
+  const grassBuffers = new Map();
   const vertexData = new Float32Array(4 * 6);
   // texture pool: LRU-evicted, with owner back-references cleared on evict
   // so an evicted texture re-uploads instead of dangling (dangling handles
   // rendered garbage — the "big squares" bug on large worlds)
   const texturePool = new Map(); // texture -> {owner, prop, lastUsed}
   let poolClock = 0;
-  const MAX_POOL = 120;
+  const MAX_POOL = GRAPHICS_BUDGET.glTexturePoolEntries;
   let contextLost = false;
 
   function poolAdd(texture, owner, prop) {
@@ -128,7 +133,7 @@ export function createTerrainGlLayer(canvas) {
 
   // world lighting inputs: height grid canvas + live sun. The heights
   // canvas uploads once (re-uploads if the source object changes).
-  function setLighting({ heightsCanvas, cols, rows, origin, sun, daylight }) {
+  function setLighting({ heightsCanvas, cols, rows, origin, sun, daylight, castShadows = true }) {
     if (contextLost) return;
     lightingState = { origin, cols, rows };
     gl.useProgram(program);
@@ -145,6 +150,7 @@ export function createTerrainGlLayer(canvas) {
     const sunDir = sun ?? { x: -0.45, y: -0.55, z: 0.72 };
     gl.uniform3f(uniformSunDir, sunDir.x, sunDir.y, Math.max(0.12, sunDir.z));
     gl.uniform1f(uniformDaylight, daylight ?? 1);
+    gl.uniform1f(uniformCastShadows, castShadows ? 1 : 0);
     gl.uniform2f(uniformGridSize, cols + 1, rows + 1);
   }
 
@@ -319,101 +325,59 @@ export function createTerrainGlLayer(canvas) {
     return true;
   }
 
-  // ---- GL grass: one triangle per blade, wind in the vertex shader, and
-  // a second flattened pass casting each blade's shadow along the sun ----
-  const grassProgram = buildGrassProgram(gl);
-  const grassBuffers = new Map(); // chunkKey -> {buffer, vertexCount}
-  const grassUniforms = grassProgram
-    ? {
-        camera: gl.getUniformLocation(grassProgram, "uCamera"),
-        viewport: gl.getUniformLocation(grassProgram, "uViewport"),
-        time: gl.getUniformLocation(grassProgram, "uTime"),
-        mode: gl.getUniformLocation(grassProgram, "uMode"),
-        shadow: gl.getUniformLocation(grassProgram, "uShadow"),
-        daylight: gl.getUniformLocation(grassProgram, "uDaylight"),
-      }
-    : null;
-
-  function grassBufferFor(chunkKey, buildBlades) {
-    let entry = grassBuffers.get(chunkKey);
-    if (entry) return entry;
-    const data = buildBlades();
-    if (!data || data.length === 0) {
-      entry = { buffer: null, vertexCount: 0 };
-    } else {
-      const buffer = gl.createBuffer();
-      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-      gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
-      entry = { buffer, vertexCount: data.length / 7 };
-    }
-    if (grassBuffers.size > 160) {
-      for (const stale of grassBuffers.values()) {
-        if (stale.buffer) gl.deleteBuffer(stale.buffer);
-      }
-      grassBuffers.clear();
-    }
-    grassBuffers.set(chunkKey, entry);
-    return entry;
-  }
-
-  let grassDiagnosed = false;
-  const grassDebug =
-    typeof globalThis.location !== "undefined" && /[?&]grassDebug=1/.test(globalThis.location.search ?? "");
-
-  function beginGrass(camera, cssWidth, cssHeight, nowMs, shadow, daylight, wind = 1) {
-    if (contextLost || !grassProgram) {
-      if (!grassDiagnosed) {
-        grassDiagnosed = true;
-        console.warn("grass: program unavailable", { contextLost, program: Boolean(grassProgram) });
-      }
-      return false;
-    }
+  function drawGrass(entries, camera, cssWidth, cssHeight, nowMs, sun = null) {
+    if (contextLost || !grassProgram || !entries?.length) return false;
     gl.useProgram(grassProgram);
-    gl.uniform3f(grassUniforms.camera, camera.x, camera.y, camera.scale);
-    gl.uniform2f(grassUniforms.viewport, cssWidth, cssHeight);
-    gl.uniform1f(grassUniforms.time, (nowMs % 1000000) / 1000);
-    gl.uniform3f(grassUniforms.shadow, shadow.dirX, shadow.dirY, shadow.length);
-    gl.uniform1f(grassUniforms.daylight, daylight);
-    gl.uniform1f(gl.getUniformLocation(grassProgram, "uWind"), wind);
+    gl.uniform3f(gl.getUniformLocation(grassProgram, "uCamera"), camera.x, camera.y, camera.scale);
+    gl.uniform2f(gl.getUniformLocation(grassProgram, "uViewport"), cssWidth, cssHeight);
+    gl.uniform1f(gl.getUniformLocation(grassProgram, "uTime"), (nowMs % 1000000) / 1000);
+    gl.uniform1f(gl.getUniformLocation(grassProgram, "uWind"), 0.72);
+    const sunDir = sun ?? { x: -0.45, y: -0.55, z: 0.72 };
+    gl.uniform3f(gl.getUniformLocation(grassProgram, "uSun"), sunDir.x, sunDir.y, sunDir.z);
+    const stride = 8 * 4;
+    const position = gl.getAttribLocation(grassProgram, "aPosition");
+    const tip = gl.getAttribLocation(grassProgram, "aTip");
+    const phase = gl.getAttribLocation(grassProgram, "aPhase");
+    const color = gl.getAttribLocation(grassProgram, "aColor");
+    gl.enableVertexAttribArray(position);
+    gl.enableVertexAttribArray(tip);
+    gl.enableVertexAttribArray(phase);
+    gl.enableVertexAttribArray(color);
+    for (const vertices of entries) {
+      const buffer = grassBufferFor(vertices);
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.vertexAttribPointer(position, 2, gl.FLOAT, false, stride, 0);
+      gl.vertexAttribPointer(tip, 1, gl.FLOAT, false, stride, 8);
+      gl.vertexAttribPointer(phase, 1, gl.FLOAT, false, stride, 12);
+      gl.vertexAttribPointer(color, 4, gl.FLOAT, false, stride, 16);
+      gl.drawArrays(gl.TRIANGLES, 0, vertices.length / 8);
+    }
+    if (!grassDiagnosed) {
+      grassDiagnosed = true;
+      console.info("Duskfell GPU grass active", {
+        chunks: entries.length,
+        vertices: entries.reduce((total, entry) => total + entry.length / 8, 0),
+        glError: gl.getError(),
+      });
+    }
     return true;
   }
 
-  function drawGrassChunk(chunkKey, buildBlades) {
-    if (contextLost || !grassProgram) return;
-    const entry = grassBufferFor(chunkKey, buildBlades);
-    if (!entry.buffer || entry.vertexCount === 0) return;
-    gl.bindBuffer(gl.ARRAY_BUFFER, entry.buffer);
-    const aPos = gl.getAttribLocation(grassProgram, "aPos");
-    const aCorner = gl.getAttribLocation(grassProgram, "aCorner");
-    const aParams = gl.getAttribLocation(grassProgram, "aParams");
-    gl.enableVertexAttribArray(aPos);
-    gl.enableVertexAttribArray(aCorner);
-    gl.enableVertexAttribArray(aParams);
-    gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 28, 0);
-    gl.vertexAttribPointer(aCorner, 2, gl.FLOAT, false, 28, 8);
-    gl.vertexAttribPointer(aParams, 3, gl.FLOAT, false, 28, 16);
-    // shadow pass first (under the blades), then the blades
-    const mode = gl.getUniformLocation(grassProgram, "uMode");
-    gl.uniform1f(gl.getUniformLocation(grassProgram, "uDebug"), grassDebug ? 1.0 : 0.0);
-    gl.uniform1f(mode, 1.0);
-    gl.drawArrays(gl.TRIANGLES, 0, entry.vertexCount);
-    gl.uniform1f(mode, 0.0);
-    gl.drawArrays(gl.TRIANGLES, 0, entry.vertexCount);
-    if (!grassDiagnosed) {
-      grassDiagnosed = true;
-      console.info("grass: first chunk drawn", {
-        vertices: entry.vertexCount,
-        glError: gl.getError(),
-        debug: grassDebug,
-      });
-    }
-  }
+  let grassDiagnosed = false;
 
-  function clearGrass() {
-    for (const entry of grassBuffers.values()) {
-      if (entry.buffer) gl.deleteBuffer(entry.buffer);
+  function grassBufferFor(vertices) {
+    const cached = grassBuffers.get(vertices);
+    if (cached) return cached;
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+    grassBuffers.set(vertices, buffer);
+    if (grassBuffers.size > 96) {
+      const stale = grassBuffers.keys().next().value;
+      gl.deleteBuffer(grassBuffers.get(stale));
+      grassBuffers.delete(stale);
     }
-    grassBuffers.clear();
+    return buffer;
   }
 
   return {
@@ -422,66 +386,39 @@ export function createTerrainGlLayer(canvas) {
     finishTerrain,
     beginWater,
     drawWaterQuad,
+    drawGrass,
     setLighting,
-    beginGrass,
-    drawGrassChunk,
-    clearGrass,
     isLost: () => contextLost,
   };
 }
 
 function buildGrassProgram(gl) {
   const vertexSource = `
-attribute vec2 aPos;      // projected base position (world px)
-attribute vec2 aCorner;   // offset from base: x spread, y = -height at tip
-attribute vec3 aParams;   // phase, heightFrac (0 base, 1 tip), shade
+attribute vec2 aPosition;
+attribute float aTip;
+attribute float aPhase;
+attribute vec4 aColor;
 uniform vec3 uCamera;
 uniform vec2 uViewport;
 uniform float uTime;
-uniform mediump float uMode;      // 0 = blade, 1 = ground shadow
-uniform vec3 uShadow;             // dirX, dirY, length
-uniform mediump float uDebug;
 uniform float uWind;
-varying float vFrac;
-varying float vShade;
+uniform vec3 uSun;
+varying vec4 vColor;
 void main() {
-  float sway = (sin(uTime * 1.9 + aParams.x) + sin(uTime * 3.3 + aParams.x * 1.7) * 0.45)
-             * 1.7 * aParams.y * uWind;
-  vec2 corner = aCorner * mix(1.0, 4.0, uDebug);
-  vec2 world;
-  if (uMode < 0.5) {
-    world = aPos + vec2(corner.x + sway, corner.y);
-  } else {
-    // flatten the blade onto the ground along the sun's cast direction
-    float rise = -corner.y;
-    world = aPos + vec2(corner.x + sway * 0.6, 0.0)
-          + vec2(uShadow.x, uShadow.y * 0.55) * rise * uShadow.z;
-  }
-  vec2 screen = (world - uCamera.xy) * uCamera.z;
+  float gust = sin(uTime * 1.55 + aPhase) + sin(uTime * 2.7 + aPhase * 1.7) * 0.34;
+  vec2 position = aPosition;
+  position.x += gust * uWind * aTip * 3.8;
+  vec2 screen = (position - uCamera.xy) * uCamera.z;
   vec2 clip = vec2(screen.x / uViewport.x * 2.0 - 1.0, 1.0 - screen.y / uViewport.y * 2.0);
   gl_Position = vec4(clip, 0.0, 1.0);
-  vFrac = aParams.y;
-  vShade = aParams.z;
+  float daylight = clamp(uSun.z * 2.2, 0.45, 1.0);
+  vColor = vec4(aColor.rgb * daylight * (0.84 + aTip * 0.16), aColor.a);
 }`;
   const fragmentSource = `
 precision mediump float;
-uniform mediump float uMode;
-uniform float uDaylight;
-uniform mediump float uDebug;
-varying float vFrac;
-varying float vShade;
+varying vec4 vColor;
 void main() {
-  if (uMode < 0.5) {
-    vec3 base = vec3(0.24, 0.30, 0.19);
-    vec3 tip = vec3(0.45, 0.54, 0.31);
-    vec3 col = mix(base, tip, vFrac) * (0.82 + vShade * 0.36);
-    col *= mix(0.62, 1.0, max(uDaylight, 0.25));
-    col = mix(col, vec3(1.0, 0.1, 0.1), uDebug);
-    gl_FragColor = vec4(col, 1.0);
-  } else {
-    float a = 0.20 * uDaylight;
-    gl_FragColor = vec4(vec3(0.06, 0.08, 0.06) * a, a);
-  }
+  gl_FragColor = vColor;
 }`;
   const vertex = compile(gl, gl.VERTEX_SHADER, vertexSource);
   const fragment = compile(gl, gl.FRAGMENT_SHADER, fragmentSource);
@@ -582,6 +519,10 @@ void main() {
   float t = uTime;
   vec2 drift = uFlow * t * 0.35;
   float body = smoothstep(0.30, 0.85, mask);
+  vec3 sun = normalize(uSun);
+  float daylight = clamp(uSun.z * 2.4, 0.0, 1.0);
+  float lowSun = clamp(1.0 - uSun.z * 1.8, 0.0, 1.0);
+  float surfaceActivity = mix(0.12, 1.0, daylight);
 
   // animated surface normal field: large swell + travelling wavelets
   vec2 warp = vec2(
@@ -596,7 +537,7 @@ void main() {
 
   // REFRACTION: bend the already-rendered riverbed through the surface
   vec2 screenUv = gl_FragCoord.xy / uResolution;
-  vec2 refracted = screenUv + normal.xy * 0.011 * body;
+  vec2 refracted = screenUv + normal.xy * 0.011 * body * surfaceActivity;
   vec3 bed = texture2D(uScene, refracted).rgb;
 
   // depth tint over the bent bed
@@ -605,12 +546,10 @@ void main() {
 
   // specular dance follows the live sun; low sun = long warm glints,
   // after dark the water dims and goes quiet
-  vec3 sun = normalize(uSun);
-  float daylight = clamp(uSun.z * 2.4, 0.0, 1.0);
-  float lowSun = clamp(1.0 - uSun.z * 1.8, 0.0, 1.0);
   float spec = pow(max(dot(normal, sun), 0.0), mix(42.0, 22.0, lowSun));
   vec3 glintColor = mix(vec3(0.9, 0.94, 0.88), vec3(1.0, 0.78, 0.5), lowSun * 0.8);
-  col += glintColor * spec * body * mix(0.10, 0.34, daylight);
+  float sunVisible = smoothstep(0.005, 0.12, uSun.z);
+  col += glintColor * spec * body * mix(0.18, 0.52, daylight) * sunVisible;
   col *= mix(0.55, 1.0, max(daylight, 0.18));
 
   // faint caustic glimmer under the refraction
@@ -622,7 +561,7 @@ void main() {
   float edge = smoothstep(0.03, 0.28, mask) * (1.0 - smoothstep(0.34, 0.72, mask));
   vec2 wf = worley(wc * 4.6 + warp * 1.4 - uFlow * t * 0.15, t * 0.6);
   float foam = edge * smoothstep(0.45, 0.05, wf.x);
-  col = mix(col, vec3(0.85, 0.9, 0.86), foam * 0.4);
+  col = mix(col, vec3(0.85, 0.9, 0.86), foam * mix(0.16, 0.4, daylight));
 
   float alpha = clamp(body + foam * 0.5, 0.0, 1.0) * mask;
   gl_FragColor = vec4(col * alpha, alpha);
@@ -663,6 +602,7 @@ uniform sampler2D uTexture;
 uniform sampler2D uHeights;
 uniform vec3 uSunDir;
 uniform float uDaylight;
+uniform float uCastShadows;
 uniform vec2 uGridSize;   // cols+1, rows+1 vertex grid
 varying vec2 vUv;
 varying vec2 vPlan;
@@ -681,6 +621,22 @@ void main() {
   vec3 normal = normalize(vec3(-hx * 0.9, -hy * 0.9, 1.6));
   float lambert = dot(normal, normalize(uSunDir));
   float shade = clamp(0.72 + lambert * 0.42 * uDaylight, 0.4, 1.22);
+  // Cheap terrain casting: six sunward height taps catch mountain/ridge
+  // occlusion. It is disabled on constrained devices by uCastShadows.
+  float terrainShadow = 0.0;
+  if (uCastShadows > 0.5 && uDaylight > 0.03 && uSunDir.z < 0.72) {
+    vec2 sunPlan = normalize(uSunDir.xy);
+    float rayRise = max(0.06, uSunDir.z) / max(0.08, length(uSunDir.xy));
+    float baseHeight = heightAt(vPlan);
+    for (int step = 1; step <= 6; step++) {
+      float distance = float(step) * 1.35;
+      float blocker = heightAt(vPlan + sunPlan * distance);
+      float rayHeight = baseHeight + distance * rayRise * 0.72 + 0.12;
+      terrainShadow += blocker > rayHeight ? 0.18 : 0.0;
+    }
+    terrainShadow = min(0.52, terrainShadow) * (1.0 - smoothstep(0.48, 0.72, uSunDir.z));
+  }
+  shade *= 1.0 - terrainShadow * uDaylight;
   gl_FragColor = vec4(texel.rgb * shade, texel.a);
 }`;
   const vertex = compile(gl, gl.VERTEX_SHADER, vertexSource);

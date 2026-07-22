@@ -3,11 +3,13 @@ use std::collections::HashMap;
 use bevy_ecs::prelude::*;
 
 use crate::content::WorldContent;
-use crate::protocol::ObjectKind;
+use crate::protocol::{
+    ObjectKind, RegionCoordSnapshot, RegionNeighborsSnapshot, RegionRoutingSnapshot,
+};
 use crate::spatial::{Point, SpatialIndex};
 use crate::terrain::{BakedTerrainGrid, TerrainAuthority};
 
-use super::model::{MapBounds, Position, SimWorld, WorldObject, SPATIAL_CELL_SIZE};
+use super::model::{MapBounds, NpcState, Position, SimWorld, WorldObject, SPATIAL_CELL_SIZE};
 use super::resources::{generated_ecology_objects, resource_node_for_object};
 use super::terrain_authority::{
     terrain_detail_authority_blockers, terrain_detail_authority_decay_consumers,
@@ -31,6 +33,14 @@ impl SimWorld {
         content: WorldContent,
         terrain_detail_authority: Option<TerrainDetailAuthority>,
     ) -> Result<Self, String> {
+        Self::from_content_with_runtime_authorities(content, terrain_detail_authority, None)
+    }
+
+    pub fn from_content_with_runtime_authorities(
+        content: WorldContent,
+        terrain_detail_authority: Option<TerrainDetailAuthority>,
+        chunked_terrain: Option<BakedTerrainGrid>,
+    ) -> Result<Self, String> {
         let mut world = World::new();
         let terrain_content = content
             .map
@@ -39,13 +49,17 @@ impl SimWorld {
             .expect("validated world content includes terrain");
         let terrain_snapshot = terrain_content.snapshot();
         let units_per_tile = terrain_snapshot.units_per_tile as f32;
-        let baked_grid = BakedTerrainGrid::from_grids(
-            &terrain_content.material_grid,
-            &terrain_content.vertex_heights,
-            &terrain_snapshot.materials,
-            (content.map.width / units_per_tile).ceil() as u32,
-            (content.map.height / units_per_tile).ceil() as u32,
-        )?;
+        let baked_grid = match chunked_terrain {
+            Some(grid) => Some(grid),
+            None => BakedTerrainGrid::from_grids(
+                &terrain_content.material_grid,
+                &terrain_content.vertex_heights,
+                &terrain_snapshot.materials,
+                (content.map.width / units_per_tile).ceil() as u32,
+                (content.map.height / units_per_tile).ceil() as u32,
+                terrain_snapshot.vertex_height_precision,
+            )?,
+        };
         let terrain_detail_blockers = terrain_detail_authority_blockers(
             terrain_detail_authority.as_ref(),
             &terrain_snapshot,
@@ -73,12 +87,57 @@ impl SimWorld {
             width: content.map.width,
             height: content.map.height,
             safe_zone_radius: content.map.safe_zone_radius,
+            region: content
+                .map
+                .region
+                .as_ref()
+                .map(|region| RegionRoutingSnapshot {
+                    schema_version: region.schema_version.clone(),
+                    atlas_id: region.atlas_id.clone(),
+                    atlas_content_sha256: region.atlas_content_sha256.clone(),
+                    region_id: region.region_id.clone(),
+                    coord: RegionCoordSnapshot {
+                        x: region.coord.x,
+                        y: region.coord.y,
+                    },
+                    tile_origin: RegionCoordSnapshot {
+                        x: region.tile_origin.x,
+                        y: region.tile_origin.y,
+                    },
+                    neighbors: RegionNeighborsSnapshot {
+                        north: region.neighbors.north.clone(),
+                        east: region.neighbors.east.clone(),
+                        south: region.neighbors.south.clone(),
+                        west: region.neighbors.west.clone(),
+                    },
+                }),
             terrain_snapshot,
             spawn: Position {
                 x: content.spawn.x,
                 y: content.spawn.y,
             },
         };
+
+        let npcs = content
+            .npcs
+            .iter()
+            .map(|npc| {
+                (
+                    npc.id.clone(),
+                    NpcState {
+                        id: npc.id.clone(),
+                        name: npc.name.clone(),
+                        persona: npc.persona.clone(),
+                        position: Position { x: npc.x, y: npc.y },
+                        radius: npc.radius,
+                        color: npc.color.clone(),
+                        canned: npc.canned.clone(),
+                        canned_cursor: 0,
+                        speech: None,
+                    },
+                )
+            })
+            .collect();
 
         let mut object_index = SpatialIndex::new(SPATIAL_CELL_SIZE);
         let mut object_entities = HashMap::new();
@@ -151,8 +210,10 @@ impl SimWorld {
             tick: 0,
             map,
             players: HashMap::new(),
+            npcs,
             inputs: HashMap::new(),
             interact_latches: HashMap::new(),
+            region_handoff_latches: Default::default(),
             player_name_index: HashMap::new(),
             player_index: SpatialIndex::new(SPATIAL_CELL_SIZE),
             object_entities,

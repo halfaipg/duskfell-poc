@@ -1,0 +1,35 @@
+{
+  "schema": "duskfell-world-render-manifest-v2",
+  "world": "valley-v2",
+  "bundle": "world-bundle-v2.json",
+  "bundleSha256": "8571b8987b76027bf61d3a08b6561846ff4b48cc028e1fc99c60f079a8e3d355",
+  "serverPatch": "server-authority-patch.json",
+  "rasters": {
+    "gameplay": {
+      "path": "assets/terrain/worlds/valley-v2/gameplay-master.png",
+      "width": 2048,
+      "height": 2048,
+      "pixelsPerTile": 32,
+      "sha256": "9ce42025502f53caf4c36cd9280b1085ea62ebe4b63548690e975e52df3afbc4"
+    },
+    "travel": {
+      "path": "assets/terrain/worlds/valley-v2/travel-lod.png",
+      "width": 1024,
+      "height": 1024,
+      "pixelsPerTile": 16,
+      "sha256": "ffbdddc206dc7110626f979e7973b3709387d6433ca3d68d9777028e89ef7efe"
+    },
+    "worldMap": {
+      "path": "assets/terrain/worlds/valley-v2/world-map-lod.png",
+      "width": 512,
+      "height": 512,
+      "pixelsPerTile": 8,
+      "sha256": "f94dd5cadf0c63da034b66628856292cb15053ea8c4551ee4839cca05e2208bf"
+    }
+  },
+  "macro": {
+    "tiles": 32,
+    "apronTiles": 4,
+    "gameplayPixelsPerTile": 32
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "schema": "duskfell-illustrated-world-manifest-v1",
+  "world": "valley-v2",
+  "authority": "world-bundle-v2.json",
+  "winner": {
+    "source": "illustrated-openai-v4.png",
+    "sha256": "8c61f57267114c457700a1067a3b404e7efafdfa58fb993dc2467162179d5444",
+    "generator": "OpenAI built-in image generation",
+    "method": "two-reference constrained style transfer plus deterministic water-mask restoration",
+    "styleReference": "user-approved Duskfell gameplay reference",
+    "alignmentReport": "illustrated-openai-v4-alignment.json",
+    "approval": "review",
+    "lods": {
+      "gameplay": { "file": "illustrated-gameplay-v1.png", "width": 2048, "height": 2048, "pixelsPerTile": 32, "sha256": "36b6ea1c250d1d5db902cdce3e9107e89a5a3bdf173a7ca43358ef1fe34e95d0" },
+      "waterAuthority": { "file": "water-authority-gameplay-v1.png", "width": 2048, "height": 2048, "pixelsPerTile": 32, "sha256": "2aedd9c9740210db7fa1a1b7296f9e775e57c7d5d7ae599b67d8a59c2d2715a2" },
+      "travel": { "file": "illustrated-travel-v1.png", "width": 1024, "height": 1024, "pixelsPerTile": 16, "sha256": "df76acadcf8724570550a2d263961386ba38daa93cdc6e0b12a9789e225b7008" },
+      "worldMap": { "file": "illustrated-world-map-v1.png", "width": 512, "height": 512, "pixelsPerTile": 8, "sha256": "7f6d7145aab83882543dcd6d341f6090fd7da47b22438b39b2a42ea4ebed8df8" }
+    },
+    "runtimeWorldMap": { "file": "illustrated-world-map-runtime-v2.png", "width": 1536, "height": 1024, "tilePixelWidth": 8, "tilePixelHeight": 8, "valleyOffsetTiles": [64, 32], "outsideValley": "unexplored-fog", "sha256": "f21517860c27b2730c24c5e45782449ca82998eba987a3be1ff7aa9ab61648a9" }
+  },
+  "rejected": [
+    {
+      "source": "illustrated-flux-2-klein-4b-fp8-v1.png",
+      "sha256": "994d6d639f612f6ac582e54bfa77f18f6cee7b3cba0811928caa4778c63274ae",
+      "reason": "geography retained but insufficient material richness and blurred detail"
+    }
+  ],
+  "vegetation": {
+    "source": "vegetation-sprites-v1.png",
+    "sha256": "299c2fcfdbc774c94204203a4f9ed45627126fde744aa9e2307efcab3adf5e55",
+    "runtimeSheet": "../../../sprites/duskfell-details-v2.png",
+    "frames": { "start": 23, "count": 8 },
+    "approval": "review"
+  }
+}

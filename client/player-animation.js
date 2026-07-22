@@ -55,7 +55,9 @@ export function walkAnimationSample({
   idleElapsedMs = null,
   fidgetFrames = null,
   idleFrames = null,
+  idleFrameMs = PLAYER_BREATH_FRAME_MS,
   phaseFrames = null,
+  authoredFrameMs = PLAYER_WALK_FRAME_MS,
 }) {
   const safeFrameCount = Math.max(1, frameCount);
   const idleFrameIndex = clampInteger(idleFrame, 0, safeFrameCount - 1);
@@ -63,7 +65,13 @@ export function walkAnimationSample({
     return {
       frameIndex:
         idleFidgetFrame(idleElapsedMs, fidgetFrames, stablePhase, safeFrameCount) ??
-        idleBreathingFrame(idleElapsedMs, idleFrames, stablePhase, safeFrameCount) ??
+        idleBreathingFrame(
+          idleElapsedMs,
+          idleFrames,
+          stablePhase,
+          safeFrameCount,
+          idleFrameMs,
+        ) ??
         idleFrameIndex,
       bodyOffsetX: 0,
       bodyOffsetY: 0,
@@ -77,7 +85,11 @@ export function walkAnimationSample({
   const sequence = normalizeFrameSequence(frameSequence, safeFrameCount);
   const sequenceLength = sequence.length;
   const speed = clamp(speedRatio, PLAYER_WALK_MIN_SPEED_RATIO, PLAYER_WALK_MAX_SPEED_RATIO);
-  const frameMs = PLAYER_WALK_FRAME_MS / speed;
+  const safeAuthoredFrameMs =
+    Number.isFinite(authoredFrameMs) && authoredFrameMs > 0
+      ? authoredFrameMs
+      : PLAYER_WALK_FRAME_MS;
+  const frameMs = safeAuthoredFrameMs / speed;
   // callers that track motion state pass an incrementally accumulated phase:
   // scaling total elapsed time by a wobbling speed ratio teleports the cycle
   const phase = Number.isFinite(phaseFrames)
@@ -110,10 +122,20 @@ function idleFidgetFrame(idleElapsedMs, fidgetFrames, stablePhase, frameCount) {
   return clampInteger(fidgetFrames[index], 0, frameCount - 1);
 }
 
-function idleBreathingFrame(idleElapsedMs, idleFrames, stablePhase, frameCount) {
+function idleBreathingFrame(
+  idleElapsedMs,
+  idleFrames,
+  stablePhase,
+  frameCount,
+  authoredFrameMs,
+) {
   if (!Array.isArray(idleFrames) || idleFrames.length === 0) return null;
   if (!Number.isFinite(idleElapsedMs)) return null;
-  const phase = Math.floor(idleElapsedMs / PLAYER_BREATH_FRAME_MS + stablePhase * 10);
+  const frameMs =
+    Number.isFinite(authoredFrameMs) && authoredFrameMs > 0
+      ? authoredFrameMs
+      : PLAYER_BREATH_FRAME_MS;
+  const phase = Math.floor(idleElapsedMs / frameMs + stablePhase * 10);
   return clampInteger(idleFrames[phase % idleFrames.length], 0, frameCount - 1);
 }
 

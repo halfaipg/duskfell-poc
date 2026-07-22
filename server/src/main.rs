@@ -8,10 +8,14 @@ mod ingress;
 mod journal;
 mod metrics;
 mod metrics_routes;
+mod npc;
 mod persistence;
 mod player_identity;
 mod protocol;
 mod readiness;
+mod region_routing;
+#[allow(dead_code)]
+mod region_transfer_tokens;
 mod resource_replay;
 mod routes;
 mod runtime;
@@ -23,6 +27,7 @@ mod settlement;
 mod sim;
 mod spatial;
 mod terrain;
+mod terrain_chunks;
 mod tick_loop;
 mod ws;
 
@@ -48,7 +53,12 @@ async fn main() -> anyhow::Result<()> {
     let runtime = initialize_runtime().await?;
     tokio::spawn(run_tick_loop(runtime.state.clone()));
 
-    let app = build_router(runtime.state, runtime.assets_dir, runtime.client_dir);
+    let app = build_router(
+        runtime.state,
+        runtime.assets_dir,
+        runtime.client_dir,
+        runtime.review_worlds_dir,
+    );
 
     let listener = TcpListener::bind(runtime.addr).await?;
     info!(addr = %runtime.addr, "Duskfell PoC server listening");

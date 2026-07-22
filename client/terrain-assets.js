@@ -51,6 +51,7 @@ export function normalizeTerrainAtlas(manifest) {
     normalizedTiles.push(normalized);
   }
   const groundPatches = normalizeGroundPatches(manifest.groundPatches);
+  const worldMap = normalizeWorldMap(manifest.worldMap);
 
   for (const material of Object.keys(TERRAIN_MATERIALS)) {
     if (!byMaterial.has(material)) {
@@ -95,6 +96,42 @@ export function normalizeTerrainAtlas(manifest) {
     pairTransitionByPair,
     pairTransitionByPairAndMask,
     groundPatches,
+    worldMap,
+  };
+}
+
+function normalizeWorldMap(worldMap) {
+  if (worldMap == null) return null;
+  if (!isObject(worldMap)) throw new Error("terrain atlas worldMap must be an object");
+  if (!isNonEmptyString(worldMap.id)) throw new Error("terrain atlas worldMap.id must be non-empty");
+  if (!isSafeRelativeImage(worldMap.image)) {
+    throw new Error("terrain atlas worldMap.image must be a safe relative PNG or WebP path");
+  }
+  if (typeof worldMap.sha256 !== "string" || !/^[a-f0-9]{64}$/.test(worldMap.sha256)) {
+    throw new Error("terrain atlas worldMap.sha256 must be a lowercase SHA-256 hex digest");
+  }
+  for (const key of ["width", "height", "worldCols", "worldRows", "tilePixelWidth", "tilePixelHeight"]) {
+    if (!isPositiveInteger(worldMap[key])) {
+      throw new Error(`terrain atlas worldMap.${key} must be a positive integer`);
+    }
+  }
+  if (
+    worldMap.width !== worldMap.worldCols * worldMap.tilePixelWidth ||
+    worldMap.height !== worldMap.worldRows * worldMap.tilePixelHeight
+  ) {
+    throw new Error("terrain atlas worldMap dimensions must align to its authoritative tile grid");
+  }
+  return {
+    id: worldMap.id,
+    imagePath: worldMap.image,
+    sha256: worldMap.sha256,
+    width: worldMap.width,
+    height: worldMap.height,
+    worldCols: worldMap.worldCols,
+    worldRows: worldMap.worldRows,
+    tilePixelWidth: worldMap.tilePixelWidth,
+    tilePixelHeight: worldMap.tilePixelHeight,
+    status: isNonEmptyString(worldMap.status) ? worldMap.status : "review",
   };
 }
 

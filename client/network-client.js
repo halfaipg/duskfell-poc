@@ -11,6 +11,7 @@ export function createNetworkClient({
   let socket = null;
   let inputSeq = 0;
   let lastInputSent = "";
+  let fatalProtocolError = false;
 
   async function connect() {
     setConnection("Connecting", "offline");
@@ -33,6 +34,10 @@ export function createNetworkClient({
     });
 
     socket.addEventListener("close", () => {
+      if (fatalProtocolError) {
+        setConnection("Protocol error", "offline");
+        return;
+      }
       setConnection("Reconnecting", "offline");
       setTimeout(connect, 900);
     });
@@ -41,7 +46,11 @@ export function createNetworkClient({
       let message;
       try {
         message = parseServerMessage(event.data);
-      } catch {
+      } catch (error) {
+        fatalProtocolError = true;
+        console.error("Rejected incompatible server message", error);
+        setConnection("Protocol error", "offline");
+        socket.close(1002, "incompatible server message");
         return;
       }
       if (message.type === "welcome") {

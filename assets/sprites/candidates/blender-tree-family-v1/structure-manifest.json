@@ -1,0 +1,129 @@
+{
+  "schemaVersion": "duskfell-blender-tree-family-v1",
+  "seed": 7341,
+  "camera": {
+    "projection": "orthographic",
+    "location": [
+      7.4,
+      -9.4,
+      7.1
+    ],
+    "target": [
+      0.0,
+      0.0,
+      2.45
+    ],
+    "orthoScale": 7.35,
+    "resolution": [
+      640,
+      640
+    ],
+    "anchor": [
+      320,
+      574
+    ]
+  },
+  "frames": [
+    {
+      "frame": 0,
+      "stage": "sapling",
+      "variant": 0,
+      "species": "greenwood",
+      "kind": "broadleaf",
+      "path": "raw/tree-sapling-00.png"
+    },
+    {
+      "frame": 1,
+      "stage": "sapling",
+      "variant": 1,
+      "species": "shadebark",
+      "kind": "conifer",
+      "path": "raw/tree-sapling-01.png"
+    },
+    {
+      "frame": 2,
+      "stage": "sapling",
+      "variant": 2,
+      "species": "ironleaf",
+      "kind": "sparse",
+      "path": "raw/tree-sapling-02.png"
+    },
+    {
+      "frame": 3,
+      "stage": "sapling",
+      "variant": 3,
+      "species": "paleoak",
+      "kind": "broadleaf",
+      "path": "raw/tree-sapling-03.png"
+    },
+    {
+      "frame": 4,
+      "stage": "mature",
+      "variant": 0,
+      "species": "greenwood",
+      "kind": "broadleaf",
+      "path": "raw/tree-mature-00.png"
+    },
+    {
+      "frame": 5,
+      "stage": "mature",
+      "variant": 1,
+      "species": "shadebark",
+      "kind": "conifer",
+      "path": "raw/tree-mature-01.png"
+    },
+    {
+      "frame": 6,
+      "stage": "mature",
+      "variant": 2,
+      "species": "ironleaf",
+      "kind": "sparse",
+      "path": "raw/tree-mature-02.png"
+    },
+    {
+      "frame": 7,
+      "stage": "mature",
+      "variant": 3,
+      "species": "paleoak",
+      "kind": "broadleaf",
+      "path": "raw/tree-mature-03.png"
+    },
+    {
+      "frame": 8,
+      "stage": "ancient",
+      "variant": 0,
+      "species": "greenwood",
+      "kind": "broadleaf",
+      "path": "raw/tree-ancient-00.png"
+    },
+    {
+      "frame": 9,
+      "stage": "ancient",
+      "variant": 1,
+      "species": "shadebark",
+      "kind": "conifer",
+      "path": "raw/tree-ancient-01.png"
+    },
+    {
+      "frame": 10,
+      "stage": "ancient",
+      "variant": 2,
+      "species": "ironleaf",
+      "kind": "sparse",
+      "path": "raw/tree-ancient-02.png"
+    },
+    {
+      "frame": 11,
+      "stage": "ancient",
+      "variant": 3,
+      "species": "paleoak",
+      "kind": "broadleaf",
+      "path": "raw/tree-ancient-03.png"
+    }
+  ],
+  "authority": {
+    "structure": "Blender trunk, root, branch, and canopy geometry",
+    "timing": "static lifecycle frames",
+    "finishing": "raw Blender render; optional controlled img2img remains review-only"
+  }
+}

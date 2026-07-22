@@ -1,0 +1,95 @@
+{
+  "schemaVersion": "duskfell-kimodo-retarget-proof-v1",
+  "approvalState": "review",
+  "motion": {
+    "schemaVersion": "duskfell-kimodo-motion-receipt-v1",
+    "source": "/Users/j/Documents/New project/uo-chain-sandbox-poc/var/kimodo/generated-v1/restrained-upright-run/seed-17.npz",
+    "sha256": "07a9a01c4c413c79dad581ecb92206e6228dae856e0631d20be782674567e3b0",
+    "bytes": 587390,
+    "skeleton": "somaskel77",
+    "fps": 30,
+    "frames": 90,
+    "durationSeconds": 3.0,
+    "jointCount": 77,
+    "keys": [
+      "foot_contacts",
+      "global_root_heading",
+      "global_rot_mats",
+      "local_rot_mats",
+      "posed_joints",
+      "root_positions",
+      "smooth_root_pos"
+    ],
+    "rootRangeMeters": [
+      0.13101011142134666,
+      0.12080210447311401,
+      9.78359236009419
+    ],
+    "rotationChecks": {
+      "maximumOrthogonalityError": 5.896095558455272e-06,
+      "maximumDeterminantError": 6.100141648923696e-06
+    }
+  },
+  "target": "wretch",
+  "targetFile": "/Users/j/Documents/New project/uo-chain-sandbox-poc/var/blender/wretch-factory.blend",
+  "action": "Duskfell|Kimodo|generated-run-seed17",
+  "actionFrames": 90,
+  "sourceFrameRange": [
+    1,
+    90
+  ],
+  "fps": 30,
+  "sampledFrames": [
+    1,
+    7,
+    13,
+    19,
+    25,
+    31,
+    37,
+    43,
+    48,
+    54,
+    60,
+    66,
+    72,
+    78,
+    84,
+    90
+  ],
+  "directions": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north",
+    "north-west",
+    "west",
+    "south-west"
+  ],
+  "rootYawDegrees": [
+    -45,
+    0,
+    45,
+    90,
+    135,
+    180,
+    -135,
+    -90
+  ],
+  "cell": {
+    "width": 128,
+    "height": 160
+  },
+  "coordinateConversion": "Kimodo +X right/+Y up/+Z forward to Blender +X right/+Z up/-Y forward",
+  "retargetMode": "global-rotation-deltas",
+  "motionStyle": "source",
+  "uprightLocomotion": true,
+  "hiddenMeshes": [
+    "uo_wretch.cortu_short_messy_hair"
+  ],
+  "rootMotion": "horizontal trajectory removed; vertical hip motion retained in the authored action",
+  "blend": "var/kimodo/generated-run-seed17-wretch.blend",
+  "sheet": "assets/sprites/candidates/kimodo/generated-run-seed17/generated-run-seed17-wretch-8x16.png",
+  "sheetSha256": "961595cf300945223e5b68cb2ec674b90e01952e787d97889c32c6347bf54cfa"
+}

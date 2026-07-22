@@ -19,6 +19,8 @@ export function defaultTerrainProfile() {
   return {
     profile: "duskfell-terrain-v1",
     seed: 7341,
+    visualDetailEnabled: true,
+    detailAuthorityEnabled: true,
     unitsPerTile: PROJECTION.unitsPerTile,
     tileWidth: PROJECTION.tileW,
     tileHeight: PROJECTION.tileH,

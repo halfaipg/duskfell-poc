@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "duskfell-generated-asset-v1",
+  "id": "scree-handpainted-v2",
+  "status": "runtime-review",
+  "kind": "top-down-mountain-surface",
+  "createdAt": "2026-07-14",
+  "tool": "OpenAI built-in image generation",
+  "model": "built-in image generation",
+  "sourceImage": "scree-handpainted-v2.png",
+  "sourceSha256": "0237f377be035ca0b4721f9845d00bb6b2cc8244a9d01d0d5d5e00a98004ffa0",
+  "runtimeImage": "../ground-patches/biome-scree-v2.webp",
+  "runtimeSha256": "cab53c2bc1c0be769fb56764d25d9a5efebf7542c912ec9483f2fd17af346d28",
+  "prompt": "Original directly overhead mountain summit texture with broad hand-painted charcoal and warm-gray slate plates, simplified fracture seams, sparse scree and olive lichen, restrained old-school pre-rendered RPG detail, and no photography, grass field, furrows, masonry, text, or watermark.",
+  "processing": "Lanczos resize from 1254x1254 PNG to 2048x2048 WebP at quality 90",
+  "projectionUse": "world-space crops texture-bombed across deterministic mountain rock and steep-slope masks",
+  "license": "project-original-ai-assisted-review"
+}

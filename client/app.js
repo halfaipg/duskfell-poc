@@ -1,23 +1,29 @@
 import { PROJECTION, defaultOrigin } from "./projection.js";
 import { createCanvasFrame, drawLoading } from "./app-frame.js";
-import { createRuntimeAssets } from "./app-assets.js";
+import { createRuntimeAssets } from "./app-assets.js?v=duskfell-world-v2-75";
 import { createTerrainCache } from "./terrain-cache.js";
 import { getAppDom } from "./app-dom.js";
 import { computeCamera } from "./camera.js";
 import { createEcologyRenderer } from "./ecology-renderer.js";
 import { createInteriorRenderer } from "./interior-renderer.js";
 import { createObjectDrawer, HIDE_WORLD_PROPS, VEGETATION_ONLY_ART_PASS } from "./object-draw.js";
-import { createTerrainDrawer, normalizeTerrainDebugMode } from "./terrain-draw.js";
-import { createTerrainGlLayer } from "./terrain-gl-layer.js";
+import { createTerrainDrawer, normalizeTerrainDebugMode } from "./terrain-draw.js?v=duskfell-world-v2-71";
+import { createTerrainGlLayer } from "./terrain-gl-layer.js?v=duskfell-world-v2-71";
 import { drawOverlay as drawOverlayPanel } from "./overlay.js";
 import { createPlayerDrawer } from "./player-draw.js";
 import { createPlayerRenderState } from "./player-render-state.js";
 import { createNetworkClient } from "./network-client.js";
 import { renderHud, renderPanel } from "./ui-panels.js";
 import { terrainHeightAtWorld } from "./terrain.js";
+import { assembleWorldChunkWindow } from "./world-chunk-assembly.js";
+import { composeWorldVisualChunkWindow } from "./world-visual-chunk-stream.js";
 import { drawWaterFish } from "./water-fish.js";
 import { drawWorldMap, toggleWorldMap } from "./world-map.js";
 import { setSun } from "./sun-state.js";
+import { loamVerticalSliceDetails, loamVerticalSliceEnabled } from "./terrain-vertical-slice.js";
+import { kimodoReviewMode } from "./kimodo-review-sprite.js?v=blender-locomotion-2";
+import { drawTerrainAtmosphere } from "./terrain-atmosphere.js";
+import { treeReviewMode } from "./tree-review-sprite.js?v=blender-tree-family-1";
 
 const { canvas, screenCtx, ui } = getAppDom();
 let ctx = screenCtx;
@@ -53,19 +59,43 @@ function sunStateAt() {
     },
   };
 }
-let currentSun = sunStateAt();
+function visualSunStateAt() {
+  const live = sunStateAt();
+  const forced = { day: 0.85, dawn: 0.09, dusk: -0.02, night: -0.5 }[DAY_TINT];
+  if (forced == null) return live;
+  return {
+    elevation: forced,
+    direction: {
+      x: -0.45,
+      y: -0.55,
+      z: forced > 0 ? Math.max(0.12, forced) : -0.2,
+    },
+  };
+}
+let currentSun = visualSunStateAt();
+let visualSunElevation = currentSun.elevation;
 console.info("Duskfell client build: painted-terrain v3 (2026-07-09)");
 
 const keys = new Set();
 let playerId = null;
 let snapshot = null;
-const runtimeAssets = createRuntimeAssets();
+const runtimeAssets = createRuntimeAssets({
+  kimodoReview: kimodoReviewMode(window.location.search),
+  treeReview: treeReviewMode(window.location.search),
+});
 const { sprites, terrainAssets } = runtimeAssets;
 const playerRenderState = createPlayerRenderState();
 const terrainCache = createTerrainCache();
 const frame = createCanvasFrame({ canvas, screenCtx });
 let localPlayerRenderPosition = null;
 let terrainWarmed = false;
+let streamedChunkKey = null;
+let lastStreamPosition = null;
+let streamRequestGeneration = 0;
+
+function activeWorldBundle() {
+  return terrainAssets.streamingWorldBundle ?? terrainAssets.worldBundle;
+}
 
 const camera = {
   x: 0,
@@ -97,7 +127,7 @@ const terrainDrawer = createTerrainDrawer({
   getTerrainAssetVersion: () => runtimeAssets.terrainAssetVersion(),
   getTerrainDebugMode: () => terrainDebugMode,
   getGlLayer: () => terrainGlLayer,
-  getSun: () => currentSun.direction,
+  getSun: () => currentSun,
 });
 const ecologyRenderer = createEcologyRenderer({
   getContext: () => ctx,
@@ -123,6 +153,7 @@ const objectDrawer = createObjectDrawer({
   getSprites: () => sprites,
   getTerrainDebugMode: () => terrainDebugMode,
   getLocalPlayerRenderPosition: () => localPlayerRenderPosition,
+  getExtraTerrainDetails: () => loamVerticalSliceDetails(terrainCache.getTerrain()),
   playerDrawer,
 });
 const networkClient = createNetworkClient({
@@ -183,7 +214,7 @@ window.addEventListener("keydown", (event) => {
   if (isTextEntryTarget(event.target)) return;
   if (event.key === "m" || event.key === "M") {
     event.preventDefault();
-    toggleWorldMap();
+    document.body.classList.toggle("world-map-open", toggleWorldMap());
     return;
   }
   if (event.key === "Enter" && chatInput) {
@@ -296,6 +327,47 @@ function fitCanvas() {
   return frame.fitCanvas();
 }
 
+function prefetchTerrainChunks(player) {
+  const stream = terrainAssets.chunkStream;
+  if (!stream || !player || !Number.isFinite(player.x) || !Number.isFinite(player.y)) return;
+  const tileX = player.x / PROJECTION.unitsPerTile;
+  const tileY = player.y / PROJECTION.unitsPerTile;
+  const chunkX = Math.floor(tileX / stream.index.chunkTiles);
+  const chunkY = Math.floor(tileY / stream.index.chunkTiles);
+  const key = `${chunkX},${chunkY}`;
+  if (key === streamedChunkKey) return;
+  const velocityX = lastStreamPosition ? tileX - lastStreamPosition.x : 0;
+  const velocityY = lastStreamPosition ? tileY - lastStreamPosition.y : 0;
+  lastStreamPosition = { x: tileX, y: tileY };
+  streamedChunkKey = key;
+  const requestGeneration = ++streamRequestGeneration;
+  const authorityRequest = stream.prefetchAhead({ tileX, tileY, velocityX, velocityY, radiusChunks: 1 });
+  const visualRequest = terrainAssets.visualChunkStream
+    ? terrainAssets.visualChunkStream.prefetchAhead({ tileX, tileY, velocityX, velocityY, radiusChunks: 1 })
+    : Promise.resolve(null);
+  Promise.all([authorityRequest, visualRequest])
+    .then(([chunks, visualChunks]) => {
+      if (requestGeneration !== streamRequestGeneration) return;
+      const nextBundle = assembleWorldChunkWindow(stream.index, chunks);
+      if (visualChunks) {
+        const painting = composeWorldVisualChunkWindow(visualChunks);
+        if (JSON.stringify(painting.sourceRegion) !== JSON.stringify(nextBundle.sourceRegion)) {
+          throw new Error("streamed visual window drifts from terrain authority window");
+        }
+        const groundPatches = new Map(terrainAssets.groundPatches);
+        groundPatches.set("__world-painting__", painting.image);
+        terrainAssets.groundPatches = groundPatches;
+        runtimeAssets.bumpTerrainAssetVersion();
+      }
+      terrainAssets.streamingWorldBundle = nextBundle;
+    })
+    .catch((error) => {
+      if (requestGeneration !== streamRequestGeneration) return;
+      console.error("Duskfell terrain chunk prefetch failed", error);
+      streamedChunkKey = null;
+    });
+}
+
 function draw(now = 0) {
   try {
     frame.updateFrameRate(now);
@@ -306,10 +378,24 @@ function draw(now = 0) {
       if (snapshot && runtimeAssets.assetsReady()) {
         // stage 2: raise the land — build one visible chunk per frame so
         // the bar moves instead of freezing while composites paint
-        terrainCache.terrainForMap(snapshot.map, terrainAssets.worldBundle);
         const origin = defaultOrigin(snapshot.map);
         const players = Array.isArray(snapshot.players) ? snapshot.players : [];
         const me = players.find((player) => player.id === playerId) || players[0];
+        prefetchTerrainChunks(me);
+        if (terrainAssets.chunkStream && !terrainAssets.streamingWorldBundle) {
+          drawLoading(ctx, rect, {
+            done: Math.min(
+              terrainAssets.chunkStream.snapshot().cached,
+              terrainAssets.visualChunkStream?.snapshot().cached ?? 9,
+            ),
+            total: 9,
+            label: "Streaming the region…",
+          });
+          updateHud();
+          requestAnimationFrame(draw);
+          return;
+        }
+        terrainCache.terrainForMap(snapshot.map, activeWorldBundle());
         const warmCamera = computeCamera({
           viewport: rect,
           map: snapshot.map,
@@ -337,8 +423,12 @@ function draw(now = 0) {
     const players = Array.isArray(snapshot.players) ? snapshot.players : [];
     // NPCs are part of the normal world; ?npcs=0 is a development escape hatch.
     const npcs = SHOW_NPCS && Array.isArray(snapshot.npcs) ? snapshot.npcs : [];
-    const actors = [...players, ...npcs];
+    const reviewPlayers = loamVerticalSliceEnabled()
+      ? players.filter((player) => player.id === playerId)
+      : players;
+    const actors = [...reviewPlayers, ...npcs];
     const me = players.find((player) => player.id === playerId) || players[0];
+    prefetchTerrainChunks(me);
     const origin = defaultOrigin(snapshot.map);
     playerRenderState.updateRenderOffsets(players, snapshot.map, playerId, now);
     playerRenderState.updateVisualPositions(actors, now);
@@ -384,7 +474,9 @@ function draw(now = 0) {
     ctx.scale(camera.scale, camera.scale);
     ctx.translate(-camera.x, -camera.y);
     const objects = Array.isArray(snapshot.objects) ? snapshot.objects : [];
-    terrainCache.terrainForMap(snapshot.map, terrainAssets.worldBundle);
+    currentSun = visualSunStateAt();
+    setSun(currentSun);
+    terrainCache.terrainForMap(snapshot.map, activeWorldBundle());
     terrainDrawer.drawMap(snapshot, origin, now, rect);
     drawWaterFish(ctx, terrainCache.getTerrain(), origin, camera, rect, now);
     if (!HIDE_WORLD_PROPS && !VEGETATION_ONLY_ART_PASS) {
@@ -396,15 +488,22 @@ function draw(now = 0) {
     if (!HIDE_WORLD_PROPS && !VEGETATION_ONLY_ART_PASS) {
       interiorRenderer.drawInteriorRoofs(origin, localPlayerRenderPosition, now);
     }
+    drawTerrainAtmosphere(
+      ctx,
+      terrainCache.getTerrain(),
+      origin,
+      camera,
+      rect,
+      now,
+      currentSun,
+    );
     ctx.restore();
 
     // day/night: overlay divs with mix-blend-mode darken both canvases —
     // canvas composite ops cannot reach the GL terrain layer below
-    currentSun = sunStateAt();
-    setSun(currentSun);
     {
-      const forced = { day: 0.85, dawn: 0.09, dusk: -0.02, night: -0.5 }[DAY_TINT];
-      const e = forced ?? currentSun.elevation;
+      const e = currentSun.elevation;
+      visualSunElevation = e;
       const horizonBand = Math.max(0, 1 - Math.abs(e) * 5.5);
       const nightAlpha = Math.max(0, Math.min(0.66, 0.1 - e * 1.35));
       if (ui.nightShade) ui.nightShade.style.opacity = nightAlpha.toFixed(3);
@@ -412,7 +511,15 @@ function draw(now = 0) {
     }
 
     drawOverlay(rect);
-    drawWorldMap(ctx, rect, terrainCache.getTerrain(), players, playerId);
+    drawWorldMap(
+      ctx,
+      rect,
+      terrainCache.getTerrain(),
+      players,
+      playerId,
+      terrainAssets.worldMap,
+      visualSunElevation,
+    );
     updateHud();
   } catch (error) {
     if (ui.hud) {

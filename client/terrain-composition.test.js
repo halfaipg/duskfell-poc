@@ -23,6 +23,10 @@ test("terrain composition zones describe roads ridges groves shores and detail b
     assert.ok(tile.composition.groveScore >= 0 && tile.composition.groveScore <= 1);
     assert.ok(tile.composition.landmarkPressure >= 0 && tile.composition.landmarkPressure <= 1);
     assert.ok(tile.composition.openSpace >= 0 && tile.composition.openSpace <= 1);
+    assert.ok(["open", "woodland", "wetland", "rocky", "scrub"].includes(tile.composition.habitat.kind));
+    assert.ok(["open", "edge", "core"].includes(tile.composition.habitat.band));
+    assert.ok(tile.composition.habitat.strength >= 0 && tile.composition.habitat.strength <= 1);
+    assert.ok(tile.composition.habitat.clearance >= 0 && tile.composition.habitat.clearance <= 1);
   }
 
   assert.ok(zones.has("plaza"), "expected a central plaza zone");
@@ -52,6 +56,25 @@ test("terrain composition zones describe roads ridges groves shores and detail b
   assert.ok(
     terrain.details.filter((detail) => !detail.kitId).length / terrain.tiles.length < 0.1,
     "expected the larger world to keep ambient procedural clutter sparse",
+  );
+
+  const ambientDetails = terrain.details.filter((detail) => !detail.kitId);
+  const ambientTiles = new Set(ambientDetails.map((detail) => `${detail.tile.x}:${detail.tile.y}`));
+  const clusteredDetails = ambientDetails.filter((detail) =>
+    [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) =>
+      ambientTiles.has(`${detail.tile.x + dx}:${detail.tile.y + dy}`),
+    ),
+  );
+  assert.ok(
+    clusteredDetails.length / ambientDetails.length > 0.25,
+    "expected ambient details to form habitat clusters instead of uniform scatter",
+  );
+  assert.equal(
+    ambientDetails.filter((detail) =>
+      terrain.tiles[detail.tile.y * terrain.cols + detail.tile.x].biome.pathPressure > 0.4,
+    ).length,
+    0,
+    "expected authored travel corridors to stay clear of ambient props",
   );
 });
 

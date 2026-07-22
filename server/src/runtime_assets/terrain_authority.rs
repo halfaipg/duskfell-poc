@@ -12,10 +12,9 @@ use super::validation::{
 };
 
 pub(super) fn load_terrain_authority_runtime_manifest(
-    assets_dir: &Path,
+    manifest_path: &Path,
     max_runtime_manifest_bytes: u64,
 ) -> anyhow::Result<RuntimeTerrainAuthorityManifest> {
-    let manifest_path = assets_dir.join("terrain").join("detail-authority.json");
     ensure_file_within_size(
         &manifest_path,
         max_runtime_manifest_bytes,
@@ -47,12 +46,6 @@ pub(super) fn load_terrain_authority_runtime_manifest(
     let blocker_count = required_array_len(&json, "blockers")?;
     let resource_node_count = required_array_len(&json, "resourceNodes")?;
     let decay_consumer_count = required_array_len(&json, "decayConsumers")?;
-    if blocker_count == 0 || resource_node_count == 0 || decay_consumer_count == 0 {
-        return Err(anyhow!(
-            "{} terrain detail authority manifest must include blockers, resourceNodes, and decayConsumers",
-            manifest_path.display()
-        ));
-    }
 
     Ok(RuntimeTerrainAuthorityManifest {
         kind: "terrain-authority",
@@ -72,10 +65,9 @@ pub(super) fn load_terrain_authority_runtime_manifest(
 }
 
 pub(crate) fn load_terrain_detail_authority_for_sim(
-    assets_dir: &Path,
+    manifest_path: &Path,
     max_runtime_manifest_bytes: u64,
 ) -> anyhow::Result<TerrainDetailAuthority> {
-    let manifest_path = assets_dir.join("terrain").join("detail-authority.json");
     ensure_file_within_size(
         &manifest_path,
         max_runtime_manifest_bytes,

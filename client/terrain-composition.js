@@ -1,4 +1,5 @@
 import { compositionKitMembership } from "./terrain-composition-kit.js";
+import { terrainHabitatForTile } from "./terrain-habitat.js";
 import { clamp } from "./terrain-primitives.js";
 
 export function terrainCompositionForTile(x, y, material, biome, cols, rows, safeRadiusTiles, profile, height, compositionKits = []) {
@@ -25,8 +26,10 @@ export function terrainCompositionForTile(x, y, material, biome, cols, rows, saf
     0,
     1,
   );
+  const habitat = terrainHabitatForTile(x, y, biome, height, profile, openSpace);
   const detailBudget = clamp(
     biome.detailDensity +
+      habitat.strength * 0.18 +
       (ridgeScore > 0.82 ? 0.08 : 0) +
       (groveScore > 0.76 ? 0.07 : 0) -
       biome.plazaPressure * 0.65 -
@@ -114,6 +117,7 @@ export function terrainCompositionForTile(x, y, material, biome, cols, rows, saf
     groveScore: clamp(groveScore, 0, 1),
     landmarkPressure,
     openSpace,
+    habitat,
   };
 }
 

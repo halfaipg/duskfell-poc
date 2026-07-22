@@ -37,7 +37,7 @@ impl AppMetrics {
             IngressRejectReason::MessageTooLarge { .. } => self
                 .ws_messages_rejected_message_too_large_total
                 .fetch_add(1, Ordering::Relaxed),
-            IngressRejectReason::RateLimited => self
+            IngressRejectReason::RateLimited | IngressRejectReason::SayRateLimited => self
                 .ws_messages_rejected_rate_limited_total
                 .fetch_add(1, Ordering::Relaxed),
             IngressRejectReason::StaleInputSequence { .. } => self

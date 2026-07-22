@@ -18,6 +18,9 @@ const MATERIAL_COLORS = {
 
 let mapCanvas = null;
 let mapKey = null;
+let sunMapCanvas = null;
+let sunMapImage = null;
+let sunMapBucket = -1;
 let visible = false;
 
 
@@ -28,6 +31,19 @@ export function toggleWorldMap() {
 
 export function isWorldMapVisible() {
   return visible;
+}
+
+export function worldMapNightAmount(sunElevation) {
+  if (!Number.isFinite(sunElevation)) return 0;
+  return Math.max(0, Math.min(1, (0.18 - sunElevation) / 0.78));
+}
+
+export function worldMapPoint(player, terrain, frame) {
+  const units = PROJECTION.unitsPerTile;
+  return {
+    x: frame.x + (player.x / units / terrain.cols) * frame.width,
+    y: frame.y + (player.y / units / terrain.rows) * frame.height,
+  };
 }
 
 // hand-drawn cartography, computed from the real world data so geography
@@ -157,9 +173,14 @@ function ensureMapCanvas(terrain) {
   return mapCanvas;
 }
 
-export function drawWorldMap(ctx, rect, terrain, players, localPlayerId) {
+export function drawWorldMap(ctx, rect, terrain, players, localPlayerId, worldMapAsset = null, sunElevation = 1) {
   if (!visible || !terrain?.worldData) return;
-  const map = ensureMapCanvas(terrain);
+  const paintedMap = worldMapAsset?.image &&
+    worldMapAsset.worldCols === terrain.cols &&
+    worldMapAsset.worldRows === terrain.rows
+    ? worldMapAsset.image
+    : null;
+  const map = paintedMap ? ensureSunMapCanvas(paintedMap, sunElevation) : ensureMapCanvas(terrain);
   if (!map) return;
 
   const margin = Math.min(rect.width, rect.height) * 0.06;
@@ -182,6 +203,9 @@ export function drawWorldMap(ctx, rect, terrain, players, localPlayerId) {
   ctx.strokeRect(x0 - 9, y0 - 9, drawW + 18, drawH + 18);
   ctx.imageSmoothingEnabled = true;
   ctx.drawImage(map, x0, y0, drawW, drawH);
+  if (paintedMap) {
+    drawAuthoritativeCoastlines(ctx, { x: x0, y: y0, width: drawW, height: drawH }, terrain);
+  }
   // soft vignette
   const grad = ctx.createRadialGradient(
     x0 + drawW / 2, y0 + drawH / 2, Math.min(drawW, drawH) * 0.42,
@@ -193,10 +217,10 @@ export function drawWorldMap(ctx, rect, terrain, players, localPlayerId) {
   ctx.fillRect(x0, y0, drawW, drawH);
 
   // players
-  const units = PROJECTION.unitsPerTile;
   for (const player of players) {
-    const px = x0 + (player.x / units / terrain.cols) * drawW;
-    const py = y0 + (player.y / units / terrain.rows) * drawH;
+    const point = worldMapPoint(player, terrain, { x: x0, y: y0, width: drawW, height: drawH });
+    const px = point.x;
+    const py = point.y;
     const isMe = player.id === localPlayerId;
     ctx.beginPath();
     ctx.arc(px, py, isMe ? 6 : 4, 0, Math.PI * 2);
@@ -220,5 +244,56 @@ export function drawWorldMap(ctx, rect, terrain, players, localPlayerId) {
   ctx.font = "12px system-ui";
   ctx.fillStyle = "#9b917c";
   ctx.fillText("press M to close", rect.width / 2, y0 + drawH + 26);
+  ctx.restore();
+}
+
+function ensureSunMapCanvas(image, sunElevation) {
+  const night = worldMapNightAmount(sunElevation);
+  const bucket = Math.round(night * 16);
+  if (sunMapCanvas && sunMapImage === image && sunMapBucket === bucket) return sunMapCanvas;
+  const canvas = document.createElement("canvas");
+  canvas.width = image.naturalWidth || image.width;
+  canvas.height = image.naturalHeight || image.height;
+  const context = canvas.getContext("2d");
+  if (!context) return image;
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  if (bucket > 0) {
+    // The game already applies its live night shade above the canvas. Keep the
+    // chart moonlit rather than double-darkening its terrain detail.
+    context.fillStyle = `rgba(8, 20, 35, ${((bucket / 16) * 0.34).toFixed(3)})`;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+  }
+  sunMapCanvas = canvas;
+  sunMapImage = image;
+  sunMapBucket = bucket;
+  return canvas;
+}
+
+function drawAuthoritativeCoastlines(ctx, frame, terrain) {
+  const tileAt = (x, y) => {
+    if (x < 0 || y < 0 || x >= terrain.cols || y >= terrain.rows) return null;
+    return terrain.tiles[y * terrain.cols + x];
+  };
+  const tileW = frame.width / terrain.cols;
+  const tileH = frame.height / terrain.rows;
+  ctx.save();
+  ctx.beginPath();
+  for (let y = 0; y < terrain.rows; y += 1) {
+    for (let x = 0; x < terrain.cols; x += 1) {
+      const tile = tileAt(x, y);
+      if (tile?.material !== "water") continue;
+      const left = frame.x + x * tileW;
+      const top = frame.y + y * tileH;
+      const right = left + tileW;
+      const bottom = top + tileH;
+      if (tileAt(x - 1, y)?.material !== "water") { ctx.moveTo(left, top); ctx.lineTo(left, bottom); }
+      if (tileAt(x + 1, y)?.material !== "water") { ctx.moveTo(right, top); ctx.lineTo(right, bottom); }
+      if (tileAt(x, y - 1)?.material !== "water") { ctx.moveTo(left, top); ctx.lineTo(right, top); }
+      if (tileAt(x, y + 1)?.material !== "water") { ctx.moveTo(left, bottom); ctx.lineTo(right, bottom); }
+    }
+  }
+  ctx.strokeStyle = "rgba(18, 35, 40, 0.5)";
+  ctx.lineWidth = Math.max(0.55, Math.min(0.9, tileW * 0.14));
+  ctx.stroke();
   ctx.restore();
 }

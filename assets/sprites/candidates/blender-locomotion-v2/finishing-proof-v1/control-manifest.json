@@ -1,0 +1,290 @@
+{
+  "schemaVersion": "duskfell-character-finishing-control-v1",
+  "approval": {
+    "state": "review"
+  },
+  "projection": "military-plan-oblique",
+  "source": {
+    "metadata": "assets/sprites/candidates/blender-locomotion-v2/duskfell-locomotion-v2.json",
+    "metadataSha256": "4daa7c31013d2ca95bbf24d1b99dd964f4d2f32459ca156b28d7f1e3ec4a87cd",
+    "sheet": "assets/sprites/candidates/blender-locomotion-v2/duskfell-locomotion-v2-8x36.png",
+    "sheetSha256": "670ec5c006bb1faaada74f08f68541ae4369b91f60a9751addc5fd6ebd6a809a"
+  },
+  "board": {
+    "path": "character-finishing-control-v1.png",
+    "sha256": "458be0ab92c36786dc0b657f84e1acb09d9ae7c1d760fc36cdcf6042d8180a28",
+    "columns": 8,
+    "rows": 4,
+    "cell": {
+      "width": 192,
+      "height": 256
+    },
+    "chroma": "#ff00ff"
+  },
+  "frames": [
+    {
+      "boardRow": 0,
+      "boardColumn": 0,
+      "pose": "idle-a",
+      "direction": "south",
+      "sourceColumn": 0,
+      "sourceRow": 0
+    },
+    {
+      "boardRow": 0,
+      "boardColumn": 1,
+      "pose": "idle-a",
+      "direction": "southeast",
+      "sourceColumn": 0,
+      "sourceRow": 1
+    },
+    {
+      "boardRow": 0,
+      "boardColumn": 2,
+      "pose": "idle-a",
+      "direction": "east",
+      "sourceColumn": 0,
+      "sourceRow": 2
+    },
+    {
+      "boardRow": 0,
+      "boardColumn": 3,
+      "pose": "idle-a",
+      "direction": "northeast",
+      "sourceColumn": 0,
+      "sourceRow": 3
+    },
+    {
+      "boardRow": 0,
+      "boardColumn": 4,
+      "pose": "idle-a",
+      "direction": "north",
+      "sourceColumn": 0,
+      "sourceRow": 4
+    },
+    {
+      "boardRow": 0,
+      "boardColumn": 5,
+      "pose": "idle-a",
+      "direction": "northwest",
+      "sourceColumn": 0,
+      "sourceRow": 5
+    },
+    {
+      "boardRow": 0,
+      "boardColumn": 6,
+      "pose": "idle-a",
+      "direction": "west",
+      "sourceColumn": 0,
+      "sourceRow": 6
+    },
+    {
+      "boardRow": 0,
+      "boardColumn": 7,
+      "pose": "idle-a",
+      "direction": "southwest",
+      "sourceColumn": 0,
+      "sourceRow": 7
+    },
+    {
+      "boardRow": 1,
+      "boardColumn": 0,
+      "pose": "idle-b",
+      "direction": "south",
+      "sourceColumn": 8,
+      "sourceRow": 0
+    },
+    {
+      "boardRow": 1,
+      "boardColumn": 1,
+      "pose": "idle-b",
+      "direction": "southeast",
+      "sourceColumn": 8,
+      "sourceRow": 1
+    },
+    {
+      "boardRow": 1,
+      "boardColumn": 2,
+      "pose": "idle-b",
+      "direction": "east",
+      "sourceColumn": 8,
+      "sourceRow": 2
+    },
+    {
+      "boardRow": 1,
+      "boardColumn": 3,
+      "pose": "idle-b",
+      "direction": "northeast",
+      "sourceColumn": 8,
+      "sourceRow": 3
+    },
+    {
+      "boardRow": 1,
+      "boardColumn": 4,
+      "pose": "idle-b",
+      "direction": "north",
+      "sourceColumn": 8,
+      "sourceRow": 4
+    },
+    {
+      "boardRow": 1,
+      "boardColumn": 5,
+      "pose": "idle-b",
+      "direction": "northwest",
+      "sourceColumn": 8,
+      "sourceRow": 5
+    },
+    {
+      "boardRow": 1,
+      "boardColumn": 6,
+      "pose": "idle-b",
+      "direction": "west",
+      "sourceColumn": 8,
+      "sourceRow": 6
+    },
+    {
+      "boardRow": 1,
+      "boardColumn": 7,
+      "pose": "idle-b",
+      "direction": "southwest",
+      "sourceColumn": 8,
+      "sourceRow": 7
+    },
+    {
+      "boardRow": 2,
+      "boardColumn": 0,
+      "pose": "walk-contact-a",
+      "direction": "south",
+      "sourceColumn": 20,
+      "sourceRow": 0
+    },
+    {
+      "boardRow": 2,
+      "boardColumn": 1,
+      "pose": "walk-contact-a",
+      "direction": "southeast",
+      "sourceColumn": 20,
+      "sourceRow": 1
+    },
+    {
+      "boardRow": 2,
+      "boardColumn": 2,
+      "pose": "walk-contact-a",
+      "direction": "east",
+      "sourceColumn": 20,
+      "sourceRow": 2
+    },
+    {
+      "boardRow": 2,
+      "boardColumn": 3,
+      "pose": "walk-contact-a",
+      "direction": "northeast",
+      "sourceColumn": 20,
+      "sourceRow": 3
+    },
+    {
+      "boardRow": 2,
+      "boardColumn": 4,
+      "pose": "walk-contact-a",
+      "direction": "north",
+      "sourceColumn": 20,
+      "sourceRow": 4
+    },
+    {
+      "boardRow": 2,
+      "boardColumn": 5,
+      "pose": "walk-contact-a",
+      "direction": "northwest",
+      "sourceColumn": 20,
+      "sourceRow": 5
+    },
+    {
+      "boardRow": 2,
+      "boardColumn": 6,
+      "pose": "walk-contact-a",
+      "direction": "west",
+      "sourceColumn": 20,
+      "sourceRow": 6
+    },
+    {
+      "boardRow": 2,
+      "boardColumn": 7,
+      "pose": "walk-contact-a",
+      "direction": "southwest",
+      "sourceColumn": 20,
+      "sourceRow": 7
+    },
+    {
+      "boardRow": 3,
+      "boardColumn": 0,
+      "pose": "walk-contact-b",
+      "direction": "south",
+      "sourceColumn": 30,
+      "sourceRow": 0
+    },
+    {
+      "boardRow": 3,
+      "boardColumn": 1,
+      "pose": "walk-contact-b",
+      "direction": "southeast",
+      "sourceColumn": 30,
+      "sourceRow": 1
+    },
+    {
+      "boardRow": 3,
+      "boardColumn": 2,
+      "pose": "walk-contact-b",
+      "direction": "east",
+      "sourceColumn": 30,
+      "sourceRow": 2
+    },
+    {
+      "boardRow": 3,
+      "boardColumn": 3,
+      "pose": "walk-contact-b",
+      "direction": "northeast",
+      "sourceColumn": 30,
+      "sourceRow": 3
+    },
+    {
+      "boardRow": 3,
+      "boardColumn": 4,
+      "pose": "walk-contact-b",
+      "direction": "north",
+      "sourceColumn": 30,
+      "sourceRow": 4
+    },
+    {
+      "boardRow": 3,
+      "boardColumn": 5,
+      "pose": "walk-contact-b",
+      "direction": "northwest",
+      "sourceColumn": 30,
+      "sourceRow": 5
+    },
+    {
+      "boardRow": 3,
+      "boardColumn": 6,
+      "pose": "walk-contact-b",
+      "direction": "west",
+      "sourceColumn": 30,
+      "sourceRow": 6
+    },
+    {
+      "boardRow": 3,
+      "boardColumn": 7,
+      "pose": "walk-contact-b",
+      "direction": "southwest",
+      "sourceColumn": 30,
+      "sourceRow": 7
+    }
+  ],
+  "provenance": {
+    "cleanRoom": true,
+    "geometryAuthority": "assets/sprites/candidates/blender-locomotion-v2/duskfell-locomotion-v2.json",
+    "animationAuthority": "Blender action and sampled source columns",
+    "finishingAuthority": "none; review-only img2img input",
+    "sourceHash": "5ce90c11a3b3bcc30ccae083f42f1bc6a31962b6cbcd65093dd25f69bbf6ec34",
+    "externalAssets": []
+  }
+}

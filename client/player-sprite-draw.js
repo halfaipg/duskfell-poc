@@ -1,6 +1,11 @@
-import { PLAYER_TURN_FADE_MS, walkAnimationSample } from "./player-animation.js";
+import {
+  PLAYER_TURN_FADE_MS,
+  PLAYER_WALK_FRAME_MS,
+  walkAnimationSample,
+} from "./player-animation.js";
 import { PLAYER_RENDER_SCALE } from "./player-config.js";
 import { stableIndex } from "./player-draw-utils.js";
+import { drawCastShadow } from "./cast-shadow.js";
 
 export function drawPlayerSprite(ctx, player, point, motion, now, sprite = null, grounding = null) {
   if (sprite?.kind === "paperdoll") {
@@ -37,51 +42,70 @@ function turnFadeFor(motion, now) {
   return { previousDirection: motion.previousDirection, t: elapsed / PLAYER_TURN_FADE_MS };
 }
 
-export function drawPlayerShadow(ctx, point, isMe, sprite, grounding = null) {
+export function drawPlayerShadow(ctx, point, isMe, sprite, grounding = null, player = null, motion = null, now = 0) {
   const shadow = sprite?.render?.shadow;
   if (shadow?.kind === "none") return;
-  if (shadow?.kind === "ellipse") {
-    const anchor = sprite.anchor;
-    const scale = sprite.render?.scale ?? PLAYER_RENDER_SCALE;
-    ctx.beginPath();
-    ctx.ellipse(
-      point.x + (shadow.x - anchor.x) * scale + (grounding?.shadowOffsetX ?? 0),
-      point.y + (shadow.y - anchor.y) * scale + (grounding?.shadowOffsetY ?? 0),
-      ((shadow.width * scale) / 2) * (grounding?.shadowScaleX ?? 1),
-      ((shadow.height * scale) / 2) * (grounding?.shadowScaleY ?? 1),
-      0,
-      0,
-      Math.PI * 2,
+  const scale = sprite?.render?.scale ?? PLAYER_RENDER_SCALE;
+  const anchor = sprite?.anchor;
+  const frame = player && motion && sprite
+    ? playerSpriteFrame(player, point, motion, now, sprite, grounding)
+    : null;
+  const shadowImage = sprite?.kind === "paperdoll" ? sprite.layers?.[0]?.image : sprite?.image;
+  if (frame && shadowImage?.complete && shadowImage.naturalWidth > 0 && anchor) {
+    const foot = {
+      x: point.x + (grounding?.shadowOffsetX ?? 0),
+      y: point.y + (grounding?.shadowOffsetY ?? 0),
+    };
+    drawCastShadow(
+      ctx,
+      shadowImage,
+      frame.sx,
+      frame.sy,
+      sprite.cellWidth,
+      sprite.cellHeight,
+      foot,
+      scale,
+      `actor:${shadowImage.src}:${frame.sx}:${frame.sy}`,
+      anchor.x,
     );
-    ctx.fillStyle = isMe
-      ? `rgba(239, 217, 139, ${Math.min(0.42, shadow.opacity + 0.1)})`
-      : `rgba(17, 20, 23, ${shadow.opacity})`;
-    ctx.fill();
-    if (isMe) {
-      ctx.strokeStyle = "rgba(255, 245, 188, 0.58)";
-      ctx.lineWidth = 1.4;
-      ctx.stroke();
-    }
-    return;
+  } else {
+    drawContactShadow(ctx, point, isMe, shadow, anchor, scale, grounding);
   }
 
+  // The local-player ring is selection feedback, separate from illumination.
+  // Keeping it independent means the sun can move without hiding who you are.
+  if (!isMe) return;
+  const ringWidth = shadow?.kind === "ellipse" ? (shadow.width * scale) / 2 : 27;
+  const ringHeight = shadow?.kind === "ellipse" ? (shadow.height * scale) / 2 : 12;
   ctx.beginPath();
   ctx.ellipse(
     point.x + (grounding?.shadowOffsetX ?? 0),
-    point.y - 2 + (grounding?.shadowOffsetY ?? 0),
-    (isMe ? 27 : 23) * (grounding?.shadowScaleX ?? 1),
-    (isMe ? 12 : 10) * (grounding?.shadowScaleY ?? 1),
+    point.y + (grounding?.shadowOffsetY ?? 0),
+    ringWidth * (grounding?.shadowScaleX ?? 1),
+    ringHeight * (grounding?.shadowScaleY ?? 1),
     0,
     0,
     Math.PI * 2,
   );
-  ctx.fillStyle = isMe ? "rgba(239, 217, 139, 0.3)" : "rgba(17, 20, 23, 0.22)";
+  ctx.strokeStyle = "rgba(255, 245, 188, 0.58)";
+  ctx.lineWidth = 1.4;
+  ctx.stroke();
+}
+
+function drawContactShadow(ctx, point, isMe, shadow, anchor, scale, grounding) {
+  const ellipse = shadow?.kind === "ellipse" && anchor;
+  ctx.beginPath();
+  ctx.ellipse(
+    point.x + (ellipse ? (shadow.x - anchor.x) * scale : 0) + (grounding?.shadowOffsetX ?? 0),
+    point.y + (ellipse ? (shadow.y - anchor.y) * scale : -2) + (grounding?.shadowOffsetY ?? 0),
+    (ellipse ? (shadow.width * scale) / 2 : isMe ? 27 : 23) * (grounding?.shadowScaleX ?? 1),
+    (ellipse ? (shadow.height * scale) / 2 : isMe ? 12 : 10) * (grounding?.shadowScaleY ?? 1),
+    0,
+    0,
+    Math.PI * 2,
+  );
+  ctx.fillStyle = `rgba(17, 20, 23, ${ellipse ? shadow.opacity : 0.22})`;
   ctx.fill();
-  if (isMe) {
-    ctx.strokeStyle = "rgba(255, 245, 188, 0.58)";
-    ctx.lineWidth = 1.4;
-    ctx.stroke();
-  }
 }
 
 function drawPlayerPaperdollSprite(ctx, player, point, motion, now, sprite, grounding = null) {
@@ -117,6 +141,14 @@ function playerSpriteFrame(player, point, motion, now, sprite, grounding = null,
     sprite.directions?.[directionName ?? motion.direction] ?? sprite.directions?.south;
   if (!direction) return null;
   const elapsed = Math.max(0, now - motion.walkStartMs);
+  const requestedFrameMs = sprite.animation?.frameMs;
+  const authoredFrameMs =
+    Number.isFinite(requestedFrameMs) && requestedFrameMs > 0
+      ? requestedFrameMs
+      : PLAYER_WALK_FRAME_MS;
+  const phaseFrames = Number.isFinite(motion.animPhaseFrames)
+    ? motion.animPhaseFrames * (PLAYER_WALK_FRAME_MS / authoredFrameMs)
+    : null;
   const animation = walkAnimationSample({
     moving: motion.moving,
     elapsedMs: elapsed,
@@ -129,7 +161,9 @@ function playerSpriteFrame(player, point, motion, now, sprite, grounding = null,
       motion.lastMovementMs != null ? now - motion.lastMovementMs : now - motion.walkStartMs,
     fidgetFrames: sprite.animation?.fidgetFrames ?? null,
     idleFrames: sprite.animation?.idleFrames ?? null,
-    phaseFrames: motion.animPhaseFrames ?? null,
+    idleFrameMs: sprite.animation?.idleFrameMs,
+    phaseFrames,
+    authoredFrameMs,
   });
   const sourceFrame = direction.startFrame + animation.frameIndex;
   const sx = (sourceFrame % sprite.columns) * sprite.cellWidth;

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "duskfell-generated-asset-v1",
+  "id": "world-map-img2img-day-v1",
+  "status": "concept-review",
+  "kind": "authoritative-world-map-enrichment",
+  "createdAt": "2026-07-14",
+  "tool": "OpenAI built-in image generation",
+  "model": "built-in image generation",
+  "sourceImage": "world-map-structure-authoritative.png",
+  "sourceSha256": "3dcff7f950d71b40f57b4893092811087dfceae792db59a015e88396558124e8",
+  "sourceEncodingNote": "The control was deterministically re-encoded after generation; decoded source pixels are unchanged.",
+  "outputImage": "world-map-img2img-day-v1.png",
+  "outputSha256": "f1f9de52424c8dfbedb88bb4c0b131a536d4a83c3a59d2f6dca74433874efd43",
+  "structureSources": "See world-map-structure-authoritative.json for pinned world, bundle, and authority hashes.",
+  "promptSummary": "Daylight HD painted-map enrichment with strict preservation of source highlands, lowlands, water, settlement, paths, cliffs, blockers, and landmark positions.",
+  "acceptance": "concept only; runtime use requires boundary-drift measurement and mask recomposition",
+  "license": "project-original-ai-assisted-review"
+}

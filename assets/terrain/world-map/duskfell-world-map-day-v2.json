@@ -1,0 +1,48 @@
+{
+  "schemaVersion": "duskfell-runtime-world-map-v2",
+  "status": "runtime-review",
+  "output": "world-map/duskfell-world-map-day-v2.webp",
+  "outputSha256": "81a1570df77e0655b6a9d74e5563803ede7a2e8e86fa54507a6e6a769b56a800",
+  "dimensions": {
+    "width": 1536,
+    "height": 1024
+  },
+  "tilePixels": {
+    "width": 8,
+    "height": 8
+  },
+  "world": {
+    "cols": 192,
+    "rows": 128,
+    "path": "server/data/world.json",
+    "sha256": "f7e731e7b81435ade5cc10b44cf2185cce4701db93ca7916fc8dfbf114df551f"
+  },
+  "pathlessBase": {
+    "image": "candidates/world-map-authoritative-painted-v3.png",
+    "sha256": "61c80d7e26befd7af8e788d8deda5ff7f55ef3053d0fec37b96a787efc4feba7",
+    "provenance": "candidates/world-map-authoritative-painted-v3.json",
+    "semanticAlignment": {
+      "agreement": 0.9545491536458334,
+      "rockRecall": 0.9854986094557012,
+      "waterRecall": 1,
+      "sampledTiles": 24576
+    },
+    "control": "candidates/world-map-authoritative-control-v3.png",
+    "controlSha256": "50d6bc0b363c02013cf0c242204d079083fd35b9199bf58c2b27d3d117a9bd05"
+  },
+  "authoritativeTrails": {
+    "count": 5,
+    "sha256": "ffc7c0eeeb9fceec880bd4a83dc017f202592c373d3c498d97217e7c8186500b",
+    "mask": "world-map/duskfell-world-map-trails-v2.png",
+    "maskSha256": "0106015e874a37e7c7202d6f4f6e53b624a7a5627caf0f3b82029ba59ca31b71",
+    "maskPixelCount": 36104,
+    "compositor": "shared polyline-distance field with deterministic edge noise and terrain-relative color blending"
+  },
+  "textureReference": {
+    "image": "candidates/world-map-pathless-base-v2.png",
+    "sha256": "fd681a84ad3bf160487aca06ecd0e8f47a434db15f4d45ccfe091df0a1bcac72",
+    "provenance": "candidates/world-map-pathless-base-v2.json"
+  },
+  "baseRenderer": "painted pathless enrichment accepted only after authoritative semantic geometry gates",
+  "runtimeTreatment": "Accepted authoritative painting plus baked authoritative trail mask; live sun grading supplies dusk and night without geometry drift."
+}

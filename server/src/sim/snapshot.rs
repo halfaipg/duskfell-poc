@@ -1,9 +1,8 @@
 use bevy_ecs::prelude::Entity;
 
 use crate::protocol::{
-    SpeechSnapshot,
-    MapSnapshot, ObjectSnapshot, PlayerId, PlayerSnapshot, ResourceKind, ResourceSnapshot,
-    SettlementSnapshot, WorldSnapshot,
+    MapSnapshot, NpcSnapshot, ObjectSnapshot, PlayerId, PlayerSnapshot, ResourceKind,
+    ResourceSnapshot, SettlementSnapshot, SpeechSnapshot, WorldSnapshot,
 };
 
 use super::movement::distance;
@@ -15,6 +14,7 @@ impl SimWorld {
             tick: self.tick,
             map: self.map_snapshot(),
             players: self.player_snapshots(None, None, f32::INFINITY),
+            npcs: self.npc_snapshots(None, f32::INFINITY),
             objects: self.object_snapshots(None, None, f32::INFINITY),
             settlement,
         }
@@ -45,9 +45,40 @@ impl SimWorld {
             tick: self.tick,
             map: self.map_snapshot(),
             players: self.player_snapshots(player_entities.as_deref(), center, interest_radius),
+            npcs: self.npc_snapshots(center, interest_radius),
             objects: self.object_snapshots(object_entities.as_deref(), center, interest_radius),
             settlement,
         }
+    }
+
+    fn npc_snapshots(&self, center: Option<Position>, interest_radius: f32) -> Vec<NpcSnapshot> {
+        let tick = self.tick;
+        let mut npcs: Vec<NpcSnapshot> = self
+            .npcs
+            .values()
+            .filter(|npc| {
+                center
+                    .map(|center| distance(center, npc.position) <= interest_radius + npc.radius)
+                    .unwrap_or(true)
+            })
+            .map(|npc| NpcSnapshot {
+                id: npc.id.clone(),
+                name: npc.name.clone(),
+                x: npc.position.x,
+                y: npc.position.y,
+                color: npc.color.clone(),
+                speech: npc
+                    .speech
+                    .as_ref()
+                    .filter(|speech| speech.until_tick > tick)
+                    .map(|speech| SpeechSnapshot {
+                        text: speech.text.clone(),
+                        until_tick: speech.until_tick,
+                    }),
+            })
+            .collect();
+        npcs.sort_by(|a, b| a.id.cmp(&b.id));
+        npcs
     }
 
     fn map_snapshot(&self) -> MapSnapshot {
@@ -55,6 +86,7 @@ impl SimWorld {
             width: self.map.width,
             height: self.map.height,
             safe_zone_radius: self.map.safe_zone_radius,
+            region: self.map.region.clone(),
             terrain: self.map.terrain_snapshot.clone(),
         }
     }

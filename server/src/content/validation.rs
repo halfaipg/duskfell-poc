@@ -5,8 +5,9 @@ use anyhow::anyhow;
 use crate::protocol::ObjectKind;
 
 use super::{
-    TerrainContent, WorldContent, TERRAIN_MATERIALS, TERRAIN_PROFILE, TERRAIN_TILE_HEIGHT,
-    TERRAIN_TILE_WIDTH, TERRAIN_UNITS_PER_TILE, WORLD_SCHEMA_VERSION,
+    TerrainContent, WorldContent, MAX_NPCS, MAX_TRAILS, MAX_TRAIL_POINTS, TERRAIN_MATERIALS,
+    TERRAIN_PROFILE, TERRAIN_TILE_HEIGHT, TERRAIN_TILE_WIDTH, TERRAIN_UNITS_PER_TILE,
+    WORLD_SCHEMA_VERSION,
 };
 
 impl WorldContent {
@@ -35,6 +36,7 @@ impl WorldContent {
                 anyhow!("map.terrain must be declared for supported world content")
             })?;
         validate_terrain(terrain, self.map.width, self.map.height)?;
+        validate_region_routing(&self.map, terrain)?;
 
         if self.objects.len() > max_objects {
             return Err(anyhow!(
@@ -94,6 +96,63 @@ impl WorldContent {
             }
         }
 
+        if self.npcs.len() > MAX_NPCS {
+            return Err(anyhow!(
+                "world content npc count {} exceeds hard limit {}",
+                self.npcs.len(),
+                MAX_NPCS
+            ));
+        }
+        let mut npc_ids = HashSet::new();
+        for npc in &self.npcs {
+            if !valid_content_id(&npc.id) {
+                return Err(anyhow!(
+                    "npc id '{}' must be lowercase ascii kebab-case",
+                    npc.id
+                ));
+            }
+            if !npc_ids.insert(npc.id.as_str()) {
+                return Err(anyhow!("duplicate npc id '{}'", npc.id));
+            }
+            validate_text_field("npc name", &npc.name, 1, 40)?;
+            validate_text_field("npc role", &npc.role, 1, 80)?;
+            validate_text_field("npc persona", &npc.persona, 1, 1200)?;
+            if npc.drives.len() > 8 {
+                return Err(anyhow!("npc '{}' may declare at most 8 drives", npc.id));
+            }
+            for drive in &npc.drives {
+                validate_text_field("npc drive", drive, 1, 120)?;
+            }
+            if npc.canned.is_empty() || npc.canned.len() > 16 {
+                return Err(anyhow!(
+                    "npc '{}' canned dialogue must contain 1-16 lines",
+                    npc.id
+                ));
+            }
+            for line in &npc.canned {
+                validate_text_field("npc canned dialogue", line, 1, 128)?;
+            }
+            validate_positive("npc.radius", npc.radius)?;
+            if !npc.x.is_finite()
+                || !npc.y.is_finite()
+                || npc.x - npc.radius < 0.0
+                || npc.x + npc.radius > self.map.width
+                || npc.y - npc.radius < 0.0
+                || npc.y + npc.radius > self.map.height
+            {
+                return Err(anyhow!(
+                    "npc '{}' footprint must fit inside map bounds",
+                    npc.id
+                ));
+            }
+            if !valid_hex_color(&npc.color) {
+                return Err(anyhow!(
+                    "npc '{}' color must be # followed by 6 hex digits",
+                    npc.id
+                ));
+            }
+        }
+
         self.require_object_kind("registrar", ObjectKind::Registrar)?;
         self.require_object_kind("field-forge", ObjectKind::Forge)?;
 
@@ -119,6 +178,137 @@ impl WorldContent {
     }
 }
 
+fn validate_region_routing(
+    map: &super::MapContent,
+    terrain: &TerrainContent,
+) -> anyhow::Result<()> {
+    let Some(region) = &map.region else {
+        return Ok(());
+    };
+    if terrain.chunk_authority.is_none() {
+        return Err(anyhow!("map.region requires chunked terrain authority"));
+    }
+    if region.schema_version != "duskfell-region-routing-v1" {
+        return Err(anyhow!("map.region.schemaVersion is unsupported"));
+    }
+    if !valid_kebab_id(&region.atlas_id) || region.atlas_id.len() > 80 {
+        return Err(anyhow!(
+            "map.region.atlasId must be bounded lowercase kebab-case"
+        ));
+    }
+    if region.atlas_content_sha256.len() != 64
+        || !region
+            .atlas_content_sha256
+            .chars()
+            .all(|ch| ch.is_ascii_hexdigit() && !ch.is_ascii_uppercase())
+    {
+        return Err(anyhow!(
+            "map.region.atlasContentSha256 must be lowercase SHA-256"
+        ));
+    }
+    let expected_id = format!("{}-r{}-{}", region.atlas_id, region.coord.x, region.coord.y);
+    if region.region_id != expected_id {
+        return Err(anyhow!(
+            "map.region.regionId does not match atlas coordinate"
+        ));
+    }
+    let cols = (map.width / terrain.units_per_tile as f32).ceil() as u32;
+    let rows = (map.height / terrain.units_per_tile as f32).ceil() as u32;
+    let expected_origin_x = region
+        .coord
+        .x
+        .checked_mul(cols)
+        .ok_or_else(|| anyhow!("map.region x origin overflows"))?;
+    let expected_origin_y = region
+        .coord
+        .y
+        .checked_mul(rows)
+        .ok_or_else(|| anyhow!("map.region y origin overflows"))?;
+    if region.tile_origin.x != expected_origin_x || region.tile_origin.y != expected_origin_y {
+        return Err(anyhow!(
+            "map.region.tileOrigin does not match regional grid"
+        ));
+    }
+    let expected = |x: u32, y: u32| format!("{}-r{x}-{y}", region.atlas_id);
+    if region.neighbors.north.as_deref()
+        != region
+            .coord
+            .y
+            .checked_sub(1)
+            .map(|y| expected(region.coord.x, y))
+            .as_deref()
+        || region.neighbors.west.as_deref()
+            != region
+                .coord
+                .x
+                .checked_sub(1)
+                .map(|x| expected(x, region.coord.y))
+                .as_deref()
+    {
+        return Err(anyhow!(
+            "map.region north/west neighbors do not match atlas coordinate"
+        ));
+    }
+    let east_x = region.coord.x.checked_add(1);
+    let south_y = region.coord.y.checked_add(1);
+    for (neighbor, expected_id) in [
+        (
+            &region.neighbors.east,
+            east_x.map(|x| expected(x, region.coord.y)),
+        ),
+        (
+            &region.neighbors.south,
+            south_y.map(|y| expected(region.coord.x, y)),
+        ),
+    ] {
+        if let Some(neighbor) = neighbor {
+            if expected_id.as_deref() != Some(neighbor.as_str()) {
+                return Err(anyhow!(
+                    "map.region east/south neighbor does not match atlas coordinate"
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
+fn valid_kebab_id(value: &str) -> bool {
+    !value.is_empty()
+        && !value.starts_with('-')
+        && !value.ends_with('-')
+        && !value.contains("--")
+        && value
+            .chars()
+            .all(|ch| ch.is_ascii_lowercase() || ch.is_ascii_digit() || ch == '-')
+}
+
+fn valid_content_id(value: &str) -> bool {
+    !value.is_empty()
+        && value.len() <= 64
+        && value.split('-').all(|part| {
+            !part.is_empty()
+                && part
+                    .chars()
+                    .all(|ch| ch.is_ascii_lowercase() || ch.is_ascii_digit())
+        })
+}
+
+fn validate_text_field(field: &str, value: &str, min: usize, max: usize) -> anyhow::Result<()> {
+    let chars = value.chars().count();
+    if chars < min || chars > max || value.chars().any(char::is_control) {
+        return Err(anyhow!(
+            "{field} must contain {min}-{max} non-control characters"
+        ));
+    }
+    Ok(())
+}
+
+fn valid_hex_color(value: &str) -> bool {
+    value.len() == 7
+        && value.starts_with('#')
+        && value[1..].chars().all(|ch| ch.is_ascii_hexdigit())
+}
+
 fn validate_positive(field: &str, value: f32) -> anyhow::Result<()> {
     if !value.is_finite() || value <= 0.0 {
         return Err(anyhow!("{field} must be a positive finite number"));
@@ -126,7 +316,11 @@ fn validate_positive(field: &str, value: f32) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn validate_terrain(terrain: &TerrainContent, map_width: f32, map_height: f32) -> anyhow::Result<()> {
+fn validate_terrain(
+    terrain: &TerrainContent,
+    map_width: f32,
+    map_height: f32,
+) -> anyhow::Result<()> {
     if terrain.profile != TERRAIN_PROFILE {
         return Err(anyhow!(
             "map.terrain.profile '{}' is not supported; expected '{}'",
@@ -166,6 +360,11 @@ fn validate_terrain(terrain: &TerrainContent, map_width: f32, map_height: f32) -
             "map.terrain.maxWalkableStep must fit inside the elevation range"
         ));
     }
+    if terrain.vertex_height_precision == 0 || terrain.vertex_height_precision > 100_000 {
+        return Err(anyhow!(
+            "map.terrain.vertexHeightPrecision must be between 1 and 100000"
+        ));
+    }
     let mut unique_materials = HashSet::new();
     for material in &terrain.materials {
         if !unique_materials.insert(material.as_str()) {
@@ -196,11 +395,120 @@ fn validate_terrain(terrain: &TerrainContent, map_width: f32, map_height: f32) -
         }
     }
 
-    // baked walkability grids (optional, but must agree with map dimensions
-    // and declare heights inside the elevation range when present)
-    if !terrain.material_grid.is_empty() || !terrain.vertex_heights.is_empty() {
-        let cols = (map_width / terrain.units_per_tile as f32).ceil() as usize;
-        let rows = (map_height / terrain.units_per_tile as f32).ceil() as usize;
+    if terrain.trails.len() > MAX_TRAILS {
+        return Err(anyhow!("map.terrain.trails exceeds maximum length"));
+    }
+    let cols = (map_width / terrain.units_per_tile as f32).ceil();
+    let rows = (map_height / terrain.units_per_tile as f32).ceil();
+    let mut trail_ids = HashSet::new();
+    for (index, trail) in terrain.trails.iter().enumerate() {
+        if trail.id.is_empty()
+            || trail.id.len() > 40
+            || !trail
+                .id
+                .chars()
+                .all(|ch| ch.is_ascii_lowercase() || ch.is_ascii_digit() || ch == '-')
+        {
+            return Err(anyhow!(
+                "map.terrain.trails[{index}].id must be lowercase kebab-case"
+            ));
+        }
+        if !trail_ids.insert(trail.id.as_str()) {
+            return Err(anyhow!(
+                "map.terrain.trails contains duplicate id '{}'",
+                trail.id
+            ));
+        }
+        if trail.label.is_empty() || trail.label.len() > 40 {
+            return Err(anyhow!(
+                "map.terrain.trails[{index}].label must be 1-40 characters"
+            ));
+        }
+        if trail.kind != "road" && trail.kind != "trail" {
+            return Err(anyhow!(
+                "map.terrain.trails[{index}].kind must be 'road' or 'trail'"
+            ));
+        }
+        if !trail.width_tiles.is_finite() || !(0.4..=3.0).contains(&trail.width_tiles) {
+            return Err(anyhow!(
+                "map.terrain.trails[{index}].widthTiles must be between 0.4 and 3"
+            ));
+        }
+        if trail.points.len() < 2 || trail.points.len() > MAX_TRAIL_POINTS {
+            return Err(anyhow!(
+                "map.terrain.trails[{index}].points must contain 2-{MAX_TRAIL_POINTS} points"
+            ));
+        }
+        for (point_index, point) in trail.points.iter().enumerate() {
+            if !point.x.is_finite()
+                || !point.y.is_finite()
+                || point.x < 0.0
+                || point.y < 0.0
+                || point.x > cols
+                || point.y > rows
+            {
+                return Err(anyhow!(
+                    "map.terrain.trails[{index}].points[{point_index}] must be inside terrain bounds"
+                ));
+            }
+        }
+    }
+
+    let has_baked_grid = !terrain.material_grid.is_empty() || !terrain.vertex_heights.is_empty();
+    if terrain.chunk_authority.is_some() && has_baked_grid {
+        return Err(anyhow!(
+            "map.terrain must use either chunkAuthority or monolithic grids, not both"
+        ));
+    }
+    if let Some(chunked) = &terrain.chunk_authority {
+        if chunked.schema_version != "duskfell-world-chunk-index-v1" {
+            return Err(anyhow!(
+                "map.terrain.chunkAuthority.schemaVersion is unsupported"
+            ));
+        }
+        if chunked.index_sha256.len() != 64
+            || !chunked
+                .index_sha256
+                .chars()
+                .all(|ch| ch.is_ascii_hexdigit() && !ch.is_ascii_uppercase())
+        {
+            return Err(anyhow!(
+                "map.terrain.chunkAuthority.indexSha256 must be lowercase SHA-256"
+            ));
+        }
+        if chunked.chunk_count == 0 || chunked.chunk_count > 256 {
+            return Err(anyhow!(
+                "map.terrain.chunkAuthority.chunkCount must be between 1 and 256"
+            ));
+        }
+        if chunked.chunk_tiles == 0 || chunked.chunk_tiles > 64 || chunked.apron_tiles > 16 {
+            return Err(anyhow!(
+                "map.terrain.chunkAuthority geometry is outside server bounds"
+            ));
+        }
+        if chunked.vertex_height_precision != terrain.vertex_height_precision {
+            return Err(anyhow!(
+                "map.terrain.chunkAuthority height precision must match terrain"
+            ));
+        }
+        if chunked.total_bytes == 0 || chunked.total_bytes > 64 * 1024 * 1024 {
+            return Err(anyhow!(
+                "map.terrain.chunkAuthority totalBytes must be between 1 and 67108864"
+            ));
+        }
+        let expected_chunks = (cols as u32).div_ceil(chunked.chunk_tiles)
+            * (rows as u32).div_ceil(chunked.chunk_tiles);
+        if chunked.chunk_count != expected_chunks {
+            return Err(anyhow!(
+                "map.terrain.chunkAuthority chunkCount does not cover map dimensions"
+            ));
+        }
+    }
+
+    // Monolithic walkability grids remain a bounded legacy fallback.
+    if has_baked_grid {
+        let cols = cols as usize;
+        let rows = rows as usize;
         if terrain.material_grid.len() != rows {
             return Err(anyhow!(
                 "map.terrain.materialGrid must have {rows} rows, found {}",
@@ -214,9 +522,9 @@ fn validate_terrain(terrain: &TerrainContent, map_width: f32, map_height: f32) -
                 ));
             }
             for ch in row.chars() {
-                let index = ch
-                    .to_digit(36)
-                    .ok_or_else(|| anyhow!("map.terrain.materialGrid contains non-base-36 '{ch}'"))?;
+                let index = ch.to_digit(36).ok_or_else(|| {
+                    anyhow!("map.terrain.materialGrid contains non-base-36 '{ch}'")
+                })?;
                 if index as usize >= terrain.materials.len() {
                     return Err(anyhow!(
                         "map.terrain.materialGrid index {index} is outside the material legend"
@@ -238,8 +546,13 @@ fn validate_terrain(terrain: &TerrainContent, map_width: f32, map_height: f32) -
                     cols + 1
                 ));
             }
+            let min_fixed =
+                i64::from(terrain.min_elevation) * i64::from(terrain.vertex_height_precision);
+            let max_fixed =
+                i64::from(terrain.max_elevation) * i64::from(terrain.vertex_height_precision);
             for height in row {
-                if *height < terrain.min_elevation || *height > terrain.max_elevation {
+                let height = i64::from(*height);
+                if height < min_fixed || height > max_fixed {
                     return Err(anyhow!(
                         "map.terrain.vertexHeights contains {height} outside the elevation range"
                     ));

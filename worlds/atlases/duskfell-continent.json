@@ -1,0 +1,45 @@
+{
+  "schema": "duskfell-continent-atlas-recipe-v1",
+  "id": "duskfell-first-continent",
+  "seed": 74291,
+  "dimensions": {
+    "regionCols": 32,
+    "regionRows": 24,
+    "regionTiles": { "cols": 192, "rows": 128 },
+    "unitsPerTile": 64
+  },
+  "sampling": { "samplesPerRegion": 4 },
+  "chunks": { "tiles": 32, "apronTiles": 4 },
+  "erosion": {
+    "enabled": true,
+    "iterations": 10,
+    "rainfall": 0.012,
+    "evaporation": 0.34,
+    "flowRate": 0.62,
+    "sedimentCapacity": 3.2,
+    "erosionRate": 0.13,
+    "depositionRate": 0.21,
+    "minimumSlope": 0.001,
+    "talus": 0.028,
+    "thermalRate": 0.06
+  },
+  "climate": {
+    "latitudeSouthDegrees": 35,
+    "latitudeNorthDegrees": 62,
+    "prevailingWind": "west-to-east",
+    "seaLevel": 0.43,
+    "elevationLapse": 0.52,
+    "orographicLift": 1.35
+  },
+  "seasonality": {
+    "calendarDays": 480,
+    "seasons": ["spring", "summer", "autumn", "winter"]
+  },
+  "source": {
+    "type": "synthetic-atlas-v1",
+    "repository": "https://github.com/halfaipg/duskfell-poc",
+    "license": "project-original",
+    "model": "duskfell-atlas-fbm-v1"
+  },
+  "review": { "maxLongEdge": 1024 }
+}

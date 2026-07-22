@@ -1,13 +1,15 @@
 use uuid::Uuid;
 
 use super::*;
-use crate::protocol::SettlementSnapshot;
+use crate::protocol::{PlayerId, SettlementSnapshot};
 
 mod crafting_inventory;
 mod ecology_resources;
 mod movement;
+mod npcs;
 mod player_identity;
 mod terrain_detail_authority;
+mod transfer;
 
 fn empty_settlement() -> SettlementSnapshot {
     SettlementSnapshot {

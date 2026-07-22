@@ -1,10 +1,22 @@
 import { PROJECTION } from "./projection.js";
 import { projectTerrainTile } from "./terrain.js";
+import { GRAPHICS_BUDGET } from "./device-profile.js";
 
 // padding must cover height-displaced diamonds and their wall quads
 // (max drop * zPx + patch overlap), or chunk layers crop them into gaps
 const TERRAIN_STATIC_CHUNK_PADDING = 64;
 const MAX_TERRAIN_STATIC_CHUNK_PIXELS = 1_200_000;
+export const TERRAIN_DRAW_OVERSCAN = GRAPHICS_BUDGET.terrainOverscanPx;
+export const TERRAIN_PRELOAD_OVERSCAN = GRAPHICS_BUDGET.terrainPreloadOverscanPx;
+
+export function cameraWorldBounds(camera, width, height, padding = 0) {
+  return {
+    minX: camera.x - padding,
+    maxX: camera.x + width / camera.scale + padding,
+    minY: camera.y - padding,
+    maxY: camera.y + height / camera.scale + padding,
+  };
+}
 
 export function createTerrainLayerManager({
   getCanvas,
@@ -20,13 +32,15 @@ export function createTerrainLayerManager({
     const camera = getCamera();
     const width = viewport?.width ?? canvas.clientWidth;
     const height = viewport?.height ?? canvas.clientHeight;
-    const pad = 144;
-    return {
-      minX: camera.x - pad,
-      maxX: camera.x + width / camera.scale + pad,
-      minY: camera.y - pad,
-      maxY: camera.y + height / camera.scale + pad,
-    };
+    return cameraWorldBounds(camera, width, height, TERRAIN_DRAW_OVERSCAN);
+  }
+
+  function preloadWorldBounds(viewport) {
+    const canvas = getCanvas();
+    const camera = getCamera();
+    const width = viewport?.width ?? canvas.clientWidth;
+    const height = viewport?.height ?? canvas.clientHeight;
+    return cameraWorldBounds(camera, width, height, TERRAIN_PRELOAD_OVERSCAN);
   }
 
   function terrainGeometryForMap(worldTerrain, origin) {
@@ -77,10 +91,7 @@ export function createTerrainLayerManager({
   }
 
   function terrainStaticLayerForChunk(chunk, renderStaticLayer) {
-    if (
-      chunk.staticLayer?.assetVersion === getTerrainAssetVersion() &&
-      chunk.staticLayer?.terrainKey === terrainRenderCacheKey
-    ) {
+    if (hasStaticLayerForChunk(chunk)) {
       return chunk.staticLayer;
     }
 
@@ -119,9 +130,18 @@ export function createTerrainLayerManager({
     return chunk.staticLayer;
   }
 
+  function hasStaticLayerForChunk(chunk) {
+    return (
+      chunk.staticLayer?.assetVersion === getTerrainAssetVersion() &&
+      chunk.staticLayer?.terrainKey === terrainRenderCacheKey
+    );
+  }
+
   return {
     boundsIntersect,
     drawTerrainStaticChunk,
+    hasStaticLayerForChunk,
+    preloadWorldBounds,
     staticLayerForChunk: terrainStaticLayerForChunk,
     terrainGeometryForMap,
     visibleWorldBounds,

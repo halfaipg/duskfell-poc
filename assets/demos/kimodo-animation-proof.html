@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Duskfell Motion Proof</title>
+  <link rel="stylesheet" href="kimodo-animation-proof.css">
+</head>
+<body>
+  <main>
+    <header>
+    <h1>Duskfell Motion Proof</h1>
+      <div class="status" id="status">Loading review asset</div>
+    </header>
+    <div class="stage"><canvas id="stage" width="944" height="560"></canvas></div>
+    <div class="toolbar">
+      <button id="play" type="button" title="Pause animation" aria-label="Pause animation">Ⅱ</button>
+      <div class="divider"></div>
+      <div class="directions" id="directions" aria-label="Facing direction"></div>
+      <div class="divider"></div>
+      <label>Speed <input id="speed" type="range" min="0.35" max="2" value="1" step="0.05"></label>
+    </div>
+  </main>
+  <script type="module" src="kimodo-animation-proof.js?v=blender-locomotion-4"></script>
+</body>
+</html>

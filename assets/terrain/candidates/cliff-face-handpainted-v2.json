@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "duskfell-generated-asset-v1",
+  "id": "cliff-face-handpainted-v2",
+  "status": "runtime-review",
+  "kind": "vertical-cliff-source",
+  "createdAt": "2026-07-14",
+  "tool": "OpenAI built-in image generation",
+  "model": "built-in image generation",
+  "sourceImage": "cliff-face-handpainted-v2.png",
+  "sourceSha256": "423d7ede205937db2274f1b0b36b5dd01e671ddf081482bd9e613aa97de17ee8",
+  "runtimeImage": "../ground-patches/biome-cliff-v2.webp",
+  "runtimeSha256": "55eb5e1d73873d6b308316eebca3208419f32985a13a81b8cf2f4543d0f591e0",
+  "prompt": "Original straight-on vertical cliff-face terrain texture with broad hand-painted charcoal and umber slate planes, large fracture columns, restrained moss, limited-value shading, and no masonry, paving, commercial-game assets, text, or watermark.",
+  "processing": "Lanczos resize from 1254x1254 PNG to 2048x2048 WebP at quality 90",
+  "projectionUse": "source painting sampled as continuous strips and affine-mapped onto military-plan-oblique wall faces",
+  "license": "project-original-ai-assisted-review"
+}

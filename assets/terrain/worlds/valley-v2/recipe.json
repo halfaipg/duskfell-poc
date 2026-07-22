@@ -1,0 +1,22 @@
+{
+  "schema": "duskfell-world-recipe-v2",
+  "id": "valley-v2",
+  "seed": 74291,
+  "dimensions": { "cols": 64, "rows": 64, "unitsPerTile": 64 },
+  "macro": { "tiles": 32, "apronTiles": 4, "gameplayPixelsPerTile": 32 },
+  "terrain": {
+    "valleyCenterX": 31.5,
+    "valleyHalfWidth": 17,
+    "lake": { "x": 34, "y": 43, "radiusX": 7.5, "radiusY": 5.5 },
+    "snowline": 0.88,
+    "riverWidth": 1.45
+  },
+  "palette": {
+    "meadow": "#65794a",
+    "loam": "#715f47",
+    "rock": "#696a64",
+    "snow": "#d9dedb",
+    "wetland": "#465f4f",
+    "water": "#315e66"
+  }
+}

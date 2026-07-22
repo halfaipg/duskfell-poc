@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "duskfell-blender-locomotion-v2",
+  "approvalState": "review",
+  "method": "CC0 Quaternius action-neutral quaternion motion retarget onto the Duskfell wretch rig with bounded gait and arm correction",
+  "source": {
+    "factory": "var/blender/wretch-factory.blend",
+    "factorySha256": "65df5fa8909da9916b559cded4f1d3562e646ef2c0e37b1993e2ecc44a03ad7c",
+    "author": "Quaternius",
+    "license": "CC0",
+    "actions": {
+      "idle": "CharacterArmature|Idle",
+      "walk": "CharacterArmature|Walk"
+    },
+    "actionFrameRanges": {
+      "idle": [
+        0,
+        75
+      ],
+      "walk": [
+        0,
+        30
+      ]
+    }
+  },
+  "blend": "var/blender/duskfell-locomotion-v2.blend",
+  "sheet": "assets/sprites/candidates/blender-locomotion-v2/duskfell-locomotion-v2-8x36.png",
+  "sheetSha256": "670ec5c006bb1faaada74f08f68541ae4369b91f60a9751addc5fd6ebd6a809a",
+  "fps": 30,
+  "cell": {
+    "width": 128,
+    "height": 160
+  },
+  "anchor": {
+    "x": 64,
+    "y": 110,
+    "kind": "footprint"
+  },
+  "directions": [
+    "south",
+    "southeast",
+    "east",
+    "northeast",
+    "north",
+    "northwest",
+    "west",
+    "southwest"
+  ],
+  "rootYawDegrees": [
+    -45,
+    0,
+    45,
+    90,
+    135,
+    180,
+    -135,
+    -90
+  ],
+  "idleFrames": 16,
+  "walkFrames": 20,
+  "columns": 36,
+  "sampledActionFrames": {
+    "idle": [
+      1,
+      5,
+      10,
+      15,
+      19,
+      24,
+      29,
+      33,
+      38,
+      43,
+      47,
+      52,
+      57,
+      61,
+      66,
+      71
+    ],
+    "walk": [
+      1,
+      2,
+      4,
+      5,
+      7,
+      8,
+      10,
+      11,
+      13,
+      14,
+      16,
+      17,
+      19,
+      20,
+      22,
+      23,
+      25,
+      26,
+      28,
+      29
+    ]
+  },
+  "hiddenMeshes": [
+    "uo_wretch.cortu_short_messy_hair"
+  ],
+  "runtimeInference": false
+}

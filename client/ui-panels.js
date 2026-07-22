@@ -4,6 +4,7 @@ import {
   PLAYER_ARCHETYPE_LABELS,
   PLAYER_CARD_PORTRAITS,
 } from "./player-config.js";
+import { GRAPHICS_QUALITY } from "./device-profile.js";
 
 export function renderHud({ ui, snapshot, smoothedFps, terrainDebugMode, groundPatchCount, terrainAssetError }) {
   if (!ui.hud) return;
@@ -17,7 +18,7 @@ export function renderHud({ ui, snapshot, smoothedFps, terrainDebugMode, groundP
   const artState = terrainAssetError
     ? `art v3 ASSETS FAILED: ${terrainAssetError}`
     : `art v3 / paintings ${groundPatchCount ?? 0}`;
-  ui.hud.textContent = `FPS ${Math.round(smoothedFps)} / Players ${players.length} / Tick ${snapshot.tick}${
+  ui.hud.textContent = `FPS ${Math.round(smoothedFps)} / Quality ${GRAPHICS_QUALITY} / Players ${players.length} / Tick ${snapshot.tick}${
     terrainDebugMode ? ` / Terrain ${terrainDebugMode}` : ""
   } / ${artState}`;
 }
@@ -95,10 +96,10 @@ function drawPlayerCardPortrait(canvas, sprite) {
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.imageSmoothingEnabled = true;
-    const scale = Math.min(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight);
+    const scale = Math.min(canvas.width / image.naturalWidth, canvas.height / image.naturalHeight) * 0.9;
     const dw = image.naturalWidth * scale;
     const dh = image.naturalHeight * scale;
-    ctx.drawImage(image, (canvas.width - dw) / 2, canvas.height - dh, dw, dh);
+    ctx.drawImage(image, (canvas.width - dw) / 2, (canvas.height - dh) / 2, dw, dh);
     return;
   }
   const layers =

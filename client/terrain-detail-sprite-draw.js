@@ -5,8 +5,11 @@ import {
 import { drawDetailShadow } from "./terrain-detail-procedural-draw.js";
 import { drawCastShadow } from "./cast-shadow.js";
 import { windStrength } from "./sun-state.js";
+import { drawLayeredBush } from "./terrain-detail-layered-bush.js";
+import { GRAPHICS_BUDGET } from "./device-profile.js";
 
 export function drawTerrainDetailSprite(ctx, sprites, cueDrawer, detail, point) {
+  if (drawLayeredBush(ctx, detail, point)) return true;
   const sprite = sprites.details;
   if (!sprite?.image.complete || sprite.image.naturalWidth === 0) return false;
   const frame = detailSpriteFrame(detail);
@@ -42,7 +45,7 @@ export function drawTerrainDetailSprite(ctx, sprites, cueDrawer, detail, point) 
   const previousSmoothing = ctx.imageSmoothingEnabled;
   ctx.imageSmoothingEnabled = false;
   const sway = WIND_SWAY[detail.kind] ?? 0;
-  if (sway > 0) {
+  if (sway > 0 && GRAPHICS_BUDGET.animatedVegetation) {
     // wind: shear the sprite around its foot anchor — tips move, roots stay
     const seconds = performance.now() / 1000;
     // coherent wind field: long spatial wavelength (~20 tiles) so the gust
@@ -111,11 +114,23 @@ function detailSpriteFrame(detail) {
   const frame = DETAIL_SPRITE_FRAMES[detail.kind];
   if (detail.kind === "tree") return treeDetailFrame(detail.stage, detail.variant);
   if (frame == null || typeof frame === "number") return frame;
+  if (Array.isArray(frame)) {
+    return frame[Math.abs(detail.variant ?? stableVariant(detail.id)) % frame.length] ?? frame[0] ?? null;
+  }
   const stageFrame = frame[detail.stage] ?? frame.mature ?? null;
   if (Array.isArray(stageFrame)) {
     return stageFrame[Math.abs(detail.variant ?? 0) % stageFrame.length] ?? stageFrame[0] ?? null;
   }
   return stageFrame;
+}
+
+function stableVariant(id = "") {
+  let hash = 2166136261;
+  for (let index = 0; index < id.length; index += 1) {
+    hash ^= id.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
 }
 
 function drawPropFrame(ctx, sprites, frameOffset, point, scale) {

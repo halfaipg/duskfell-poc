@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "duskfell-kimodo-config-v1",
+  "upstream": {
+    "repository": "https://github.com/nv-tlabs/kimodo",
+    "commit": "1aece8c124d73d255ceff5086d983b844c9f4e94",
+    "codeLicense": "Apache-2.0"
+  },
+  "model": {
+    "id": "Kimodo-SOMA-RP-v1.1",
+    "repository": "https://huggingface.co/nvidia/Kimodo-SOMA-RP-v1.1",
+    "license": "NVIDIA Open Model License",
+    "skeleton": "somaskel77",
+    "internalSkeleton": "somaskel30",
+    "fps": 30,
+    "maximumFrames": 300,
+    "defaultDiffusionSteps": 100,
+    "defaultSeed": 42,
+    "postprocess": true
+  },
+  "skeletonBridge": {
+    "restRotationAsset": "kimodo/assets/skeletons/somaskel77/standard_t_pose_global_offsets_rots.p",
+    "restRotationSha256": "464a8a95159d5e26ad24a702107aec86698935deeb034e02c9fe51e55472d75b",
+    "coordinateConversion": "Kimodo +X right/+Y up/+Z forward to Blender +X right/+Z up/-Y forward"
+  },
+  "intake": {
+    "maximumCompressedBytes": 268435456,
+    "maximumUncompressedBytes": 67108864,
+    "maximumArrays": 7,
+    "acceptedJointCounts": [30, 77],
+    "maximumFrames": 900,
+    "rotationTolerance": 0.002,
+    "determinantTolerance": 0.002
+  },
+  "runtimePolicy": "offline-authoring-only"
+}

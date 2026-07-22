@@ -4,6 +4,8 @@ pub const DEFAULT_MAX_CLIENT_TEXT_BYTES: usize = 4096;
 pub const DEFAULT_MESSAGE_BURST: u32 = 20;
 pub const DEFAULT_MESSAGE_REFILL_PER_SECOND: u32 = 30;
 pub const DEFAULT_MAX_INPUT_SEQUENCE_STEP: u64 = 120;
+pub const DEFAULT_SAY_BURST: u32 = 3;
+pub const DEFAULT_SAY_REFILL_PER_SECOND: u32 = 1;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ClientIngressConfig {
@@ -11,6 +13,8 @@ pub struct ClientIngressConfig {
     pub message_burst: u32,
     pub message_refill_per_second: u32,
     pub max_input_sequence_step: u64,
+    pub say_burst: u32,
+    pub say_refill_per_second: u32,
 }
 
 impl Default for ClientIngressConfig {
@@ -20,6 +24,8 @@ impl Default for ClientIngressConfig {
             message_burst: DEFAULT_MESSAGE_BURST,
             message_refill_per_second: DEFAULT_MESSAGE_REFILL_PER_SECOND,
             max_input_sequence_step: DEFAULT_MAX_INPUT_SEQUENCE_STEP,
+            say_burst: DEFAULT_SAY_BURST,
+            say_refill_per_second: DEFAULT_SAY_REFILL_PER_SECOND,
         }
     }
 }
@@ -31,6 +37,7 @@ pub enum IngressRejectReason {
         max: usize,
     },
     RateLimited,
+    SayRateLimited,
     StaleInputSequence {
         seq: u64,
         last: u64,
@@ -52,6 +59,7 @@ impl IngressRejectReason {
                 format!("message-too-large bytes={bytes} max={max}")
             }
             Self::RateLimited => "rate-limited".to_string(),
+            Self::SayRateLimited => "say-rate-limited".to_string(),
             Self::StaleInputSequence { seq, last } => {
                 format!("stale-input-sequence seq={seq} last={last}")
             }
@@ -78,16 +86,35 @@ pub struct ClientIngress {
     tokens: f32,
     last_refill: Instant,
     last_input_seq: Option<u64>,
+    say_tokens: f32,
+    last_say_refill: Instant,
 }
 
 impl ClientIngress {
     pub fn new(config: ClientIngressConfig) -> Self {
+        let message_tokens = config.message_burst as f32;
+        let say_tokens = config.say_burst as f32;
         Self {
-            tokens: config.message_burst as f32,
+            tokens: message_tokens,
             config,
             last_refill: Instant::now(),
             last_input_seq: None,
+            say_tokens,
+            last_say_refill: Instant::now(),
         }
+    }
+
+    pub fn allow_say(&mut self) -> Result<(), IngressRejectReason> {
+        let now = Instant::now();
+        let elapsed = now.duration_since(self.last_say_refill).as_secs_f32();
+        self.last_say_refill = now;
+        self.say_tokens = (self.say_tokens + elapsed * self.config.say_refill_per_second as f32)
+            .min(self.config.say_burst as f32);
+        if self.say_tokens < 1.0 {
+            return Err(IngressRejectReason::SayRateLimited);
+        }
+        self.say_tokens -= 1.0;
+        Ok(())
     }
 
     pub fn allow_text_frame(&mut self, bytes: usize) -> Result<(), IngressRejectReason> {
@@ -185,6 +212,8 @@ mod tests {
             message_burst: 3,
             message_refill_per_second: DEFAULT_MESSAGE_REFILL_PER_SECOND,
             max_input_sequence_step: DEFAULT_MAX_INPUT_SEQUENCE_STEP,
+            say_burst: DEFAULT_SAY_BURST,
+            say_refill_per_second: DEFAULT_SAY_REFILL_PER_SECOND,
         };
         let mut ingress = ClientIngress::new(config);
         for _ in 0..3 {
@@ -195,6 +224,22 @@ mod tests {
             ingress.allow_text_frame(16),
             Err(IngressRejectReason::RateLimited)
         );
+    }
+
+    #[test]
+    fn rate_limits_player_speech_independently_from_movement() {
+        let mut ingress = ClientIngress::new(ClientIngressConfig {
+            say_burst: 2,
+            say_refill_per_second: 1,
+            ..ClientIngressConfig::default()
+        });
+        assert!(ingress.allow_say().is_ok());
+        assert!(ingress.allow_say().is_ok());
+        assert_eq!(
+            ingress.allow_say(),
+            Err(IngressRejectReason::SayRateLimited)
+        );
+        assert!(ingress.allow_text_frame(16).is_ok());
     }
 
     #[test]

@@ -1,6 +1,6 @@
 const TERRAIN_CHUNK_TILES = 8;
 
-export function terrainChunks(tiles, cols, rows) {
+export function terrainChunks(tiles, cols, rows, { originX = 0, originY = 0 } = {}) {
   const chunks = [];
   for (let y = 0; y < rows; y += TERRAIN_CHUNK_TILES) {
     for (let x = 0; x < cols; x += TERRAIN_CHUNK_TILES) {
@@ -14,8 +14,8 @@ export function terrainChunks(tiles, cols, rows) {
       }
       const height = chunkHeightMetadata(chunkTiles);
       chunks.push({
-        x,
-        y,
+        x: x + originX,
+        y: y + originY,
         cols: maxX - x,
         rows: maxY - y,
         height,
@@ -26,7 +26,12 @@ export function terrainChunks(tiles, cols, rows) {
   return chunks;
 }
 
-export function elevationEdgesForTile(tile, tiles, cols, rows) {
+export function elevationEdgesForTile(tile, tiles, cols, rows, options = {}) {
+  const originX = options.originX ?? 0;
+  const originY = options.originY ?? 0;
+  const worldCols = options.worldCols ?? cols;
+  const worldRows = options.worldRows ?? rows;
+  const emitWorldRim = options.emitWorldRim ?? true;
   if (tile.material === "water") return [];
   const neighbors = [
     ["north", tile.x, tile.y - 1],
@@ -38,16 +43,19 @@ export function elevationEdgesForTile(tile, tiles, cols, rows) {
   const edges = [];
 
   for (const [edge, nx, ny] of neighbors) {
-    if (nx < 0 || ny < 0 || nx >= cols || ny >= rows) {
+    if (nx < 0 || ny < 0 || nx >= worldCols || ny >= worldRows) {
       // world rim: the land breaks off into the void — emit a cliff face
       // deep enough to cover the tile's full displacement so no black gap
       // shows below raised border tiles (drop uncapped on purpose)
-      if (currentHeight > 0.5) {
+      if (emitWorldRim && currentHeight > 0.5) {
         edges.push({ edge, drop: currentHeight + 1.5, neighborMaterial: "rock" });
       }
       continue;
     }
-    const neighbor = tiles[ny * cols + nx];
+    const localX = nx - originX;
+    const localY = ny - originY;
+    if (localX < 0 || localY < 0 || localX >= cols || localY >= rows) continue;
+    const neighbor = tiles[localY * cols + localX];
     if (!neighbor || neighbor.material === "water") continue;
     const drop = currentHeight - averageHeight(neighbor);
     if (drop < 0.75) continue;

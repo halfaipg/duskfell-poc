@@ -6,38 +6,31 @@ export function createInteriorRenderer({ getContext, getTerrain }) {
     const terrain = getTerrain();
     if (!terrain?.interiorSpaces?.length) return;
     for (const space of terrain.interiorSpaces) {
-      drawInteriorRoof(space, origin, playerPosition, now);
+      const occupancy = interiorOccupancy(space, playerPosition);
+      if (occupancy.inside) {
+        const corners = projectedBounds(space.bounds, space.roof?.z ?? 2, origin, terrain.profile?.unitsPerTile ?? PROJECTION.unitsPerTile);
+        const flicker = Math.sin(now * 0.003 + stableStringHash(space.id) * 0.01) * 0.5 + 0.5;
+        drawInteriorReveal(space, corners, origin, occupancy, terrain.profile?.unitsPerTile ?? PROJECTION.unitsPerTile, flicker);
+      }
+      for (const occluder of occupancy.occluders ?? []) drawInteriorRoof(space, occluder, origin, now);
     }
   }
 
-  function drawInteriorRoof(space, origin, playerPosition, now) {
+  function drawInteriorRoof(space, occluder, origin, now) {
     const terrain = getTerrain();
     const ctx = getContext();
-    const occupancy = interiorOccupancy(space, playerPosition);
-    const alpha = occupancy.roofAlpha;
+    const alpha = occluder.alpha;
     if (alpha <= 0) return;
 
     const units = terrain?.profile?.unitsPerTile ?? PROJECTION.unitsPerTile;
-    const minX = space.bounds.minX / units;
-    const maxX = space.bounds.maxX / units;
-    const minY = space.bounds.minY / units;
-    const maxY = space.bounds.maxY / units;
-    const roofZ = space.roof?.z ?? 2;
-    const corners = {
-      nw: projectMap(minX, minY, roofZ, origin),
-      ne: projectMap(maxX, minY, roofZ, origin),
-      se: projectMap(maxX, maxY, roofZ, origin),
-      sw: projectMap(minX, maxY, roofZ, origin),
-    };
-    const flicker = Math.sin(now * 0.003 + stableStringHash(space.id) * 0.01) * 0.5 + 0.5;
+    const corners = projectedBounds(occluder.bounds ?? space.bounds, occluder.z ?? space.roof?.z ?? 2, origin, units);
+    const flicker = Math.sin(now * 0.003 + stableStringHash(occluder.id) * 0.01) * 0.5 + 0.5;
+    const revealed = occluder.revealed;
 
     ctx.save();
-    if (occupancy.inside) {
-      drawInteriorReveal(space, corners, origin, occupancy, units, flicker);
-    }
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = occupancy.inside ? "rgba(118, 112, 96, 0.36)" : "rgba(83, 78, 68, 0.86)";
-    ctx.strokeStyle = occupancy.inside ? "rgba(223, 214, 181, 0.28)" : "rgba(32, 28, 24, 0.72)";
+    ctx.fillStyle = revealed ? "rgba(118, 112, 96, 0.36)" : "rgba(83, 78, 68, 0.86)";
+    ctx.strokeStyle = revealed ? "rgba(223, 214, 181, 0.28)" : "rgba(32, 28, 24, 0.72)";
     ctx.lineWidth = 1.6;
     ctx.beginPath();
     ctx.moveTo(corners.nw.x, corners.nw.y);
@@ -48,8 +41,8 @@ export function createInteriorRenderer({ getContext, getTerrain }) {
     ctx.fill();
     ctx.stroke();
 
-    ctx.globalAlpha = alpha * (occupancy.inside ? 0.38 : 0.68);
-    ctx.strokeStyle = occupancy.inside ? "rgba(150, 198, 190, 0.45)" : "rgba(179, 167, 133, 0.52)";
+    ctx.globalAlpha = alpha * (revealed ? 0.38 : 0.68);
+    ctx.strokeStyle = revealed ? "rgba(150, 198, 190, 0.45)" : "rgba(179, 167, 133, 0.52)";
     ctx.lineWidth = 1;
     const ribs = 4;
     for (let rib = 1; rib < ribs; rib += 1) {
@@ -171,6 +164,19 @@ function lerpPoint(a, b, t) {
   return {
     x: a.x + (b.x - a.x) * t,
     y: a.y + (b.y - a.y) * t,
+  };
+}
+
+function projectedBounds(bounds, z, origin, units) {
+  const minX = bounds.minX / units;
+  const maxX = bounds.maxX / units;
+  const minY = bounds.minY / units;
+  const maxY = bounds.maxY / units;
+  return {
+    nw: projectMap(minX, minY, z, origin),
+    ne: projectMap(maxX, minY, z, origin),
+    se: projectMap(maxX, maxY, z, origin),
+    sw: projectMap(minX, maxY, z, origin),
   };
 }
 

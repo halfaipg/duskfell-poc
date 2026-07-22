@@ -8,9 +8,11 @@ use crate::content::WorldContent;
 use crate::player_identity::{validate_player_name, PlayerNameError, PLAYER_NAME_MAX_CHARS};
 #[cfg(test)]
 use crate::protocol::ObjectKind;
-use crate::protocol::{PlayerId, ResourceKind};
+use crate::protocol::ResourceKind;
+use crate::region_routing::detect_region_handoff;
 use crate::spatial::Point;
 
+mod actor_intents;
 mod crafting;
 mod ecology;
 mod interactions;
@@ -18,19 +20,24 @@ mod inventory;
 mod lifecycle;
 mod model;
 mod movement;
+mod npcs;
 mod players;
 mod resources;
 mod snapshot;
 mod spawn;
 mod terrain_authority;
+#[allow(dead_code)]
+mod transfer;
 mod world_init;
 
+pub(crate) use self::actor_intents::{ActorId, ActorIntent, ActorIntentError};
 #[allow(unused_imports)]
 pub use self::crafting::ItemCraftedEvent;
 #[cfg(test)]
 use self::ecology::{COIL_MYCELIUM_CHARGE_INTERVAL_TICKS, ECOLOGY_DECAY_FEED_INTERVAL_TICKS};
 #[allow(unused_imports)]
 pub use self::interactions::{ItemFedEvent, ResourceFedEvent, ResourceGatheredEvent};
+#[cfg(test)]
 use self::inventory::*;
 use self::lifecycle::*;
 use self::model::{
@@ -53,6 +60,10 @@ use self::terrain_authority::{
     TerrainDetailAuthorityConsumeRequirement, TerrainDetailAuthorityDecayConsumer,
     TerrainDetailAuthorityLifecycle, TerrainDetailAuthorityResource,
     TerrainDetailAuthorityResourceNode,
+};
+#[allow(unused_imports)]
+pub(crate) use self::transfer::{
+    PlayerTransferInventoryStack, PlayerTransferState, TransferStateError,
 };
 
 impl SimWorld {
@@ -85,11 +96,30 @@ impl SimWorld {
             velocity.y = vertical * PLAYER_SPEED * scale;
         }
 
-        let mut movers = self.world.query::<(Entity, &mut Position, &Velocity)>();
-        for (entity, mut position, velocity) in movers.iter_mut(&mut self.world) {
+        let mut movers = self
+            .world
+            .query::<(Entity, &Player, &mut Position, &Velocity)>();
+        for (entity, player, mut position, velocity) in movers.iter_mut(&mut self.world) {
+            let intended_x = position.x + velocity.x * dt;
+            let intended_y = position.y + velocity.y * dt;
+            if let Some(intent) = detect_region_handoff(
+                self.map.region.as_ref(),
+                player.id,
+                self.map.width,
+                self.map.height,
+                self.map.terrain_snapshot.units_per_tile,
+                intended_x,
+                intended_y,
+            ) {
+                if self.region_handoff_latches.insert(player.id) {
+                    outcome.region_handoff_intents.push(intent);
+                }
+            } else {
+                self.region_handoff_latches.remove(&player.id);
+            }
             let candidate = Position {
-                x: (position.x + velocity.x * dt).clamp(28.0, self.map.width - 28.0),
-                y: (position.y + velocity.y * dt).clamp(28.0, self.map.height - 28.0),
+                x: intended_x.clamp(28.0, self.map.width - 28.0),
+                y: intended_y.clamp(28.0, self.map.height - 28.0),
             };
             if player_step_allowed(&self.terrain, &movement_blockers, *position, candidate) {
                 position.x = candidate.x;

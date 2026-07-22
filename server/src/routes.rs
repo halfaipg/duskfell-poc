@@ -19,10 +19,16 @@ use crate::session_routes::issue_session;
 use crate::ws;
 use crate::AppState;
 
-pub(crate) fn build_router(state: AppState, assets_dir: PathBuf, client_dir: PathBuf) -> Router {
+pub(crate) fn build_router(
+    state: AppState,
+    assets_dir: PathBuf,
+    client_dir: PathBuf,
+    review_worlds_dir: PathBuf,
+) -> Router {
     let http_body_limit_bytes = state.http_body_limit_bytes;
+    let serves_review_worlds = !state.public_deployment;
 
-    Router::new()
+    let router = Router::new()
         .route("/healthz", get(healthz))
         .route("/readyz", get(readyz))
         .route("/api/session", post(issue_session))
@@ -33,7 +39,14 @@ pub(crate) fn build_router(state: AppState, assets_dir: PathBuf, client_dir: Pat
         .route("/admin/runtime", get(admin_runtime))
         .route("/admin/summary", get(admin_summary))
         .route("/ws", get(ws::ws_handler))
-        .nest_service("/assets", ServeDir::new(assets_dir))
+        .nest_service("/assets", ServeDir::new(assets_dir));
+    let router = if serves_review_worlds {
+        router.nest_service("/worlds/generated", ServeDir::new(review_worlds_dir))
+    } else {
+        router
+    };
+
+    router
         .nest_service("/", ServeDir::new(client_dir))
         .layer(DefaultBodyLimit::disable())
         .layer(RequestBodyLimitLayer::new(http_body_limit_bytes))

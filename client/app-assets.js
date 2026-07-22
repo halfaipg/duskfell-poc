@@ -1,9 +1,12 @@
 import { loadRuntimeSpriteAssets } from "./sprite-loader.js";
-import { loadRuntimeTerrainAssets } from "./terrain-loader.js";
+import { loadRuntimeTerrainAssets } from "./terrain-loader.js?v=duskfell-world-v2-71";
+import { loadKimodoReviewSprite } from "./kimodo-review-sprite.js?v=blender-locomotion-2";
+import { loadTreeReviewSprite } from "./tree-review-sprite.js?v=blender-tree-family-1";
 
-export function createRuntimeAssets() {
+export function createRuntimeAssets({ kimodoReview = null, treeReview = null } = {}) {
   const sprites = {
     player: null,
+    reviewPlayer: null,
     players: [],
     paperdolls: [],
     props: null,
@@ -14,6 +17,10 @@ export function createRuntimeAssets() {
     atlas: null,
     image: null,
     worldBundle: null,
+    streamingWorldBundle: null,
+    chunkStream: null,
+    visualChunkStream: null,
+    worldMap: null,
     groundPatches: new Map(),
     patternSources: [],
     patternContexts: new WeakMap(),
@@ -28,6 +35,9 @@ export function createRuntimeAssets() {
     sprites,
     terrainAssets,
     terrainAssetVersion: () => terrainAssetVersion,
+    bumpTerrainAssetVersion() {
+      terrainAssetVersion += 1;
+    },
     terrainAssetError: () => terrainAssetError,
     assetsReady: () => progress.spritesReady && progress.terrainReady,
     assetProgress: () => ({
@@ -44,10 +54,25 @@ export function createRuntimeAssets() {
         if (!response.ok) return;
         const manifest = await response.json();
         Object.assign(sprites, await loadRuntimeSpriteAssets(manifest));
+        if (kimodoReview) {
+          try {
+            sprites.reviewPlayer = await loadKimodoReviewSprite(kimodoReview);
+          } catch (error) {
+            console.warn("Kimodo player review disabled", error);
+          }
+        }
+        if (treeReview) {
+          try {
+            sprites.details = await loadTreeReviewSprite(treeReview);
+          } catch (error) {
+            console.warn("Tree-family review disabled", error);
+          }
+        }
         progress.spritesReady = true;
       } catch (error) {
         console.warn("Sprite assets disabled", error);
         sprites.player = null;
+        sprites.reviewPlayer = null;
         sprites.players = [];
         sprites.paperdolls = [];
         sprites.props = null;
@@ -80,6 +105,10 @@ export function createRuntimeAssets() {
         terrainAssetError = error instanceof Error ? error.message : String(error);
         terrainAssets.atlas = null;
         terrainAssets.image = null;
+        terrainAssets.worldMap = null;
+        terrainAssets.streamingWorldBundle = null;
+        terrainAssets.chunkStream = null;
+        terrainAssets.visualChunkStream = null;
         terrainAssets.groundPatches = new Map();
         terrainAssets.patternSources = [];
         terrainAssets.patternContexts = new WeakMap();

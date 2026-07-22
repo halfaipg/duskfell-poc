@@ -27,6 +27,7 @@ export function createObjectDrawer({
   getSprites,
   getTerrainDebugMode,
   getLocalPlayerRenderPosition,
+  getExtraTerrainDetails = () => [],
   playerDrawer,
 }) {
   let ctx = getContext();
@@ -56,10 +57,11 @@ export function createObjectDrawer({
   function drawSceneEntities(players, objects, origin, now) {
     refreshRendererState();
     const terrainDetailObjectIds = terrainDetailAuthorityObjectIds(terrain?.details);
+    const terrainDetails = [...(terrain?.details ?? []), ...(getExtraTerrainDetails() ?? [])];
     const entities = [
       ...(HIDE_WORLD_PROPS
         ? []
-        : (terrain?.details ?? [])
+        : terrainDetails
             .filter((detail) => !VEGETATION_ONLY_ART_PASS || VISIBLE_DETAIL_KINDS.has(detail.kind))
             .map((detail) => ({
               type: "terrain-detail",

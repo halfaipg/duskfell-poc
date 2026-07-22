@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "duskfell-character-img2img-request-v1",
+  "createdAt": "2026-07-22",
+  "model": "OpenAI built-in image generation",
+  "mode": "edit",
+  "input": "character-finishing-control-v1.png",
+  "inputSha256": "458be0ab92c36786dc0b657f84e1acb09d9ae7c1d760fc36cdcf6042d8180a28",
+  "output": "character-finishing-openai-v1.png",
+  "background": "#ff00ff chroma-key",
+  "prompt": "Edit the supplied deterministic 8-column by 4-row character pose board. Preserve exactly 32 adult human figures in the same cells, row order, facing directions, limb silhouettes, stride phases, body proportions, and foot registration. Change only the low-poly surface treatment into original clean-room hand-painted dark-age fantasy game sprite art: lanky readable anatomy, simplified expressive planes, restrained earthy skin and cloth, crisp painterly edges, and coherent plan-oblique lighting. Keep the figure bald and minimally clothed in a plain dark loincloth so later paperdoll equipment can register. Use one perfectly flat #ff00ff background with no floor or shadows. No armor, shirt, boots, hair, weapons, added props, missing figures, merged figures, photorealism, vector art, text, logos, or watermark.",
+  "immutable": [
+    "8x4 order",
+    "figure count",
+    "direction rows",
+    "limb silhouettes",
+    "stride phases",
+    "body proportions",
+    "foot registration"
+  ],
+  "approval": {
+    "state": "review"
+  }
+}

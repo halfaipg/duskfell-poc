@@ -6,6 +6,7 @@ license.workspace = true
 rust-version.workspace = true
 
 [dependencies]
+animus = { path = "../animus" }
 anyhow = "1.0"
 axum = { version = "0.7", features = ["ws"] }
 bevy_ecs = "0.14"

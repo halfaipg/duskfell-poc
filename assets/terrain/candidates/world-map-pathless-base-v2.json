@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "duskfell-generated-asset-v1",
+  "id": "world-map-pathless-base-v2",
+  "status": "candidate-review",
+  "kind": "pathless-world-map-base",
+  "createdAt": "2026-07-15",
+  "tool": "OpenAI built-in image generation",
+  "model": "built-in image generation",
+  "sourceImage": "../world-map/duskfell-world-map-day-v1.webp",
+  "sourceSha256": "fdae8c4b2abbbb216ba96335db42628e2bc61db2ee01cc36c4f2288dcf27aed8",
+  "outputImage": "world-map-pathless-base-v2.png",
+  "outputSha256": "fd681a84ad3bf160487aca06ecd0e8f47a434db15f4d45ccfe091df0a1bcac72",
+  "dimensions": {
+    "width": 1536,
+    "height": 1024
+  },
+  "promptSummary": "Remove all visible roads, trails, tracks, crossroads, route lines, and route-shaped clearings while preserving geography, terrain masses, landmarks, lighting, framing, dimensions, and painted style.",
+  "role": "Pathless visual base only. Runtime routes must be introduced by the deterministic authoritative trail compositor.",
+  "license": "project-original-ai-assisted-review"
+}

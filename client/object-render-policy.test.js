@@ -30,6 +30,7 @@ test("prefers explicit terrain detail resource node ids", () => {
 
 test("builds fallback terrain detail ids for older detail metadata", () => {
   assert.equal(terrainDetailAuthorityObjectId({ id: "stump-2-3-9000" }), "terrain-detail:stump-2-3-9000");
+  assert.equal(terrainDetailAuthorityObjectId({ id: "scenic-tree", scenicOnly: true }), null);
   assert.equal(terrainDetailAuthorityObjectId({}), null);
 });
 

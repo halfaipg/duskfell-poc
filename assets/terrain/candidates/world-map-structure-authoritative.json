@@ -1,0 +1,43 @@
+{
+  "schemaVersion": "duskfell-authoritative-world-map-control-v1",
+  "status": "img2img-control",
+  "output": "world-map-structure-authoritative.png",
+  "outputSha256": "3dcff7f950d71b40f57b4893092811087dfceae792db59a015e88396558124e8",
+  "dimensions": {
+    "width": 1024,
+    "height": 1024
+  },
+  "mapRect": {
+    "x": 32,
+    "y": 192,
+    "width": 960,
+    "height": 640
+  },
+  "world": {
+    "path": "server/data/world.json",
+    "sha256": "f7e731e7b81435ade5cc10b44cf2185cce4701db93ca7916fc8dfbf114df551f"
+  },
+  "bundle": {
+    "path": "assets/terrain/world-bundle.json",
+    "sha256": "06bd812335abd91fa1ac7f631231eb53b29396d9abaa451d0584ee308a718524"
+  },
+  "authority": {
+    "path": "assets/terrain/detail-authority.json",
+    "sha256": "4fab23aa5ca3c90ee81eaa4ff065d27ceff1e06e35110254d280062ab9c225a4"
+  },
+  "terrain": {
+    "cols": 192,
+    "rows": 128,
+    "unitsPerTile": 64,
+    "seed": 7341,
+    "heightScale": 20
+  },
+  "overlays": [
+    "material boundaries",
+    "height discontinuities",
+    "terrain blockers",
+    "world objects",
+    "npcs",
+    "spawn"
+  ]
+}

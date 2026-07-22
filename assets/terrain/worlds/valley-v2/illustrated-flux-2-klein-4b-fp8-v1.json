@@ -1,0 +1,28 @@
+{
+  "request": {
+    "model": "FLUX.2 Klein 4B FP8",
+    "prompt": "Transform this exact Duskfell structural terrain control into a richly illustrated dark medieval RPG world surface. Preserve geography pixel-for-pixel: same river centerline and width, same lake boundary, same valley walls, same mountain massing, same snowline, no added or removed water, no moved ridges. Orthographic top-down terrain master for a military plan-oblique game, no horizon. Warm dark loam and compacted earth, restrained olive meadow and moss, embedded slate stones, gravel banks, stratified gray mountain rock, natural alpine snow, deep blue-green water. Hand-painted high-fidelity late-1990s pre-rendered dark-fantasy RPG language upgraded to HD; broad quiet regions with dense microtexture only up close. Surface painting only: no characters, buildings, trees, bushes, text, UI, border, tile grid, mirrored patterns, fake paths, or cast shadows from absent objects.",
+    "image": "gameplay-master.png",
+    "size": "1536x1536",
+    "output_format": "png",
+    "response_format": "b64_json",
+    "seed": 74291,
+    "strength": 0.68,
+    "steps": 6
+  },
+  "response": {
+    "created": 1784238422,
+    "data": [
+      {
+        "revised_prompt": "Transform this exact Duskfell structural terrain control into a richly illustrated dark medieval RPG world surface. Preserve geography pixel-for-pixel: same river centerline and width, same lake boundary, same valley walls, same mountain massing, same snowline, no added or removed water, no moved ridges. Orthographic top-down terrain master for a military plan-oblique game, no horizon. Warm dark loam and compacted earth, restrained olive meadow and moss, embedded slate stones, gravel banks, stratified gray mountain rock, natural alpine snow, deep blue-green water. Hand-painted high-fidelity late-1990s pre-rendered dark-fantasy RPG language upgraded to HD; broad quiet regions with dense microtexture only up close. Surface painting only: no characters, buildings, trees, bushes, text, UI, border, tile grid, mirrored patterns, fake paths, or cast shadows from absent objects.",
+        "seed": 74291
+      }
+    ],
+    "grid": {
+      "worker": "half5090beast1",
+      "gen_time": 8.41,
+      "model": "FLUX.2 Klein 4B FP8",
+      "recipe_root": null
+    }
+  }
+}

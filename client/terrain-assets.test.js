@@ -114,6 +114,29 @@ test("normalizes complete biome patches and rejects coverage gaps", () => {
   assert.throws(() => normalizeTerrainAtlas(manifest), /missing ground patch for biome blight/);
 });
 
+test("normalizes an authoritative-grid world map and rejects dimension drift", () => {
+  const manifest = validAtlas();
+  manifest.worldMap = {
+    id: "world-map-test",
+    image: "world-map/test.webp",
+    sha256: "b".repeat(64),
+    width: 1536,
+    height: 1024,
+    worldCols: 192,
+    worldRows: 128,
+    tilePixelWidth: 8,
+    tilePixelHeight: 8,
+    status: "runtime-review",
+  };
+
+  const atlas = normalizeTerrainAtlas(manifest);
+  assert.equal(atlas.worldMap.imagePath, "world-map/test.webp");
+  assert.equal(atlas.worldMap.worldCols, 192);
+
+  manifest.worldMap.width = 1535;
+  assert.throws(() => normalizeTerrainAtlas(manifest), /align to its authoritative tile grid/);
+});
+
 test("rejects malformed material-pair transition frames", () => {
   const manifest = validAtlas();
   manifest.tileSheet.rows = 12;

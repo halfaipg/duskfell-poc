@@ -1,0 +1,26 @@
+{
+  "schemaVersion": "duskfell-generated-asset-v1",
+  "id": "world-map-authoritative-painted-v3",
+  "status": "runtime-candidate",
+  "kind": "pathless-authoritative-world-map-enrichment",
+  "createdAt": "2026-07-15",
+  "tool": "OpenAI built-in image generation",
+  "model": "built-in image generation",
+  "sourceImage": "world-map-authoritative-control-v3.png",
+  "sourceSha256": "50d6bc0b363c02013cf0c242204d079083fd35b9199bf58c2b27d3d117a9bd05",
+  "worldSha256": "f7e731e7b81435ade5cc10b44cf2185cce4701db93ca7916fc8dfbf114df551f",
+  "outputImage": "world-map-authoritative-painted-v3.png",
+  "outputSha256": "61c80d7e26befd7af8e788d8deda5ff7f55ef3053d0fec37b96a787efc4feba7",
+  "dimensions": {
+    "width": 1536,
+    "height": 1024
+  },
+  "promptSummary": "Pathless HD dark-fantasy terrain enrichment; charcoal is mountain rock, blue only is water, and all control geometry must remain fixed.",
+  "acceptance": {
+    "semanticAgreement": 0.9545491536458334,
+    "rockRecall": 0.9854986094557012,
+    "waterRecall": 1,
+    "criticalSpawnPassSamples": "pass"
+  },
+  "license": "project-original-ai-assisted-review"
+}

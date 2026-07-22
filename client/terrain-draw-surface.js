@@ -7,7 +7,7 @@ export function terrainUnderpaintMaterial(tile) {
   return tile.material;
 }
 
-export function drawTerrainSideWalls(ctx, tile, corners, palette, cliffImage = null) {
+export function drawTerrainSideWalls(ctx, tile, corners, palette, cliffImage = null, continuousPainting = false) {
   // water included: walls cover the screen-space gap below displaced edges
   // for every material — skipping them leaves black notches at pond steps
   if (!Array.isArray(tile.elevationEdges) || tile.elevationEdges.length === 0) return;
@@ -18,7 +18,7 @@ export function drawTerrainSideWalls(ctx, tile, corners, palette, cliffImage = n
     // on rock, where every bench step is a small cliff band: unpainted
     // 1-step gaps expose 20px of flat undercoat across the whole massif
     const rocky = tile.material === "rock" || tile.material === "stone";
-    if (edge.drop < 2 && !rocky) continue;
+    if (edge.drop < 2 && (!rocky || continuousPainting)) continue;
     const [from, to] = edgePoints(corners, edge.edge);
     const dropPx = Math.max(2, edge.drop * PROJECTION.zPx);
     const lowerFrom = { x: from.x, y: from.y + dropPx };
@@ -34,31 +34,28 @@ export function drawTerrainSideWalls(ctx, tile, corners, palette, cliffImage = n
     };
 
     if (cliffImage) {
-      // real rock face: the enriched cliff painting fills the wall quad;
-      // the source window hashes from tile coords so neighbouring walls
-      // don't repeat, and the depth gradient below keeps the shading
+      // Map a continuous strip of the source painting onto the actual wall
+      // basis. Axis-aligned drawImage bounds shear diagonal faces into blurry
+      // vertical bands; this affine mapping keeps fracture planes geological.
       ctx.save();
       wallPath();
       ctx.clip();
-      const windowSize = 280;
-      // continuous striations: the window slides along the wall run (half a
-      // window per tile) and holds its row constant, so neighbouring wall
-      // tiles read as one rock face instead of a patchwork of random crops
-      const horizontal = edge.edge === "north" || edge.edge === "south";
-      const along = horizontal ? tile.x : tile.y;
-      const cross = horizontal ? tile.y : tile.x;
-      const uRange = Math.max(1, cliffImage.width - windowSize);
-      const su = ((along * windowSize * 0.5) % uRange + uRange) % uRange;
-      const sv = (((cross * 53) % 4) / 4) * Math.max(0, cliffImage.height - windowSize * 0.6);
+      const sample = cliffFaceTextureSample(tile, edge, cliffImage);
       ctx.imageSmoothingEnabled = true;
-      const left = Math.min(from.x, to.x, lowerFrom.x, lowerTo.x);
-      const top = Math.min(from.y, to.y);
-      ctx.drawImage(
-        cliffImage,
-        su, sv, windowSize, windowSize * 0.6,
-        left - 2, top - 2,
-        Math.abs(to.x - from.x) + 4, dropPx + Math.abs(to.y - from.y) + 4,
+      ctx.globalAlpha = edge.drop >= 2 ? 0.96 : 0.74;
+      ctx.transform(
+        (to.x - from.x) / sample.width,
+        (to.y - from.y) / sample.width,
+        0,
+        dropPx / sample.height,
+        from.x,
+        from.y,
       );
+      if (sample.reverse) {
+        ctx.translate(sample.width, 0);
+        ctx.scale(-1, 1);
+      }
+      drawWrappedCliffStrip(ctx, cliffImage, sample);
       ctx.restore();
     }
 
@@ -68,9 +65,11 @@ export function drawTerrainSideWalls(ctx, tile, corners, palette, cliffImage = n
       (lowerFrom.x + lowerTo.x) / 2,
       (lowerFrom.y + lowerTo.y) / 2,
     );
-    const shadowAlpha = Math.min(0.22, 0.06 + edge.drop * 0.035);
-    gradient.addColorStop(0, tintWithAlpha(palette.dark, shadowAlpha * (cliffImage ? 0.45 : 0.72)));
-    gradient.addColorStop(1, `rgba(8, 11, 10, ${shadowAlpha * (cliffImage ? 1.5 : 1)})`);
+    const orientationShade = edge.edge === "south" ? 1.18 : edge.edge === "east" ? 1.08 : 0.92;
+    const shadowAlpha = Math.min(0.25, (0.055 + edge.drop * 0.034) * orientationShade);
+    gradient.addColorStop(0, tintWithAlpha(palette.dark, shadowAlpha * (cliffImage ? 0.32 : 0.72)));
+    gradient.addColorStop(0.7, `rgba(12, 15, 14, ${shadowAlpha * (cliffImage ? 0.62 : 0.48)})`);
+    gradient.addColorStop(1, `rgba(7, 9, 9, ${shadowAlpha * (cliffImage ? 1.45 : 1)})`);
     wallPath();
     ctx.fillStyle = gradient;
     ctx.fill();
@@ -78,10 +77,67 @@ export function drawTerrainSideWalls(ctx, tile, corners, palette, cliffImage = n
     ctx.beginPath();
     ctx.moveTo(from.x, from.y);
     ctx.lineTo(to.x, to.y);
-    ctx.strokeStyle = "rgba(242, 224, 166, 0.16)";
-    ctx.lineWidth = 1.2;
+    const ledgeAlpha = edge.drop >= 2 ? 0.09 : 0.025;
+    ctx.strokeStyle = `rgba(224, 207, 160, ${ledgeAlpha})`;
+    ctx.lineWidth = edge.drop >= 2 ? 0.9 : 0.45;
     ctx.stroke();
   }
+}
+
+const CLIFF_SOURCE_PX_PER_TILE = 96;
+const CLIFF_SOURCE_MIN_HEIGHT = 384;
+const CLIFF_SOURCE_PX_PER_DROP = 160;
+
+export function cliffFaceTextureSample(tile, edge, cliffImage) {
+  const horizontal = edge.edge === "north" || edge.edge === "south";
+  const along = horizontal ? tile.x : tile.y;
+  const cross = horizontal ? tile.y : tile.x;
+  const width = Math.min(CLIFF_SOURCE_PX_PER_TILE, cliffImage.width);
+  const height = Math.min(
+    cliffImage.height,
+    Math.max(CLIFF_SOURCE_MIN_HEIGHT, Math.round(edge.drop * CLIFF_SOURCE_PX_PER_DROP)),
+  );
+  const maxV = Math.max(1, cliffImage.height - height + 1);
+  const orientation = ["north", "east", "south", "west"].indexOf(edge.edge);
+  return {
+    width,
+    height,
+    sourceX: positiveModulo(along * width, cliffImage.width),
+    sourceY: positiveModulo(cross * 211 + Math.max(0, orientation) * 503, maxV),
+    reverse: edge.edge === "south" || edge.edge === "west",
+  };
+}
+
+function drawWrappedCliffStrip(ctx, image, sample) {
+  const firstWidth = Math.min(sample.width, image.width - sample.sourceX);
+  ctx.drawImage(
+    image,
+    sample.sourceX,
+    sample.sourceY,
+    firstWidth,
+    sample.height,
+    0,
+    0,
+    firstWidth,
+    sample.height,
+  );
+  const remainder = sample.width - firstWidth;
+  if (remainder <= 0) return;
+  ctx.drawImage(
+    image,
+    0,
+    sample.sourceY,
+    remainder,
+    sample.height,
+    firstWidth,
+    0,
+    remainder,
+    sample.height,
+  );
+}
+
+function positiveModulo(value, divisor) {
+  return ((value % divisor) + divisor) % divisor;
 }
 
 export function drawTerrainFacetShade(ctx, tile, corners) {

@@ -17,10 +17,14 @@ use crate::config::{
 use crate::content::WorldContent;
 use crate::metrics::AppMetrics;
 use crate::runtime_assets::{load_terrain_detail_authority_for_sim, RuntimeManifest};
-use crate::runtime_paths::{assets_dir, client_dir, content_path};
+use crate::runtime_paths::{
+    assets_dir, client_dir, content_path, review_worlds_dir, terrain_chunk_index_path,
+    terrain_detail_authority_path,
+};
 use crate::session::{SessionAccountRateLimiter, SessionIssueRateLimiter, SessionTickets};
 use crate::settlement::{self, SettlementConfig, SettlementLedger};
 use crate::sim::SimWorld;
+use crate::terrain_chunks::load_chunked_terrain_grid;
 use anyhow::anyhow;
 use tokio::sync::{Mutex, Semaphore};
 use tracing::info;
@@ -54,6 +58,10 @@ pub(crate) async fn initialize_runtime() -> anyhow::Result<RuntimeServer> {
     let max_content_objects =
         env_positive_usize("MAX_CONTENT_OBJECTS", DEFAULT_MAX_CONTENT_OBJECTS)?;
     let loaded_content = WorldContent::load_with_limits(content_path(), max_content_objects)?;
+    let (cognition, cognition_outputs) = match crate::npc::maybe_spawn(&loaded_content.content)? {
+        Some((bridge, outputs)) => (Some(bridge), Some(outputs)),
+        None => (None, None),
+    };
     let content_manifest = loaded_content.manifest.clone();
     let session_config = session_config()?;
     let account_auth = account_auth_config()?;
@@ -156,18 +164,57 @@ pub(crate) async fn initialize_runtime() -> anyhow::Result<RuntimeServer> {
         );
     }
     let assets_dir = assets_dir();
+    let terrain_authority_path = terrain_detail_authority_path(&assets_dir);
     let runtime_manifest = RuntimeManifest::load(
         &assets_dir,
+        &terrain_authority_path,
         content_manifest.clone(),
         max_runtime_manifest_bytes,
         max_runtime_asset_bytes,
     )?;
     let terrain_detail_authority =
-        load_terrain_detail_authority_for_sim(&assets_dir, max_runtime_manifest_bytes)?;
+        load_terrain_detail_authority_for_sim(&terrain_authority_path, max_runtime_manifest_bytes)?;
 
-    let mut sim = SimWorld::from_content_with_terrain_detail_authority(
+    let terrain_content = loaded_content
+        .content
+        .map
+        .terrain
+        .as_ref()
+        .expect("validated world content includes terrain");
+    let terrain_chunk_index = terrain_chunk_index_path();
+    let chunked_terrain = match (&terrain_content.chunk_authority, terrain_chunk_index) {
+        (Some(authority), Some(index_path)) => {
+            let units = terrain_content.units_per_tile as f32;
+            let cols = (loaded_content.content.map.width / units).ceil() as u32;
+            let rows = (loaded_content.content.map.height / units).ceil() as u32;
+            Some(load_chunked_terrain_grid(
+                &index_path,
+                authority,
+                &terrain_content.materials,
+                cols,
+                rows,
+                terrain_content.units_per_tile,
+                terrain_content.min_elevation,
+                terrain_content.max_elevation,
+            )?)
+        }
+        (Some(_), None) => {
+            return Err(anyhow!(
+                "chunked server terrain requires TERRAIN_CHUNK_INDEX_PATH"
+            ));
+        }
+        (None, Some(_)) => {
+            return Err(anyhow!(
+                "TERRAIN_CHUNK_INDEX_PATH was set for non-chunked server content"
+            ));
+        }
+        (None, None) => None,
+    };
+
+    let mut sim = SimWorld::from_content_with_runtime_authorities(
         loaded_content.content,
         Some(terrain_detail_authority),
+        chunked_terrain,
     )
     .map_err(|err| anyhow!(err))?;
     let replayed_resource_node_count =
@@ -179,65 +226,72 @@ pub(crate) async fn initialize_runtime() -> anyhow::Result<RuntimeServer> {
         );
     }
 
+    let state = AppState {
+        sim: Arc::new(Mutex::new(sim)),
+        cognition,
+        settlement_tx,
+        settlement_ledger,
+        settlement_outbox: durable_runtime.settlement_outbox,
+        settlement_config,
+        journal: durable_runtime.journal,
+        journal_writer: durable_runtime.journal_writer,
+        journal_replayed_total_events: durable_runtime.journal_replayed_total_events,
+        journal_sequence_anomalies: durable_runtime.journal_sequence_anomalies,
+        max_journal_bytes: durable_runtime.max_journal_bytes,
+        max_settlement_outbox_bytes: durable_runtime.max_settlement_outbox_bytes,
+        max_durable_line_bytes: durable_runtime.max_durable_line_bytes,
+        persistence_backend,
+        _journal_file_lock: durable_runtime.journal_file_lock,
+        _settlement_outbox_file_lock: durable_runtime.settlement_outbox_file_lock,
+        durable_sync_writes: durable_runtime.durable_sync_writes,
+        max_content_objects,
+        metrics: metrics_handle,
+        sessions: Arc::new(Mutex::new(SessionTickets::new(
+            session_config.ticket_ttl,
+            session_config.ticket_capacity,
+        ))),
+        account_auth,
+        session_issue_limiter: Arc::new(Mutex::new(SessionIssueRateLimiter::new(
+            session_issue_rate_limit_config.clone(),
+        ))),
+        account_session_limiter: Arc::new(Mutex::new(SessionAccountRateLimiter::new(
+            account_session_rate_limit_config.clone(),
+        ))),
+        admission_backend,
+        session_config,
+        session_issue_rate_limit_config,
+        account_session_rate_limit_config,
+        websocket_config,
+        ingress_config,
+        max_snapshot_bytes,
+        max_admin_snapshot_bytes,
+        client_reject_limit,
+        origin_allowlist,
+        connection_permits: Arc::new(Semaphore::new(max_active_connections)),
+        max_active_connections,
+        peer_connections: Arc::new(Mutex::new(PeerConnectionCounts::default())),
+        max_connections_per_ip,
+        account_connections: Arc::new(Mutex::new(AccountConnectionCounts::default())),
+        max_connections_per_account,
+        content_manifest,
+        deployment_profile,
+        public_deployment,
+        draining,
+        admin_token,
+        metrics_token,
+        http_body_limit_bytes,
+        admin_event_limit_cap,
+        runtime_manifest,
+    };
+    if let Some(outputs) = cognition_outputs {
+        tokio::spawn(crate::npc::run_output_pump(state.clone(), outputs));
+    }
+
     Ok(RuntimeServer {
-        state: AppState {
-            sim: Arc::new(Mutex::new(sim)),
-            settlement_tx,
-            settlement_ledger,
-            settlement_outbox: durable_runtime.settlement_outbox,
-            settlement_config,
-            journal: durable_runtime.journal,
-            journal_writer: durable_runtime.journal_writer,
-            journal_replayed_total_events: durable_runtime.journal_replayed_total_events,
-            journal_sequence_anomalies: durable_runtime.journal_sequence_anomalies,
-            max_journal_bytes: durable_runtime.max_journal_bytes,
-            max_settlement_outbox_bytes: durable_runtime.max_settlement_outbox_bytes,
-            max_durable_line_bytes: durable_runtime.max_durable_line_bytes,
-            persistence_backend,
-            _journal_file_lock: durable_runtime.journal_file_lock,
-            _settlement_outbox_file_lock: durable_runtime.settlement_outbox_file_lock,
-            durable_sync_writes: durable_runtime.durable_sync_writes,
-            max_content_objects,
-            metrics: metrics_handle,
-            sessions: Arc::new(Mutex::new(SessionTickets::new(
-                session_config.ticket_ttl,
-                session_config.ticket_capacity,
-            ))),
-            account_auth,
-            session_issue_limiter: Arc::new(Mutex::new(SessionIssueRateLimiter::new(
-                session_issue_rate_limit_config.clone(),
-            ))),
-            account_session_limiter: Arc::new(Mutex::new(SessionAccountRateLimiter::new(
-                account_session_rate_limit_config.clone(),
-            ))),
-            admission_backend,
-            session_config,
-            session_issue_rate_limit_config,
-            account_session_rate_limit_config,
-            websocket_config,
-            ingress_config,
-            max_snapshot_bytes,
-            max_admin_snapshot_bytes,
-            client_reject_limit,
-            origin_allowlist,
-            connection_permits: Arc::new(Semaphore::new(max_active_connections)),
-            max_active_connections,
-            peer_connections: Arc::new(Mutex::new(PeerConnectionCounts::default())),
-            max_connections_per_ip,
-            account_connections: Arc::new(Mutex::new(AccountConnectionCounts::default())),
-            max_connections_per_account,
-            content_manifest,
-            deployment_profile,
-            public_deployment,
-            draining,
-            admin_token,
-            metrics_token,
-            http_body_limit_bytes,
-            admin_event_limit_cap,
-            runtime_manifest,
-        },
+        state,
         addr,
         assets_dir,
         client_dir: client_dir(),
+        review_worlds_dir: review_worlds_dir(),
     })
 }

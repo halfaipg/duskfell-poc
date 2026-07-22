@@ -22,26 +22,45 @@ export function buildWorldData(tiles, cols, rows, safeRadiusTiles, profile) {
 }
 
 // bundle worlds: grids come straight from the bake, no formulas anywhere
-export function buildWorldDataFromGrids(tiles, cols, rows, heightsGrid, heathGrid) {
+export function buildWorldDataFromGrids(
+  tiles,
+  cols,
+  rows,
+  heightsGrid,
+  heathGrid,
+  biomeWeightGrids = null,
+  origin = { x: 0, y: 0 },
+) {
   const heights = Float32Array.from(heightsGrid.flat());
   const heath = Float32Array.from(heathGrid.flat());
-  return assembleWorldData(tiles, cols, rows, heights, heath);
+  const biomeWeights = biomeWeightGrids
+    ? Object.fromEntries(
+        Object.entries(biomeWeightGrids).map(([biome, values]) => [biome, Float32Array.from(values.flat())]),
+      )
+    : null;
+  return assembleWorldData(tiles, cols, rows, heights, heath, biomeWeights, origin);
 }
 
-function assembleWorldData(tiles, cols, rows, heights, heath) {
-  const channel = buildChannelFields(tiles, cols, rows);
+function assembleWorldData(tiles, cols, rows, heights, heath, biomeWeights = null, origin = { x: 0, y: 0 }) {
+  const originX = Number.isInteger(origin?.x) ? origin.x : 0;
+  const originY = Number.isInteger(origin?.y) ? origin.y : 0;
+  const channel = buildChannelFields(tiles, cols, rows, { x: originX, y: originY });
   // rock body field: 1 on mountain/stone tiles, sampled bilinear for the
   // painter — grid-derived, so generated worlds carry their massifs
   const rock = new Float32Array(cols * rows);
   for (const tile of tiles) {
     if (tile.material === "rock" || tile.material === "stone") {
-      rock[tile.y * cols + tile.x] = 1;
+      const localX = tile.x - originX;
+      const localY = tile.y - originY;
+      if (localX >= 0 && localY >= 0 && localX < cols && localY < rows) {
+        rock[localY * cols + localX] = 1;
+      }
     }
   }
 
   const sampleVertexGrid = (grid, mapX, mapY) => {
-    const x = clamp(mapX, 0, cols);
-    const y = clamp(mapY, 0, rows);
+    const x = clamp(mapX - originX, 0, cols);
+    const y = clamp(mapY - originY, 0, rows);
     const x0 = Math.min(cols - 1, Math.floor(x));
     const y0 = Math.min(rows - 1, Math.floor(y));
     const fx = x - x0;
@@ -56,10 +75,10 @@ function assembleWorldData(tiles, cols, rows, heights, heath) {
 
   const sampleTileGrid = (grid, mapX, mapY) => {
     // tile-center lattice: value at (x+0.5, y+0.5)
-    const x = clamp(mapX - 0.5, 0, cols - 1);
-    const y = clamp(mapY - 0.5, 0, rows - 1);
-    const x0 = Math.min(cols - 2, Math.floor(x));
-    const y0 = Math.min(rows - 2, Math.floor(y));
+    const x = clamp(mapX - originX - 0.5, 0, cols - 1);
+    const y = clamp(mapY - originY - 0.5, 0, rows - 1);
+    const x0 = Math.max(0, Math.min(cols - 2, Math.floor(x)));
+    const y0 = Math.max(0, Math.min(rows - 2, Math.floor(y)));
     const fx = x - x0;
     const fy = y - y0;
     const nw = grid[y0 * cols + x0];
@@ -69,19 +88,38 @@ function assembleWorldData(tiles, cols, rows, heights, heath) {
     return (nw * (1 - fx) + ne * fx) * (1 - fy) + (sw * (1 - fx) + se * fx) * fy;
   };
 
+  const weightsAt = (mapX, mapY) => {
+    if (biomeWeights) {
+      const sampled = Object.fromEntries(
+        VISUAL_BIOMES.map((biome) => [biome, biomeWeights[biome] ? clamp(sampleTileGrid(biomeWeights[biome], mapX, mapY), 0, 1) : 0]),
+      );
+      const total = Object.values(sampled).reduce((sum, value) => sum + value, 0) || 1;
+      for (const biome of Object.keys(sampled)) sampled[biome] /= total;
+      return sampled;
+    }
+    const heathWeight = clamp(sampleVertexGrid(heath, mapX, mapY), 0, 1);
+    const weights = Object.fromEntries(VISUAL_BIOMES.map((biome) => [biome, 0]));
+    weights.heath = heathWeight;
+    weights.meadow = 1 - heathWeight;
+    return weights;
+  };
+
   return {
     cols,
     rows,
+    origin: { x: originX, y: originY },
     heightAt: (mapX, mapY) => sampleVertexGrid(heights, mapX, mapY),
     heathWeightAt: (mapX, mapY) => sampleVertexGrid(heath, mapX, mapY),
-    weightsAt(mapX, mapY) {
-      const heathWeight = clamp(sampleVertexGrid(heath, mapX, mapY), 0, 1);
-      const weights = Object.fromEntries(VISUAL_BIOMES.map((biome) => [biome, 0]));
-      weights.heath = heathWeight;
-      weights.meadow = 1 - heathWeight;
-      return weights;
-    },
+    weightsAt,
     activeBiomesForPatch(superX, superY, patchTiles) {
+      if (biomeWeights) {
+        const maxima = Object.fromEntries(VISUAL_BIOMES.map((biome) => [biome, 0]));
+        for (let sy = 0; sy <= 4; sy += 1) for (let sx = 0; sx <= 4; sx += 1) {
+          const sampled = weightsAt(superX * patchTiles + (sx / 4) * patchTiles, superY * patchTiles + (sy / 4) * patchTiles);
+          for (const biome of VISUAL_BIOMES) maxima[biome] = Math.max(maxima[biome], sampled[biome] ?? 0);
+        }
+        return VISUAL_BIOMES.filter((biome) => maxima[biome] >= 0.018).sort((a, b) => maxima[b] - maxima[a]);
+      }
       let min = 1;
       let max = 0;
       for (let sy = 0; sy <= 4; sy += 1) {
@@ -118,13 +156,18 @@ function assembleWorldData(tiles, cols, rows, heights, heath) {
 }
 
 // distance / flow / fordness computed purely from tile materials
-function buildChannelFields(tiles, cols, rows) {
+function buildChannelFields(tiles, cols, rows, origin = { x: 0, y: 0 }) {
+  const originX = origin.x ?? 0;
+  const originY = origin.y ?? 0;
   const distance = new Float32Array(cols * rows).fill(1e9);
   const fordSeeds = [];
   const waterTiles = [];
   const queue = [];
   for (const tile of tiles) {
-    const index = tile.y * cols + tile.x;
+    const localX = tile.x - originX;
+    const localY = tile.y - originY;
+    if (localX < 0 || localY < 0 || localX >= cols || localY >= rows) continue;
+    const index = localY * cols + localX;
     if (tile.material === "water") {
       distance[index] = 0;
       queue.push(index);
@@ -198,7 +241,7 @@ function buildChannelFields(tiles, cols, rows) {
         ax = -ax;
         ay = -ay;
       }
-      const index = tile.y * cols + tile.x;
+      const index = (tile.y - originY) * cols + (tile.x - originX);
       flowX[index] = ax;
       flowY[index] = ay;
     }
@@ -228,11 +271,13 @@ function buildChannelFields(tiles, cols, rows) {
   // field; the painter turns it into gravel
   const fordness = new Float32Array(cols * rows);
   for (const seed of fordSeeds) {
-    if (distance[seed.y * cols + seed.x] > 2.5) continue;
+    const seedX = seed.x - originX;
+    const seedY = seed.y - originY;
+    if (distance[seedY * cols + seedX] > 2.5) continue;
     for (let dy = -3; dy <= 3; dy += 1) {
       for (let dx = -3; dx <= 3; dx += 1) {
-        const nx = seed.x + dx;
-        const ny = seed.y + dy;
+        const nx = seedX + dx;
+        const ny = seedY + dy;
         if (nx < 0 || ny < 0 || nx >= cols || ny >= rows) continue;
         const falloff = Math.max(0, 1 - Math.hypot(dx, dy) / 3.2);
         const index = ny * cols + nx;

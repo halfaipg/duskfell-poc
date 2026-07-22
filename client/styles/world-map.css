@@ -1,0 +1,14 @@
+.world-map-open .topbar,
+.world-map-open .panel,
+.world-map-open .panel-open,
+.world-map-open .hud,
+.world-map-open .statusbar,
+.world-map-open .chat-input {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.world-map-open #nightShade,
+.world-map-open #dawnGlow {
+  display: none !important;
+}

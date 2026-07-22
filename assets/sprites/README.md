@@ -41,6 +41,37 @@ The portrait is not copied out of the oblique walk sheet. It should be generated
 
 The current live base-card portrait set is split from `player-cards/duskfell-player-cards-stylized-source-20260708.png`. It intentionally targets a less-realistic carved paperdoll miniature style. Older realistic review cards are archived under `player-cards/archive/` for comparison only.
 
+The clean-room Blender-to-illustrated tree-family proof is under
+`candidates/blender-tree-family-v1/`. Its twelve frames cover four species and
+three lifecycle stages while sharing a `(96, 176)` trunk anchor. Raw Blender
+renders, normalized structure frames, img2img output, alpha-cleaned output, and
+the finished candidate remain separate. Rebuild the structural and finishing
+stages with `npm run sprites:trees:structure`,
+`npm run sprites:trees:assemble`, and `npm run sprites:trees:finish`. Review the
+hash-pinned candidate in game with `?trees=blender`; this does not promote it to
+the default manifest.
+
+The current eight-direction character structure proof is under
+`candidates/blender-locomotion-v2/`. It removes the imported rig's static
+action-space offset, retargets the remaining CC0 Quaternius idle and walk
+motion onto the minimally clothed wretch rig with bounded leg and arm motion,
+hides the unreliable detachable hair, and renders one fixed plan-oblique
+camera into `128x160` cells. Rebuild and validate it with:
+
+```sh
+npm run sprites:locomotion:structure
+npm run sprites:locomotion:validate
+```
+
+The validator rejects wrong dimensions or hashes, clipped alpha, detached
+components, empty frames, weak pose change, weak foot spread, direction scale
+drift, excessive crouch, and implausible locomotion extent. Review the moving
+cycle before the live `?character=blender` check. The current hash passes those
+gates and stays registered to the footprint in the live world, but it remains a
+review candidate rather than a manifest promotion. Its raw body material,
+player-card portrait, equipment layers, and illustrated treatment are not
+final art.
+
 For ComfyUI or Comfy Cloud sprite workflows, inspect the downloaded API workflow before spending generation credits:
 
 ```sh

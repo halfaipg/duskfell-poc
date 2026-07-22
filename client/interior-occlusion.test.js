@@ -1,7 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { interiorFloorAt, interiorHeightAt, interiorOccupancy, interiorPortalAt, interiorPortalHeightAt } from "./interior-occlusion.js";
+import {
+  interiorFloorAt,
+  interiorHeightAt,
+  interiorOccupancy,
+  interiorPortalAt,
+  interiorPortalHeightAt,
+  interiorRoomAt,
+} from "./interior-occlusion.js";
 
 const space = {
   bounds: { minX: 100, maxX: 300, minY: 200, maxY: 420 },
@@ -79,4 +86,23 @@ test("interior height samples floor z and interpolates stair portal z", () => {
   assert.equal(midpoint.source, "portal");
   assert.equal(midpoint.portal.id, "south-stairs");
   assert.ok(midpoint.z > 0.59 && midpoint.z < 0.61);
+});
+
+test("room occupancy reveals only matching occluder groups", () => {
+  const roomSpace = {
+    ...space,
+    rooms: [
+      { id: "west", floorLevel: 0, bounds: { minX: 100, maxX: 200, minY: 200, maxY: 420 } },
+      { id: "east", floorLevel: 0, bounds: { minX: 200, maxX: 300, minY: 200, maxY: 420 } },
+    ],
+    occluders: [
+      { id: "west-roof", floorLevel: 1, roomIds: ["west"], bounds: { minX: 100, maxX: 200, minY: 200, maxY: 420 }, alpha: 0.84, revealedAlpha: 0.05 },
+      { id: "east-roof", floorLevel: 1, roomIds: ["east"], bounds: { minX: 200, maxX: 300, minY: 200, maxY: 420 }, alpha: 0.84, revealedAlpha: 0.05 },
+    ],
+  };
+  assert.equal(interiorRoomAt(roomSpace, { x: 150, y: 260, z: 0 }).id, "west");
+  const occupancy = interiorOccupancy(roomSpace, { x: 150, y: 260, z: 0 });
+  assert.deepEqual(occupancy.activeRoomIds, ["west"]);
+  assert.equal(occupancy.occluders.find((entry) => entry.id === "west-roof").alpha, 0.05);
+  assert.equal(occupancy.occluders.find((entry) => entry.id === "east-roof").alpha, 0.84);
 });

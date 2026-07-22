@@ -13,6 +13,7 @@ use crate::content::ContentManifest;
 use crate::ingress::ClientIngressConfig;
 use crate::journal::EventJournal;
 use crate::metrics::AppMetrics;
+use crate::npc::CognitionBridge;
 use crate::persistence::{DurableFileLock, JsonlEventWriter};
 use crate::runtime_assets::RuntimeManifest;
 use crate::session::{
@@ -29,11 +30,13 @@ pub(crate) struct RuntimeServer {
     pub(crate) addr: SocketAddr,
     pub(crate) assets_dir: PathBuf,
     pub(crate) client_dir: PathBuf,
+    pub(crate) review_worlds_dir: PathBuf,
 }
 
 #[derive(Clone)]
 pub(crate) struct AppState {
     pub(crate) sim: Arc<Mutex<SimWorld>>,
+    pub(crate) cognition: Option<CognitionBridge>,
     pub(crate) settlement_tx: mpsc::Sender<SettlementJob>,
     pub(crate) settlement_ledger: SettlementLedgerHandle,
     pub(crate) settlement_outbox: SettlementOutboxHandle,

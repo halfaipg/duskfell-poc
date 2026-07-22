@@ -15,12 +15,12 @@ import {
   tileUsesGroundPatch,
   waterAnimConstants,
   waterGroupsForChunk,
-} from "./terrain-ground-patches.js";
+} from "./terrain-ground-patches.js?v=duskfell-world-v2-71";
 import { PROJECTION } from "./projection.js";
 import { TERRAIN_MATERIALS } from "./terrain.js";
-import { RENDER_DPR_CAP } from "./device-profile.js";
-import { getSun, shadowCast, windStrength } from "./sun-state.js";
-import { CONSTRAINED_DEVICE } from "./device-profile.js";
+import { GRAPHICS_BUDGET, RENDER_DPR_CAP } from "./device-profile.js";
+import { getSun, shadowCast } from "./sun-state.js";
+import { grassVerticesForChunk } from "./terrain-vertical-slice.js";
 
 export { normalizeTerrainDebugMode };
 
@@ -92,11 +92,14 @@ export function createTerrainDrawer({
         cols: worldTerrain.cols,
         rows: worldTerrain.rows,
         origin,
-        sun: sun.direction,
+        sun: sun?.direction,
         daylight: shadowCast().daylight,
+        castShadows: GRAPHICS_BUDGET.dynamicTerrainShadows,
       });
     }
-    const waterEntries = glActive ? new Map() : null;
+    const dynamicWater = GRAPHICS_BUDGET.waterAnimation !== "static";
+    const waterEntries = glActive && dynamicWater ? new Map() : null;
+    const grassEntries = glActive && GRAPHICS_BUDGET.gpuGrass ? [] : null;
     for (const chunk of renderGeometry.chunks) {
       if (!terrainLayerManager.boundsIntersect(chunk.bounds, visibleBounds)) continue;
       const staticDrawn = glActive
@@ -117,20 +120,36 @@ export function createTerrainDrawer({
         for (const entry of waterGroupsForChunk(chunk, worldTerrain, terrainAssets.groundPatches)) {
           waterEntries.set(`${entry.superX}:${entry.superY}`, entry);
         }
-      } else {
+        if (grassEntries) {
+          const grass = grassVerticesForChunk(chunk, origin, worldTerrain);
+          if (grass) grassEntries.push(grass);
+        }
+      } else if (!glActive && dynamicWater) {
         // 2D fallback: per-frame canvas shimmer on top of the cached ground
         drawChunkWaterAnimation(ctx, chunk, origin, worldTerrain, terrainAssets.groundPatches, now);
       }
       terrainDebugDrawer.drawTerrainDebugChunk(chunk, terrainDebugMode);
     }
     if (glActive) {
+      if (grassEntries?.length) {
+        glLayer.drawGrass(grassEntries, camera, viewport.width, viewport.height, now, getSun()?.direction);
+      }
       glLayer.finishTerrain();
       if (waterEntries?.size) {
         drawGlWater(glLayer, waterEntries, origin, now);
       }
-      drawGlGrass(glLayer, renderGeometry, visibleBounds, origin, now, viewport);
     }
+    preloadNextStaticChunk(renderGeometry.chunks, terrainLayerManager.preloadWorldBounds(viewport));
     return glActive;
+  }
+
+  function preloadNextStaticChunk(chunks, preloadBounds) {
+    for (const chunk of chunks) {
+      if (!terrainLayerManager.boundsIntersect(chunk.bounds, preloadBounds)) continue;
+      if (terrainLayerManager.hasStaticLayerForChunk(chunk)) continue;
+      buildStaticLayer(chunk);
+      return;
+    }
   }
 
   // shader water: one quad per water supertile, masked and animated on the
@@ -139,7 +158,7 @@ export function createTerrainDrawer({
     const waterImage = terrainAssets.groundPatches?.get?.("stream-water") ?? null;
     if (!waterImage) return;
     const { ANIM_SIZE, CANVAS_TILES, PATCH_TILES, MARGIN_TILES } = waterAnimConstants();
-    if (!glLayer.beginWater(camera, canvas.clientWidth, canvas.clientHeight, now, waterImage, getSun())) return;
+    if (!glLayer.beginWater(camera, canvas.clientWidth, canvas.clientHeight, now, waterImage, getSun()?.direction)) return;
     const { halfW, halfH } = PROJECTION;
     const animPxPerTile = ANIM_SIZE / CANVAS_TILES;
     const a = halfW / animPxPerTile;
@@ -199,64 +218,6 @@ export function createTerrainDrawer({
     return heightsCanvas;
   }
 
-  // grass blades: deterministic scatter on grassy tiles, wind + shadows on
-  // the GPU. Blade geometry lives in cached per-chunk buffers.
-  const GRASS_BLADES_PER_TILE = CONSTRAINED_DEVICE ? 5 : 11;
-
-  function drawGlGrass(glLayer, renderGeometry, visibleBounds, origin, now, viewport) {
-    const cast = shadowCast();
-    if (!glLayer.beginGrass(camera, viewport.width, viewport.height, now, cast, cast.daylight, windStrength(now))) {
-      return;
-    }
-    for (const chunk of renderGeometry.chunks) {
-      if (!terrainLayerManager.boundsIntersect(chunk.bounds, visibleBounds)) continue;
-      const chunkKey = `${terrainCacheKey}:${chunk.x}:${chunk.y}`;
-      glLayer.drawGrassChunk(chunkKey, () => buildChunkBlades(chunk));
-    }
-  }
-
-  function buildChunkBlades(chunk) {
-    const blades = [];
-    for (const tileView of chunk.tiles) {
-      const tile = tileView.tile;
-      if (tile.material !== "grass") continue;
-      const vegetation = tile.biome?.vegetation ?? 0;
-      if (vegetation < 0.3) continue;
-      const count = Math.round(vegetation * GRASS_BLADES_PER_TILE);
-      const { corners } = tileView;
-      for (let index = 0; index < count; index += 1) {
-        const u = hash01(tile.x * 31 + index, tile.y * 17 + index * 7);
-        const v = hash01(tile.x * 13 + index * 3, tile.y * 41 + index);
-        // bilinear across the projected diamond keeps blades on the tile
-        const topX = corners.nw.x + (corners.ne.x - corners.nw.x) * u;
-        const topY = corners.nw.y + (corners.ne.y - corners.nw.y) * u;
-        const botX = corners.sw.x + (corners.se.x - corners.sw.x) * u;
-        const botY = corners.sw.y + (corners.se.y - corners.sw.y) * u;
-        const x = topX + (botX - topX) * v;
-        const y = topY + (botY - topY) * v;
-        const height = 5 + hash01(index, tile.x + tile.y) * 8;
-        const halfWidth = 0.9 + hash01(index * 5, tile.y) * 0.9;
-        const lean = (hash01(tile.x + index, tile.y * 3) - 0.5) * 3;
-        // gust phase travels with world position; small per-blade jitter
-        const phase = (tile.x + tile.y) * 0.29 + hash01(tile.x * 7, tile.y * 11 + index) * 1.1;
-        const shade = hash01(index * 11, tile.x * 3 + tile.y);
-        // one triangle: base-left, base-right, tip
-        blades.push(
-          x, y, -halfWidth, 0, phase, 0, shade,
-          x, y, halfWidth, 0, phase, 0, shade,
-          x, y, lean, -height, phase, 1, shade,
-        );
-      }
-    }
-    return blades.length ? new Float32Array(blades) : null;
-  }
-
-  function hash01(a, b) {
-    let h = (Math.imul(a + 101, 374761393) ^ Math.imul(b + 181, 668265263)) >>> 0;
-    h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0;
-    return ((h ^ (h >>> 16)) >>> 0) / 0xffffffff;
-  }
-
   function glDpr() {
     return Math.min(globalThis.devicePixelRatio || 1, RENDER_DPR_CAP);
   }
@@ -295,7 +256,7 @@ export function createTerrainDrawer({
       warmKey = `${terrainCacheKey}:${terrainAssetVersion}`;
       warmIndex = 0;
     }
-    const visibleBounds = terrainLayerManager.visibleWorldBounds(viewport);
+    const visibleBounds = terrainLayerManager.preloadWorldBounds(viewport);
     const geometry = terrainLayerManager.terrainGeometryForMap(terrain, origin);
     const visible = geometry.chunks.filter((chunk) =>
       terrainLayerManager.boundsIntersect(chunk.bounds, visibleBounds),
@@ -314,7 +275,14 @@ export function createTerrainDrawer({
     const palette = TERRAIN_MATERIALS[terrainUnderpaintMaterial(tile)];
     const groundPatchTile = tileUsesGroundPatch(tile, terrainAssets.groundPatches);
 
-    drawTerrainSideWalls(ctx, tile, corners, palette, terrainAssets.groundPatches?.get?.("cliff") ?? null);
+    drawTerrainSideWalls(
+      ctx,
+      tile,
+      corners,
+      palette,
+      terrainAssets.groundPatches?.get?.("cliff") ?? null,
+      terrainAssets.groundPatches?.has?.("__world-painting__") ?? false,
+    );
 
     if (!groundPatchTile) {
       ctx.beginPath();

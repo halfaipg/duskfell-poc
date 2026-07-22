@@ -150,6 +150,25 @@ pub(super) fn load_terrain_runtime_manifest(
             approval_state: approval_state.clone(),
         });
     }
+    let world_map_count = if let Some(world_map) = json.get("worldMap") {
+        let id = required_string(world_map, "id").context("terrain.worldMap.id")?;
+        let image = required_string(world_map, "image").context("terrain.worldMap.image")?;
+        let sha256 = required_string(world_map, "sha256").context("terrain.worldMap.sha256")?;
+        validate_sha256_pin(&sha256).context("terrain.worldMap.sha256")?;
+        let bytes =
+            verified_runtime_image_bytes(image_root, &image, &sha256, max_runtime_asset_bytes)?;
+        images.push(RuntimeAssetImage {
+            id,
+            image,
+            sha256,
+            sha256_verified: true,
+            bytes,
+            approval_state: approval_state.clone(),
+        });
+        1
+    } else {
+        0
+    };
 
     Ok(RuntimeAssetManifest {
         kind: "terrain",
@@ -160,7 +179,7 @@ pub(super) fn load_terrain_runtime_manifest(
         max_manifest_bytes: max_runtime_manifest_bytes,
         max_image_bytes: max_runtime_asset_bytes,
         projection,
-        entry_count: tiles.len() + ground_patches.len(),
+        entry_count: tiles.len() + ground_patches.len() + world_map_count,
         images,
     })
 }

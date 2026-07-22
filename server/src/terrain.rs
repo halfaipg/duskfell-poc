@@ -49,6 +49,8 @@ impl TerrainMaterial {
 pub struct BakedTerrainGrid {
     materials: Vec<Vec<TerrainMaterial>>,
     vertex_heights: Vec<Vec<i32>>,
+    vertex_height_precision: f32,
+    water_depths: Option<Vec<Vec<f32>>>,
 }
 
 impl BakedTerrainGrid {
@@ -58,9 +60,33 @@ impl BakedTerrainGrid {
         legend: &[String],
         cols: u32,
         rows: u32,
+        vertex_height_precision: u32,
+    ) -> Result<Option<Self>, String> {
+        Self::from_grids_with_water_depths(
+            material_grid,
+            vertex_heights,
+            legend,
+            cols,
+            rows,
+            vertex_height_precision,
+            None,
+        )
+    }
+
+    pub fn from_grids_with_water_depths(
+        material_grid: &[String],
+        vertex_heights: &[Vec<i32>],
+        legend: &[String],
+        cols: u32,
+        rows: u32,
+        vertex_height_precision: u32,
+        water_depths: Option<&[Vec<f32>]>,
     ) -> Result<Option<Self>, String> {
         if material_grid.is_empty() && vertex_heights.is_empty() {
             return Ok(None);
+        }
+        if vertex_height_precision == 0 {
+            return Err("vertexHeightPrecision must be greater than zero".to_string());
         }
         if material_grid.len() != rows as usize {
             return Err(format!(
@@ -106,9 +132,21 @@ impl BakedTerrainGrid {
                 ));
             }
         }
+        if let Some(depths) = water_depths {
+            if depths.len() != rows as usize
+                || depths.iter().any(|row| {
+                    row.len() != cols as usize
+                        || row.iter().any(|value| !value.is_finite() || *value < 0.0)
+                })
+            {
+                return Err("waterDepths dimensions or samples are invalid".to_string());
+            }
+        }
         Ok(Some(Self {
             materials,
             vertex_heights: vertex_heights.to_vec(),
+            vertex_height_precision: vertex_height_precision as f32,
+            water_depths: water_depths.map(|depths| depths.to_vec()),
         }))
     }
 }
@@ -156,7 +194,24 @@ impl TerrainAuthority {
         // like water — impassability comes from material, not step height,
         // so bilerped boundary tiles cannot form accidental ramps
         let material = self.material_at_world(world_x, world_y);
-        material != TerrainMaterial::Water && material != TerrainMaterial::Rock
+        material != TerrainMaterial::Water
+            && material != TerrainMaterial::Rock
+            && self.water_depth_at_world(world_x, world_y) <= 0.02
+    }
+
+    pub fn water_depth_at_world(&self, world_x: f32, world_y: f32) -> f32 {
+        let (tile_x, tile_y, _, _) = self.world_tile(world_x, world_y);
+        self.baked
+            .as_ref()
+            .and_then(|baked| baked.water_depths.as_ref())
+            .map(|depths| depths[tile_y as usize][tile_x as usize])
+            .unwrap_or_else(|| {
+                if self.material_for_tile(tile_x, tile_y) == TerrainMaterial::Water {
+                    1.0
+                } else {
+                    0.0
+                }
+            })
     }
 
     pub fn allows_step(&self, from_x: f32, from_y: f32, to_x: f32, to_y: f32) -> bool {
@@ -243,7 +298,8 @@ impl TerrainAuthority {
 
     fn vertex_height(&self, x: u32, y: u32) -> f32 {
         if let Some(baked) = &self.baked {
-            return baked.vertex_heights[y as usize][x as usize] as f32;
+            return baked.vertex_heights[y as usize][x as usize] as f32
+                / baked.vertex_height_precision;
         }
         let x_f = x as f32;
         let y_f = y as f32;
@@ -351,11 +407,59 @@ mod tests {
         );
     }
 
+    #[test]
+    fn baked_fixed_point_heights_are_scaled_before_interpolation() {
+        let mut profile = demo_terrain().profile;
+        profile.vertex_height_precision = 1000;
+        profile.min_elevation = 0;
+        profile.max_elevation = 1;
+        profile.water_level = 0;
+        let baked = BakedTerrainGrid::from_grids(
+            &["0".to_string()],
+            &[vec![0, 250], vec![500, 1000]],
+            &["grass".to_string()],
+            1,
+            1,
+            1000,
+        )
+        .expect("fixed-point grid is valid")
+        .expect("fixed-point grid is present");
+        let terrain = TerrainAuthority::with_baked_grid(profile, 64.0, 64.0, 0.0, Some(baked));
+
+        assert!((terrain.height_at_world(32.0, 32.0) - 0.4375).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn canonical_water_depth_blocks_collision_even_before_material_hardening() {
+        let mut profile = demo_terrain().profile;
+        profile.vertex_height_precision = 1000;
+        profile.min_elevation = 0;
+        profile.max_elevation = 1;
+        let depths = vec![vec![0.08]];
+        let baked = BakedTerrainGrid::from_grids_with_water_depths(
+            &["0".to_string()],
+            &[vec![0, 0], vec![0, 0]],
+            &["grass".to_string()],
+            1,
+            1,
+            1000,
+            Some(&depths),
+        )
+        .expect("water-backed grid is valid")
+        .expect("water-backed grid is present");
+        let terrain = TerrainAuthority::with_baked_grid(profile, 64.0, 64.0, 0.0, Some(baked));
+
+        assert!((terrain.water_depth_at_world(32.0, 32.0) - 0.08).abs() < f32::EPSILON);
+        assert!(!terrain.is_walkable_at_world(32.0, 32.0));
+    }
+
     fn demo_terrain() -> TerrainAuthority {
         TerrainAuthority::new(
             TerrainSnapshot {
                 profile: "duskfell-terrain-v1".to_string(),
                 seed: 7341,
+                detail_authority_enabled: true,
+                visual_detail_enabled: true,
                 units_per_tile: 64,
                 tile_width: 64,
                 tile_height: 64,
@@ -364,6 +468,7 @@ mod tests {
                 max_elevation: 4,
                 water_level: -1,
                 max_walkable_step: 1,
+                vertex_height_precision: 1,
                 materials: vec![
                     "grass".to_string(),
                     "field".to_string(),
@@ -372,6 +477,7 @@ mod tests {
                     "water".to_string(),
                     "settlement".to_string(),
                 ],
+                trails: Vec::new(),
             },
             2560.0,
             1664.0,

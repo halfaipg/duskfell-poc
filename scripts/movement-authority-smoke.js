@@ -3,6 +3,8 @@ import { mkdir } from "node:fs/promises";
 import { performance } from "node:perf_hooks";
 import path from "node:path";
 
+import { parseServerMessage } from "../client/server-messages.js";
+
 const args = parseArgs(process.argv.slice(2));
 const port = Number(args.port ?? 4131);
 const moveMs = Number(args.moveMs ?? 850);
@@ -66,6 +68,7 @@ async function runMovement(input) {
   const url = new URL(wsUrl);
   url.searchParams.set("session", session.sessionToken);
   const ws = new WebSocket(url);
+  ws.binaryType = "arraybuffer";
   let seq = 0;
   let playerId = null;
   let start = null;
@@ -79,7 +82,7 @@ async function runMovement(input) {
     }, moveMs + 5000);
 
     ws.addEventListener("message", (event) => {
-      const message = JSON.parse(String(event.data));
+      const message = parseServerMessage(event.data);
       const snapshot = message.type === "welcome" ? message.snapshot : message;
       if (message.type === "welcome") {
         playerId = message.playerId;

@@ -3,4 +3,10 @@ target/
 .DS_Store
 *.log
 node_modules/
+__pycache__/
 var/
+worlds/generated/
+worlds/duskfell-valley/
+worlds/surveys/
+assets/sprites/candidates/kimodo/**/frames/
+assets/sprites/candidates/blender-locomotion-v2/frames/

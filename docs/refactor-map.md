@@ -15,6 +15,10 @@ Checked July 8, 2026:
 | `scripts/verify-sprite-manifest.js` | 89 | Sprite manifest verifier coordinator. Owns manifest loading, top-level schema/version/sheets checks, async image validation dispatch, result shaping, and CLI output. Projection contract validation lives in `scripts/sprite-manifest/projection.js`; sheet schema validation lives in `scripts/sprite-manifest/sheet.js`; PNG/hash inspection, paperdoll stack validation, provenance/style policy, and primitive validators live in sibling child modules. |
 | `scripts/verify-terrain-atlas.js` | 55 | Terrain atlas verifier facade only. Owns manifest file loading, result shaping, and CLI output. Schema/projection/path validation lives in `scripts/terrain-atlas/manifest.js`; tile coverage checks live in `coverage.js`; clean-room provenance and approval policy live in `provenance.js`; PNG dimension/hash checks live in `image.js`; constants and primitive validators live in sibling modules. |
 | `scripts/normalize-generated-detail-sheet.py` | 107 | Detail sheet assembly coordinator. Owns generated source cleanup, source-frame fitting, static-frame assembly, output writes, and manifest hash/provenance updates. Shared hash/manifest IO lives in `scripts/asset_pipeline_utils.py`; generated sheet cleanup lives in `scripts/detail_sheet_normalization.py`; detail sheet metadata lives in `scripts/detail_sheet_manifest.py`; shared raster helpers live in `scripts/pixel_art_primitives.py`; locally authored tree-frame trunk/root/resource/age drawing lives in `scripts/detail_sheet_tree_frames.py`; crown recipes live in `scripts/detail_sheet_tree_crowns.py`. Split boulder/reeds/ruin static-frame drawing only if those recipes grow. |
+| `scripts/blender-duskfell-tree-family.py` | 319 | Deterministic clean-room tree structure generator. Owns the fixed orthographic camera, seed, species/stage geometry, raw 640px renders, and saved Blender source scene. It never owns painterly finishing. |
+| `scripts/assemble-blender-tree-family.py` | 160 | Blender tree candidate assembler. Preserves raw renders, creates normalized structural frames and the 4x3 control board, maps frames 8-19 into a review detail sheet, and records structural provenance. |
+| `scripts/normalize-finished-tree-board.py` | 269 | Controlled tree img2img intake gate. Finds transparent row valleys, preserves one board-wide scale, anchors trunks, rejects clipping/coverage/scale drift, and emits a hash-recorded review sheet without changing the default sprite manifest. |
+| `client/tree-review-sprite.js` | 38 | Explicit `?trees=blender` review loader. Pins the validated candidate SHA-256 and swaps only the terrain-detail sheet; ordinary sessions retain the manifest-selected default. |
 | `scripts/normalize-generated-actor-sheet.py` | 57 | Actor sheet assembly coordinator. Owns source existence checks, source grid iteration, base/variant output writes, and command output. Shared dimensions/paths/variant metadata live in `scripts/actor_sheet_config.py`; source cleanup and trim fitting live in `scripts/actor_sheet_normalization.py`; role-specific silhouette/equipment overlays live in `scripts/actor_sheet_variants.py`; sprite manifest provenance updates live in `scripts/actor_sheet_manifest.py`. |
 | `scripts/normalize-paperdoll-demo-sheet.py` | 49 | Paperdoll demo sheet coordinator. Owns source existence checks, base body generation, equipment layer generation, output writes, manifest update dispatch, and command output. Shared paths/dimensions/palette/provenance constants live in `scripts/paperdoll_demo_config.py`; generated body cleanup and fitting live in `scripts/paperdoll_body_normalization.py`; deterministic equipment-layer drawing lives in `scripts/paperdoll_layers.py`; paperdoll sheet and manifest assembly lives in `scripts/paperdoll_demo_manifest.py`. |
 | `scripts/generate-placeholder-sprites.js` | 255 | Placeholder sprite recipe coordinator. Owns player/prop placeholder frame recipes, sheet generation order, output writes, and sprite manifest hash updates. PNG encoding is shared with `scripts/placeholder-terrain-atlas/png.js`; reusable RGBA raster primitives live in `scripts/placeholder-sprites/raster.js`. Split player and prop recipes only if placeholder art remains a maintained path rather than a fallback. |
@@ -464,6 +468,11 @@ Checked July 8, 2026:
   - Terrain zone classification, elevation/moisture/detail bands, road-axis
     derivation, landmark pressure, and composition-kit material/object-band
     overrides moved out of `client/terrain.js`.
+- `client/terrain-habitat.js`
+  - Correlated woodland, wetland, rocky, scrub, and negative-space habitat
+    scoring from continuous biome, slope, path, water, and wind authority.
+    `client/terrain-composition.js` records the result; ambient detail placement
+    consumes it without inventing a second ecology model.
 - `client/terrain-composition-kit.js`
   - Terrain composition-kit catalog, deterministic kit construction, material
     overrides, geometry metrics, and membership scoring moved out of
@@ -1066,3 +1075,17 @@ replay coordination, and small math helpers.
   atlas selection, or authority output changes.
 - Public/auth/deployment extraction: run the relevant `npm run smoke:*` scripts,
   not just unit tests.
+
+## Character Authoring Boundary
+
+- `scripts/blender-duskfell-locomotion.py` owns deterministic CC0 mocap
+  action-neutral retargeting, bounded gait correction, full Blender actions,
+  eight-direction camera rendering, and candidate provenance.
+- `scripts/validate-character-sheet.py` owns fail-closed image structure review
+  for candidate dimensions, hashes, clipping, components, direction scale, pose
+  change, lower-body spread, crouch, and body-relative locomotion extent.
+- `client/kimodo-review-sprite.js` remains a reversible review loader only. The
+  `character=blender` entry must not imply manifest approval or runtime model
+  inference.
+- Image generation may finish an accepted structure sheet, but it must not own
+  skeletal timing, camera projection, direction mapping, or foot registration.

@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Duskfell World Workshop</title>
+    <link rel="stylesheet" href="./world-editor.css?v=6" />
+  </head>
+  <body>
+    <header>
+      <strong>Duskfell World Workshop</strong>
+      <span id="status">Loading world package...</span>
+      <button id="reset" type="button">Reset</button>
+      <button id="export" type="button">Export bundle</button>
+      <button id="exportPatch" type="button">Export authoring patch</button>
+    </header>
+    <main>
+      <aside aria-label="World tools">
+        <label>Review package
+          <span class="source-row">
+            <input id="package" type="text" value="/worlds/generated/duskfell-climate-chunked-v1" spellcheck="false" />
+            <button id="loadPackage" type="button">Load</button>
+          </span>
+        </label>
+        <label>Tool
+          <select id="tool">
+            <option value="terrain">Terrain brush</option>
+            <option value="settlement">Settlement</option>
+            <option value="trail">Trail</option>
+            <option value="landmark">Landmark</option>
+            <option value="delete">Delete</option>
+          </select>
+        </label>
+        <div id="terrainControls" class="tool-controls">
+          <label>Field
+            <select id="field">
+              <option value="elevation">Elevation</option>
+              <option value="moisture">Moisture</option>
+              <option value="temperature">Temperature</option>
+              <option value="precipitation">Precipitation</option>
+              <option value="humidity">Humidity</option>
+              <option value="fogPotential">Fog potential</option>
+              <option value="windExposure">Wind exposure</option>
+              <option value="growingSeason">Growing season</option>
+              <option value="rockiness">Rockiness</option>
+              <option value="snow">Snow</option>
+              <option value="vegetation">Vegetation</option>
+              <option value="water">Water</option>
+              <option value="riverSpline">River spline</option>
+            </select>
+          </label>
+          <label>Brush radius <output id="radiusValue">4</output>
+            <input id="radius" type="range" min="1" max="12" step="1" value="4" />
+          </label>
+          <label>Strength <output id="strengthValue">0.18</output>
+            <input id="strength" type="range" min="0.02" max="0.5" step="0.01" value="0.18" />
+          </label>
+          <fieldset>
+            <legend>Mode</legend>
+            <label><input type="radio" name="mode" value="raise" checked /> Raise / paint</label>
+            <label><input type="radio" name="mode" value="lower" /> Lower / erase</label>
+            <label><input type="radio" name="mode" value="smooth" /> Smooth</label>
+          </fieldset>
+        </div>
+        <div id="landmarkControls" class="tool-controls" hidden>
+          <label>Landmark type
+            <select id="landmarkType">
+              <option value="ancient-ruin">Ancient ruin</option>
+              <option value="sacred-grove">Sacred grove</option>
+              <option value="mineral-scar">Mineral scar</option>
+              <option value="waystone">Waystone</option>
+            </select>
+          </label>
+        </div>
+        <div id="trailControls" class="tool-controls" hidden>
+          <button id="cancelTrail" type="button" disabled>Cancel trail</button>
+        </div>
+        <label class="check"><input id="overlay" type="checkbox" checked /> Field overlay</label>
+        <fieldset>
+          <legend>Authority layers</legend>
+          <label><input id="hydrologyDetails" type="checkbox" checked /> Watersheds and tributaries</label>
+          <label><input id="features" type="checkbox" checked /> Settlements and trails</label>
+          <label><input id="ecology" type="checkbox" checked /> Resources and landmarks</label>
+        </fieldset>
+        <dl>
+          <dt>World</dt><dd id="worldSize">Loading...</dd>
+          <dt>Projection</dt><dd>Military plan-oblique</dd>
+          <dt>Habitats</dt><dd id="habitatCount">-</dd>
+          <dt>Resources</dt><dd id="resourceCount">-</dd>
+          <dt>Climate zones</dt><dd id="climateZoneCount">-</dd>
+          <dt>Fog country</dt><dd id="fogTileCount">-</dd>
+          <dt>Watersheds</dt><dd id="watershedCount">-</dd>
+          <dt>Tributaries</dt><dd id="tributaryCount">-</dd>
+          <dt>Shorelines</dt><dd id="shorelineCount">-</dd>
+          <dt>Settlements</dt><dd id="settlementCount">-</dd>
+          <dt>Trails</dt><dd id="trailCount">-</dd>
+          <dt>Landmarks</dt><dd id="landmarkCount">-</dd>
+        </dl>
+      </aside>
+      <section class="workspace">
+        <div class="viewport">
+          <div class="viewport-title"><strong>Authority fields</strong><span>Paint directly on the world</span></div>
+          <canvas id="authority" width="768" height="768"></canvas>
+        </div>
+        <div class="viewport">
+          <div class="viewport-title"><strong>Gameplay projection</strong><span>Production painting on authoritative relief</span></div>
+          <canvas id="projection" width="768" height="512"></canvas>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="./world-editor.js?v=7"></script>
+  </body>
+</html>

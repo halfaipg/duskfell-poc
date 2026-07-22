@@ -51,8 +51,21 @@ pub struct WorldSnapshot {
     pub tick: u64,
     pub map: MapSnapshot,
     pub players: Vec<PlayerSnapshot>,
+    pub npcs: Vec<NpcSnapshot>,
     pub objects: Vec<ObjectSnapshot>,
     pub settlement: SettlementSnapshot,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NpcSnapshot {
+    pub id: String,
+    pub name: String,
+    pub x: f32,
+    pub y: f32,
+    pub color: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub speech: Option<SpeechSnapshot>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -61,7 +74,35 @@ pub struct MapSnapshot {
     pub width: f32,
     pub height: f32,
     pub safe_zone_radius: f32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub region: Option<RegionRoutingSnapshot>,
     pub terrain: TerrainSnapshot,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RegionRoutingSnapshot {
+    pub schema_version: String,
+    pub atlas_id: String,
+    pub atlas_content_sha256: String,
+    pub region_id: String,
+    pub coord: RegionCoordSnapshot,
+    pub tile_origin: RegionCoordSnapshot,
+    pub neighbors: RegionNeighborsSnapshot,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct RegionCoordSnapshot {
+    pub x: u32,
+    pub y: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RegionNeighborsSnapshot {
+    pub north: Option<String>,
+    pub east: Option<String>,
+    pub south: Option<String>,
+    pub west: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -69,6 +110,8 @@ pub struct MapSnapshot {
 pub struct TerrainSnapshot {
     pub profile: String,
     pub seed: u32,
+    pub detail_authority_enabled: bool,
+    pub visual_detail_enabled: bool,
     pub units_per_tile: u32,
     pub tile_width: u32,
     pub tile_height: u32,
@@ -77,7 +120,25 @@ pub struct TerrainSnapshot {
     pub max_elevation: i32,
     pub water_level: i32,
     pub max_walkable_step: u32,
+    pub vertex_height_precision: u32,
     pub materials: Vec<String>,
+    pub trails: Vec<TrailSnapshot>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TrailSnapshot {
+    pub id: String,
+    pub label: String,
+    pub kind: String,
+    pub width_tiles: f32,
+    pub points: Vec<TrailPointSnapshot>,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct TrailPointSnapshot {
+    pub x: f32,
+    pub y: f32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -261,7 +322,9 @@ mod tests {
                 assert!(right);
                 assert!(!interact);
             }
-            ClientMessage::Rename { .. } | ClientMessage::Say { .. } => panic!("expected input message"),
+            ClientMessage::Rename { .. } | ClientMessage::Say { .. } => {
+                panic!("expected input message")
+            }
         }
     }
 

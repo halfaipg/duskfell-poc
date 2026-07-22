@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "duskfell-generated-asset-v1",
+  "id": "biome-proof-triptych-v1",
+  "status": "concept-review",
+  "kind": "painted-biome-proof-set",
+  "createdAt": "2026-07-15",
+  "tool": "OpenAI built-in image generation",
+  "model": "built-in image generation",
+  "outputImage": "biome-proof-triptych-v1.png",
+  "outputSha256": "cb4f203c8aadd53510d9470b9e017ca8e9f845d7f8d09bacc77e57bcaaf4ca8a",
+  "promptSummary": "Three pathless, terrain-only studies: muted heartland meadow, autumn heath, and cold fen margin.",
+  "runtimeProofs": [
+    {
+      "id": "meadow",
+      "image": "biome-proof-meadow-v1.webp",
+      "sha256": "1ff4ac6df4f8503e1546dd2b5f293c498fc8ea2980151a6107c163b45ef345ef",
+      "dimensions": { "width": 2048, "height": 2048 }
+    },
+    {
+      "id": "heath",
+      "image": "biome-proof-heath-v1.webp",
+      "sha256": "4f3cd1e717521479397170c73cf351205cbf20ba837e905b92f23e0f054029d1",
+      "dimensions": { "width": 2048, "height": 2048 }
+    },
+    {
+      "id": "fen",
+      "image": "biome-proof-fen-v1.webp",
+      "sha256": "c8b8182529a596d60d2693a3855d530182246b7a193fc3202ed5e2495f9aa713",
+      "dimensions": { "width": 2048, "height": 2048 }
+    }
+  ],
+  "license": "project-original-ai-assisted-review"
+}

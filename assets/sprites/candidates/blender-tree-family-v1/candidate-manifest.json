@@ -1,0 +1,205 @@
+{
+  "schemaVersion": "duskfell-blender-tree-candidate-v1",
+  "approval": {
+    "state": "review"
+  },
+  "projection": "military-plan-oblique",
+  "cell": {
+    "width": 192,
+    "height": 192,
+    "anchor": {
+      "x": 96,
+      "y": 176
+    }
+  },
+  "runtimeMapping": {
+    "sheet": "duskfell-details-blender-tree-v1.png",
+    "treeFrames": {
+      "sapling": [
+        8,
+        9,
+        10,
+        11
+      ],
+      "mature": [
+        12,
+        13,
+        14,
+        15
+      ],
+      "ancient": [
+        16,
+        17,
+        18,
+        19
+      ]
+    }
+  },
+  "artifacts": {
+    "strip": {
+      "path": "tree-family-strip-v1.png",
+      "sha256": "1e743319c1685380d91bbdb2155327a2e55e24f332865732e642a5b1554962e8"
+    },
+    "detailSheet": {
+      "path": "duskfell-details-blender-tree-v1.png",
+      "sha256": "2a103be0e3b2913ffddc974ecba0b728be229373349a7af1fe85dcd49a43b981"
+    },
+    "reviewBoard": {
+      "path": "tree-family-review-board-v1.png",
+      "sha256": "a257249e27a08a0cedbbf279a27d87f3eba6923ecf56cc4ea855158da55cadf7"
+    }
+  },
+  "frames": [
+    {
+      "frame": 0,
+      "stage": "sapling",
+      "variant": 0,
+      "species": "greenwood",
+      "kind": "broadleaf",
+      "path": "raw/tree-sapling-00.png",
+      "normalizedPath": "structure-frames/tree-sapling-00.png",
+      "sha256": "aa2ab1c0b2854c758fc8798bc47f863bbeac31a175ad78edeedf2a08fd0ba4ab"
+    },
+    {
+      "frame": 1,
+      "stage": "sapling",
+      "variant": 1,
+      "species": "shadebark",
+      "kind": "conifer",
+      "path": "raw/tree-sapling-01.png",
+      "normalizedPath": "structure-frames/tree-sapling-01.png",
+      "sha256": "6cbca74cdf220e3f9dbfc9ed89de424e6b224240e110704d5a3c6cf454fe117d"
+    },
+    {
+      "frame": 2,
+      "stage": "sapling",
+      "variant": 2,
+      "species": "ironleaf",
+      "kind": "sparse",
+      "path": "raw/tree-sapling-02.png",
+      "normalizedPath": "structure-frames/tree-sapling-02.png",
+      "sha256": "b4f1ee3be7bf1dd87cf96946e154024a5547580b53441e05e65acc6627b92553"
+    },
+    {
+      "frame": 3,
+      "stage": "sapling",
+      "variant": 3,
+      "species": "paleoak",
+      "kind": "broadleaf",
+      "path": "raw/tree-sapling-03.png",
+      "normalizedPath": "structure-frames/tree-sapling-03.png",
+      "sha256": "119c6ae3f37c5fa1d0d72a9c1942b84343e3524f984a448268f8c0a212049c44"
+    },
+    {
+      "frame": 4,
+      "stage": "mature",
+      "variant": 0,
+      "species": "greenwood",
+      "kind": "broadleaf",
+      "path": "raw/tree-mature-00.png",
+      "normalizedPath": "structure-frames/tree-mature-00.png",
+      "sha256": "1ad17f3c727892bca620083e9ebd3e02d6c47d4fe897c207f8c9ee2edb717332"
+    },
+    {
+      "frame": 5,
+      "stage": "mature",
+      "variant": 1,
+      "species": "shadebark",
+      "kind": "conifer",
+      "path": "raw/tree-mature-01.png",
+      "normalizedPath": "structure-frames/tree-mature-01.png",
+      "sha256": "2b993f68abba1c28327cdf7a5e8283f2f51a3830e18b8a653eda28f860a1a85f"
+    },
+    {
+      "frame": 6,
+      "stage": "mature",
+      "variant": 2,
+      "species": "ironleaf",
+      "kind": "sparse",
+      "path": "raw/tree-mature-02.png",
+      "normalizedPath": "structure-frames/tree-mature-02.png",
+      "sha256": "e0c81c00525d058eb54c40ba7cccf8e37830490db28459c28610b35a3e8c6c27"
+    },
+    {
+      "frame": 7,
+      "stage": "mature",
+      "variant": 3,
+      "species": "paleoak",
+      "kind": "broadleaf",
+      "path": "raw/tree-mature-03.png",
+      "normalizedPath": "structure-frames/tree-mature-03.png",
+      "sha256": "1f4cf6f8d5cb7b8d12f3d3472506c067deb75ffb5fd741aa471683963ddf67b3"
+    },
+    {
+      "frame": 8,
+      "stage": "ancient",
+      "variant": 0,
+      "species": "greenwood",
+      "kind": "broadleaf",
+      "path": "raw/tree-ancient-00.png",
+      "normalizedPath": "structure-frames/tree-ancient-00.png",
+      "sha256": "00ddf4c6aab92ccecb6c06ab40c2b99d36b41af6d0be36d7c204d36bb24e2196"
+    },
+    {
+      "frame": 9,
+      "stage": "ancient",
+      "variant": 1,
+      "species": "shadebark",
+      "kind": "conifer",
+      "path": "raw/tree-ancient-01.png",
+      "normalizedPath": "structure-frames/tree-ancient-01.png",
+      "sha256": "1f8a089a35db302430af404010036afda7829a2b43724966dba161e9f6544ec4"
+    },
+    {
+      "frame": 10,
+      "stage": "ancient",
+      "variant": 2,
+      "species": "ironleaf",
+      "kind": "sparse",
+      "path": "raw/tree-ancient-02.png",
+      "normalizedPath": "structure-frames/tree-ancient-02.png",
+      "sha256": "73578340f12bcebee81c4f2c55d273f85336781363aee2fd2a3ec058f5de8de3"
+    },
+    {
+      "frame": 11,
+      "stage": "ancient",
+      "variant": 3,
+      "species": "paleoak",
+      "kind": "broadleaf",
+      "path": "raw/tree-ancient-03.png",
+      "normalizedPath": "structure-frames/tree-ancient-03.png",
+      "sha256": "5a0c81b51bb27feab191838523de53758339ee1eeb00ff55afb6190b860532a5"
+    }
+  ],
+  "provenance": {
+    "cleanRoom": true,
+    "method": "deterministic Blender structure render plus local anchor normalization",
+    "seed": 7341,
+    "camera": {
+      "projection": "orthographic",
+      "location": [
+        7.4,
+        -9.4,
+        7.1
+      ],
+      "target": [
+        0.0,
+        0.0,
+        2.45
+      ],
+      "orthoScale": 7.35,
+      "resolution": [
+        640,
+        640
+      ],
+      "anchor": [
+        320,
+        574
+      ]
+    },
+    "sourceHash": "8840d3eb33a56b75bd992691f863e4af727f9b3090568c726d0d9dee17b07f03",
+    "externalAssets": [],
+    "img2img": null,
+    "note": "Blender owns silhouette and registration. Any later img2img candidate must preserve alpha, anchor, stage scale, and frame identity."
+  }
+}

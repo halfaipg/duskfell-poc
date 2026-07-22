@@ -76,6 +76,13 @@ assets; server map and terrain-detail data own walkability, elevation,
 collision, resources, decay, and gameplay state. A painted river or rock is not
 authoritative merely because it appears in a generated image.
 
+The July 22 tree-family proof applies the same rule to environment props. A
+seeded Blender scene owns trunk, root, branch, canopy, camera, species, stage,
+and anchor structure; img2img supplies only the illustrated surface. The
+finished 12-frame family is hash-pinned behind `?trees=blender`, passes automated
+alpha/anchor/scale gates, and remains review-state until human art approval.
+See `docs/art/blender-img2img-pipeline.md` for commands and evidence.
+
 ## July 7, 2026 Decision Update
 
 The current camera/projection contract is right for the target: the live PoC renders `64x64` square diamond tiles in `military-plan-oblique` projection, not the common squashed `64x32` dimetric look. The graphics problem is asset quality and terrain richness, not the camera math. The placeholder atlas reads flat and repetitive, with weak terrain transitions, elevation character, props, shadows, and sprite identity.
@@ -279,6 +286,24 @@ The immediate fix is not to keep generating dressed sprites. Duskfell should use
 7. **Preview bake:** Generate contact sheets and animation previews for every direction before shipping to the browser. A still sheet can look good while the walk is bad.
 8. **Player-card portrait:** Generate a matching full-body front-facing 2D portrait for every player paperdoll. Store it at `assets/sprites/player-cards/<paperdoll-id>-front.png`. Default/base cards must be minimally clothed; do not show armor, cloaks, weapons, boots, or class outfits until those layers are actually equipped.
 9. **Pipeline audit:** Run `npm run sprites:pipeline` for the current one-shot truth report. It verifies that player paperdolls are body-only, checks player-card portraits, counts available equipment overlays, runs the gait analyzer, and reports the next blocking art action.
+
+The Blender locomotion v2 review now supplies a stronger structural body source
+than the old generated paperdoll sheet. It is deliberately separate from the
+default manifest until style finishing and overlay registration are complete:
+
+```sh
+npm run sprites:locomotion:structure
+npm run sprites:locomotion:validate
+# live review: /game.html?world=valley-v2&character=blender
+```
+
+Its validator proves cell/hash integrity, no clipping, one connected body,
+eight-direction scale coherence, pose change, leg spread, minimum walk height,
+and bounded locomotion extent. The imported action is neutralized around its
+average looping pose before bounded motion is transferred, avoiding the static
+rig correction that distorted earlier attempts. Moving proof and live-world
+review accept this motion structure for finishing; those checks do not certify
+the raw skin material, portrait, equipment layers, or illustrated art quality.
 
 Tooling decision after the focused clone inspection:
 

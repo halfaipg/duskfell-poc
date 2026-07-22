@@ -8,12 +8,12 @@ mod env;
 mod network;
 mod public_deployment;
 
-pub(crate) use self::auth::{
-    account_auth_config, validate_account_jwt, AccountAuthConfig, AccountAuthMode,
-    MAX_AUTH_TOKEN_BYTES, MAX_JWT_AUDIENCE_BYTES, MAX_JWT_ISSUER_BYTES,
-};
 #[cfg(test)]
-pub(crate) use self::auth::{validate_account_subject, MAX_ACCOUNT_SUBJECT_BYTES};
+pub(crate) use self::auth::MAX_ACCOUNT_SUBJECT_BYTES;
+pub(crate) use self::auth::{
+    account_auth_config, validate_account_jwt, validate_account_subject, AccountAuthConfig,
+    AccountAuthMode, MAX_AUTH_TOKEN_BYTES, MAX_JWT_AUDIENCE_BYTES, MAX_JWT_ISSUER_BYTES,
+};
 pub(crate) use self::budget::{validate_runtime_budget_config, RuntimeBudgetConfig};
 pub(crate) use self::env::{
     admission_backend, bind_addr, deployment_profile, env_bool, env_optional_nonempty_string,

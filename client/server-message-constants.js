@@ -1,4 +1,5 @@
 export const MAX_PLAYERS = 512;
+export const MAX_NPCS = 128;
 export const MAX_OBJECTS = 4096;
 export const MAX_INVENTORY_SLOTS = 32;
 export const MAX_RESOURCE_COUNT = 999;

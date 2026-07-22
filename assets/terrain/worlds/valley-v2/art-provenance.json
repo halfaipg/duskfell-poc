@@ -1,0 +1,21 @@
+{
+  "schema": "duskfell-art-provenance-v1",
+  "assets": [
+    {
+      "id": "valley-v2-loam-ground-v1",
+      "file": "loam-ground-v1.png",
+      "sha256": "cd4077087a272c4b8caa572165010bf85d1e9c04699be7d0e03f92ec9d0b66ac",
+      "generator": "OpenAI built-in image generation",
+      "reference": "user-approved Duskfell ground-look reference",
+      "intent": "surface-only painted loam ground patch",
+      "constraints": ["no props", "no characters", "no visible tile border"]
+    },
+    {
+      "id": "valley-v2-meadow-ground-v1",
+      "file": "meadow-ground-v1.png",
+      "sha256": "99d9385ca6196efa0495f124cb5bea0ace35fe462c14e17e4814cf376f6596a1",
+      "derivedFrom": "valley-v2-loam-ground-v1",
+      "operation": "deterministic olive tint and saturation restraint"
+    }
+  ]
+}

@@ -10,6 +10,8 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 COPY Cargo.toml Cargo.lock ./
+COPY animus/Cargo.toml animus/Cargo.toml
+COPY animus/src animus/src
 COPY server/Cargo.toml server/Cargo.toml
 COPY server/src server/src
 COPY server/data server/data

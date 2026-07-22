@@ -230,6 +230,67 @@
       ]
     },
     {
+      "id": "terrain.cliff-face.affine-v1",
+      "version": 1,
+      "status": "runtime-review",
+      "kind": "vertical-cliff-surface",
+      "deterministic": true,
+      "files": [
+        "assets/terrain/candidates/cliff-face-handpainted-v2.json",
+        "assets/terrain/ground-patches/biome-cliff-v2.webp",
+        "client/terrain-draw-surface.js"
+      ],
+      "editorKnobs": [
+        "source painting",
+        "source pixels per tile",
+        "source pixels per elevation drop",
+        "face orientation shade",
+        "ledge contrast"
+      ],
+      "invariants": [
+        "source art is a straight-on vertical geological face",
+        "adjacent wall tiles sample one continuous horizontal source run",
+        "texture follows the projected wall basis instead of an axis-aligned bounding box",
+        "minor terraces do not receive bright repeated outlines",
+        "collision and height authority remain unchanged"
+      ],
+      "outputs": [
+        "affine-mapped cliff wall faces",
+        "orientation-aware face shading"
+      ]
+    },
+    {
+      "id": "terrain.mountain-crown.scree-v1",
+      "version": 1,
+      "status": "runtime-review",
+      "kind": "top-down-mountain-surface",
+      "deterministic": true,
+      "files": [
+        "assets/terrain/candidates/scree-handpainted-v2.json",
+        "assets/terrain/ground-patches/biome-scree-v2.webp",
+        "client/terrain-ground-patches.js"
+      ],
+      "editorKnobs": [
+        "source painting",
+        "rock body threshold",
+        "scree skirt threshold",
+        "fracture scale",
+        "palette unifier"
+      ],
+      "invariants": [
+        "source art is directly overhead with no side-view cliffs",
+        "summit rock shares the charcoal and umber cliff-face palette",
+        "rock bodies and skirts derive from the authoritative world rock field",
+        "world-space texture bombing avoids tile-grid repetition",
+        "collision and height authority remain unchanged"
+      ],
+      "outputs": [
+        "painted mountain crowns",
+        "rock-to-soil scree skirts",
+        "steep-slope fracture texture"
+      ]
+    },
+    {
       "id": "terrain.runtime.world-aligned-sampling.v1",
       "version": 1,
       "status": "runtime-review",

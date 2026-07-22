@@ -72,6 +72,34 @@ export async function validateGroundPatchImages(manifest, manifestDir, errors) {
   );
 }
 
+export async function validateWorldMapImage(manifest, manifestDir, errors) {
+  const worldMap = manifest?.worldMap;
+  if (!isObject(worldMap) || !isSafeRelativePath(worldMap.image)) return;
+  const imagePath = path.resolve(manifestDir, worldMap.image);
+  if (!isSubpath(manifestDir, imagePath)) return;
+
+  let dimensions;
+  let imageBytes;
+  try {
+    imageBytes = await readFile(imagePath);
+    dimensions = readGroundPatchDimensions(imageBytes, path.extname(worldMap.image));
+  } catch (err) {
+    errors.push(`worldMap.image could not be read: ${err.message}`);
+    return;
+  }
+  if (dimensions.width !== worldMap.width || dimensions.height !== worldMap.height) {
+    errors.push(
+      `worldMap.image dimensions ${dimensions.width}x${dimensions.height} do not match declared ${worldMap.width}x${worldMap.height}`,
+    );
+  }
+  if (isSha256Hex(worldMap.sha256)) {
+    const actualHash = sha256Hex(imageBytes);
+    if (actualHash !== worldMap.sha256) {
+      errors.push(`worldMap.sha256 ${worldMap.sha256} does not match actual image hash ${actualHash}`);
+    }
+  }
+}
+
 export function readGroundPatchDimensions(bytes, extension) {
   if (extension.toLowerCase() === ".png") return readPngDimensions(bytes);
   return readWebpDimensions(bytes);

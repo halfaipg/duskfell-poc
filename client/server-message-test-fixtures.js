@@ -97,6 +97,8 @@ export function validTerrain() {
   return {
     profile: "duskfell-terrain-v1",
     seed: 7341,
+    detailAuthorityEnabled: true,
+    visualDetailEnabled: true,
     unitsPerTile: 64,
     tileWidth: 64,
     tileHeight: 64,
@@ -105,7 +107,9 @@ export function validTerrain() {
     maxElevation: 4,
     waterLevel: -1,
     maxWalkableStep: 1,
+    vertexHeightPrecision: 1000,
     materials: ["grass", "field", "dirt", "stone", "water", "settlement", "cobble", "rock", "ruin", "shore"],
+    trails: [],
   };
 }
 

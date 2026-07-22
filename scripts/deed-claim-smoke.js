@@ -1,5 +1,7 @@
 import { performance } from "node:perf_hooks";
 
+import { parseServerMessage } from "../client/server-messages.js";
+
 const args = parseArgs(process.argv.slice(2));
 const url = args.url ?? "ws://127.0.0.1:4107/ws";
 const timeoutMs = Number(args.timeoutMs ?? 8000);
@@ -24,6 +26,7 @@ let error = null;
 
 try {
   socket = new WebSocket(wsUrl);
+  socket.binaryType = "arraybuffer";
   await runSmoke();
 } catch (err) {
   error = err;
@@ -70,7 +73,7 @@ async function runSmoke() {
     });
 
     socket.addEventListener("message", (event) => {
-      const message = JSON.parse(String(event.data));
+      const message = parseServerMessage(event.data);
       if (message.type === "welcome") {
         playerId = message.playerId;
         latestSnapshot = message.snapshot;

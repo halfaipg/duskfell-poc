@@ -52,6 +52,10 @@ test("builds deterministic military-projection terrain with slopes and transitio
     "expected sunken courtyard to expose multi-floor interior metadata",
   );
   assert.ok(
+    terrain.interiorSpaces.some((space) => space.kitKind === "sunken-courtyard" && space.rooms.length >= 3 && space.occluders.length >= 3),
+    "expected sunken courtyard to expose room-scoped roof groups",
+  );
+  assert.ok(
     terrain.interiorSpaces.some((space) =>
       space.portals?.some((portal) => portal.kind === "stairs" && portal.fromFloor === 0 && portal.toFloor === 1),
     ),

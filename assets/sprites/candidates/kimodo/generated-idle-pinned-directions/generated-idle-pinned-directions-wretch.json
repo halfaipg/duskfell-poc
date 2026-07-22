@@ -1,0 +1,83 @@
+{
+  "schemaVersion": "duskfell-kimodo-retarget-proof-v1",
+  "approvalState": "review",
+  "motion": {
+    "schemaVersion": "duskfell-kimodo-motion-receipt-v1",
+    "source": "/Users/j/Documents/New project/uo-chain-sandbox-poc/var/kimodo/idle-pinned.npz",
+    "sha256": "3a56d8a9ea6e4f2463d714f4835792f0556e0e26b30b6f5e6051b15d6bcab24e",
+    "bytes": 392210,
+    "skeleton": "somaskel77",
+    "fps": 30,
+    "frames": 60,
+    "durationSeconds": 2.0,
+    "jointCount": 77,
+    "keys": [
+      "foot_contacts",
+      "global_root_heading",
+      "global_rot_mats",
+      "local_rot_mats",
+      "posed_joints",
+      "root_positions",
+      "smooth_root_pos"
+    ],
+    "rootRangeMeters": [
+      0.0028057597810402513,
+      0.0008143186569213867,
+      0.004834322491660714
+    ],
+    "rotationChecks": {
+      "maximumOrthogonalityError": 4.878460416080088e-06,
+      "maximumDeterminantError": 5.818516034761245e-06
+    }
+  },
+  "target": "wretch",
+  "targetFile": "/Users/j/Documents/New project/uo-chain-sandbox-poc/var/blender/wretch-factory.blend",
+  "action": "Duskfell|Kimodo|generated-idle-pinned-directions",
+  "actionFrames": 60,
+  "sourceFrameRange": [
+    1,
+    60
+  ],
+  "fps": 30,
+  "sampledFrames": [
+    1,
+    21,
+    40,
+    60
+  ],
+  "directions": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north",
+    "north-west",
+    "west",
+    "south-west"
+  ],
+  "rootYawDegrees": [
+    -45,
+    0,
+    45,
+    90,
+    135,
+    180,
+    -135,
+    -90
+  ],
+  "cell": {
+    "width": 128,
+    "height": 160
+  },
+  "coordinateConversion": "Kimodo +X right/+Y up/+Z forward to Blender +X right/+Z up/-Y forward",
+  "retargetMode": "position-directions-soma77-review",
+  "motionStyle": "source",
+  "uprightLocomotion": false,
+  "hiddenMeshes": [
+    "uo_wretch.cortu_short_messy_hair"
+  ],
+  "rootMotion": "horizontal trajectory removed; vertical hip motion retained in the authored action",
+  "blend": "var/kimodo/generated-idle-pinned-directions-wretch.blend",
+  "sheet": "assets/sprites/candidates/kimodo/generated-idle-pinned-directions/generated-idle-pinned-directions-wretch-8x4.png",
+  "sheetSha256": "3965b95390409cbce11ad62f82a2cf6961fb3c4c7aa7bf727720baa8b3d94595"
+}

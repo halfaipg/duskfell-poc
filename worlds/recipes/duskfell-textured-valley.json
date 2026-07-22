@@ -1,0 +1,106 @@
+{
+  "schema": "duskfell-world-recipe-v3",
+  "id": "duskfell-textured-valley",
+  "seed": 74291,
+  "dimensions": { "cols": 64, "rows": 64, "unitsPerTile": 64 },
+  "source": {
+    "type": "synthetic-v2",
+    "repository": "https://github.com/halfaipg/duskfell-poc",
+    "license": "project-original",
+    "model": "duskfell-synthetic-v2"
+  },
+  "placement": { "targetCols": 192, "targetRows": 128, "offsetX": 64, "offsetY": 32 },
+  "macro": {
+    "tiles": 32,
+    "apronTiles": 4,
+    "gameplayPixelsPerTile": 32,
+    "travelPixelsPerTile": 16,
+    "worldMapPixelsPerTile": 8
+  },
+  "terrain": {
+    "valleyCenterX": 31.5,
+    "valleyHalfWidth": 17,
+    "lake": { "x": 34, "y": 43, "radiusX": 7.5, "radiusY": 5.5 },
+    "snowline": 0.88,
+    "riverWidth": 1.45
+  },
+  "erosion": {
+    "enabled": true,
+    "iterations": 6,
+    "rainfall": 0.012,
+    "evaporation": 0.34,
+    "flowRate": 0.62,
+    "sedimentCapacity": 3.2,
+    "erosionRate": 0.13,
+    "depositionRate": 0.21,
+    "minimumSlope": 0.001,
+    "talus": 0.028,
+    "thermalRate": 0
+  },
+  "hydrology": {
+    "maxTributaries": 4,
+    "minTributaryLengthTiles": 6,
+    "watershedOutletBucketTiles": 8,
+    "shorelineThreshold": 0.45
+  },
+  "climate": {
+    "latitudeSouthDegrees": 43,
+    "latitudeNorthDegrees": 49,
+    "prevailingWind": "west-to-east",
+    "annualTemperature": 0.76,
+    "latitudeCooling": 0.12,
+    "elevationLapse": 0.48,
+    "seasonalAmplitude": 0.24,
+    "oceanMoisture": 0.58,
+    "orographicLift": 1.35,
+    "waterHumidityRadiusTiles": 10,
+    "fogHumidityThreshold": 0.7
+  },
+  "planning": {
+    "settlements": 3,
+    "minSettlementSpacing": 16,
+    "maxTrailSlope": 0.78,
+    "trailWidth": 1.15
+  },
+  "ecology": {
+    "maxResourceNodes": 96,
+    "minResourceSpacingTiles": 1.45,
+    "minHabitatPatchTiles": 6,
+    "landmarkCount": 4,
+    "minLandmarkSpacingTiles": 10
+  },
+  "palette": {
+    "meadow": "#65794a",
+    "loam": "#715f47",
+    "rock": "#696a64",
+    "snow": "#d9dedb",
+    "wetland": "#465f4f",
+    "water": "#315e66"
+  },
+  "illustration": {
+    "enabled": true,
+    "execution": "chunked-v1",
+    "provider": "duskfell-authority-compositor",
+    "model": "ground-patch-compositor-v1",
+    "controlRenderer": "structural-raster-v1",
+    "controlSamplesPerTile": 4,
+    "strength": 1,
+    "steps": 1,
+    "cfgScale": 1,
+    "sampler": "deterministic-composite",
+    "maxLongEdge": 1536,
+    "promptVersion": "duskfell-authority-compositor-v1",
+    "prompt": "Blend project-owned ground paintings under continuous biome, climate, height, water, trail, and settlement authority without inventing geography.",
+    "inputAssets": {
+      "meadow": { "path": "assets/terrain/ground-patches/biome-meadow.webp", "sha256": "76112f8ee92e9d0151225b3de165c1956134c8aa53619b801927d9308fd451e0" },
+      "loam": { "path": "assets/terrain/ground-patches/biome-heath.webp", "sha256": "abf285c77344e53c2203d8053e0d5b3c5b7127f1a9f4e787429a258aaa67416c" },
+      "rock": { "path": "assets/terrain/ground-patches/biome-scree-v2.webp", "sha256": "cab53c2bc1c0be769fb56764d25d9a5efebf7542c912ec9483f2fd17af346d28" },
+      "snow": { "path": "assets/terrain/ground-patches/biome-frost.webp", "sha256": "e8c069b470780870677ca650da5469b77dbf76fa95d7b00929616253e53d5ef0" },
+      "wetland": { "path": "assets/terrain/ground-patches/biome-fen.webp", "sha256": "f249ce629c83e826c5f09e1c07bf2b1efeb7814e08f8665f802f21b907a769a7" },
+      "water": { "path": "assets/terrain/ground-patches/biome-stream-water.webp", "sha256": "2d73185dc3bb9fac0fa596afa919ea567cef9ca432eb67dff5d8002cddbf14e3" },
+      "trail": { "path": "assets/terrain/ground-patches/biome-trail.webp", "sha256": "935a08fff25272b9a316486dfcd95fb8bbdca4717528a1170b59e03c4edca712" },
+      "settlement": { "path": "assets/terrain/ground-patches/worn-a.png", "sha256": "1ac88160012d63bc23970d81218d9beae9951fb34a2d1384aa8ea0703ae819f7" }
+    },
+    "gates": { "waterF1": 0.72, "snowF1": 0.58, "riverCenterOffsetTiles": 1.5, "trailRecall": 0.24, "settlementRecall": 0.35, "minEntropy": 0.79, "minEdgeEnergy": 0.02 }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "model": "Krea 2 Turbo",
+  "prompt": "Clean-room Duskfell environment sprite production sheet, exactly eight isolated vegetation sprites arranged in a strict 4 by 2 grid with large equal gutters. Original late-1990s pre-rendered dark-fantasy RPG visual language upgraded to high definition: naturalistic hand-painted texture, gritty subdued northern-European colors, irregular botanical silhouettes, dense internal detail, dark fine branch structure, restrained highlights, no glossy vector shapes. Fixed military-plan-oblique orthographic gameplay camera, square-plan 45 degree oblique view from above, coherent warm upper-left key light, consistent scale, every sprite aligned to a bottom-center ground anchor. Uniform flat saturated magenta studio matte behind all objects, no floor and no scenery. Top row: dense low meadow grass clump; broad grass and sedge clump with restrained seed heads; mature irregular hawthorn scrub bush; smaller young hawthorn scrub bush. Bottom row: low purple-flowering heath clump; asymmetric dying yellow-olive bush; intricate dead thorn scrub with many fine twigs; low harvested hawthorn stump with fresh dense regrowth. Grass must read as lush coherent tussocks, never individual sprouts scattered across terrain. Bushes must read as believable scrub, never trees, cacti, icons, or clipart. No words, borders, panels, people, pots, rocks, trees, watermark, checkerboard, copied game assets, or baked ground shadows.",
+  "negative_prompt": "vector, clipart, mobile game icon, cartoon, glossy, plastic, cactus, tree, bonsai, paddle leaves, sparse isolated blades, lawn, pattern, terrain tile, floor, ground square, white box, gray box, checkerboard, text, label, logo, watermark, person, building",
+  "size": "1216x832",
+  "n": 1,
+  "response_format": "b64_json",
+  "output_format": "png"
+}

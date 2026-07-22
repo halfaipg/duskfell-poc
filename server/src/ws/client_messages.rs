@@ -3,7 +3,7 @@ use tracing::error;
 use crate::ingress::{ClientIngress, IngressRejectReason};
 use crate::journal::JournalEventKind;
 use crate::protocol::{ClientMessage, PlayerId};
-use crate::sim::PlayerInput;
+use crate::sim::{ActorId, ActorIntent, PlayerInput};
 use crate::tick_loop::record_journal;
 use crate::AppState;
 
@@ -46,7 +46,47 @@ pub(super) async fn handle_client_text(
             false
         }
         Ok(ClientMessage::Say { text }) => {
-            state.sim.lock().await.player_say(player_id, &text);
+            if let Err(reason) = ingress.allow_say() {
+                record_rejection(state, player_id, reason).await;
+                return true;
+            }
+            let applied = {
+                let mut sim = state.sim.lock().await;
+                let Ok(applied) = sim.apply_actor_intent(
+                    ActorId::Player(player_id),
+                    ActorIntent::Say {
+                        text,
+                        audience: None,
+                    },
+                ) else {
+                    return false;
+                };
+                applied
+            };
+            if let Some(target) = applied.nearby_npc {
+                let accepted = state
+                    .cognition
+                    .as_ref()
+                    .map(|bridge| {
+                        bridge
+                            .events
+                            .try_send(animus::GameEvent::ActorSpoke {
+                                npc_id: target.id.clone(),
+                                actor_id: player_id.to_string(),
+                                actor_name: applied.actor_name,
+                                text: applied.clean_text,
+                            })
+                            .is_ok()
+                    })
+                    .unwrap_or(false);
+                if !accepted {
+                    let _ = state
+                        .sim
+                        .lock()
+                        .await
+                        .apply_npc_canned_intent(&target.id, player_id);
+                }
+            }
             false
         }
         Ok(ClientMessage::Rename { name }) => {

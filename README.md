@@ -16,6 +16,7 @@ The PoC currently proves the first production-shaped loop:
 - Configurable max-active WebSocket admission control before player entities are created.
 - Configurable WebSocket heartbeat and stale-connection timeout.
 - Interest-filtered WebSocket snapshots so clients receive nearby shard state instead of the full world.
+- Content-authored static NPCs with proximity speech, bounded `say`-only cognition, and deterministic offline fallback dialogue.
 - Server-authoritative resource gathering from original grove/ore nodes into bounded per-player inventory stacks, with resource summaries and journaled gather events.
 - Server-authoritative starter crafting at the Field Forge, consuming `wood + ore` into a crafted inventory item with a journaled craft event.
 - A dry-run "Title Office" deed claim that updates gameplay instantly.
@@ -169,9 +170,11 @@ Important current docs:
 - [Development Constitution](docs/development-constitution.md)
 - [Refactor Map](docs/refactor-map.md)
 - [Architecture](docs/architecture.md)
+- [NPC Cognition](docs/npc-cognition.md)
 - [Security](docs/security.md)
 - [Rendering](docs/rendering.md)
 - [Art Pipeline](docs/art-pipeline.md)
+- [Terrain Constitution](docs/TERRAIN-CONSTITUTION.md)
 - [Reference Research](docs/reference-research.md)
 
 ## Local Inspection
@@ -271,7 +274,7 @@ Set `MAX_ACTIVE_CONNECTIONS` to cap concurrent WebSocket players before spawning
 Set `MAX_CONNECTIONS_PER_IP` to cap concurrent WebSocket players from one peer IP before consuming a one-use session ticket or spawning sim entities. The default is `64`.
 Set `MAX_CONNECTIONS_PER_ACCOUNT` to cap concurrent authenticated WebSocket players from one account subject before consuming a one-use session ticket or spawning sim entities. The default is `4`. This is an in-process PoC guardrail; production should enforce the same boundary in shared admission/router state.
 Set `SNAPSHOT_INTERVAL_MS` to tune per-client WebSocket snapshot cadence. The default is `50`, matching the 20 Hz sim tick; higher values reduce bandwidth and serialization work at the cost of visual update rate.
-Set `INTEREST_RADIUS` to tune how many world units around each player are included in WebSocket snapshots. The default is `520`. Lower values reduce per-client payload size; `/api/snapshot` remains a full admin/debug snapshot.
+Set `INTEREST_RADIUS` to tune how many world units around each player are included in WebSocket snapshots. The default is `1800`, covering the normal plan-oblique camera envelope plus an offscreen arrival margin. Lower values reduce per-client payload size but can reintroduce visible entity pop-in; `/api/snapshot` remains a full admin/debug snapshot.
 Set `MAX_SNAPSHOT_BYTES` to cap serialized WebSocket welcome/snapshot payloads. The default is `65536`; payloads above the cap are rejected and the connection is closed instead of sending an unexpectedly large update.
 Set `MAX_ADMIN_SNAPSHOT_BYTES` to cap the serialized full debug/admin `/api/snapshot` response. The default is `262144`; oversized debug snapshots return `413` and increment `sundermere_admin_snapshot_payload_rejected_total`.
 Set `WS_HEARTBEAT_SECONDS` and `WS_IDLE_TIMEOUT_SECONDS` to tune WebSocket ping cadence and stale-connection eviction. Defaults are `30` and `180`; the idle timeout must be greater than the heartbeat interval.

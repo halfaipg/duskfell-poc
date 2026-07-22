@@ -3,6 +3,8 @@ import { mkdir } from "node:fs/promises";
 import { performance } from "node:perf_hooks";
 import path from "node:path";
 
+import { parseServerMessage } from "../client/server-messages.js";
+
 const args = parseArgs(process.argv.slice(2));
 const port = Number(args.port ?? 4136);
 const interestRadius = Number(args.interestRadius ?? 20);
@@ -33,6 +35,7 @@ try {
     const url = new URL(wsUrl);
     url.searchParams.set("session", session.sessionToken);
     const socket = new WebSocket(url);
+    socket.binaryType = "arraybuffer";
     sockets.push(socket);
     await waitForOpen(socket);
   }
@@ -100,6 +103,7 @@ async function startServer() {
       INTEREST_RADIUS: String(interestRadius),
       JOURNAL_PATH: path.join(runtimeDir, `${runId}-journal.jsonl`),
       SETTLEMENT_OUTBOX_PATH: path.join(runtimeDir, `${runId}-settlement-outbox.jsonl`),
+      MAX_RUNTIME_MANIFEST_BYTES: "1048576",
       REQUIRE_SESSION: "true",
       RUST_LOG: "sundermere_server=warn,tower_http=warn",
     },
@@ -114,7 +118,7 @@ async function startServer() {
     logs += String(chunk);
   });
 
-  await waitForHealth(child, logs);
+  await waitForHealth(child, () => logs);
   return child;
 }
 
@@ -126,7 +130,7 @@ async function observeInterestWindow(socket) {
   await new Promise((resolve, reject) => {
     const timeout = setTimeout(resolve, 700);
     socket.addEventListener("message", (event) => {
-      const message = JSON.parse(String(event.data));
+      const message = parseServerMessage(event.data);
       if (message.type === "welcome") {
         welcomePlayerCount = message.snapshot.players.length;
       } else if (message.type === "snapshot") {
@@ -170,11 +174,11 @@ async function waitForOpen(socket) {
   });
 }
 
-async function waitForHealth(child, logs) {
+async function waitForHealth(child, getLogs) {
   const deadline = performance.now() + 10000;
   while (performance.now() < deadline) {
     if (child.exitCode != null) {
-      throw new Error(`server exited during startup with code ${child.exitCode}: ${logs}`);
+      throw new Error(`server exited during startup with code ${child.exitCode}: ${getLogs()}`);
     }
     try {
       const response = await fetch(`${httpUrl}/healthz`);
@@ -186,7 +190,7 @@ async function waitForHealth(child, logs) {
     }
     await sleep(120);
   }
-  throw new Error(`server did not become healthy on ${httpUrl}: ${logs}`);
+  throw new Error(`server did not become healthy on ${httpUrl}: ${getLogs()}`);
 }
 
 async function stopServer(child) {

@@ -9,6 +9,12 @@ world-space contract.
 ## Current Contract
 
 - Projection is 64x64 military/plan-oblique, not 2:1 dimetric isometric.
+- Lighting is frame-current and shared across terrain, water, actors, and
+  details. Actors and sprite details cast their current alpha silhouette;
+  procedural scenery uses a sun-directed low-cost footprint plus contact
+  occlusion. Desktop terrain performs six sunward height-field taps for ridge
+  and mountain casting, while constrained devices retain dynamic Lambert
+  hillshade without the extra taps.
 - Terrain uses shared per-corner tile heights and samples the same height field
   for actors, props, and terrain details.
 - Actor and prop anchors use bilinear sub-tile height sampling, so walking
@@ -18,14 +24,36 @@ world-space contract.
   south, east, west, slope, normal, and lighting. Chunks expose aggregate height
   bounds so renderers can cull, shade, sort, and later build GPU buffers without
   recomputing those values ad hoc.
+- Generated worlds carry `duskfell-water-authority-v1` at canonical terrain
+  resolution: wet mask, world-level surface height, physical depth, D8 flow
+  direction, and flow strength. Exact apron slices stream with terrain chunks.
+  GPU water animation follows this flow, bridge planning samples the same mask,
+  and Rust collision rejects authoritative depth even before a coarse material
+  is classified as water.
 - Every tile carries explicit biome channels for elevation, moisture, rockiness,
   dryness, settlement pressure, plaza pressure, path pressure, north/south path
   pressure, east/west path pressure, shore path pressure, water pressure, shore
   pressure, vegetation, and detail density.
+- The world content also carries bounded named trail routes. A deterministic
+  A* authoring pass derives them from the baked material and elevation grids,
+  refusing water, massif rock, and steps above the server movement limit. The
+  server validates route IDs, widths, bounds, and payload caps before exposing
+  them to clients. The same route pressure clears terrain detail and paints
+  worn ground. World-map intake first renders a pathless control directly from
+  authoritative materials and vertex heights, then rejects painted enrichment
+  unless overall semantics, mountain recall, and water recall clear fixed drift
+  gates. The route field is baked only after that acceptance step with
+  terrain-relative color and deterministic edge noise; the runtime client never
+  draws trail polylines. This keeps gameplay and cartography from drifting into
+  separate geographies without making the map read like a debug diagram. This
+  route layer is the intended
+  ownership boundary for a future in-game level editor.
 - Every tile also carries a terrain composition record with a named zone
   (`water`, `plaza`, `road`, `shore`, `ridge`, `grove`, `scrub`, or `meadow`),
   elevation/moisture bands, road axis, detail family, object band, optional
-  composition-kit membership, and density budget. Materials, decals, detail
+  composition-kit membership, density budget, and a correlated habitat record
+  (`open`, `woodland`, `wetland`, `rocky`, or `scrub`) with core/edge/open band,
+  strength, clearance, and negative-space pressure. Materials, decals, detail
   objects, and debug overlays use that shared composition layer instead of each
   renderer inventing its own terrain meaning.
 - Every tile now resolves that composition into a terrain family profile such as
@@ -59,6 +87,10 @@ world-space contract.
 - Procedural materials, transitions, decals, elevation edges, and details are
   generated from the map seed, tile biome channels, composition zone, and
   composition kit membership.
+- Generated v2 worlds expose normalized continuous material-family fields for
+  meadow, loam, wet soil, banks, beaches, scree, cliffs, snow, water, roads,
+  and settlements. The client bilinearly paints those fields through approved
+  ground sources, so banks and scree skirts do not jump at tile or chunk edges.
 - Terrain details now include footprint metadata. Larger statics such as trees,
   ruins, and boulders reserve tile-space before spawning so groves,
   ridges, and shorelines have depth without overlapping into visual noise.
@@ -76,6 +108,22 @@ world-space contract.
   `decayConsumers` recipes that constrain which organic resources an authored
   terrain-detail mycelium node can passively consume. Multi-resource yields
   remain metadata until a later authority pass.
+- A world may set `map.terrain.detailAuthorityEnabled` to `false` while its
+  painted terrain and procedural detail placement are being reconciled. Scenic
+  details can remain visible when `map.terrain.visualDetailEnabled` is true,
+  but the client strips their authority ids, blocking footprints, resources,
+  consumption recipes, and lifecycle cues. The checked authority manifest then
+  contains empty blocker, resource, and decay arrays, and procedural interior
+  floor/roof spaces remain disabled, so invisible collision and elevation
+  offsets cannot survive a clean-slate world pass. Setting
+  `visualDetailEnabled` false removes scenic details independently. Geographic
+  terrain authority, trails, and explicit world objects remain active.
+- Ambient detail anchors now come from low-frequency habitat patches rather
+  than independent tile rolls. The placement gate reserves negative space,
+  clears water, steep faces, plazas, and trail pressure, and requires automated
+  adjacency evidence that details form clusters. In placed v2 worlds, ambient
+  placement is bounded to the authored source region; named composition kits
+  remain world-space features outside that footprint.
 - Tall detail statics expose a shared depth profile alongside their footprint.
   Ruins, masonry pieces, and staged tree canopies now declare vertical height,
   occlusion radius, fade alpha, and sort bias so the browser can keep the player
@@ -83,9 +131,10 @@ world-space contract.
 - Terrain can now expose explicit indoor spaces. The first space comes from the
   sunken courtyard kit and carries world bounds, reveal padding, two floor
   levels, a stair portal connecting the sunken floor to the upper gallery, and
-  roof opacity metadata. The browser draws its roof/upper shell as an occluding
-  layer and fades that layer when the local player steps inside, revealing the
-  interior floor, gallery outline, and active stair connector. Interior floor
+  roof opacity metadata. Interiors partition that footprint into floor-aware
+  room volumes and named roof groups. The browser fades only the sections
+  assigned to the local player's room, keeps adjacent rooms covered, and
+  reveals the interior floor, gallery outline, and active stair connector. Interior floor
   and portal metadata also contribute to `terrainHeightAtWorld(...)`: floor
   samples add the room's floor offset, and stair portals interpolate between
   their lower and upper floor heights even when they cross the room threshold.
@@ -219,6 +268,56 @@ world-space contract.
   `authority`, `biome`, `chunks`, `detail`, `elevation`, `kit`, `material`,
   `moisture`, `path`, `rock`, `transition`, `vegetation`, `walkability`, or
   `zone`.
+
+## Loam Vertical Slice
+
+`?verticalSlice=loam&dayTint=day&npcs=0` is the contained target-driven
+environment proof. It uses the real world height field, military-plan-oblique
+projection, chunk cache, player renderer, depth sorting, and day/night sun; it
+does not replace the world with a screenshot. The mode changes presentation
+only and does not alter server movement, collision, resources, trails, or
+durable world state.
+
+The slice is deliberately layered:
+
+- A reviewed top-down loam candidate supplies broad soil and fine aggregate.
+  The normal biome bomber keeps sampling world-aligned, while a restrained
+  warm glaze compresses furrow contrast. The slice omits the normal ecotone
+  overlay so its 20x20-tile review area stays visually quiet.
+- Rocks remain bottom-center anchored terrain details. They are independent of
+  the soil painting and therefore remain sortable, replaceable, and eligible
+  for future collision/resource promotion.
+- Grass is cached as sparse WebGL triangle clusters. Roots remain fixed,
+  blade tips receive coherent shader wind, colors follow the live sun, and the
+  2D fallback simply omits this enrichment. Density is derived from moisture,
+  rockiness, open-space pressure, and path pressure instead of being baked into
+  the ground image.
+- The review bush kit exercises young, mature, heath, dying, and dead stages.
+  Each instance carries lifecycle/resource metadata and shares the same sun,
+  wind, anchor, sorting, and occlusion conventions as manifest-backed details.
+  The current procedural canopy is a composition prototype, not final art.
+- Remote demo players are hidden only in this review mode so one real local
+  actor provides an honest scale reference.
+
+The verified desktop review held the HUD at 120 FPS at the normal gameplay
+camera. Promotion requires the same slice to hold at least 60 FPS on the low
+target profile, retain stable bottom-center anchors during movement, and pass
+day, dusk, and night review without exposing tile or chunk seams.
+
+The editor-facing contract is data, not pixels: a future level tool should
+write a composition-kit id, seed, 20x20 bounds, density curves, life-stage
+weights, verified ground-source id, and explicit prop overrides. Runtime code
+then resolves that recipe through the same ground, grass, detail, authority,
+and depth paths used here. Final bush sprites can replace the procedural
+prototype without changing placement or lifecycle data.
+
+The `valley-v2` illustrated runtime keeps static ground and animated water on
+one coordinate contract. `terrain:world:v2:restore` emits both the restored
+world painting and `water-authority-gameplay-v1.png`; the latter copies the
+accepted water field into an alpha mask at the 2048 gameplay LOD. Canvas and
+WebGL water crop that mask with the same source-region transform as the ground
+painting, so regenerated rivers cannot acquire a second visual centerline or
+spill their shimmer onto banks.
 
 ## Clean-Room Boundary
 

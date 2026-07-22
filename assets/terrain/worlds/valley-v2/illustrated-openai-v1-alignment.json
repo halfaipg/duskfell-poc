@@ -1,0 +1,22 @@
+{
+  "schema": "duskfell-illustrated-alignment-v1",
+  "candidate": "assets/terrain/worlds/valley-v2/illustrated-openai-v1.png",
+  "water": {
+    "intersection": 150,
+    "expectedCount": 268,
+    "predictedCount": 151,
+    "precision": 0.9933774834437086,
+    "recall": 0.5597014925373134,
+    "f1": 0.7159904534606204
+  },
+  "snow": {
+    "intersection": 332,
+    "expectedCount": 947,
+    "predictedCount": 556,
+    "precision": 0.5971223021582733,
+    "recall": 0.3505807814149947,
+    "f1": 0.44178310046573516
+  },
+  "riverMeanCenterOffsetTiles": 0.4074074074074074,
+  "accepted": false
+}

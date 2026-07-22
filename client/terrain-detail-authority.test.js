@@ -92,6 +92,35 @@ test("terrain exposes detail authority manifest for future server promotion", ()
   }
 });
 
+test("terrain detail authority can be disabled while scenic composition remains non-authoritative", () => {
+  const map = testMap();
+  map.terrain.detailAuthorityEnabled = false;
+
+  const terrain = buildTerrain(map);
+
+  assert.ok(terrain.details.length > 0);
+  assert.ok(terrain.details.every((detail) => detail.scenicOnly));
+  assert.ok(terrain.details.every((detail) => detail.authority === null));
+  assert.ok(terrain.details.every((detail) => detail.footprint.blocksMovement === false));
+  assert.ok(terrain.details.every((detail) => detail.resources.length === 0));
+  assert.deepEqual(terrain.detailAuthority.blockers, []);
+  assert.deepEqual(terrain.detailAuthority.resourceNodes, []);
+  assert.deepEqual(terrain.detailAuthority.decayConsumers, []);
+  assert.deepEqual(terrain.interiorSpaces, []);
+});
+
+test("visual terrain details can be disabled independently of gameplay authority", () => {
+  const map = testMap();
+  map.terrain.visualDetailEnabled = false;
+
+  const terrain = buildTerrain(map);
+
+  assert.deepEqual(terrain.details, []);
+  assert.deepEqual(terrain.detailAuthority.blockers, []);
+  assert.deepEqual(terrain.detailAuthority.resourceNodes, []);
+  assert.deepEqual(terrain.detailAuthority.decayConsumers, []);
+});
+
 test("organic terrain details expose lifecycle resources and mycelium decay hooks", () => {
   const terrain = buildTerrain(testMap());
   const trees = terrain.details.filter((detail) => detail.kind === "tree");

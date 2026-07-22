@@ -232,6 +232,53 @@ server/src/sim/terrain_authority/*
 scripts/generate-terrain-detail-authority.js
 ```
 
+Huge-world generation is hierarchical. `npm run worldgen:atlas` emits coarse
+continental elevation/climate/biome authority plus deterministic descriptors
+for every `192 x 128` region. `npm run worldgen:region` validates one descriptor
+and refines it into twenty-four `32 x 32` chunks with overlap aprons. Neighboring
+regions sample global coordinates and share exact boundary heights. The runtime
+promotion path retains those chunks. Chunked approved browser sessions skip the
+regional monolith and use a hash-verifying, bounded LRU to assemble moving
+terrain windows at global coordinates. Continental drainage supplies shared
+flow segments and reciprocal gates to regional refinement. Promoted Rust shards
+also omit duplicate monolithic terrain grids and reconstruct one bounded region
+from byte- and hash-pinned fixed-point chunks before startup. Manifest-v4
+review packages also crop gameplay-resolution controls for every chunk sample
+apron, record each core crop, and hash exact RGB overlap bands between
+neighbors. Validation decodes the controls and rejects even rehashed one-pixel
+seam drift. Accepted illustrated output is cropped into an equivalent visual
+set, validated again, and preserved by promotion. Approved clients skip the
+gameplay monolith, stream authority and illustrated chunks through independent
+bounded LRUs, and compose only the nearby apron-bearing window. Controls remain
+generation inputs and are never rendered as approved art.
+Recipes may select `illustration.execution: chunked-v1`. That mode records one
+resumable, hash-bound img2img job per visual control, uses deterministic
+coordinate-derived seeds, creates a pre-reconciliation candidate contact sheet,
+and promotes the complete request/response/output provenance tree. Completed
+jobs are reused only when their request, control, output bytes, dimensions, and
+hashes still match.
+`npm run worldgen:regions` adds durable multi-region scheduling over a validated
+atlas rectangle. Its atomic `batch.json` pins atlas/template identity and every
+accepted region manifest. Resume revalidates completed packages, retries only
+incomplete work, caps concurrency at four, and refuses identity or output drift.
+`npm run worldgen:preview -- --package PATH --port 4112` revalidates one package
+and boots it through the real Rust/client chunk path from an isolated
+hash-addressed `review` runtime under `var/world-previews/`. The browser requires
+the printed `preview=1` opt-in, and the command does not touch the approved-world
+registry or count as visual approval.
+Atlas-bound
+snapshots expose validated global origin and neighbor IDs, and outward movement
+emits a de-duplicated server handoff intent. The server has a bounded player-state
+export/import contract plus tested HS256 transfer tickets bound to atlas hash,
+source, destination, expiry, and one-use nonce. They are deliberately not wired
+to live sockets until a trusted region endpoint registry, source freeze/ack
+protocol, and shared durable replay ledger can make the whole handoff atomic.
+Coordinated cross-region elevation editing and local tributary curvature/erosion
+remain explicit follow-up work. Chunk illustration is independently scheduled
+inside each bounded region build. Bounded atlas-region
+terrain edits already replay against source-resolution rasters and fail closed
+if any generated edge value drifts.
+
 ## Settlement Boundary
 
 Settlement is asynchronous. Gameplay must not wait for chain writes.

@@ -15,6 +15,7 @@ pub(crate) use self::terrain_authority::load_terrain_detail_authority_for_sim;
 impl RuntimeManifest {
     pub(crate) fn load(
         assets_dir: &Path,
+        terrain_authority_path: &Path,
         content: ContentManifest,
         max_runtime_manifest_bytes: u64,
         max_runtime_asset_bytes: usize,
@@ -41,7 +42,7 @@ impl RuntimeManifest {
                     max_runtime_asset_bytes,
                 )?,
                 terrain_authority: load_terrain_authority_runtime_manifest(
-                    assets_dir,
+                    terrain_authority_path,
                     max_runtime_manifest_bytes,
                 )?,
             },

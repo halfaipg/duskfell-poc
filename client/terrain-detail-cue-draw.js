@@ -6,6 +6,7 @@ import {
 import { terrainResourceCues } from "./terrain-resource-cues.js";
 
 export function drawTerrainDetailLifecycleCues(ctx, detail, point, scale) {
+  if (detail.scenicOnly) return;
   if (detail.kind === "tree") {
     drawTerrainDetailTreeCues(ctx, detail, point, scale);
   } else if (detail.kind === "fallen-log" || detail.kind === "stump") {

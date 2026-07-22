@@ -4,6 +4,11 @@
 
 Duskfell art should use Blender/3D as the deterministic structure pass and img2img as the richness pass.
 
+This preserves Duskfell's illustrated plan-oblique identity while adopting the
+coherence of a physically assembled 3D scene. It is not a migration to a
+full-3D runtime and does not permit importing noncommercial OpenMMO code or
+mixed-provenance assets.
+
 Blender owns:
 - camera angle, scale, silhouettes, masks, depth, elevation, object placement, collision-aligned structure
 - repeatability for terrain chunks, paperdolls, equipment registration, walk-cycle poses, and provenance
@@ -13,6 +18,45 @@ Img2img owns:
 - the final UO-like illustrative surface that raw 3D does not provide
 
 This is now the preferred path over trying to make raw Blender renders look final.
+
+## Environment Prop Proof (July 22, 2026)
+
+The first complete environment-prop proof is a clean-room tree family with four
+species (`greenwood`, `shadebark`, `ironleaf`, and `paleoak`) across sapling,
+mature, and ancient stages. It deliberately adopts OpenMMO's structural
+discipline without using OpenMMO code or assets.
+
+The stages are separate and reproducible:
+
+1. `npm run sprites:trees:structure` renders twelve deterministic 640px Blender
+   structure frames into `raw/` and saves the source `.blend` plus camera/seed
+   manifest.
+2. `npm run sprites:trees:assemble` preserves the raw renders, writes aligned
+   192px frames into `structure-frames/`, and creates the fixed 4x3 review board.
+3. Img2img edits only the review board's surface treatment. The exact immutable
+   constraints and prompt are recorded in `img2img-request.json`.
+4. Chroma removal produces `tree-family-img2img-openai-v1-alpha.png`.
+5. `npm run sprites:trees:finish` finds transparent valleys between generated
+   rows, applies one board-wide scale, pins all trunk bases to `(96, 176)`, and
+   fails closed on clipping, alpha coverage, centering, or lifecycle-scale
+   regressions.
+
+The finished candidate passes with stage median heights of `82.5`, `137.5`, and
+`171` pixels. A repeated Blender render reproduced the exact structural board
+SHA-256, and rebuilding the finish reproduced the exact runtime-sheet SHA-256.
+Raw structure, normalized structure, AI output, alpha-cleaned output, and final
+candidate are intentionally separate artifacts.
+
+Review it in the running client with:
+
+```text
+/game.html?world=valley-v2&trees=blender
+```
+
+`client/tree-review-sprite.js` loads that candidate by a pinned hash. It replaces
+only the detail sheet for the explicit review URL and leaves the default runtime
+manifest untouched. Browser inspection passed at high and low quality with no
+warnings or errors. The candidate remains `review`, not production-approved.
 
 ## Reference Artifacts
 

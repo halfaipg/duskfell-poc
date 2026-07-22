@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "duskfell-authoritative-world-map-control-v3",
+  "status": "img2img-control",
+  "output": "world-map-authoritative-control-v3.png",
+  "outputSha256": "50d6bc0b363c02013cf0c242204d079083fd35b9199bf58c2b27d3d117a9bd05",
+  "dimensions": {
+    "width": 1536,
+    "height": 1024
+  },
+  "world": {
+    "path": "server/data/world.json",
+    "sha256": "f7e731e7b81435ade5cc10b44cf2185cce4701db93ca7916fc8dfbf114df551f"
+  },
+  "terrain": {
+    "cols": 192,
+    "rows": 128,
+    "unitsPerTile": 64,
+    "seed": 7341
+  },
+  "geometryAuthority": [
+    "materials",
+    "vertex heights",
+    "water",
+    "rock",
+    "biome boundaries"
+  ],
+  "excludes": [
+    "trails",
+    "labels",
+    "markers",
+    "ui"
+  ]
+}

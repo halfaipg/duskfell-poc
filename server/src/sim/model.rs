@@ -1,9 +1,10 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::f32::consts::FRAC_1_SQRT_2;
 
 use bevy_ecs::prelude::*;
 
-use crate::protocol::{ObjectKind, PlayerId, ResourceKind, TerrainSnapshot};
+use crate::protocol::{ObjectKind, PlayerId, RegionRoutingSnapshot, ResourceKind, TerrainSnapshot};
+use crate::region_routing::RegionHandoffIntent;
 use crate::settlement::SettlementJob;
 use crate::spatial::{Point, SpatialIndex};
 use crate::terrain::TerrainAuthority;
@@ -21,7 +22,10 @@ pub(super) const OBJECT_SOLID_RADIUS_SCALE: f32 = 0.45;
 pub(super) const INTERACT_RADIUS: f32 = 64.0;
 pub(super) const RESOURCE_GATHER_AMOUNT: u32 = 1;
 pub(super) const MAX_LIFECYCLE_AGE_YEARS: u32 = 1_000_000;
-pub const INTEREST_RADIUS: f32 = 520.0;
+// Covers the plan-oblique camera through a 1080p viewport plus an offscreen
+// arrival margin, so authoritative actors and props reach the client before
+// their sprites cross the visible edge.
+pub const INTEREST_RADIUS: f32 = 1_800.0;
 pub(super) const SPATIAL_CELL_SIZE: f32 = 256.0;
 pub(super) const SPAWN_SLOT_BASE_RADIUS: f32 = 92.0;
 pub(super) const SPAWN_SLOT_RING_STEP: f32 = 58.0;
@@ -60,6 +64,25 @@ pub(super) struct PlayerSpeech {
     pub(super) until_tick: u64,
 }
 
+#[derive(Debug, Clone)]
+pub(super) struct NpcState {
+    pub(super) id: String,
+    pub(super) name: String,
+    pub(super) persona: String,
+    pub(super) position: Position,
+    pub(super) radius: f32,
+    pub(super) color: String,
+    pub(super) canned: Vec<String>,
+    pub(super) canned_cursor: usize,
+    pub(super) speech: Option<PlayerSpeech>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct NpcTalkTarget {
+    pub id: String,
+    pub persona: String,
+}
+
 #[derive(Component, Debug, Clone)]
 pub(super) struct WorldObject {
     pub(super) id: String,
@@ -80,6 +103,7 @@ pub struct PlayerInput {
 
 #[derive(Debug, Default)]
 pub struct SimTickOutcome {
+    pub region_handoff_intents: Vec<RegionHandoffIntent>,
     pub settlement_jobs: Vec<SettlementJob>,
     pub resource_events: Vec<ResourceGatheredEvent>,
     pub resource_feed_events: Vec<ResourceFedEvent>,
@@ -114,6 +138,7 @@ pub(super) struct MapBounds {
     pub(super) width: f32,
     pub(super) height: f32,
     pub(super) safe_zone_radius: f32,
+    pub(super) region: Option<RegionRoutingSnapshot>,
     pub(super) terrain_snapshot: TerrainSnapshot,
     pub(super) spawn: Position,
 }
@@ -124,8 +149,10 @@ pub struct SimWorld {
     pub(super) tick: u64,
     pub(super) map: MapBounds,
     pub(super) players: HashMap<PlayerId, Entity>,
+    pub(super) npcs: HashMap<String, NpcState>,
     pub(super) inputs: HashMap<PlayerId, PlayerInput>,
     pub(super) interact_latches: HashMap<PlayerId, bool>,
+    pub(super) region_handoff_latches: HashSet<PlayerId>,
     pub(super) player_name_index: HashMap<String, PlayerId>,
     pub(super) player_index: SpatialIndex<Entity>,
     pub(super) object_entities: HashMap<String, Entity>,

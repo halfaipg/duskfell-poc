@@ -1,0 +1,95 @@
+{
+  "schemaVersion": "duskfell-kimodo-retarget-proof-v1",
+  "approvalState": "review",
+  "motion": {
+    "schemaVersion": "duskfell-kimodo-motion-receipt-v1",
+    "source": "/Users/j/Documents/New project/uo-chain-sandbox-poc/var/kimodo/generated-v1/neutral-breathing-idle/seed-91.npz",
+    "sha256": "e54a315775b386fef2df6b52fe35826511f166f93f8cddd5eb90bbb3b47b28c5",
+    "bytes": 782570,
+    "skeleton": "somaskel77",
+    "fps": 30,
+    "frames": 120,
+    "durationSeconds": 4.0,
+    "jointCount": 77,
+    "keys": [
+      "foot_contacts",
+      "global_root_heading",
+      "global_rot_mats",
+      "local_rot_mats",
+      "posed_joints",
+      "root_positions",
+      "smooth_root_pos"
+    ],
+    "rootRangeMeters": [
+      0.003215280594304204,
+      0.0009998083114624023,
+      0.0045126136392354965
+    ],
+    "rotationChecks": {
+      "maximumOrthogonalityError": 4.926512784386716e-06,
+      "maximumDeterminantError": 6.579990103672273e-06
+    }
+  },
+  "target": "wretch",
+  "targetFile": "/Users/j/Documents/New project/uo-chain-sandbox-poc/var/blender/wretch-factory.blend",
+  "action": "Duskfell|Kimodo|generated-idle-seed91-cycle",
+  "actionFrames": 78,
+  "sourceFrameRange": [
+    10,
+    87
+  ],
+  "fps": 30,
+  "sampledFrames": [
+    1,
+    6,
+    11,
+    16,
+    22,
+    27,
+    32,
+    37,
+    42,
+    47,
+    52,
+    57,
+    63,
+    68,
+    73,
+    78
+  ],
+  "directions": [
+    "south",
+    "south-east",
+    "east",
+    "north-east",
+    "north",
+    "north-west",
+    "west",
+    "south-west"
+  ],
+  "rootYawDegrees": [
+    -45,
+    0,
+    45,
+    90,
+    135,
+    180,
+    -135,
+    -90
+  ],
+  "cell": {
+    "width": 128,
+    "height": 160
+  },
+  "coordinateConversion": "Kimodo +X right/+Y up/+Z forward to Blender +X right/+Z up/-Y forward",
+  "retargetMode": "position-directions-soma77-review",
+  "motionStyle": "source",
+  "uprightLocomotion": false,
+  "hiddenMeshes": [
+    "uo_wretch.cortu_short_messy_hair"
+  ],
+  "rootMotion": "horizontal trajectory removed; vertical hip motion retained in the authored action",
+  "blend": "var/kimodo/generated-idle-seed91-cycle-wretch.blend",
+  "sheet": "assets/sprites/candidates/kimodo/generated-idle-seed91-cycle/generated-idle-seed91-cycle-wretch-8x16.png",
+  "sheetSha256": "f2b8884a448b8abdde87463b63f7d6445fdabe7b532b2b56a00175f54bec5589"
+}

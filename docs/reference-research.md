@@ -11,6 +11,13 @@ Checked July 6, 2026. This project must not copy code, data, assets, names, pack
 | ClassicUO | https://github.com/ClassicUO/ClassicUO | BSD-2-Clause on GitHub |
 | Moongate v2 | https://github.com/moongate-community/moongate | GPL-3.0 on GitHub |
 | Moongate Next | https://github.com/moongate-community/moongate-next | Apache-2.0 on GitHub |
+| OpenMMO | https://github.com/Julian-adv/OpenMMO | PolyForm Noncommercial 1.0.0; research only for Duskfell |
+
+## Focused Audits
+
+- [OpenMMO adoption audit](openmmo-research-audit.md) documents the July 22,
+  2026 clean-room review of its world generation, terrain rendering, editor,
+  housing, characters, networking, performance, and asset provenance.
 
 ## Safe Lessons To Convert Into Original Requirements
 

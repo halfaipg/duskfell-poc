@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "duskfell-img2img-request-v1",
+  "createdAt": "2026-07-22",
+  "model": "OpenAI built-in image generation",
+  "mode": "edit",
+  "input": "tree-family-review-board-v1.png",
+  "output": "tree-family-img2img-openai-v1.png",
+  "background": "#ff00ff chroma-key",
+  "prompt": "Edit the supplied deterministic Blender 4-column by 3-row tree board. Preserve exactly twelve trees in the same cells, order, lifecycle scale progression, trunk silhouettes, branch directions, conifer identity, and bottom-center trunk-base registration. Remove labels and checkerboard. Use a perfectly flat #ff00ff background. Transform only the low-poly surface treatment into original clean-room hand-painted dark-age fantasy game sprite art with crisp irregular foliage, visible branches and negative space, weathered bark, moss, restrained earthy greens, and military plan-oblique camera. No new or missing trees, merged canopies, photorealism, vector style, text, logos, watermarks, cast shadows, or floor.",
+  "immutable": [
+    "4x3 order",
+    "tree count",
+    "stage proportions",
+    "trunk base anchors",
+    "species identity",
+    "silhouette registration"
+  ],
+  "approval": {
+    "state": "review"
+  }
+}

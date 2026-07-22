@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "duskfell-runtime-world-map-v1",
+  "status": "runtime-review",
+  "output": "world-map/duskfell-world-map-day-v1.webp",
+  "outputSha256": "fdae8c4b2abbbb216ba96335db42628e2bc61db2ee01cc36c4f2288dcf27aed8",
+  "dimensions": {
+    "width": 1536,
+    "height": 1024
+  },
+  "tilePixels": {
+    "width": 8,
+    "height": 8
+  },
+  "world": {
+    "cols": 192,
+    "rows": 128
+  },
+  "source": {
+    "image": "candidates/world-map-img2img-day-v1.png",
+    "sha256": "f1f9de52424c8dfbedb88bb4c0b131a536d4a83c3a59d2f6dca74433874efd43",
+    "provenance": "candidates/world-map-img2img-day-v1.json",
+    "crop": {
+      "width": 1176,
+      "height": 928,
+      "x": 40,
+      "y": 160
+    }
+  },
+  "authoritativeControl": {
+    "metadata": "candidates/world-map-structure-authoritative.json",
+    "sha256": "3dcff7f950d71b40f57b4893092811087dfceae792db59a015e88396558124e8"
+  },
+  "runtimeTreatment": "One aligned day painting; live client sun grading supplies dusk and night without geometry drift."
+}

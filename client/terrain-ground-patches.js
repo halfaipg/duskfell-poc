@@ -4,6 +4,7 @@ import { VISUAL_BIOMES } from "./terrain-visual-biomes.js";
 import { projectTerrainTile } from "./terrain-geometry.js";
 import { TERRAIN_MATERIALS, terrainTileAt } from "./terrain.js";
 import { PROJECTION } from "./projection.js";
+import { getSun, shadowCast } from "./sun-state.js";
 
 const PATCHED_MATERIALS = new Set([
   "grass", "field", "dirt", "stone", "rock", "ruin", "shore", "settlement", "cobble",
@@ -160,6 +161,23 @@ function compositePatchForTile(tile, terrain, groundPatches) {
     return canvas;
   }
 
+  const worldPainting = groundPatches.get("__world-painting__");
+  if (worldPainting && terrain.sourceRegion) {
+    drawAuthoritativeWorldPainting(composite, worldPainting, superX, superY, terrain.sourceRegion);
+    compositeCache.set(key, canvas);
+    return canvas;
+  }
+
+  if (textureReviewMode) {
+    const reviewImage = groundPatches.get("meadow");
+    if (reviewImage) {
+      composite.imageSmoothingEnabled = true;
+      drawReviewPatchImage(composite, reviewImage, superX, superY);
+      compositeCache.set(key, canvas);
+      return canvas;
+    }
+  }
+
   const activeBiomes = terrain.worldData.activeBiomesForPatch(superX, superY, PATCH_TILES);
   for (const [biomeIndex, biome] of activeBiomes.entries()) {
     const image = biomeImageForSupertile(groundPatches, biome);
@@ -185,7 +203,19 @@ function compositePatchForTile(tile, terrain, groundPatches) {
     composite.globalCompositeOperation = "source-over";
   }
 
-  drawEcotoneBand(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches);
+  if (loamSliceMode) {
+    // The slice is an art-direction proof for broad, quiet loam. Preserve
+    // the source's fine aggregate while compressing its dark furrows; the
+    // regular world still receives the full biome ecotone treatment.
+    composite.save();
+    composite.globalCompositeOperation = "source-over";
+    composite.fillStyle = "rgba(84, 69, 49, 0.3)";
+    composite.fillRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+    composite.restore();
+  } else {
+    drawEcotoneBand(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches);
+  }
+  drawMaterialFamilyModifiers(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches);
   drawRockBody(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches);
   drawReliefShade(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches);
   drawRoadWear(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches);
@@ -198,8 +228,56 @@ function compositePatchForTile(tile, terrain, groundPatches) {
   return canvas;
 }
 
+function drawAuthoritativeWorldPainting(context, image, superX, superY, sourceRegion) {
+  drawAuthoritativeRegion(context, image, superX, superY, sourceRegion, PLAN_PX_PER_TILE);
+}
+
+function drawAuthoritativeRegion(context, image, superX, superY, sourceRegion, targetPixelsPerTile) {
+  const imageWidth = image.naturalWidth ?? image.width;
+  const imageHeight = image.naturalHeight ?? image.height;
+  const sourcePixelsPerTile = imageWidth / sourceRegion.cols;
+  const worldTileX = superX * PATCH_TILES - MARGIN_TILES;
+  const worldTileY = superY * PATCH_TILES - MARGIN_TILES;
+  const localTileX = worldTileX - sourceRegion.offsetX;
+  const localTileY = worldTileY - sourceRegion.offsetY;
+  const sourceX = Math.max(0, localTileX * sourcePixelsPerTile);
+  const sourceY = Math.max(0, localTileY * sourcePixelsPerTile);
+  const sourceEndX = Math.min(imageWidth, (localTileX + CANVAS_TILES) * sourcePixelsPerTile);
+  const sourceEndY = Math.min(imageHeight, (localTileY + CANVAS_TILES) * sourcePixelsPerTile);
+  if (sourceEndX <= sourceX || sourceEndY <= sourceY) return;
+  const destinationX = Math.max(0, -localTileX * targetPixelsPerTile);
+  const destinationY = Math.max(0, -localTileY * targetPixelsPerTile);
+  const destinationWidth = (sourceEndX - sourceX) / sourcePixelsPerTile * targetPixelsPerTile;
+  const destinationHeight = (sourceEndY - sourceY) / sourcePixelsPerTile * targetPixelsPerTile;
+  context.imageSmoothingEnabled = true;
+  context.drawImage(
+    image,
+    sourceX,
+    sourceY,
+    sourceEndX - sourceX,
+    sourceEndY - sourceY,
+    destinationX,
+    destinationY,
+    destinationWidth,
+    destinationHeight,
+  );
+}
+
 function biomeImageForSupertile(groundPatches, biome) {
   return groundPatches.get(biome) ?? null;
+}
+
+function drawReviewPatchImage(ctx, image, superX, superY) {
+  const period = textureReviewTiles * PLAN_PX_PER_TILE;
+  const worldStartX = (superX * PATCH_TILES - MARGIN_TILES) * PLAN_PX_PER_TILE;
+  const worldStartY = (superY * PATCH_TILES - MARGIN_TILES) * PLAN_PX_PER_TILE;
+  const phaseX = ((worldStartX % period) + period) % period;
+  const phaseY = ((worldStartY % period) + period) % period;
+  for (let y = -phaseY; y < CANVAS_SIZE; y += period) {
+    for (let x = -phaseX; x < CANVAS_SIZE; x += period) {
+      ctx.drawImage(image, x, y, period, period);
+    }
+  }
 }
 
 // mountain body: the massif is painted as rock, not grassland at altitude —
@@ -256,8 +334,11 @@ function drawRockBody(composite, maskContext, maskCanvas, superX, superY, terrai
     applyMaskedImage(composite, maskCanvas, screeImage, superX, superY);
     writeFieldMask(maskContext, body);
     applyMaskedImage(composite, maskCanvas, screeImage, superX, superY);
+    // The authored scree v2 source already carries the mountain palette.
+    // Keep only a restrained cool unifier instead of crushing its painted
+    // fracture detail with the heavy correction used by the old grass source.
     composite.globalCompositeOperation = "multiply";
-    composite.fillStyle = "rgba(132, 134, 140, 0.42)";
+    composite.fillStyle = "rgba(184, 188, 192, 0.14)";
     applyMaskedFill(composite, maskCanvas);
     composite.globalCompositeOperation = "source-over";
   }
@@ -518,6 +599,65 @@ function drawEcotoneBand(composite, maskContext, maskCanvas, superX, superY, ter
   composite.restore();
 }
 
+const MATERIAL_MODIFIER_LAYERS = Object.freeze([
+  { family: "wetSoil", image: "wetland", scale: 0.78 },
+  { family: "riverBank", image: "trail", scale: 0.82 },
+  { family: "beach", image: "trail", scale: 0.72, tint: "rgba(222, 204, 164, 0.28)" },
+  { family: "scree", image: "scree", scale: 0.9 },
+  { family: "cliff", image: "scree", scale: 1 },
+  { family: "snow", image: "frost", scale: 0.92 },
+]);
+
+// Worldgen material families are continuous authority fields. Painting them
+// through bilinearly sampled masks preserves soft banks and scree skirts while
+// keeping the generated texture sources in the existing composition pipeline.
+function drawMaterialFamilyModifiers(composite, maskContext, maskCanvas, superX, superY, terrain, groundPatches) {
+  if (!terrain.materialWeights?.weights) return;
+  for (const layer of MATERIAL_MODIFIER_LAYERS) {
+    const image = groundPatches?.get(layer.image);
+    const source = terrain.materialWeights.weights[layer.family];
+    if (!image || !source) continue;
+    const field = new Float32Array(MASK_SIZE * MASK_SIZE);
+    let maximum = 0;
+    for (let y = 0; y < MASK_SIZE; y += 1) for (let x = 0; x < MASK_SIZE; x += 1) {
+      const mapX = superX * PATCH_TILES + ((x + 0.5) / MASK_SIZE) * CANVAS_TILES - MARGIN_TILES;
+      const mapY = superY * PATCH_TILES + ((y + 0.5) / MASK_SIZE) * CANVAS_TILES - MARGIN_TILES;
+      const weight = materialWeightAt(terrain, layer.family, mapX, mapY) * layer.scale;
+      field[y * MASK_SIZE + x] = weight;
+      maximum = Math.max(maximum, weight);
+    }
+    if (maximum <= 0.015) continue;
+    writeFieldMask(maskContext, field);
+    composite.save();
+    composite.imageSmoothingEnabled = true;
+    applyMaskedImage(composite, maskCanvas, image, superX, superY);
+    if (layer.tint) {
+      composite.globalCompositeOperation = "multiply";
+      composite.fillStyle = layer.tint;
+      applyMaskedFill(composite, maskCanvas);
+    }
+    composite.restore();
+  }
+}
+
+function materialWeightAt(terrain, family, mapX, mapY) {
+  const values = terrain.materialWeights?.weights?.[family];
+  if (!values?.length || !values[0]?.length) return 0;
+  const offsetX = terrain.sourceRegion?.offsetX ?? 0;
+  const offsetY = terrain.sourceRegion?.offsetY ?? 0;
+  const sampleX = mapX - offsetX - 0.5;
+  const sampleY = mapY - offsetY - 0.5;
+  const x0 = Math.max(0, Math.min(values[0].length - 1, Math.floor(sampleX)));
+  const y0 = Math.max(0, Math.min(values.length - 1, Math.floor(sampleY)));
+  const x1 = Math.min(values[0].length - 1, x0 + 1);
+  const y1 = Math.min(values.length - 1, y0 + 1);
+  const tx = clamp01(sampleX - Math.floor(sampleX));
+  const ty = clamp01(sampleY - Math.floor(sampleY));
+  const north = values[y0][x0] * (1 - tx) + values[y0][x1] * tx;
+  const south = values[y1][x0] * (1 - tx) + values[y1][x1] * tx;
+  return north * (1 - ty) + south * ty;
+}
+
 // Roads and plaza aprons on painted ground read as trampled earth: a soft
 // mask built from tile zones darkens and desaturates the painting along the
 // route, so paths stay legible without falling back to atlas ribbons.
@@ -711,37 +851,71 @@ function drawWaterBodies(composite, maskContext, maskCanvas, superX, superY, ter
 // The composite stays cached; per frame a half-res overlay scrolls the
 // enriched water painting along the channel tangent through the water mask
 // (two layers, opposing speeds, so the surface shimmers instead of sliding
-// like a conveyor). Clipped to water tile diamonds so translucent overlap
-// at supertile borders never double-brightens.
+// like a conveyor). Illustrated worlds use their accepted water authority
+// mask; procedural worlds retain the generated stream field fallback.
 // quarter resolution: the moving shimmer needs far less detail than the
 // static painting, and full-res scratch composites were costing 100ms+ per
 // frame near water
 const ANIM_SIZE = CANVAS_SIZE / 4;
 const waterAnimCache = new Map();
+const WATER_FLOW_D8 = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
 
-function waterAnimationLayerFor(superX, superY, terrain) {
+function waterAnimationLayerFor(superX, superY, terrain, groundPatches) {
   const seed = terrain.profile?.seed ?? 7341;
-  const key = `${superX}:${superY}:${terrain.cols}:${terrain.rows}:${seed}`;
+  const authorityMask = groundPatches?.get?.("__world-water-mask__") ?? null;
+  const key = `${superX}:${superY}:${terrain.cols}:${terrain.rows}:${seed}:${authorityMask ? "authority" : "procedural"}`;
   if (waterAnimCache.has(key)) return waterAnimCache.get(key);
-  const fields = streamFieldsForPatch(superX, superY, terrain);
   let entry = null;
-  if (fields) {
-    const full = document.createElement("canvas");
-    full.width = MASK_SIZE;
-    full.height = MASK_SIZE;
-    writeFieldMask(full.getContext("2d"), fields.water);
-    const mask = document.createElement("canvas");
-    mask.width = ANIM_SIZE;
-    mask.height = ANIM_SIZE;
-    const maskCtx = mask.getContext("2d");
-    maskCtx.imageSmoothingEnabled = true;
-    maskCtx.drawImage(full, 0, 0, ANIM_SIZE, ANIM_SIZE);
+  const mask = document.createElement("canvas");
+  mask.width = ANIM_SIZE;
+  mask.height = ANIM_SIZE;
+  const maskCtx = mask.getContext("2d", { willReadFrequently: true });
+  if (authorityMask && terrain.sourceRegion) {
+    drawAuthoritativeRegion(
+      maskCtx,
+      authorityMask,
+      superX,
+      superY,
+      terrain.sourceRegion,
+      ANIM_SIZE / CANVAS_TILES,
+    );
+  } else {
+    const fields = streamFieldsForPatch(superX, superY, terrain);
+    if (fields) {
+      const full = document.createElement("canvas");
+      full.width = MASK_SIZE;
+      full.height = MASK_SIZE;
+      writeFieldMask(full.getContext("2d"), fields.water);
+      maskCtx.imageSmoothingEnabled = true;
+      maskCtx.drawImage(full, 0, 0, ANIM_SIZE, ANIM_SIZE);
+    }
+  }
+  const alpha = maskCtx.getImageData(0, 0, ANIM_SIZE, ANIM_SIZE).data;
+  let hasWater = false;
+  for (let index = 3; index < alpha.length; index += 4) {
+    if (alpha[index] > 2) {
+      hasWater = true;
+      break;
+    }
+  }
+  if (hasWater) {
     // flow tangent across this supertile from the channel flow field
-    const flow = terrain.worldData.channel.flowAt(
+    const flow = waterAuthorityFlowAt(
+      terrain,
+      superX * PATCH_TILES,
+      superY * PATCH_TILES,
+      PATCH_TILES,
+    ) ?? terrain.worldData.channel.flowAt(
       superX * PATCH_TILES + PATCH_TILES / 2,
       superY * PATCH_TILES + PATCH_TILES / 2,
     );
-    entry = { mask, flowX: flow.x, flowY: flow.y };
+    entry = {
+      mask,
+      flowX: flow.x,
+      flowY: flow.y,
+      worldOriginX: superX * PATCH_TILES - MARGIN_TILES,
+      worldOriginY: superY * PATCH_TILES - MARGIN_TILES,
+    };
   }
   waterAnimCache.set(key, entry);
   while (waterAnimCache.size > MAX_COMPOSITE_PATCHES) {
@@ -750,9 +924,37 @@ function waterAnimationLayerFor(superX, superY, terrain) {
   return entry;
 }
 
+export function waterAuthorityFlowAt(terrain, worldX, worldY, spanTiles = 1) {
+  const authority = terrain?.waterAuthority;
+  if (!authority || authority.schema !== "duskfell-water-authority-v1") return null;
+  const samples = authority.samplesPerTile;
+  const offsetX = terrain.sourceRegion?.offsetX ?? 0;
+  const offsetY = terrain.sourceRegion?.offsetY ?? 0;
+  const minX = Math.max(0, Math.floor((worldX - offsetX) * samples));
+  const minY = Math.max(0, Math.floor((worldY - offsetY) * samples));
+  const maxX = Math.min(authority.cellCols, Math.ceil((worldX + spanTiles - offsetX) * samples));
+  const maxY = Math.min(authority.cellRows, Math.ceil((worldY + spanTiles - offsetY) * samples));
+  let flowX = 0;
+  let flowY = 0;
+  let weightTotal = 0;
+  for (let y = minY; y < maxY; y += 1) for (let x = minX; x < maxX; x += 1) {
+    const direction = authority.flowDirectionD8[y]?.[x];
+    if (!Number.isInteger(direction) || direction < 0 || direction >= WATER_FLOW_D8.length) continue;
+    const strength = Math.max(0.01, authority.flowStrength[y]?.[x] ?? 0) * (authority.wetMask[y]?.[x] ?? 0);
+    const [dx, dy] = WATER_FLOW_D8[direction];
+    flowX += dx * strength;
+    flowY += dy * strength;
+    weightTotal += strength;
+  }
+  if (weightTotal <= 0) return null;
+  const length = Math.hypot(flowX, flowY);
+  if (length <= 1e-9) return null;
+  return { x: flowX / length, y: flowY / length };
+}
+
 const WATER_ANIM_TICK_MS = 66; // ~15fps shimmer: plenty for water, cheap to build
 
-function animationFrameFor(layer, waterImage, nowMs) {
+function animationFrameFor(layer, nowMs) {
   const tick = Math.floor(nowMs / WATER_ANIM_TICK_MS) * WATER_ANIM_TICK_MS;
   if (layer.frame && layer.frameTick === tick) return layer.frame;
   if (!layer.frame) {
@@ -763,65 +965,43 @@ function animationFrameFor(layer, waterImage, nowMs) {
   }
   const scratch = layer.frame.getContext("2d");
   const pxPerTile = ANIM_SIZE / CANVAS_TILES;
-  // flow buffer: layered currents + glints render here, then a per-strip
-  // sine ripple copies it into the frame so the surface undulates like
-  // fluid instead of sliding like a printed sheet
-  if (!layer.flowCanvas) {
-    layer.flowCanvas = document.createElement("canvas");
-    layer.flowCanvas.width = ANIM_SIZE;
-    layer.flowCanvas.height = ANIM_SIZE;
-  }
-  const flow = layer.flowCanvas.getContext("2d");
-  flow.save();
-  flow.globalCompositeOperation = "source-over";
-  flow.clearRect(0, 0, ANIM_SIZE, ANIM_SIZE);
-  flow.imageSmoothingEnabled = true;
-  for (const pass of [
-    { speed: 1.1, alpha: 0.4, zoom: 1, op: "source-over" },
-    { speed: -0.4, alpha: 0.2, zoom: 1.7, op: "source-over" },
-    // sparse highlights rushing ahead of the body read as surface glints
-    { speed: 2.1, alpha: 0.1, zoom: 0.62, op: "lighter" },
-  ]) {
-    // canvas tiles sit at (n*span - offset), so a growing offset slides the
-    // painting AGAINST the flow vector — negate so speed>0 marches
-    // downstream, following the channel's local bend
-    const distance = (tick / 1000) * -pass.speed * pxPerTile;
-    const span = ANIM_SIZE * pass.zoom;
-    const offX = ((layer.flowX * distance) % (span * 2) + span * 2) % (span * 2);
-    const offY = ((layer.flowY * distance) % (span * 2) + span * 2) % (span * 2);
-    flow.globalAlpha = pass.alpha;
-    flow.globalCompositeOperation = pass.op;
-    // mirror-tiled so the non-seamless painting scrolls without seams
-    for (let ny = -2; ny <= 1; ny += 1) {
-      for (let nx = -2; nx <= 1; nx += 1) {
-        const baseX = nx * span - offX + span * 2;
-        const baseY = ny * span - offY + span * 2;
-        if (baseX > ANIM_SIZE || baseY > ANIM_SIZE || baseX + span < 0 || baseY + span < 0) continue;
-        const mirrorX = ((nx % 2) + 2) % 2 === 1;
-        const mirrorY = ((ny % 2) + 2) % 2 === 1;
-        flow.save();
-        flow.translate(baseX + span / 2, baseY + span / 2);
-        flow.scale(mirrorX ? -1 : 1, mirrorY ? -1 : 1);
-        flow.drawImage(waterImage, -span / 2, -span / 2, span, span);
-        flow.restore();
-      }
-    }
-  }
-  flow.restore();
-
   scratch.save();
   scratch.globalCompositeOperation = "source-over";
   scratch.clearRect(0, 0, ANIM_SIZE, ANIM_SIZE);
   scratch.imageSmoothingEnabled = true;
-  // transverse ripple: two superposed sine waves shift each strip so wave
-  // crests travel at a different rate than the texture drift below them
   const seconds = tick / 1000;
-  const STRIP = 6;
-  for (let y = 0; y < ANIM_SIZE; y += STRIP) {
-    const wobble =
-      Math.sin(y * 0.055 + seconds * 2.6) * 2.2 +
-      Math.sin(y * 0.021 - seconds * 1.7) * 1.6;
-    scratch.drawImage(layer.flowCanvas, 0, y, ANIM_SIZE, STRIP, wobble, y, ANIM_SIZE, STRIP);
+  const daylight = shadowCast().daylight;
+  const elevation = getSun().elevation ?? 0;
+  const lowSun = clamp01(1 - Math.max(0, elevation) * 1.8);
+  const spacing = 2.15;
+  const travel = seconds * 0.42;
+  const minGridX = Math.floor((layer.worldOriginX - 3) / spacing);
+  const maxGridX = Math.ceil((layer.worldOriginX + CANVAS_TILES + 3) / spacing);
+  const minGridY = Math.floor((layer.worldOriginY - 3) / spacing);
+  const maxGridY = Math.ceil((layer.worldOriginY + CANVAS_TILES + 3) / spacing);
+  const angle = Math.atan2(layer.flowY, layer.flowX);
+  scratch.fillStyle = lowSun > 0.55
+    ? `rgba(255, 211, 151, ${0.025 + daylight * 0.09})`
+    : `rgba(218, 238, 231, ${0.02 + daylight * 0.075})`;
+  for (let gridY = minGridY; gridY <= maxGridY; gridY += 1) {
+    for (let gridX = minGridX; gridX <= maxGridX; gridX += 1) {
+      const jitterX = (stampHash01(gridX, gridY, 941) - 0.5) * spacing * 0.82;
+      const jitterY = (stampHash01(gridX, gridY, 557) - 0.5) * spacing * 0.82;
+      const worldX = gridX * spacing + jitterX + layer.flowX * travel;
+      const worldY = gridY * spacing + jitterY + layer.flowY * travel;
+      const x = (worldX - layer.worldOriginX) * pxPerTile;
+      const y = (worldY - layer.worldOriginY) * pxPerTile;
+      if (x < -18 || y < -18 || x > ANIM_SIZE + 18 || y > ANIM_SIZE + 18) continue;
+      const length = (0.08 + stampHash01(gridX, gridY, 773) * 0.18) * pxPerTile;
+      const width = Math.max(0.65, 0.018 * pxPerTile);
+      scratch.save();
+      scratch.translate(x, y);
+      scratch.rotate(angle + (stampHash01(gridX, gridY, 313) - 0.5) * 0.28);
+      scratch.beginPath();
+      scratch.ellipse(0, 0, length, width, 0, 0, Math.PI * 2);
+      scratch.fill();
+      scratch.restore();
+    }
   }
   scratch.globalCompositeOperation = "destination-in";
   scratch.drawImage(layer.mask, 0, 0);
@@ -838,15 +1018,28 @@ const waterAnimDisabled =
 // paintings — a same-perspective debug view for judging the raw hillshade
 const reliefOnlyDebug =
   typeof globalThis.location !== "undefined" && /[?&]reliefOnly=1/.test(globalThis.location.search ?? "");
+// ?textureReview=1 preserves an imported proof at a large, readable scale.
+// Projection and elevation remain active while biome bombing and overlays
+// stay out of the way for an honest source-vs-runtime art review.
+const textureReviewMode =
+  typeof globalThis.location !== "undefined" && /[?&]textureReview=1/.test(globalThis.location.search ?? "");
+const loamSliceMode =
+  typeof globalThis.location !== "undefined" &&
+  new URLSearchParams(globalThis.location.search ?? "").get("verticalSlice") === "loam";
+const textureReviewTiles = (() => {
+  if (typeof globalThis.location === "undefined") return 6;
+  const raw = Number(new URLSearchParams(globalThis.location.search ?? "").get("textureTiles"));
+  return Number.isFinite(raw) ? Math.max(4, Math.min(64, raw)) : 6;
+})();
 
 // water supertile groups for a chunk — shared by the 2D animator and the
 // GL shader path. Each entry carries the cached mask/flow layer.
 export function waterGroupsForChunk(chunk, terrain, groundPatches) {
   if (!terrain || !useGroundPatches(groundPatches)) return [];
-  const groups = collectWaterGroups(chunk, terrain);
+  const groups = collectWaterGroups(chunk, terrain, groundPatches);
   const out = [];
   for (const group of groups.values()) {
-    const layer = waterAnimationLayerFor(group.superX, group.superY, terrain);
+    const layer = waterAnimationLayerFor(group.superX, group.superY, terrain, groundPatches);
     if (layer) out.push({ ...group, layer });
   }
   return out;
@@ -861,11 +1054,13 @@ export function waterAnimConstants() {
   };
 }
 
-function collectWaterGroups(chunk, terrain) {
+function collectWaterGroups(chunk, terrain, groundPatches) {
   const groups = new Map();
+  const authorityMask = groundPatches?.has?.("__world-water-mask__") && terrain.sourceRegion;
   for (const tileView of chunk.tiles) {
     const tile = tileView.tile;
-    let inChannel = tile.material === "water" || tile.material === "shore";
+    let inChannel = Boolean(authorityMask && PATCHED_MATERIALS.has(tile.material));
+    if (!inChannel) inChannel = tile.material === "water" || tile.material === "shore";
     if (!inChannel && PATCHED_MATERIALS.has(tile.material)) {
       inChannel =
         terrain.worldData.channel.distanceAt(tile.x + 0.5, tile.y + 0.5) < 1.7;
@@ -883,34 +1078,15 @@ function collectWaterGroups(chunk, terrain) {
 export function drawChunkWaterAnimation(ctx, chunk, origin, terrain, groundPatches, nowMs) {
   if (waterAnimDisabled) return;
   if (!origin || !terrain || !useGroundPatches(groundPatches)) return;
-  const waterImage = groundPatches.get("stream-water") ?? null;
-  if (!waterImage) return;
-  const groups = new Map();
-  for (const tileView of chunk.tiles) {
-    const tile = tileView.tile;
-    // the painted channel bleeds past strict water tiles (ragged edges,
-    // feather, shore band) — clip by distance to the centerline, not by
-    // material, or the bank wedges stay frozen while the body animates
-    let inChannel = tile.material === "water" || tile.material === "shore";
-    if (!inChannel && PATCHED_MATERIALS.has(tile.material)) {
-      inChannel =
-        terrain.worldData.channel.distanceAt(tile.x + 0.5, tile.y + 0.5) < 1.7;
-    }
-    if (!inChannel) continue;
-    const superX = Math.floor(tile.x / PATCH_TILES);
-    const superY = Math.floor(tile.y / PATCH_TILES);
-    const key = `${superX}:${superY}`;
-    if (!groups.has(key)) groups.set(key, { superX, superY, tiles: [] });
-    groups.get(key).tiles.push(tile);
-  }
+  const groups = collectWaterGroups(chunk, terrain, groundPatches);
   if (!groups.size) return;
 
   for (const group of groups.values()) {
-    const layer = waterAnimationLayerFor(group.superX, group.superY, terrain);
+    const layer = waterAnimationLayerFor(group.superX, group.superY, terrain, groundPatches);
     if (!layer) continue;
     // the animation frame is built once per tick per supertile and shared
     // by every chunk that overlaps it — per frame this is just one blit
-    const frame = animationFrameFor(layer, waterImage, nowMs);
+    const frame = animationFrameFor(layer, nowMs);
 
     const { halfW, halfH } = PROJECTION;
     const animPxPerTile = ANIM_SIZE / CANVAS_TILES;

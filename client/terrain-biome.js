@@ -1,6 +1,7 @@
 import { vertexHeight } from "./terrain-height.js";
 import { clamp, noise2d } from "./terrain-noise.js";
 import { defaultTerrainProfile } from "./terrain-profile.js";
+import { trailFieldAt } from "./terrain-trails.js";
 
 export function materialForTile(x, y, cols, rows, safeRadiusTiles, profile = defaultTerrainProfile()) {
   return materialForBiome(biomeForTile(x, y, cols, rows, safeRadiusTiles, profile));
@@ -48,7 +49,11 @@ export function biomeForTile(x, y, cols, rows, safeRadiusTiles, profile = defaul
   // roads run the breadth of the map, wandering with noise so they read as
   // worn trails rather than surveyed lines; pressure fades toward the far
   // edges so trails peter out instead of slamming into the border
-  const roads = roadPressuresAt(x, y, cols, rows, profile);
+  const hasAuthoredTrails = Array.isArray(profile.trails) && profile.trails.length > 0;
+  const authoredTrail = trailFieldAt(x + 0.5, y + 0.5, profile.trails);
+  const roads = hasAuthoredTrails
+    ? { northSouth: authoredTrail.northSouth, eastWest: authoredTrail.eastWest }
+    : roadPressuresAt(x, y, cols, rows, profile);
   const northSouthPathPressure = roads.northSouth;
   const eastWestPathPressure = roads.eastWest;
 

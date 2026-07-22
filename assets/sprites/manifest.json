@@ -613,14 +613,14 @@
     },
     {
       "id": "duskfell-details",
-      "image": "duskfell-details.png",
-      "imageSha256": "f2b43f5bd0a8b3f8b4c67b201882d09fcfc33119cf808f6e7c58a398a553211f",
+      "image": "duskfell-details-v2.png",
+      "imageSha256": "8416513f9051140398fcaf250ae684220ef7cdafbbf4d30e8f65045a8312cfc9",
       "frameGrid": {
         "cellWidth": 192,
         "cellHeight": 192,
-        "columns": 23,
+        "columns": 31,
         "rows": 1,
-        "frameCount": 23
+        "frameCount": 31
       },
       "anchor": {
         "kind": "foot",
@@ -650,7 +650,7 @@
         {
           "name": "neutral",
           "startFrame": 0,
-          "frameCount": 23
+          "frameCount": 31
         }
       ],
       "provenance": {
@@ -659,7 +659,7 @@
         "createdAt": "2026-07-07",
         "license": "project-original-ai-assisted-review",
         "reviewer": "codex",
-        "prompt": "original clean-room military-plan-oblique dark fantasy terrain detail sheet with rock cluster, pebbles, grass tuft, wildflowers, scrub bush, fallen log, stump, mushrooms, and locally authored four sapling tree variants, four mature tree variants, four ancient tree variants, boulder, reeds, and ruined-stone static frames",
+        "prompt": "original clean-room military-plan-oblique dark fantasy terrain detail sheet with rock cluster, pebbles, grass tuft, wildflowers, scrub bush, fallen log, stump, mushrooms, tree lifecycle variants, boulder, reeds, ruined stone, and eight appended high-fidelity grass and scrub lifecycle frames",
         "negativePrompt": "no text, no logos, no watermark, no copied commercial game assets, not 2:1 isometric",
         "method": "ai-generated",
         "tool": "OpenAI built-in image generation plus local chroma-key sprite-sheet normalization",
