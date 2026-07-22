@@ -264,3 +264,27 @@ warnings or errors. This accepts the motion structure for controlled finishing,
 not the raw render as final art or a default-manifest promotion. Img2img may
 stylize accepted frames later, but must not alter their silhouette, limbs,
 timing, direction rows, or anchor.
+
+### Controlled Finishing Proof
+
+`scripts/prepare-character-finishing-board.py` extracts four representative
+poses across all eight directions from the exact accepted locomotion SHA. The
+resulting `8x4` board is an img2img style and registration experiment, not a
+shortcut for generating missing frames. `scripts/validate-character-finishing-board.py`
+then verifies source hashes, figure count, one meaningful component per cell,
+silhouette overlap, scale, and cell containment. Because the first generated
+board shifted feet by a small but systematic amount, the validator performs a
+bounded, recorded translation back to the Blender-owned center and baseline;
+it rejects any correction larger than `18px`.
+
+```sh
+npm run sprites:locomotion:finishing-control
+npm run sprites:locomotion:finishing-validate
+```
+
+The first OpenAI finishing proof passes after a one-pixel contracted chroma
+matte. All 32 cells remain connected; vertical registration corrections are
+`-16px` through `-5px`, and registered silhouette IoU is `0.583-0.822`. Its
+hand-painted treatment is a viable direction, but the proof has only two idle
+and two walk contact poses. Production work must finish every Blender-authored
+frame or use a deterministic material/shader bake; AI may not supply in-betweens.

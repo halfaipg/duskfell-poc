@@ -22,6 +22,7 @@
     "sprites:locomotion:structure": "\"${BLENDER_BIN:-/Applications/Blender.app/Contents/MacOS/Blender}\" --background var/blender/wretch-factory.blend --python scripts/blender-duskfell-locomotion.py -- --name duskfell-locomotion-v2 --output assets/sprites/candidates/blender-locomotion-v2",
     "sprites:locomotion:validate": "python3 scripts/validate-character-sheet.py assets/sprites/candidates/blender-locomotion-v2/duskfell-locomotion-v2.json",
     "sprites:locomotion:finishing-control": "python3 scripts/prepare-character-finishing-board.py",
+    "sprites:locomotion:finishing-validate": "python3 scripts/validate-character-finishing-board.py",
     "sprites:pipeline": "python3 scripts/character-pipeline-audit.py",
     "sprites:comfy:audit": "python3 scripts/audit-comfy-sprite-workflow.py",
     "sprites:generate": "python3 scripts/normalize-generated-actor-sheet.py && python3 scripts/normalize-generated-detail-sheet.py",

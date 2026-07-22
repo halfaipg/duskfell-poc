@@ -72,6 +72,24 @@ review candidate rather than a manifest promotion. Its raw body material,
 player-card portrait, equipment layers, and illustrated treatment are not
 final art.
 
+The first controlled illustrated-finishing proof lives in the candidate's
+`finishing-proof-v1/` directory. It contains two idle and two opposite walk
+contact poses for all eight directions, not a complete animation. Rebuild the
+hash-bound control board and validate the generated proof with:
+
+```sh
+npm run sprites:locomotion:finishing-control
+npm run sprites:locomotion:finishing-validate
+```
+
+The native img2img pass preserved all 32 connected figures. Local chroma
+removal and a bounded deterministic registration stage restored each painted
+figure to its Blender-owned center and foot baseline; recorded vertical
+corrections range from `-16px` to `-5px`, and registered silhouette IoU ranges
+from `0.583` to `0.822`. The normalized proof is useful evidence that AI can
+finish surface treatment without owning pose or timing. It is not a runtime
+sheet and must not be expanded by interpolating or inventing animation frames.
+
 For ComfyUI or Comfy Cloud sprite workflows, inspect the downloaded API workflow before spending generation credits:
 
 ```sh

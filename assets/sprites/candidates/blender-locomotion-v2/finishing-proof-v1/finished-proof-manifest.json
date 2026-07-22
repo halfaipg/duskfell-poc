@@ -1,0 +1,2039 @@
+{
+  "schemaVersion": "duskfell-character-finishing-proof-v1",
+  "approval": {
+    "state": "review"
+  },
+  "projection": "military-plan-oblique",
+  "validation": {
+    "ok": true,
+    "errors": [],
+    "thresholds": {
+      "alpha": 24,
+      "minimumComponentArea": 32,
+      "minimumSilhouetteIou": 0.46,
+      "maximumCenterDrift": 10.0,
+      "maximumBaselineDrift": 10,
+      "maximumRegistrationShift": 18,
+      "scaleRatio": [
+        0.84,
+        1.18
+      ]
+    }
+  },
+  "frames": [
+    {
+      "boardRow": 0,
+      "boardColumn": 0,
+      "pose": "idle-a",
+      "direction": "south",
+      "sourceColumn": 0,
+      "sourceRow": 0,
+      "source": {
+        "empty": false,
+        "bbox": [
+          60,
+          65,
+          118,
+          201
+        ],
+        "width": 58,
+        "height": 136,
+        "centerX": 89.0,
+        "centerY": 133.0,
+        "baseline": 201,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          57,
+          58,
+          118,
+          211
+        ],
+        "width": 61,
+        "height": 153,
+        "centerX": 87.5,
+        "centerY": 134.5,
+        "baseline": 211,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": 2,
+        "translateY": -10
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          59,
+          48,
+          120,
+          201
+        ],
+        "width": 61,
+        "height": 153,
+        "centerX": 89.5,
+        "centerY": 124.5,
+        "baseline": 201,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.7027,
+      "errors": []
+    },
+    {
+      "boardRow": 0,
+      "boardColumn": 1,
+      "pose": "idle-a",
+      "direction": "southeast",
+      "sourceColumn": 0,
+      "sourceRow": 1,
+      "source": {
+        "empty": false,
+        "bbox": [
+          60,
+          66,
+          132,
+          194
+        ],
+        "width": 72,
+        "height": 128,
+        "centerX": 96.0,
+        "centerY": 130.0,
+        "baseline": 194,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          60,
+          60,
+          130,
+          205
+        ],
+        "width": 70,
+        "height": 145,
+        "centerX": 95.0,
+        "centerY": 132.5,
+        "baseline": 205,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": 1,
+        "translateY": -11
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          61,
+          49,
+          131,
+          194
+        ],
+        "width": 70,
+        "height": 145,
+        "centerX": 96.0,
+        "centerY": 121.5,
+        "baseline": 194,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.6851,
+      "errors": []
+    },
+    {
+      "boardRow": 0,
+      "boardColumn": 2,
+      "pose": "idle-a",
+      "direction": "east",
+      "sourceColumn": 0,
+      "sourceRow": 2,
+      "source": {
+        "empty": false,
+        "bbox": [
+          74,
+          65,
+          132,
+          201
+        ],
+        "width": 58,
+        "height": 136,
+        "centerX": 103.0,
+        "centerY": 133.0,
+        "baseline": 201,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          73,
+          58,
+          134,
+          211
+        ],
+        "width": 61,
+        "height": 153,
+        "centerX": 103.5,
+        "centerY": 134.5,
+        "baseline": 211,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": 0,
+        "translateY": -10
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          73,
+          48,
+          134,
+          201
+        ],
+        "width": 61,
+        "height": 153,
+        "centerX": 103.5,
+        "centerY": 124.5,
+        "baseline": 201,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.6727,
+      "errors": []
+    },
+    {
+      "boardRow": 0,
+      "boardColumn": 3,
+      "pose": "idle-a",
+      "direction": "northeast",
+      "sourceColumn": 0,
+      "sourceRow": 3,
+      "source": {
+        "empty": false,
+        "bbox": [
+          84,
+          63,
+          120,
+          197
+        ],
+        "width": 36,
+        "height": 134,
+        "centerX": 102.0,
+        "centerY": 130.0,
+        "baseline": 197,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          83,
+          54,
+          121,
+          206
+        ],
+        "width": 38,
+        "height": 152,
+        "centerX": 102.0,
+        "centerY": 130.0,
+        "baseline": 206,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": 0,
+        "translateY": -9
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          83,
+          45,
+          121,
+          197
+        ],
+        "width": 38,
+        "height": 152,
+        "centerX": 102.0,
+        "centerY": 121.0,
+        "baseline": 197,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.75,
+      "errors": []
+    },
+    {
+      "boardRow": 0,
+      "boardColumn": 4,
+      "pose": "idle-a",
+      "direction": "north",
+      "sourceColumn": 0,
+      "sourceRow": 4,
+      "source": {
+        "empty": false,
+        "bbox": [
+          74,
+          57,
+          132,
+          189
+        ],
+        "width": 58,
+        "height": 132,
+        "centerX": 103.0,
+        "centerY": 123.0,
+        "baseline": 189,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          70,
+          53,
+          132,
+          198
+        ],
+        "width": 62,
+        "height": 145,
+        "centerX": 101.0,
+        "centerY": 125.5,
+        "baseline": 198,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": 2,
+        "translateY": -9
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          72,
+          44,
+          134,
+          189
+        ],
+        "width": 62,
+        "height": 145,
+        "centerX": 103.0,
+        "centerY": 116.5,
+        "baseline": 189,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.6964,
+      "errors": []
+    },
+    {
+      "boardRow": 0,
+      "boardColumn": 5,
+      "pose": "idle-a",
+      "direction": "northwest",
+      "sourceColumn": 0,
+      "sourceRow": 5,
+      "source": {
+        "empty": false,
+        "bbox": [
+          60,
+          56,
+          132,
+          177
+        ],
+        "width": 72,
+        "height": 121,
+        "centerX": 96.0,
+        "centerY": 116.5,
+        "baseline": 177,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          59,
+          52,
+          131,
+          191
+        ],
+        "width": 72,
+        "height": 139,
+        "centerX": 95.0,
+        "centerY": 121.5,
+        "baseline": 191,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": 1,
+        "translateY": -14
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          60,
+          38,
+          132,
+          177
+        ],
+        "width": 72,
+        "height": 139,
+        "centerX": 96.0,
+        "centerY": 107.5,
+        "baseline": 177,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.5839,
+      "errors": []
+    },
+    {
+      "boardRow": 0,
+      "boardColumn": 6,
+      "pose": "idle-a",
+      "direction": "west",
+      "sourceColumn": 0,
+      "sourceRow": 6,
+      "source": {
+        "empty": false,
+        "bbox": [
+          60,
+          57,
+          118,
+          189
+        ],
+        "width": 58,
+        "height": 132,
+        "centerX": 89.0,
+        "centerY": 123.0,
+        "baseline": 189,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          61,
+          52,
+          122,
+          196
+        ],
+        "width": 61,
+        "height": 144,
+        "centerX": 91.5,
+        "centerY": 124.0,
+        "baseline": 196,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": -2,
+        "translateY": -7
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          59,
+          45,
+          120,
+          189
+        ],
+        "width": 61,
+        "height": 144,
+        "centerX": 89.5,
+        "centerY": 117.0,
+        "baseline": 189,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.7572,
+      "errors": []
+    },
+    {
+      "boardRow": 0,
+      "boardColumn": 7,
+      "pose": "idle-a",
+      "direction": "southwest",
+      "sourceColumn": 0,
+      "sourceRow": 7,
+      "source": {
+        "empty": false,
+        "bbox": [
+          72,
+          63,
+          108,
+          197
+        ],
+        "width": 36,
+        "height": 134,
+        "centerX": 90.0,
+        "centerY": 130.0,
+        "baseline": 197,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          70,
+          58,
+          108,
+          207
+        ],
+        "width": 38,
+        "height": 149,
+        "centerX": 89.0,
+        "centerY": 132.5,
+        "baseline": 207,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": 1,
+        "translateY": -10
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          71,
+          48,
+          109,
+          197
+        ],
+        "width": 38,
+        "height": 149,
+        "centerX": 90.0,
+        "centerY": 122.5,
+        "baseline": 197,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.7709,
+      "errors": []
+    },
+    {
+      "boardRow": 1,
+      "boardColumn": 0,
+      "pose": "idle-b",
+      "direction": "south",
+      "sourceColumn": 8,
+      "sourceRow": 0,
+      "source": {
+        "empty": false,
+        "bbox": [
+          60,
+          63,
+          118,
+          198
+        ],
+        "width": 58,
+        "height": 135,
+        "centerX": 89.0,
+        "centerY": 130.5,
+        "baseline": 198,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          57,
+          59,
+          118,
+          212
+        ],
+        "width": 61,
+        "height": 153,
+        "centerX": 87.5,
+        "centerY": 135.5,
+        "baseline": 212,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": 2,
+        "translateY": -14
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          59,
+          45,
+          120,
+          198
+        ],
+        "width": 61,
+        "height": 153,
+        "centerX": 89.5,
+        "centerY": 121.5,
+        "baseline": 198,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.673,
+      "errors": []
+    },
+    {
+      "boardRow": 1,
+      "boardColumn": 1,
+      "pose": "idle-b",
+      "direction": "southeast",
+      "sourceColumn": 8,
+      "sourceRow": 1,
+      "source": {
+        "empty": false,
+        "bbox": [
+          60,
+          65,
+          132,
+          191
+        ],
+        "width": 72,
+        "height": 126,
+        "centerX": 96.0,
+        "centerY": 128.0,
+        "baseline": 191,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          60,
+          60,
+          130,
+          205
+        ],
+        "width": 70,
+        "height": 145,
+        "centerX": 95.0,
+        "centerY": 132.5,
+        "baseline": 205,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": 1,
+        "translateY": -14
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          61,
+          46,
+          131,
+          191
+        ],
+        "width": 70,
+        "height": 145,
+        "centerX": 96.0,
+        "centerY": 118.5,
+        "baseline": 191,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.6622,
+      "errors": []
+    },
+    {
+      "boardRow": 1,
+      "boardColumn": 2,
+      "pose": "idle-b",
+      "direction": "east",
+      "sourceColumn": 8,
+      "sourceRow": 2,
+      "source": {
+        "empty": false,
+        "bbox": [
+          74,
+          63,
+          132,
+          198
+        ],
+        "width": 58,
+        "height": 135,
+        "centerX": 103.0,
+        "centerY": 130.5,
+        "baseline": 198,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          73,
+          59,
+          134,
+          212
+        ],
+        "width": 61,
+        "height": 153,
+        "centerX": 103.5,
+        "centerY": 135.5,
+        "baseline": 212,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": 0,
+        "translateY": -14
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          73,
+          45,
+          134,
+          198
+        ],
+        "width": 61,
+        "height": 153,
+        "centerX": 103.5,
+        "centerY": 121.5,
+        "baseline": 198,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.628,
+      "errors": []
+    },
+    {
+      "boardRow": 1,
+      "boardColumn": 3,
+      "pose": "idle-b",
+      "direction": "northeast",
+      "sourceColumn": 8,
+      "sourceRow": 3,
+      "source": {
+        "empty": false,
+        "bbox": [
+          84,
+          62,
+          120,
+          195
+        ],
+        "width": 36,
+        "height": 133,
+        "centerX": 102.0,
+        "centerY": 128.5,
+        "baseline": 195,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          83,
+          55,
+          121,
+          206
+        ],
+        "width": 38,
+        "height": 151,
+        "centerX": 102.0,
+        "centerY": 130.5,
+        "baseline": 206,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": 0,
+        "translateY": -11
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          83,
+          44,
+          121,
+          195
+        ],
+        "width": 38,
+        "height": 151,
+        "centerX": 102.0,
+        "centerY": 119.5,
+        "baseline": 195,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.7529,
+      "errors": []
+    },
+    {
+      "boardRow": 1,
+      "boardColumn": 4,
+      "pose": "idle-b",
+      "direction": "north",
+      "sourceColumn": 8,
+      "sourceRow": 4,
+      "source": {
+        "empty": false,
+        "bbox": [
+          74,
+          56,
+          132,
+          188
+        ],
+        "width": 58,
+        "height": 132,
+        "centerX": 103.0,
+        "centerY": 122.0,
+        "baseline": 188,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          69,
+          54,
+          132,
+          198
+        ],
+        "width": 63,
+        "height": 144,
+        "centerX": 100.5,
+        "centerY": 126.0,
+        "baseline": 198,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": 2,
+        "translateY": -10
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          71,
+          44,
+          134,
+          188
+        ],
+        "width": 63,
+        "height": 144,
+        "centerX": 102.5,
+        "centerY": 116.0,
+        "baseline": 188,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.7243,
+      "errors": []
+    },
+    {
+      "boardRow": 1,
+      "boardColumn": 5,
+      "pose": "idle-b",
+      "direction": "northwest",
+      "sourceColumn": 8,
+      "sourceRow": 5,
+      "source": {
+        "empty": false,
+        "bbox": [
+          60,
+          54,
+          132,
+          176
+        ],
+        "width": 72,
+        "height": 122,
+        "centerX": 96.0,
+        "centerY": 115.0,
+        "baseline": 176,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          59,
+          53,
+          131,
+          191
+        ],
+        "width": 72,
+        "height": 138,
+        "centerX": 95.0,
+        "centerY": 122.0,
+        "baseline": 191,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": 1,
+        "translateY": -15
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          60,
+          38,
+          132,
+          176
+        ],
+        "width": 72,
+        "height": 138,
+        "centerX": 96.0,
+        "centerY": 107.0,
+        "baseline": 176,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.6132,
+      "errors": []
+    },
+    {
+      "boardRow": 1,
+      "boardColumn": 6,
+      "pose": "idle-b",
+      "direction": "west",
+      "sourceColumn": 8,
+      "sourceRow": 6,
+      "source": {
+        "empty": false,
+        "bbox": [
+          60,
+          56,
+          118,
+          188
+        ],
+        "width": 58,
+        "height": 132,
+        "centerX": 89.0,
+        "centerY": 122.0,
+        "baseline": 188,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          61,
+          52,
+          122,
+          197
+        ],
+        "width": 61,
+        "height": 145,
+        "centerX": 91.5,
+        "centerY": 124.5,
+        "baseline": 197,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": -2,
+        "translateY": -9
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          59,
+          43,
+          120,
+          188
+        ],
+        "width": 61,
+        "height": 145,
+        "centerX": 89.5,
+        "centerY": 115.5,
+        "baseline": 188,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.7625,
+      "errors": []
+    },
+    {
+      "boardRow": 1,
+      "boardColumn": 7,
+      "pose": "idle-b",
+      "direction": "southwest",
+      "sourceColumn": 8,
+      "sourceRow": 7,
+      "source": {
+        "empty": false,
+        "bbox": [
+          72,
+          62,
+          108,
+          195
+        ],
+        "width": 36,
+        "height": 133,
+        "centerX": 90.0,
+        "centerY": 128.5,
+        "baseline": 195,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          70,
+          59,
+          108,
+          207
+        ],
+        "width": 38,
+        "height": 148,
+        "centerX": 89.0,
+        "centerY": 133.0,
+        "baseline": 207,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": 1,
+        "translateY": -12
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          71,
+          47,
+          109,
+          195
+        ],
+        "width": 38,
+        "height": 148,
+        "centerX": 90.0,
+        "centerY": 121.0,
+        "baseline": 195,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.774,
+      "errors": []
+    },
+    {
+      "boardRow": 2,
+      "boardColumn": 0,
+      "pose": "walk-contact-a",
+      "direction": "south",
+      "sourceColumn": 20,
+      "sourceRow": 0,
+      "source": {
+        "empty": false,
+        "bbox": [
+          57,
+          63,
+          133,
+          183
+        ],
+        "width": 76,
+        "height": 120,
+        "centerX": 95.0,
+        "centerY": 123.0,
+        "baseline": 183,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          53,
+          63,
+          134,
+          189
+        ],
+        "width": 81,
+        "height": 126,
+        "centerX": 93.5,
+        "centerY": 126.0,
+        "baseline": 189,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": 2,
+        "translateY": -6
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          55,
+          57,
+          136,
+          183
+        ],
+        "width": 81,
+        "height": 126,
+        "centerX": 95.5,
+        "centerY": 120.0,
+        "baseline": 183,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.8081,
+      "errors": []
+    },
+    {
+      "boardRow": 2,
+      "boardColumn": 1,
+      "pose": "walk-contact-a",
+      "direction": "southeast",
+      "sourceColumn": 20,
+      "sourceRow": 1,
+      "source": {
+        "empty": false,
+        "bbox": [
+          63,
+          65,
+          127,
+          197
+        ],
+        "width": 64,
+        "height": 132,
+        "centerX": 95.0,
+        "centerY": 131.0,
+        "baseline": 197,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          63,
+          64,
+          128,
+          208
+        ],
+        "width": 65,
+        "height": 144,
+        "centerX": 95.5,
+        "centerY": 136.0,
+        "baseline": 208,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": 0,
+        "translateY": -11
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          63,
+          53,
+          128,
+          197
+        ],
+        "width": 65,
+        "height": 144,
+        "centerX": 95.5,
+        "centerY": 125.0,
+        "baseline": 197,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.7304,
+      "errors": []
+    },
+    {
+      "boardRow": 2,
+      "boardColumn": 2,
+      "pose": "walk-contact-a",
+      "direction": "east",
+      "sourceColumn": 20,
+      "sourceRow": 2,
+      "source": {
+        "empty": false,
+        "bbox": [
+          65,
+          65,
+          139,
+          203
+        ],
+        "width": 74,
+        "height": 138,
+        "centerX": 102.0,
+        "centerY": 134.0,
+        "baseline": 203,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          66,
+          62,
+          138,
+          212
+        ],
+        "width": 72,
+        "height": 150,
+        "centerX": 102.0,
+        "centerY": 137.0,
+        "baseline": 212,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": 0,
+        "translateY": -9
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          66,
+          53,
+          138,
+          203
+        ],
+        "width": 72,
+        "height": 150,
+        "centerX": 102.0,
+        "centerY": 128.0,
+        "baseline": 203,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.7305,
+      "errors": []
+    },
+    {
+      "boardRow": 2,
+      "boardColumn": 3,
+      "pose": "walk-contact-a",
+      "direction": "northeast",
+      "sourceColumn": 20,
+      "sourceRow": 3,
+      "source": {
+        "empty": false,
+        "bbox": [
+          65,
+          62,
+          132,
+          194
+        ],
+        "width": 67,
+        "height": 132,
+        "centerX": 98.5,
+        "centerY": 128.0,
+        "baseline": 194,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          65,
+          56,
+          130,
+          199
+        ],
+        "width": 65,
+        "height": 143,
+        "centerX": 97.5,
+        "centerY": 127.5,
+        "baseline": 199,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": 1,
+        "translateY": -5
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          66,
+          51,
+          131,
+          194
+        ],
+        "width": 65,
+        "height": 143,
+        "centerX": 98.5,
+        "centerY": 122.5,
+        "baseline": 194,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.833,
+      "errors": []
+    },
+    {
+      "boardRow": 2,
+      "boardColumn": 4,
+      "pose": "walk-contact-a",
+      "direction": "north",
+      "sourceColumn": 20,
+      "sourceRow": 4,
+      "source": {
+        "empty": false,
+        "bbox": [
+          58,
+          56,
+          135,
+          183
+        ],
+        "width": 77,
+        "height": 127,
+        "centerX": 96.5,
+        "centerY": 119.5,
+        "baseline": 183,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          55,
+          54,
+          135,
+          189
+        ],
+        "width": 80,
+        "height": 135,
+        "centerX": 95.0,
+        "centerY": 121.5,
+        "baseline": 189,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": 2,
+        "translateY": -6
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          57,
+          48,
+          137,
+          183
+        ],
+        "width": 80,
+        "height": 135,
+        "centerX": 97.0,
+        "centerY": 115.5,
+        "baseline": 183,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.7855,
+      "errors": []
+    },
+    {
+      "boardRow": 2,
+      "boardColumn": 5,
+      "pose": "walk-contact-a",
+      "direction": "northwest",
+      "sourceColumn": 20,
+      "sourceRow": 5,
+      "source": {
+        "empty": false,
+        "bbox": [
+          65,
+          54,
+          129,
+          194
+        ],
+        "width": 64,
+        "height": 140,
+        "centerX": 97.0,
+        "centerY": 124.0,
+        "baseline": 194,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          64,
+          53,
+          128,
+          203
+        ],
+        "width": 64,
+        "height": 150,
+        "centerX": 96.0,
+        "centerY": 128.0,
+        "baseline": 203,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": 1,
+        "translateY": -9
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          65,
+          44,
+          129,
+          194
+        ],
+        "width": 64,
+        "height": 150,
+        "centerX": 97.0,
+        "centerY": 119.0,
+        "baseline": 194,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.7698,
+      "errors": []
+    },
+    {
+      "boardRow": 2,
+      "boardColumn": 6,
+      "pose": "walk-contact-a",
+      "direction": "west",
+      "sourceColumn": 20,
+      "sourceRow": 6,
+      "source": {
+        "empty": false,
+        "bbox": [
+          52,
+          56,
+          127,
+          200
+        ],
+        "width": 75,
+        "height": 144,
+        "centerX": 89.5,
+        "centerY": 128.0,
+        "baseline": 200,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          54,
+          53,
+          127,
+          204
+        ],
+        "width": 73,
+        "height": 151,
+        "centerX": 90.5,
+        "centerY": 128.5,
+        "baseline": 204,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": -1,
+        "translateY": -4
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          53,
+          49,
+          126,
+          200
+        ],
+        "width": 73,
+        "height": 151,
+        "centerX": 89.5,
+        "centerY": 124.5,
+        "baseline": 200,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.8513,
+      "errors": []
+    },
+    {
+      "boardRow": 2,
+      "boardColumn": 7,
+      "pose": "walk-contact-a",
+      "direction": "southwest",
+      "sourceColumn": 20,
+      "sourceRow": 7,
+      "source": {
+        "empty": false,
+        "bbox": [
+          60,
+          60,
+          127,
+          194
+        ],
+        "width": 67,
+        "height": 134,
+        "centerX": 93.5,
+        "centerY": 127.0,
+        "baseline": 194,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          57,
+          59,
+          128,
+          201
+        ],
+        "width": 71,
+        "height": 142,
+        "centerX": 92.5,
+        "centerY": 130.0,
+        "baseline": 201,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": 1,
+        "translateY": -7
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          58,
+          52,
+          129,
+          194
+        ],
+        "width": 71,
+        "height": 142,
+        "centerX": 93.5,
+        "centerY": 123.0,
+        "baseline": 194,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.7638,
+      "errors": []
+    },
+    {
+      "boardRow": 3,
+      "boardColumn": 0,
+      "pose": "walk-contact-b",
+      "direction": "south",
+      "sourceColumn": 30,
+      "sourceRow": 0,
+      "source": {
+        "empty": false,
+        "bbox": [
+          54,
+          62,
+          126,
+          207
+        ],
+        "width": 72,
+        "height": 145,
+        "centerX": 90.0,
+        "centerY": 134.5,
+        "baseline": 207,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          52,
+          59,
+          126,
+          216
+        ],
+        "width": 74,
+        "height": 157,
+        "centerX": 89.0,
+        "centerY": 137.5,
+        "baseline": 216,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": 1,
+        "translateY": -9
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          53,
+          50,
+          127,
+          207
+        ],
+        "width": 74,
+        "height": 157,
+        "centerX": 90.0,
+        "centerY": 128.5,
+        "baseline": 207,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.6928,
+      "errors": []
+    },
+    {
+      "boardRow": 3,
+      "boardColumn": 1,
+      "pose": "walk-contact-b",
+      "direction": "southeast",
+      "sourceColumn": 30,
+      "sourceRow": 1,
+      "source": {
+        "empty": false,
+        "bbox": [
+          63,
+          63,
+          127,
+          204
+        ],
+        "width": 64,
+        "height": 141,
+        "centerX": 95.0,
+        "centerY": 133.5,
+        "baseline": 204,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          61,
+          62,
+          128,
+          215
+        ],
+        "width": 67,
+        "height": 153,
+        "centerX": 94.5,
+        "centerY": 138.5,
+        "baseline": 215,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": 0,
+        "translateY": -11
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          61,
+          51,
+          128,
+          204
+        ],
+        "width": 67,
+        "height": 153,
+        "centerX": 94.5,
+        "centerY": 127.5,
+        "baseline": 204,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.7425,
+      "errors": []
+    },
+    {
+      "boardRow": 3,
+      "boardColumn": 2,
+      "pose": "walk-contact-b",
+      "direction": "east",
+      "sourceColumn": 30,
+      "sourceRow": 2,
+      "source": {
+        "empty": false,
+        "bbox": [
+          60,
+          62,
+          144,
+          185
+        ],
+        "width": 84,
+        "height": 123,
+        "centerX": 102.0,
+        "centerY": 123.5,
+        "baseline": 185,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          60,
+          57,
+          145,
+          190
+        ],
+        "width": 85,
+        "height": 133,
+        "centerX": 102.5,
+        "centerY": 123.5,
+        "baseline": 190,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": 0,
+        "translateY": -5
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          60,
+          52,
+          145,
+          185
+        ],
+        "width": 85,
+        "height": 133,
+        "centerX": 102.5,
+        "centerY": 118.5,
+        "baseline": 185,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.7972,
+      "errors": []
+    },
+    {
+      "boardRow": 3,
+      "boardColumn": 3,
+      "pose": "walk-contact-b",
+      "direction": "northeast",
+      "sourceColumn": 30,
+      "sourceRow": 3,
+      "source": {
+        "empty": false,
+        "bbox": [
+          69,
+          60,
+          139,
+          194
+        ],
+        "width": 70,
+        "height": 134,
+        "centerX": 104.0,
+        "centerY": 127.0,
+        "baseline": 194,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          67,
+          53,
+          141,
+          201
+        ],
+        "width": 74,
+        "height": 148,
+        "centerX": 104.0,
+        "centerY": 127.0,
+        "baseline": 201,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": 0,
+        "translateY": -7
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          67,
+          46,
+          141,
+          194
+        ],
+        "width": 74,
+        "height": 148,
+        "centerX": 104.0,
+        "centerY": 120.0,
+        "baseline": 194,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.7747,
+      "errors": []
+    },
+    {
+      "boardRow": 3,
+      "boardColumn": 4,
+      "pose": "walk-contact-b",
+      "direction": "north",
+      "sourceColumn": 30,
+      "sourceRow": 4,
+      "source": {
+        "empty": false,
+        "bbox": [
+          66,
+          54,
+          138,
+          195
+        ],
+        "width": 72,
+        "height": 141,
+        "centerX": 102.0,
+        "centerY": 124.5,
+        "baseline": 195,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          63,
+          50,
+          138,
+          204
+        ],
+        "width": 75,
+        "height": 154,
+        "centerX": 100.5,
+        "centerY": 127.0,
+        "baseline": 204,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": 2,
+        "translateY": -9
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          65,
+          41,
+          140,
+          195
+        ],
+        "width": 75,
+        "height": 154,
+        "centerX": 102.5,
+        "centerY": 118.0,
+        "baseline": 195,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.658,
+      "errors": []
+    },
+    {
+      "boardRow": 3,
+      "boardColumn": 5,
+      "pose": "walk-contact-b",
+      "direction": "northwest",
+      "sourceColumn": 30,
+      "sourceRow": 5,
+      "source": {
+        "empty": false,
+        "bbox": [
+          65,
+          51,
+          129,
+          188
+        ],
+        "width": 64,
+        "height": 137,
+        "centerX": 97.0,
+        "centerY": 119.5,
+        "baseline": 188,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          63,
+          51,
+          128,
+          197
+        ],
+        "width": 65,
+        "height": 146,
+        "centerX": 95.5,
+        "centerY": 124.0,
+        "baseline": 197,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": 2,
+        "translateY": -9
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          65,
+          42,
+          130,
+          188
+        ],
+        "width": 65,
+        "height": 146,
+        "centerX": 97.5,
+        "centerY": 115.0,
+        "baseline": 188,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.7077,
+      "errors": []
+    },
+    {
+      "boardRow": 3,
+      "boardColumn": 6,
+      "pose": "walk-contact-b",
+      "direction": "west",
+      "sourceColumn": 30,
+      "sourceRow": 6,
+      "source": {
+        "empty": false,
+        "bbox": [
+          48,
+          54,
+          132,
+          173
+        ],
+        "width": 84,
+        "height": 119,
+        "centerX": 90.0,
+        "centerY": 113.5,
+        "baseline": 173,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          47,
+          50,
+          133,
+          178
+        ],
+        "width": 86,
+        "height": 128,
+        "centerX": 90.0,
+        "centerY": 114.0,
+        "baseline": 178,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": 0,
+        "translateY": -5
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          47,
+          45,
+          133,
+          173
+        ],
+        "width": 86,
+        "height": 128,
+        "centerX": 90.0,
+        "centerY": 109.0,
+        "baseline": 173,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.8129,
+      "errors": []
+    },
+    {
+      "boardRow": 3,
+      "boardColumn": 7,
+      "pose": "walk-contact-b",
+      "direction": "southwest",
+      "sourceColumn": 30,
+      "sourceRow": 7,
+      "source": {
+        "empty": false,
+        "bbox": [
+          52,
+          59,
+          123,
+          191
+        ],
+        "width": 71,
+        "height": 132,
+        "centerX": 87.5,
+        "centerY": 125.0,
+        "baseline": 191,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "rawFinished": {
+        "empty": false,
+        "bbox": [
+          49,
+          57,
+          124,
+          200
+        ],
+        "width": 75,
+        "height": 143,
+        "centerX": 86.5,
+        "centerY": 128.5,
+        "baseline": 200,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "registration": {
+        "translateX": 1,
+        "translateY": -9
+      },
+      "finished": {
+        "empty": false,
+        "bbox": [
+          50,
+          48,
+          125,
+          191
+        ],
+        "width": 75,
+        "height": 143,
+        "centerX": 87.5,
+        "centerY": 119.5,
+        "baseline": 191,
+        "components": 1,
+        "touchesCellBorder": false
+      },
+      "silhouetteIou": 0.7505,
+      "errors": []
+    }
+  ],
+  "artifacts": {
+    "control": {
+      "path": "character-finishing-control-v1.png",
+      "sha256": "458be0ab92c36786dc0b657f84e1acb09d9ae7c1d760fc36cdcf6042d8180a28"
+    },
+    "rawGenerated": {
+      "path": "character-finishing-openai-v1.png",
+      "sha256": "d82968d5b8703c2b0926a6218346bba6b8b4ce5f1e531d1dad77a6c4325d7f50"
+    },
+    "matte": {
+      "path": "character-finishing-openai-v1-alpha-contracted.png",
+      "sha256": "81987202b81d0bbd991a3e5f93ac57b710e4385ad7a681e51dffb8134d45ca73"
+    },
+    "normalized": {
+      "path": "character-finishing-openai-v1-8x4.png",
+      "sha256": "9de3e6ceeb741e3dfbe006a5ee343f08cdb070d720eee6c1c2cdecd5279ccffe"
+    }
+  },
+  "provenance": {
+    "cleanRoom": true,
+    "model": "OpenAI built-in image generation",
+    "method": "Blender structure plus controlled OpenAI img2img surface finishing",
+    "geometryAuthority": "assets/sprites/candidates/blender-locomotion-v2/duskfell-locomotion-v2.json",
+    "animationAuthority": "Blender source frame mapping in control manifest",
+    "finishingAuthority": "none; proof remains review-only",
+    "controlManifestSha256": "265eafc715fb37bdaf66a92565127cb1e5b8f8abe08bc5536c5cd3faaf1e4b8d",
+    "requestSha256": "7c432fadc1225a34c63387e9d4f827eb824fbd312a8ce2c83166ebf52ae92770",
+    "sourceHash": "56fa3fe2c1bf204e2fae4d14d59ca44ae75ef8f16f9167db4b3eaeb3d20a2e4a",
+    "externalAssets": []
+  }
+}
